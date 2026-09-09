@@ -43,5 +43,6 @@ pkgs.testers.runNixOSTest {
           machine.succeed(
               "getfattr -n security.selinux --only-values \"%s\" | grep -q screen_exec_t" % tmux_bin
           )
+
     '';
 }

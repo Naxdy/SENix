@@ -294,5 +294,58 @@ in
         pkgs.policycoreutils
       ];
     };
+
+    systemd.services.selinux-store-overlay = lib.mkIf cfg.storeOverlay {
+      description = "Overlay SELinux store metadata over /nix/store";
+      wantedBy = [ "multi-user.target" ];
+      before = [
+        "multi-user.target"
+        "nix-daemon.service"
+      ];
+      path = [
+        pkgs.util-linux
+        pkgs.coreutils
+        pkgs.attr
+      ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        set -eu
+
+        upper=/run/selinux/overlay
+        meta=/run/selinux/metadata
+        store=/run/selinux/store
+
+        mkdir -p /run/selinux "$upper" "$meta" "$store"
+        mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper"
+        mkdir -p "$upper/upper" "$upper/work"
+
+        # The build.squashfs image, carrying the file context / xattr metadata
+        # for only the referenced store paths.
+        mount -t squashfs -o ro,loop ${cfg.build.squashfs} "$meta"
+
+        # The real store, exposed as the lower layer so every store path (past,
+        # present, or added at runtime with nix build) stays visible with data.
+        mount --bind /nix/store "$store"
+
+        # Overlay the metadata over the store: a writable tmpfs upper carries the
+        # labels (via metacopy) while file data continues to come from the store.
+        mount -t overlay overlay \
+          -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
+          /nix/store
+
+        # Copy the baked `security.selinux` labels from the metadata image onto
+        # the overlaid store paths. `setfattr` triggers metadata-only copy-up
+        # (metacopy), so labels land in the tmpfs upper; data stays in the store.
+        find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
+          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null); then
+            rel=''${f#"$meta"}
+            setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
+          fi
+        done
+      '';
+    };
   };
 }
