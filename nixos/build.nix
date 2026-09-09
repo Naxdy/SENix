@@ -131,6 +131,93 @@ let
       runHook postBuild
     '';
   };
+  # Every store path referenced by any module's fileContext.storePaths.
+  storePaths = lib.concatLists (
+    lib.mapAttrsToList (
+      _: m: lib.concatLists (lib.mapAttrsToList (_: paths: paths) m.fileContext.storePaths)
+    ) mods
+  );
+  storePathsUnique = lib.unique storePaths;
+
+  # Raw file contexts (with `gen_context(...)` still unexpanded) across all modules.
+  squashfsFC = lib.concatStringsSep "\n" (
+    lib.filter (s: s != "") (
+      map (m: if m.fileContext.rules != { } then genFC m.fileContext else "") (lib.attrValues mods)
+    )
+  );
+
+  # Mirror a store path's tree into the staging area as empty files / symlinks /
+  # directories, so the SquashFS carries only metadata (never file contents).
+  mirrorStorePath = sp: ''
+    src=${toString sp}
+    dst="$staging/nix/store/$(basename "$src")"
+    mkdir -p "$dst"
+    (cd "$src" && find . -mindepth 1 | while IFS= read -r p; do
+      if [ -d "$p" ] && [ ! -L "$p" ]; then
+        mkdir -p "$dst/$p"
+      elif [ -L "$p" ]; then
+        ln -s "$(readlink "$p")" "$dst/$p"
+      else
+        touch "$dst/$p"
+      fi
+    done)
+  '';
+
+  mirrorStorePaths = lib.concatStrings (map mirrorStorePath storePathsUnique);
+
+  squashfsDrv = pkgs.stdenv.mkDerivation {
+    pname = "selinux-store-metadata";
+    version = "1";
+    dontUnpack = true;
+
+    nativeBuildInputs = [
+      pkgs.squashfsTools
+      pkgs.policycoreutils
+      pkgs.attr
+      pkgs.gnum4
+      pkgs.gawk
+      pkgs.gnused
+      pkgs.findutils
+    ];
+
+    buildInputs = [
+      refpolicy
+    ]
+    ++ storePathsUnique;
+
+    buildPhase = ''
+            runHook preBuild
+
+            set -euo pipefail
+
+            include=${includeDir}
+            m4support=$(find "$include/support" -maxdepth 1 -name '*.spt' | sort)
+            mls_sens=$(awk -F'[ :=]+' '/MLS_SENS/ {print $NF}' "$include/build.conf")
+            mls_cats=$(awk -F'[ :=]+' '/MLS_CATS/ {print $NF}' "$include/build.conf")
+            mcs_cats=$(awk -F'[ :=]+' '/MCS_CATS/ {print $NF}' "$include/build.conf")
+            M4PARAM="-D mls_num_sens=$mls_sens -D mls_num_cats=$mls_cats -D mcs_num_cats=$mcs_cats"
+
+            staging=$(mktemp -d)
+
+            # Materialize the raw file contexts, then expand the `gen_context` macros.
+            cat > "$staging/file_contexts" <<'SENIX_FCEOF'
+      ${squashfsFC}
+      SENIX_FCEOF
+            m4 $M4PARAM $m4support "$staging/file_contexts" > "$staging/file_contexts.x"
+
+            ${mirrorStorePaths}
+
+            # Best-effort labelling: on hosts without an active SELinux LSM, `setfiles`
+            # still computes the correct context but cannot store the 'security.selinux'
+            # xattr (EPERM/EOPNOTSUPP); the VM test is where the labels are verified.
+            setfiles -r "$staging" "$staging/file_contexts.x" "$staging" || true
+
+            mksquashfs "$staging/nix/store" "$out" \
+              -noappend -xattrs -no-progress > /dev/null
+
+            runHook postBuild
+    '';
+  };
 in
 {
   options.security.selinux.build = {
@@ -162,5 +249,9 @@ in
         A derivation producing all compiled policy modules (`*.pp`) derived from `security.selinux.modules`.
       '';
     };
+  };
+
+  config = {
+    security.selinux.build.squashfs = squashfsDrv;
   };
 }
