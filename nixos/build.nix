@@ -164,19 +164,53 @@ let
   '';
 
   mirrorStorePaths = lib.concatStrings (map mirrorStorePath storePathsUnique);
+  # Python helper: match staged store files against the expanded file contexts and
+  # emit `mksquashfs` pseudo `x` definitions. Writing the `security.selinux` xattr
+  # this way bakes it into the image without needing an active SELinux LSM on the
+  # build host (so a no-SELinux -> SELinux switch needs only a single rebuild).
+  pseudoGen = ''
+    import re, os, sys
+
+    def main(fc, store):
+        entries = []
+        with open(fc) as f:
+            for line in f:
+                line = line.rstrip('\n')
+                if not line or line.startswith('#'):
+                    continue
+                parts = line.split('\t', 1)
+                if len(parts) != 2:
+                    continue
+                try:
+                    entries.append((re.compile(parts[0].strip()), parts[1].strip()))
+                except re.error:
+                    pass
+        out = []
+        for root, dirs, files in os.walk(store):
+            for name in dirs + files:
+                full = os.path.join(root, name)
+                rel = os.path.relpath(full, store)
+                logical = '/nix/store/' + rel
+                ctx = None
+                for regex, c in entries:
+                    if regex.search(logical):
+                        ctx = c
+                if ctx:
+                    out.append('%s x security.selinux=%s' % (rel, ctx))
+        sys.stdout.write('\n'.join(out))
+
+    main(sys.argv[1], sys.argv[2])
+  '';
 
   squashfsDrv = pkgs.stdenv.mkDerivation {
     pname = "selinux-store-metadata";
     version = "1";
     dontUnpack = true;
-
     nativeBuildInputs = [
       pkgs.squashfsTools
-      pkgs.policycoreutils
-      pkgs.attr
+      pkgs.python3
       pkgs.gnum4
       pkgs.gawk
-      pkgs.gnused
       pkgs.findutils
     ];
 
@@ -207,14 +241,18 @@ let
 
             ${mirrorStorePaths}
 
-            # Best-effort labelling: on hosts without an active SELinux LSM, `setfiles`
-            # still computes the correct context but cannot store the 'security.selinux'
-            # xattr (EPERM/EOPNOTSUPP); the VM test is where the labels are verified.
-            setfiles -r "$staging" "$staging/file_contexts.x" "$staging" || true
+            # Write the matcher and generate per-file `security.selinux` xattr
+            # definitions as a `mksquashfs` pseudo file. This bakes the labels
+            # into the image unconditionally, so the build works on hosts without
+            # an active SELinux LSM (no-SELinux -> SELinux needs one rebuild).
+            cat > "$staging/matcher.py" <<'SENIX_PYEOF'
+      ${pseudoGen}
+      SENIX_PYEOF
+            python3 "$staging/matcher.py" \
+              "$staging/file_contexts.x" "$staging/nix/store" > "$staging/pseudo"
 
             mksquashfs "$staging/nix/store" "$out" \
-              -noappend -xattrs -no-progress > /dev/null
-
+              -pf "$staging/pseudo" -noappend -xattrs -no-progress > /dev/null
             runHook postBuild
     '';
   };
