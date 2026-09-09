@@ -37,58 +37,81 @@ in
       '';
     };
 
+    policyVersion = mkOption {
+      type = types.nullOr types.int;
+      default = null;
+      example = 33;
+      description = ''
+        The SELinux policy version to target when building policy modules.
+
+        Passed to `semanage` via `policy-version` in `semanage.conf`. If `null`, the toolchain default is used.
+      '';
+    };
+
     modules = mkOption {
       type = types.attrsOf (
-        types.submodule {
-          options = {
-            interface = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = ''
-                Interface (`.if`) rules for this module.
-              '';
-            };
-            typeEnforcement = mkOption {
-              type = types.nullOr types.str;
-              default = null;
-              description = ''
-                Type enforcement (`.te`) rules for this module.
-              '';
-            };
-            fileContext = mkOption {
-              type = types.submodule {
-                options = {
-                  storePaths = mkOption {
-                    type = types.attrsOf (types.listOf types.path);
-                    default = [ ];
-                    description = ''
-                      A list of store paths to generate the appropriate file context rules for.
+        types.submodule (
+          { config, ... }:
+          {
+            options = {
+              name = mkOption {
+                type = types.str;
+                default = config._module.args.name;
+                description = ''
+                  Name of this policy module, as referenced by `policy_module` in the module's type enforcement rules.
 
-                      Any entry in `rules` containing `@attr@` will be replicated for each path listed here.
-                    '';
-                  };
-                  rules = {
-                    type = types.attrsOf types.str;
-                    default = { };
-                    example = {
-                      "@my_app@/bin/my_app" = "gen_context(system_u:object_r:my_app_exec_t,s0)";
-                      "HOME_DIR/\.cache/my_app(/.*)?" = "gen_context(system_u:object_r:my_app_cache_t,s0)";
+                  Defaults to the attribute name under `modules`.
+                '';
+              };
+              interface = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = ''
+                  Interface (`.if`) rules for this module.
+                '';
+              };
+              typeEnforcement = mkOption {
+                type = types.nullOr types.str;
+                default = null;
+                description = ''
+                  Type enforcement (`.te`) rules for this module.
+                '';
+              };
+              fileContext = mkOption {
+                type = types.submodule {
+                  options = {
+                    storePaths = mkOption {
+                      type = types.attrsOf (types.listOf types.path);
+                      default = [ ];
+                      description = ''
+                        A list of store paths to generate the appropriate file context rules for.
+
+                        Any entry in `rules` containing `@attr@` will be replicated for each path listed here.
+                      '';
                     };
-                    description = ''
-                      An attribute set of paths with their corresponding context assignments.
+                    rules = mkOption {
+                      type = types.attrsOf types.str;
+                      default = { };
+                      example = {
+                        "@my_app@/bin/my_app" = "gen_context(system_u:object_r:my_app_exec_t,s0)";
+                        "HOME_DIR/\.cache/my_app(/.*)?" = "gen_context(system_u:object_r:my_app_cache_t,s0)";
+                      };
+                      description = ''
+                        An attribute set of paths with their corresponding context assignments.
 
-                      If a path begins with `@attr@`, that rule will be repeated for every path listed in `storePaths.<attr>`.
-                    '';
+                        If a path begins with `@attr@`, that rule will be repeated for every path listed in `storePaths.<attr>`.
+                      '';
+                    };
                   };
                 };
+                default = { };
+                description = ''
+                  File context (`.fc`) rules for this module.
+                '';
               };
-              default = { };
-              description = ''
-                File context (`.fc`) rules for this module.
-              '';
             };
-          };
-        }
+          }
+        )
       );
       default = { };
       description = ''
@@ -96,7 +119,7 @@ in
       '';
     };
 
-    type = {
+    type = mkOption {
       type = types.str;
       default = "refpolicy";
       example = "targeted";
@@ -105,7 +128,7 @@ in
       '';
     };
 
-    mode = {
+    mode = mkOption {
       type = types.enum [
         "enforcing"
         "permissive"
@@ -117,6 +140,16 @@ in
         SELinux enforcement mode.
       '';
     };
+    storeOverlay = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Whether to overlay the SquashFS metadata filesystem built into `security.selinux.build.squashfs` over `/nix/store` at runtime.
+
+        Files in the Nix store cannot carry setuid bits or extended attributes, so SELinux file context metadata has to be supplied externally. When enabled, the metadata is presented through a read-only overlay; when disabled, labels must instead come from path-based file context rules (e.g. via `modules.*.fileContext`).
+      '';
+    };
+
   };
 
   config = lib.mkIf cfg.enable {
@@ -124,30 +157,69 @@ in
       (
         final: prev:
         let
+          # Building `coreutils` with `selinuxSupport` in this nixpkgs revision trips the
+          # bootstrap `fetchurlBoot` (it does not accept `nativeBuildInputs`). Drop it from
+          # the override set until upstream can build SELinux-enabled coreutils during bootstrap.
           overridePkgs = [
-            "casync"
-            "celeste64"
-            "coreutils"
-            "emacs"
-            "erofs-utils"
-            "esdm"
-            "flatpak"
-            "postgresql"
-            "postgresql_14"
-            "postgresql_15"
-            "postgresql_16"
-            "postgresql_17"
-            "postgresql_18"
-            "systemd"
+            {
+              name = "emacs";
+              flag = "withSelinux";
+            }
+            {
+              name = "systemd";
+              flag = "withSelinux";
+            }
+            {
+              name = "casync";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "erofs-utils";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "flatpak";
+              flag = "withSELinuxModule";
+            }
+            {
+              name = "postgresql";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "postgresql_14";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "postgresql_15";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "postgresql_16";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "postgresql_17";
+              flag = "selinuxSupport";
+            }
+            {
+              name = "postgresql_18";
+              flag = "selinuxSupport";
+            }
           ];
         in
         builtins.listToAttrs (
-          map (name: {
-            inherit name;
-            value = prev.${name}.override {
-              withSelinux = true;
-            };
-          }) overridePkgs
+          map (
+            {
+              name,
+              flag,
+            }:
+            {
+              inherit name;
+              value = prev.${name}.override {
+                ${flag} = true;
+              };
+            }
+          ) overridePkgs
         )
       )
     ];

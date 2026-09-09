@@ -61,8 +61,49 @@
       formatter = forEachSupportedSystem ({ treefmt, ... }: treefmt);
 
       checks = forEachSupportedSystem (
-        { treefmtEval, ... }: {
+        {
+          system,
+          pkgs,
+          treefmtEval,
+          ...
+        }:
+        let
+          inherit (nixpkgs) lib;
+
+          selinuxEval = lib.nixosSystem {
+            inherit system;
+            modules = [
+              ./nixos/default.nix
+              ./test/screen/module.nix
+            ];
+          };
+
+          selinux = selinuxEval.config.security.selinux;
+        in
+        {
           treefmt = treefmtEval.config.build.check self;
+
+          selinux =
+            pkgs.runCommand "selinux-config-check"
+              {
+                inherit (selinux)
+                  enable
+                  mode
+                  type
+                  storeOverlay
+                  ;
+                screenName = selinux.modules.screen.name;
+                ruleCount = builtins.length (builtins.attrNames selinux.modules.screen.fileContext.rules);
+              }
+              ''
+                test "$enable" = "1"
+                test "$storeOverlay" = "1"
+                test "$mode" = "permissive"
+                test "$type" = "refpolicy"
+                test "$screenName" = "screen"
+                test "$ruleCount" -gt 0
+                echo "SELinux module scaffold evaluates successfully." >$out
+              '';
         }
       );
     };
