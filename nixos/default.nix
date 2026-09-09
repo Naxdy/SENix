@@ -227,7 +227,7 @@ in
     boot.kernelPatches = [
       {
         name = "selinux";
-        extraStructuredConfig = with lib.kernel; {
+        structuredExtraConfig = with lib.kernel; {
           SECURITY_SELINUX = yes;
         };
         patch = null;

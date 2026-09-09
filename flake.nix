@@ -69,6 +69,10 @@
         }:
         {
           treefmt = treefmtEval.config.build.check self;
+
+          selinux = import ./tests/screen/test.nix {
+            inherit pkgs;
+          };
         }
       );
     };
