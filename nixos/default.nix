@@ -9,10 +9,12 @@ let
 
   cfg = config.security.selinux;
 
-  # Shared bash used both to set up the store overlay at boot (systemd) and to
-  # refresh it on `nixos-rebuild switch` (activation). Re-running is safe: it
-  # unmounts any previously-installed overlay first, so a switch that produces a
-  # different `build.squashfs` re-applies the new labels.
+  # The single store-overlay setup. It is packaged as `selinux-store-overlay`
+  # (see `storeOverlayScript`) and run by the activation script at boot and on
+  # `nixos-rebuild switch`. It is idempotent: it only mounts the overlay once
+  # (never re-mounting over the store's own overlayfs), and on re-runs it skips
+  # work entirely unless `build.squashfs` changed, in which case it refreshes the
+  # metadata image and re-applies the baked labels.
   storeOverlaySetup =
     # bash
     ''
@@ -22,6 +24,13 @@ let
         upper=/run/selinux/overlay
         meta=/run/selinux/metadata
         store=/run/selinux/store
+
+        # Skip entirely if the same squashfs is already active — e.g. a switch
+        # that didn't change any referenced store paths (no new labels to apply).
+        if [ -e /run/selinux/overlay-active ] &&
+           [ "$(cat /run/selinux/store-overlay-squashfs 2>/dev/null)" = "${cfg.build.squashfs}" ]; then
+          return 0
+        fi
 
         if [ ! -e /run/selinux/overlay-active ]; then
           # Fresh setup (boot). The overlay itself is only mounted here; the Nix
@@ -45,8 +54,8 @@ let
         fi
 
         # Refresh the metadata image with the (possibly different) build.squashfs.
-        # If the loop device isn't available yet (early initrd), defer to the
-        # real-root systemd service.
+        # If the loop device isn't available yet (e.g. very early initrd), defer;
+        # a later run (switch or the loop device coming up) will retry.
         umount "$meta" 2>/dev/null || true
         if ! mount -t squashfs -o ro,loop ${cfg.build.squashfs} "$meta" 2>/dev/null; then
           return 0
@@ -61,10 +70,29 @@ let
             setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
           fi
         done
+
+        # Record which squashfs is currently mounted so idempotent re-runs can
+        # skip work when nothing changed.
+        echo "${cfg.build.squashfs}" > /run/selinux/store-overlay-squashfs
       }
 
-      setupStoreOverlay
+        setupStoreOverlay
     '';
+
+  # A single, re-runnable overlay setup. The activation script (boot + switch)
+  # runs this; exposing it as a package also lets a `nixos-rebuild switch` (and
+  # the test) trigger a re-apply by invoking it, so there is only one place that
+  # holds the setup logic.
+  storeOverlayScript = pkgs.writeShellApplication {
+    name = "selinux-store-overlay";
+    runtimeInputs = [
+      pkgs.util-linux
+      pkgs.coreutils
+      pkgs.attr
+      pkgs.findutils
+    ];
+    text = storeOverlaySetup;
+  };
 
 in
 {
@@ -292,9 +320,16 @@ in
       }
     ];
 
-    # The store-overlay service mounts the metadata SquashFS via a loop device,
-    # so ensure the loop module is available as early as possible.
+    # The store overlay setup mounts the metadata SquashFS via a loop device, so
+    # ensure the loop module is available as early as possible.
     boot.kernelModules = [
+      "loop"
+    ];
+
+    # The store overlay activation mounts the metadata SquashFS via a loop device
+    # from within the initrd (the activation scripts run there during boot), so
+    # ensure the loop module is available to the initrd too.
+    boot.initrd.kernelModules = [
       "loop"
     ];
 
@@ -331,6 +366,7 @@ in
         SELINUX=${cfg.mode}
         SELINUXTYPE=${cfg.type}
       '';
+
       etc."selinux/semanage.conf".text =
         lib.optionalString (cfg.policyVersion != null) ''
           policy-version = ${toString cfg.policyVersion}
@@ -356,26 +392,8 @@ in
       systemPackages = [
         pkgs.libselinux
         pkgs.policycoreutils
+        storeOverlayScript
       ];
-    };
-
-    systemd.services.selinux-store-overlay = lib.mkIf cfg.storeOverlay {
-      description = "Overlay SELinux store metadata over /nix/store";
-      wantedBy = [ "multi-user.target" ];
-      before = [
-        "multi-user.target"
-        "nix-daemon.service"
-      ];
-      path = [
-        pkgs.util-linux
-        pkgs.coreutils
-        pkgs.attr
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-      };
-      script = storeOverlaySetup;
     };
 
     system.activationScripts.selinuxStoreOverlay = lib.mkIf cfg.storeOverlay {
@@ -383,8 +401,7 @@ in
         "etc"
       ];
       text = ''
-        export PATH=${pkgs.util-linux}/bin:${pkgs.coreutils}/bin:${pkgs.attr}/bin:${pkgs.findutils}/bin:$PATH
-        ${storeOverlaySetup}
+        ${storeOverlayScript}/bin/selinux-store-overlay
       '';
     };
   };

@@ -35,11 +35,12 @@ pkgs.testers.runNixOSTest {
       tmux_bin = machine.succeed("readlink -f \"$(command -v tmux)\"").strip()
 
       # A `nixos-rebuild switch` with a different `build.squashfs` re-runs the
-      # same overlay setup through the activation script. Simulate that path here
-      # by restarting the overlay unit (which performs the teardown + re-mount +
-      # re-apply) and re-assert that the labels survive the reconfigure.
-      machine.succeed("systemctl restart selinux-store-overlay.service")
-      machine.wait_for_unit("selinux-store-overlay.service")
+      # same overlay setup (the activation script runs the `selinux-store-overlay`
+      # command). Since the boot already mounted the current squashfs, force the
+      # "changed squashfs" path by marking it stale, then re-apply and check the
+      # labels are still correct after the reconfigure.
+      machine.succeed("echo stale > /run/selinux/store-overlay-squashfs")
+      machine.succeed("selinux-store-overlay")
 
       with subtest("the screen binary carries the screen_exec_t context"):
           machine.succeed(
