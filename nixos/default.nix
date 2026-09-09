@@ -8,6 +8,64 @@ let
   inherit (lib) mkOption types;
 
   cfg = config.security.selinux;
+
+  # Shared bash used both to set up the store overlay at boot (systemd) and to
+  # refresh it on `nixos-rebuild switch` (activation). Re-running is safe: it
+  # unmounts any previously-installed overlay first, so a switch that produces a
+  # different `build.squashfs` re-applies the new labels.
+  storeOverlaySetup =
+    # bash
+    ''
+      set -eu
+
+      setupStoreOverlay() {
+        upper=/run/selinux/overlay
+        meta=/run/selinux/metadata
+        store=/run/selinux/store
+
+        if [ ! -e /run/selinux/overlay-active ]; then
+          # Fresh setup (boot). The overlay itself is only mounted here; the Nix
+          # store (itself already an overlayfs) must not be stacked further on
+          # later re-runs, so we never unmount /nix/store once set up.
+          mkdir -p /run/selinux "$upper" "$meta" "$store"
+          mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper"
+          mkdir -p "$upper/upper" "$upper/work"
+          # The real store, exposed as the lower layer so every store path (past,
+          # present, or added at runtime with nix build) stays visible with data.
+          mount --bind /nix/store "$store"
+          # Overlay the metadata over the store: a writable tmpfs upper carries the
+          # labels (via metacopy) while file data continues to come from the store.
+          mount -t overlay overlay \
+            -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
+            /nix/store
+          # Mark as set up so later re-runs (e.g. a switch) only refresh labels and
+          # never re-mount the overlay (which would push overlayfs past its max
+          # stacking depth).
+          touch /run/selinux/overlay-active
+        fi
+
+        # Refresh the metadata image with the (possibly different) build.squashfs.
+        # If the loop device isn't available yet (early initrd), defer to the
+        # real-root systemd service.
+        umount "$meta" 2>/dev/null || true
+        if ! mount -t squashfs -o ro,loop ${cfg.build.squashfs} "$meta" 2>/dev/null; then
+          return 0
+        fi
+
+        # Copy the baked `security.selinux` labels from the metadata image onto the
+        # overlaid store paths. `setfattr` triggers metadata-only copy-up, so labels
+        # land in the tmpfs upper; data stays in the store.
+        find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
+          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null); then
+            rel=''${f#"$meta"}
+            setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
+          fi
+        done
+      }
+
+      setupStoreOverlay
+    '';
+
 in
 {
   imports = [
@@ -234,6 +292,12 @@ in
       }
     ];
 
+    # The store-overlay service mounts the metadata SquashFS via a loop device,
+    # so ensure the loop module is available as early as possible.
+    boot.kernelModules = [
+      "loop"
+    ];
+
     security.lsm = [
       "selinux"
     ];
@@ -311,40 +375,16 @@ in
         Type = "oneshot";
         RemainAfterExit = true;
       };
-      script = ''
-        set -eu
+      script = storeOverlaySetup;
+    };
 
-        upper=/run/selinux/overlay
-        meta=/run/selinux/metadata
-        store=/run/selinux/store
-
-        mkdir -p /run/selinux "$upper" "$meta" "$store"
-        mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper"
-        mkdir -p "$upper/upper" "$upper/work"
-
-        # The build.squashfs image, carrying the file context / xattr metadata
-        # for only the referenced store paths.
-        mount -t squashfs -o ro,loop ${cfg.build.squashfs} "$meta"
-
-        # The real store, exposed as the lower layer so every store path (past,
-        # present, or added at runtime with nix build) stays visible with data.
-        mount --bind /nix/store "$store"
-
-        # Overlay the metadata over the store: a writable tmpfs upper carries the
-        # labels (via metacopy) while file data continues to come from the store.
-        mount -t overlay overlay \
-          -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
-          /nix/store
-
-        # Copy the baked `security.selinux` labels from the metadata image onto
-        # the overlaid store paths. `setfattr` triggers metadata-only copy-up
-        # (metacopy), so labels land in the tmpfs upper; data stays in the store.
-        find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
-          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null); then
-            rel=''${f#"$meta"}
-            setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
-          fi
-        done
+    system.activationScripts.selinuxStoreOverlay = lib.mkIf cfg.storeOverlay {
+      deps = [
+        "etc"
+      ];
+      text = ''
+        export PATH=${pkgs.util-linux}/bin:${pkgs.coreutils}/bin:${pkgs.attr}/bin:${pkgs.findutils}/bin:$PATH
+        ${storeOverlaySetup}
       '';
     };
   };

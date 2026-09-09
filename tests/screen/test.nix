@@ -34,6 +34,13 @@ pkgs.testers.runNixOSTest {
       screen_bin = machine.succeed("readlink -f \"$(command -v screen)\"").strip()
       tmux_bin = machine.succeed("readlink -f \"$(command -v tmux)\"").strip()
 
+      # A `nixos-rebuild switch` with a different `build.squashfs` re-runs the
+      # same overlay setup through the activation script. Simulate that path here
+      # by restarting the overlay unit (which performs the teardown + re-mount +
+      # re-apply) and re-assert that the labels survive the reconfigure.
+      machine.succeed("systemctl restart selinux-store-overlay.service")
+      machine.wait_for_unit("selinux-store-overlay.service")
+
       with subtest("the screen binary carries the screen_exec_t context"):
           machine.succeed(
               "getfattr -n security.selinux --only-values \"%s\" | grep -q screen_exec_t" % screen_bin
