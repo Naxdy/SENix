@@ -158,6 +158,14 @@ pkgs.testers.runNixOSTest {
       # `var_lib_t`; this idempotently exercises the relabel entry point.
       machine.succeed("selinux-relabel")
 
+      # Runtime SELinux tooling must work: the policy/contexts must be present
+      # on the real /etc/selinux (not only under /run), and restorecon must be
+      # able to relabel using them.
+      machine.succeed("ls /etc/selinux/refpolicy/policy/ 2>&1")
+      machine.succeed("sestatus 2>&1")
+      machine.succeed("restorecon -R /etc 2>&1")
+
+
       # Create the files the confined app reads, and label them.
       machine.succeed("mkdir -p /var/lib/enforce_learn")
       machine.succeed("echo allowed-data > /var/lib/enforce_learn/allowed")
