@@ -158,6 +158,11 @@ pkgs.testers.runNixOSTest {
       with subtest("SELinux is enforcing"):
           machine.succeed("test \"$(getenforce)\" = Enforcing")
 
+      with subtest("the app binary has the enforce_learn_exec_t context"):
+          machine.succeed(
+              "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q 'enforce_learn_exec_t'"
+          )
+
       with subtest("the confined app can read its own data"):
           machine.succeed("echo '%s' | grep -q allowed_readable=1" % out)
 

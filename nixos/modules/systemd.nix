@@ -1,6 +1,6 @@
 { config, ... }: {
   # Based on the refpolicy's policy/modules/system/systemd.fc
-  security.selinux.modules = {
+  config.security.selinux.modules = {
     systemd = {
       layer = "system";
       fileContext = {
