@@ -4,6 +4,7 @@
 
   imports = [
     ./chromium.nix
+    ./init-context.nix
     ./init.nix
     ./systemd.nix
   ];

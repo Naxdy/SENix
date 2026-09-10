@@ -54,7 +54,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "permissive";
+        mode = "enforcing";
 
         modules.enforce_learn = {
           typeEnforcement = ''
@@ -68,6 +68,7 @@ pkgs.testers.runNixOSTest {
               type var_t;
               type var_lib_t;
               type unlabeled_t;
+              type fs_t;
             }
 
             type enforce_learn_exec_t;
@@ -104,10 +105,16 @@ pkgs.testers.runNixOSTest {
             allow enforce_learn_t unlabeled_t:dir { read search open };
             allow enforce_learn_t var_t:dir { read search open };
             allow enforce_learn_t var_lib_t:dir { read search open };
-
             allow enforce_learn_t self:process signal_perms;
             allow enforce_learn_t self:fd use;
             allow enforce_learn_t enforce_learn_data_t:file { open read getattr };
+            allow enforce_learn_data_t fs_t:filesystem associate;
+            allow enforce_learn_secret_t fs_t:filesystem associate;
+
+            # The test driver labels the app's data files with `setfattr`; it
+            # runs as `init_t` (systemd), so grant it the relabel permission.
+            allow init_t enforce_learn_data_t:file relabelto;
+            allow init_t enforce_learn_secret_t:file relabelto;
           '';
           fileContext = {
             storePaths.enforce_learn = [
@@ -145,9 +152,6 @@ pkgs.testers.runNixOSTest {
       # exec'ing it triggers the `kernel_t -> enforce_learn_t` transition.
       machine.succeed("echo stale > /run/selinux/store-overlay-squashfs")
       machine.succeed("selinux-store-overlay")
-
-      # The system boots permissive; switch to enforcing for the actual check.
-      machine.succeed("setenforce 1")
 
       # Executing the binary transitions us into enforce_learn_t via the type
       # transition. The app exits 0 iff it can read its own data and cannot read

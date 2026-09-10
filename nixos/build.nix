@@ -14,6 +14,31 @@ let
   policySrc = cfg.refpolicy.package.src;
   supportDir = "${policySrc}/policy/support";
 
+  # The Reference Policy layer directories that exist in the source tree.
+  refpolicyLayers = lib.attrNames (
+    lib.filterAttrs (_: t: t == "directory") (builtins.readDir "${policySrc}/policy/modules")
+  );
+  refpolicyLayerFiles = lib.mapAttrs (
+    layer: _: builtins.readDir "${policySrc}/policy/modules/${layer}"
+  ) (lib.genAttrs refpolicyLayers (_: null));
+  # Which Reference Policy layer a module belongs to (auto-detected by scanning
+  # the source tree). Modules not present in the Reference Policy are reported
+  # as `senix` — i.e. they are custom modules that must be appended to the
+  # generated `modules.conf`.
+  moduleLayer =
+    name:
+    let
+      found = lib.filter (
+        layer:
+        let
+          files = refpolicyLayerFiles.${layer};
+        in
+        builtins.hasAttr "${name}.te" files
+        || builtins.hasAttr "${name}.if" files
+        || builtins.hasAttr "${name}.fc" files
+      ) refpolicyLayers;
+    in
+    if found == [ ] then "senix" else builtins.head found;
   # Expand `@attr@` placeholders in file context rules using their store paths.
   expandRule =
     fileContext: key: value:
@@ -50,6 +75,7 @@ let
   moduleSourceDrv =
     let
       stubIf = pkgs.writeText "stub.if" "";
+      stubFc = pkgs.writeText "stub.fc" "";
     in
     pkgs.linkFarm "selinux-module-sources" (
       lib.flatten (
@@ -58,6 +84,7 @@ let
           let
             m = mods.${name};
             inherit (m) layer;
+            isCustom = moduleLayer name == "senix";
             dir = "policy/modules/${layer}";
             te =
               if m.typeEnforcement != null then
@@ -81,7 +108,7 @@ let
                     path = materializeSource m.interface "${name}.if";
                   }
                 ]
-              else if layer == "senix" then
+              else if isCustom then
                 # Custom modules don't have a `.if` in the Reference Policy tree;
                 # the build requires one, so provide an empty file.
                 [
@@ -111,8 +138,18 @@ let
                     path = pkgs.writeText "${name}.fc" (genFC m.fileContext + "\n");
                   }
                 ]
+              else if isCustom then
+                # Custom modules don't have a `.fc` in the Reference Policy tree;
+                # the build requires one, so provide an empty file.
+                [
+                  {
+                    inherit dir;
+                    name = "${dir}/${name}.fc";
+                    path = stubFc;
+                  }
+                ]
               else
-                # No file contexts overridden: the Reference Policy `.fc` is used.
+                # Overridden built-in module: keep the Reference Policy `.fc`.
                 [ ];
           in
           te ++ if_ ++ fc
@@ -129,17 +166,22 @@ let
       ]
     );
 
+  # Custom modules (not part of the Reference Policy) — detected by scanning the
+  # source, not by their declared `layer` (which may point into the Reference
+  # Policy, e.g. `kernel`, to make a custom module a base module). These aren't
+  # in the refpolicy's generated `modules.conf`, so we append them; built-in
+  # Reference Policy modules are left as-is (we build all of them). Custom
+  # modules placed in the `kernel` layer are appended as `base` so their
+  # statements (e.g. `sid init`) are compiled into the base policy.
+  customInfo = lib.concatStringsSep " " (
+    map (name: "${name}=${if mods.${name}.layer == "kernel" then "base" else "module"}") (
+      lib.filter (name: moduleLayer name == "senix") moduleNames
+    )
+  );
+
   # Common make flags for the Reference Policy build (single line so they can
   # be interpolated directly into a `make` invocation).
   refpolicyTools = "CHECKPOLICY=${pkgs.checkpolicy}/bin/checkpolicy CHECKMODULE=${pkgs.checkpolicy}/bin/checkmodule SEMODULE=${pkgs.policycoreutils}/bin/semodule SEMOD_PKG=${pkgs.semodule-utils}/bin/semodule_package SEMOD_LNK=${pkgs.semodule-utils}/bin/semodule_link SEMOD_EXP=${pkgs.semodule-utils}/bin/semodule_expand DISTRO=nixos SYSTEMD=y UBAC=y";
-
-  # Custom modules (not part of the Reference Policy) that live in the `senix`
-  # layer. These aren't in the refpolicy's generated `modules.conf`, so we have
-  # to append them; every built-in Reference Policy module is left as-is (we
-  # build all of them).
-  senixNames = lib.concatStringsSep " " (
-    map lib.escapeShellArg (lib.filter (name: mods.${name}.layer == "senix") moduleNames)
-  );
 
   # The policy is built from the Reference Policy sources in full: every built-in
   # module is compiled, and any module declared in `config.security.selinux.modules`
@@ -162,11 +204,6 @@ let
       pkgs.getopt
       pkgs.findutils
     ];
-
-    buildInputs = [
-      cfg.refpolicy.package
-    ];
-
     buildPhase = ''
       runHook preBuild
 
@@ -182,12 +219,12 @@ let
       make conf \
         ${refpolicyTools}
 
-      # Append custom (`senix`) modules to modules.conf; every built-in module
-      # is kept (we build all of them, no selection/disable logic).
-      python3 - policy/modules.conf ${senixNames} <<'SENIX_PYEOF'
+      # Append custom (senix) modules to modules.conf; every built-in module
+      python3 - policy/modules.conf ${customInfo} <<'SENIX_PYEOF'
       import sys
 
-      conf, senix = sys.argv[1], set(sys.argv[2:])
+      conf = sys.argv[1]
+      entries = [e.split("=", 1) for e in sys.argv[2:] if "=" in e]
       existing = set()
       out = []
       with open(conf) as f:
@@ -197,31 +234,41 @@ let
               if len(parts) == 3 and parts[1] == "=":
                   existing.add(parts[0])
               out.append(line)
-      for name in sorted(senix - existing):
-          out.append(f"{name} = module\n")
+      for name, status in entries:
+          if name not in existing:
+              out.append(f"{name} = {status}\n")
       with open(conf, "w") as f:
           f.writelines(out)
       SENIX_PYEOF
 
-      # Overlay the declarative module sources onto the Reference Policy tree.
-      # Files whose layer/path we override are replaced; everything else is a
-      # no-op copy of the corresponding source file (or left untouched).
+      # The `init` module only declares `init_t`/`init_exec_t`/`initrc_transition_domain`
+      # once; we move those into the `init_context` base module (which declares
+      # `sid init init_t`, only valid in the base). Strip them from `init.te`
+      # so the base is the single source of truth and checkmodule doesn't see a
+      sed -i \
+        -e 's|^\(\tclass passwd rootok;\)$|\1\n\ttype init_t;\n\ttype init_exec_t;|' \
+        -e '/^attribute initrc_transition_domain;/d' \
+        -e '/^type init_t, initrc_transition_domain;/d' \
+        -e '/^type init_exec_t;/d' \
+        policy/modules/system/init.te
       cp -a ${moduleSourceDrv}/. .
 
-      # Nix stdenv sets `prefix=/usr` in the environment; override it so the
-      # install lands under $out, and prevent make from writing anywhere else.
-      export DESTDIR=$out
-      export prefix=$out
-      export SHAREDIR=$out/share/selinux/refpolicy
+      # `cp -a` preserves the (read-only) source modes; ensure everything is
+      # writable again before any in-place `sed`/`make` runs.
+      chmod -R u+w .
+
+      # The `init_context` base module (declared via `security.selinux.modules`)
+      # sets `sid init init_t` so PID 1 boots as `init_t`; drop the Reference
+      # Policy's own `sid init` (which is `unlabeled_t`) so there is exactly one
+      # `sid init` statement.
+      sed -i '/^sid init[[:space:]]/d' policy/modules/kernel/kernel.te
+
       export INSTALL=${pkgs.coreutils}/bin/install
 
-      # `cp -a` copies sources with their (read-only) modes; ensure everything is
-      # writable again so the build can create `tmp/` and write generated files.
-      chmod -R u+w .
       mkdir -p tmp
 
-      # Build and install the full policy (plus headers for the squashfs).
-      make all install install-headers ${refpolicyTools} prefix=$out
+      make all install install-headers ${refpolicyTools} prefix=$out DESTDIR=$out
+
 
       # The Reference Policy's `install` also stages modules under
       # `$(prefix)/usr`, doubling everything (deduped but confusing); drop it.
@@ -229,6 +276,10 @@ let
 
       runHook postBuild
     '';
+    # `buildPhase` runs `make install` with `prefix=$out DESTDIR=$out`; the
+    # default stdenv `installPhase` would run `make install` again without those
+    # (installing to `/usr`), so make it a no-op.
+    installPhase = "true";
   };
 
   # Every store path referenced by any module's fileContext.storePaths.

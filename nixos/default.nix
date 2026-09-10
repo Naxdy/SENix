@@ -357,6 +357,91 @@ in
       "loop"
     ];
 
+    # `systemd` is PID 1 and must run as `init_t` (not `kernel_t`) to boot
+    # directly into enforcing mode, but the store overlay/`semodule` (which
+    # labels files) only runs in stage 2 — after PID 1 is exec'd. So load the
+    # SELinux policy, label the systemd binary `init_exec_t`, and start
+    # enforcing from within the initrd, before the real init is exec'd. Together
+    # with the `type_transition ... -> init_t` in the `init_context` module this
+    # makes systemd run as `init_t`.
+    boot.initrd.systemd.storePaths = [
+      pkgs.attr
+      pkgs.policycoreutils
+      pkgs.libselinux.bin
+      cfg.build.policy
+    ];
+    # `semodule`/libsemanage hardcodes the HLL compiler dir and the external
+    # `setfiles`/`load_policy`/`sefcontext_compile` commands to `/usr/libexec`
+    # and `/sbin`/`/usr/sbin`, none of which exist in the read-only initrd.
+    # Supply a `semanage.conf` that points them at the store paths, and use a
+    # writable store under `/run` (the initrd `/var` is read-only).
+    boot.initrd.systemd.contents."/etc/selinux/semanage.conf".text =
+      lib.optionalString (cfg.policyVersion != null) ''
+        policy-version = ${toString cfg.policyVersion}
+      ''
+      + ''
+        store-root = /run/selinux
+        compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
+
+        [load_policy]
+        path = ${pkgs.policycoreutils}/bin/load_policy
+        [end]
+
+        [setfiles]
+        path = ${pkgs.policycoreutils}/bin/setfiles
+        args = -q -c $@ $<
+        [end]
+
+        [sefcontext_compile]
+        path = ${pkgs.libselinux.bin}/bin/sefcontext_compile
+        args = $@
+        [end]
+      '';
+
+    boot.initrd.systemd.services.selinux-init = {
+      wantedBy = [ "initrd.target" ];
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+      };
+      script = ''
+        # Install and link the policy modules, make the linked policy visible to
+        # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
+        # and performs the kernel version conversion), then enforce. We cannot
+        # rely on the store overlay here (it is not up yet, and the initrd store
+        # cannot hold xattrs), so label the systemd binary `init_exec_t`
+        # directly — both the initrd copy and the real-root copy mounted at
+        # `/sysroot/nix/store`. That makes systemd's re-exec at switch_root
+        # transition to `init_t` via the `init_context` type_transition, so PID 1
+        # can start units in enforcing mode.
+        pp=""
+        for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
+          [ -e "$f" ] && pp="$pp $f"
+        done
+        ${pkgs.policycoreutils}/bin/semodule -s ${cfg.type} -i ''${pp}
+
+        mkdir -p /etc/selinux/${cfg.type}/policy
+
+        printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
+
+        SRC=/run/selinux/${cfg.type}/active/policy.kern
+        if [ -f "$SRC" ]; then
+          for v in $(seq 40 25); do cp "$SRC" /etc/selinux/${cfg.type}/policy/policy.$v; done
+        fi
+
+        ${pkgs.policycoreutils}/bin/load_policy
+        ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
+
+        SD=${config.systemd.package}/lib/systemd/systemd
+        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SD" || true
+
+        SRD=/sysroot/nix/store/$(basename ${config.systemd.package})/lib/systemd/systemd
+        if [ -f "$SRD" ]; then
+          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SRD" || true
+        fi
+      '';
+    };
+
     security.lsm = [
       "selinux"
     ];
