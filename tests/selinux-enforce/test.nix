@@ -136,7 +136,27 @@ pkgs.testers.runNixOSTest {
   testScript =
     # python
     ''
+
       machine.wait_for_unit("multi-user.target")
+
+      # The boot-time `selinux-relabel.service` must have already applied the
+      # store labels to the real /nix/store (not just via the manual re-apply
+      # below); otherwise store labels would only exist after an explicit
+      # re-apply and daemon binaries would start unlabeled on a real boot.
+      machine.succeed(
+          "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
+      )
+
+      # The boot-time `setfiles` relabel must have labeled the non-store root
+      # (e.g. /var/lib -> var_lib_t); otherwise the file-context rules are never
+      # applied to the live filesystem and services run against unlabeled state.
+      machine.succeed("getfattr -n security.selinux --only-values /var/lib | grep -q var_lib_t")
+
+      # Re-apply the labels (as a `nixos-rebuild switch` would), before creating
+      # the app data files so `setfiles` does not overwrite their specific
+      # `enforce_learn_data_t`/`enforce_learn_secret_t` labels with the generic
+      # `var_lib_t`; this idempotently exercises the relabel entry point.
+      machine.succeed("selinux-relabel")
 
       # Create the files the confined app reads, and label them.
       machine.succeed("mkdir -p /var/lib/enforce_learn")
@@ -144,14 +164,6 @@ pkgs.testers.runNixOSTest {
       machine.succeed("echo secret-data > /var/lib/enforce_learn/secret")
       machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_data_t /var/lib/enforce_learn/allowed")
       machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_secret_t /var/lib/enforce_learn/secret")
-
-      # Apply the squashfs-supplied store labels. The `selinux-store-overlay`
-      # command (re)mounts the metadata image and copies the baked
-      # `security.selinux` labels onto the overlaid store paths via metadata-only
-      # copy-up; among them is the app binary's `enforce_learn_exec_t` label so
-      # exec'ing it triggers the `kernel_t -> enforce_learn_t` transition.
-      machine.succeed("echo stale > /run/selinux/store-overlay-squashfs")
-      machine.succeed("selinux-store-overlay")
 
       # Executing the binary transitions us into enforce_learn_t via the type
       # transition. The app exits 0 iff it can read its own data and cannot read

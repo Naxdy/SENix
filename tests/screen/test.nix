@@ -30,17 +30,14 @@ pkgs.testers.runNixOSTest {
 
       # `command -v` resolves through /run/current-system; dereference to the
       # (read-only) Nix store path so we assert on the actual store object that
-      # the SquashFS metadata overlay is meant to label.
+      # the boot-time relabel is meant to label.
       screen_bin = machine.succeed("readlink -f \"$(command -v screen)\"").strip()
       tmux_bin = machine.succeed("readlink -f \"$(command -v tmux)\"").strip()
 
-      # A `nixos-rebuild switch` with a different `build.squashfs` re-runs the
-      # same overlay setup (the activation script runs the `selinux-store-overlay`
-      # command). Since the boot already mounted the current squashfs, force the
-      # "changed squashfs" path by marking it stale, then re-apply and check the
-      # labels are still correct after the reconfigure.
-      machine.succeed("echo stale > /run/selinux/store-overlay-squashfs")
-      machine.succeed("selinux-store-overlay")
+      # Re-apply the labels (as a `nixos-rebuild switch` would); this exercises
+      # the `selinux-relabel` entry point and must be idempotent with the boot
+      # application.
+      machine.succeed("selinux-relabel")
 
       with subtest("the screen binary carries the screen_exec_t context"):
           machine.succeed(
