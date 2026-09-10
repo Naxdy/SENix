@@ -73,6 +73,10 @@
           selinux = import ./tests/screen/test.nix {
             inherit pkgs;
           };
+
+          selinux-enforce = import ./tests/selinux-enforce/test.nix {
+            inherit pkgs;
+          };
         }
       );
     };

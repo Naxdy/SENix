@@ -98,6 +98,7 @@ in
 {
   imports = [
     ./build.nix
+    ./refpolicy.nix
   ];
 
   options.security.selinux = {
@@ -107,19 +108,6 @@ in
       example = true;
       description = ''
         Whether to enable SELinux support via [SENix](https://github.com/Naxdy/SENix).
-      '';
-    };
-
-    policy = mkOption {
-      type = types.path;
-      default = "${
-        pkgs.selinux-refpolicy.override { policyVersion = "refpolicy"; }
-      }/share/selinux/refpolicy";
-      defaultText = ''
-        The refpolicy of `pkgs.selinux-refpolicy`.
-      '';
-      description = ''
-        Path to the SELinux policy.
       '';
     };
 
@@ -150,27 +138,48 @@ in
                 '';
               };
               interface = mkOption {
-                type = types.nullOr types.str;
+                type = types.nullOr (
+                  types.oneOf [
+                    types.pathInStore
+                    types.str
+                  ]
+                );
                 default = null;
                 description = ''
-                  Interface (`.if`) rules for this module.
+                  Interface (`.if`) rules for this module, either as a Nix store path to a `.if` file
+                  (accepted by `types.pathInStore`), or a raw string of the interface content.
                 '';
               };
               typeEnforcement = mkOption {
-                type = types.nullOr types.str;
+                type = types.nullOr (
+                  types.oneOf [
+                    types.pathInStore
+                    types.str
+                  ]
+                );
                 default = null;
                 description = ''
-                  Type enforcement (`.te`) rules for this module.
+                  Type enforcement (`.te`) rules for this module, either as a Nix store path to a `.te` file
+                  (accepted by `types.pathInStore`), or a raw string of the type enforcement content.
                 '';
               };
               fileContext = mkOption {
                 type = types.submodule {
                   options = {
-                    storePaths = mkOption {
-                      type = types.attrsOf (types.listOf types.path);
-                      default = [ ];
+                    source = mkOption {
+                      type = types.nullOr types.pathInStore;
+                      default = null;
                       description = ''
-                        A list of store paths to generate the appropriate file context rules for.
+                        A Nix store path to a file context (`.fc`) file to use for this module directly,
+                        instead of generating one from `rules`. Used when pulling a module verbatim from
+                        the Reference Policy sources.
+                      '';
+                    };
+                    storePaths = mkOption {
+                      type = types.attrsOf (types.listOf types.pathInStore);
+                      default = { };
+                      description = ''
+                        A list of Nix store paths to generate the appropriate file context rules for.
 
                         Any entry in `rules` containing `@attr@` will be replicated for each path listed here.
                       '';
@@ -337,6 +346,45 @@ in
       "selinux"
     ];
 
+    # Override the built-init/systemd modules' file contexts with Nix-store
+    # paths. The `.te`/`.if` are left to the Reference Policy source; only the
+    # store-specific labels are supplied so the SquashFS (and the compiled
+    # policy) can label the store paths. These modules take precedence over the
+    # Reference Policy's `init`/`systemd` modules.
+    security.selinux.modules = {
+      init = {
+        fileContext = {
+          storePaths = {
+            init = [
+              config.systemd.package
+            ];
+          };
+          rules = {
+            "@init@/lib/systemd/systemd" = "gen_context(system_u:object_r:init_exec_t,s0)";
+            "@init@/bin/systemd" = "gen_context(system_u:object_r:init_exec_t,s0)";
+            "@init@/lib/systemd/systemd-shutdown" = "gen_context(system_u:object_r:init_exec_t,s0)";
+            "@init@/lib/systemd/systemd-oomd" = "gen_context(system_u:object_r:init_exec_t,s0)";
+          };
+        };
+      };
+
+      systemd = {
+        fileContext = {
+          storePaths = {
+            systemd = [
+              config.systemd.package
+            ];
+          };
+          rules = {
+            "@systemd@/lib/systemd/system-generators(/.*)?" =
+              "gen_context(system_u:object_r:systemd_generator_exec_t,s0)";
+            "@systemd@/lib/systemd/user-generators(/.*)?" =
+              "gen_context(system_u:object_r:systemd_generator_exec_t,s0)";
+          };
+        };
+      };
+    };
+
     system.activationScripts.selinux = {
       deps = [
         "etc"
@@ -345,7 +393,13 @@ in
         # bash
         ''
           install -d -m0755 /var/lib/selinux
-          cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ${lib.escapeShellArg cfg.policy}/*.pp"
+          # The full policy (base + all declared modules) comes from
+          # `build.policy`; it is installed wholesale.
+          pp=""
+          for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
+            [ -e "$f" ] && pp="$pp $f"
+          done
+          cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ''${pp}"
           skipSELinuxActivation=0
 
           if [ -f /var/lib/selinux/activate-check ]; then
