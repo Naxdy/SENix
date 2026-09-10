@@ -65,7 +65,7 @@ let
         # overlaid store paths. `setfattr` triggers metadata-only copy-up, so labels
         # land in the tmpfs upper; data stays in the store.
         find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
-          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null); then
+          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null | tr -d '\0'); then
             rel=''${f#"$meta"}
             setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
           fi
