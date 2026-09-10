@@ -98,6 +98,7 @@ in
 {
   imports = [
     ./build.nix
+    ./modules
     ./refpolicy.nix
   ];
 
@@ -130,11 +131,25 @@ in
             options = {
               name = mkOption {
                 type = types.str;
+                readOnly = true;
+                internal = true;
                 default = config._module.args.name;
                 description = ''
                   Name of this policy module, as referenced by `policy_module` in the module's type enforcement rules.
 
                   Defaults to the attribute name under `modules`.
+                '';
+              };
+              layer = mkOption {
+                type = types.str;
+                default = "senix";
+                example = "apps";
+                description = ''
+                  The "layer" this module is placed under.
+
+                  Defaults to `senix` in order to not conflict with any existing layers / modules
+                  within the refpolicy. If a layer + module combination already exists in the refpolicy,
+                  options declared under `config.security.selinux.modules.*` take precedence.
                 '';
               };
               interface = mkOption {
@@ -345,45 +360,6 @@ in
     security.lsm = [
       "selinux"
     ];
-
-    # Override the built-init/systemd modules' file contexts with Nix-store
-    # paths. The `.te`/`.if` are left to the Reference Policy source; only the
-    # store-specific labels are supplied so the SquashFS (and the compiled
-    # policy) can label the store paths. These modules take precedence over the
-    # Reference Policy's `init`/`systemd` modules.
-    security.selinux.modules = {
-      init = {
-        fileContext = {
-          storePaths = {
-            init = [
-              config.systemd.package
-            ];
-          };
-          rules = {
-            "@init@/lib/systemd/systemd" = "gen_context(system_u:object_r:init_exec_t,s0)";
-            "@init@/bin/systemd" = "gen_context(system_u:object_r:init_exec_t,s0)";
-            "@init@/lib/systemd/systemd-shutdown" = "gen_context(system_u:object_r:init_exec_t,s0)";
-            "@init@/lib/systemd/systemd-oomd" = "gen_context(system_u:object_r:init_exec_t,s0)";
-          };
-        };
-      };
-
-      systemd = {
-        fileContext = {
-          storePaths = {
-            systemd = [
-              config.systemd.package
-            ];
-          };
-          rules = {
-            "@systemd@/lib/systemd/system-generators(/.*)?" =
-              "gen_context(system_u:object_r:systemd_generator_exec_t,s0)";
-            "@systemd@/lib/systemd/user-generators(/.*)?" =
-              "gen_context(system_u:object_r:systemd_generator_exec_t,s0)";
-          };
-        };
-      };
-    };
 
     system.activationScripts.selinux = {
       deps = [

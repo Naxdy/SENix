@@ -14,35 +14,6 @@ let
   policySrc = cfg.refpolicy.package.src;
   supportDir = "${policySrc}/policy/support";
 
-  # The Reference Policy layer directories that exist in the source tree.
-  refpolicyLayers = lib.attrNames (
-    lib.filterAttrs (_: t: t == "directory") (builtins.readDir "${policySrc}/policy/modules")
-  );
-
-  # File lists per layer, computed once so `moduleLayer` only does membership
-  # checks rather than re-reading directories for every module.
-  refpolicyLayerFiles = lib.mapAttrs (
-    layer: _: builtins.readDir "${policySrc}/policy/modules/${layer}"
-  ) (lib.genAttrs refpolicyLayers (_: null));
-
-  # Determine which Reference Policy layer a module belongs to by looking for
-  # its sources; modules that aren't part of the Reference Policy are placed in
-  # a dedicated `senix` layer.
-  moduleLayer =
-    name:
-    let
-      found = lib.filter (
-        layer:
-        let
-          files = refpolicyLayerFiles.${layer};
-        in
-        builtins.hasAttr "${name}.te" files
-        || builtins.hasAttr "${name}.if" files
-        || builtins.hasAttr "${name}.fc" files
-      ) refpolicyLayers;
-    in
-    if found == [ ] then "senix" else builtins.head found;
-
   # Expand `@attr@` placeholders in file context rules using their store paths.
   expandRule =
     fileContext: key: value:
@@ -86,7 +57,7 @@ let
           name:
           let
             m = mods.${name};
-            layer = moduleLayer name;
+            inherit (m) layer;
             dir = "policy/modules/${layer}";
             te =
               if m.typeEnforcement != null then
@@ -167,7 +138,7 @@ let
   # to append them; every built-in Reference Policy module is left as-is (we
   # build all of them).
   senixNames = lib.concatStringsSep " " (
-    map lib.escapeShellArg (lib.filter (name: moduleLayer name == "senix") moduleNames)
+    map lib.escapeShellArg (lib.filter (name: mods.${name}.layer == "senix") moduleNames)
   );
 
   # The policy is built from the Reference Policy sources in full: every built-in
@@ -259,6 +230,7 @@ let
       runHook postBuild
     '';
   };
+
   # Every store path referenced by any module's fileContext.storePaths.
   storePaths = lib.concatLists (
     lib.mapAttrsToList (
