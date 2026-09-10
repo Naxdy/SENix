@@ -102,9 +102,11 @@ let
       set -eu
 
       relabel() {
-        # Clear the marker so the store overlay is (re)set up on the current
-        # `/nix/store` (the initrd-time run may have targeted the initrd store).
-        rm -f /run/selinux/overlay-active
+        # `selinux-store-overlay` mounts the metadata overlay on `/nix/store`
+        # only once and is idempotent (it skips re-mounting if the store overlay
+        # is already active with the same metadata; re-mounting would stack a
+        # second overlay and exceed the overlayfs depth limit). It does not rely
+        # on an initrd-time run, so nothing clears the marker here.
         ${storeOverlayScript}/bin/selinux-store-overlay
 
         fc=/run/selinux/${cfg.type}/active/file_contexts
