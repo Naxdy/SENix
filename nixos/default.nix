@@ -112,7 +112,12 @@ let
         fc=/run/selinux/${cfg.type}/active/file_contexts
         pol=/run/selinux/${cfg.type}/active/policy.kern
         if [ -f "$fc" ] && [ -f "$pol" ]; then
-          ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" /etc /var /run /dev || true
+          # Label the writable non-store root. `/home`, `/opt` and `/srv` may be
+          # absent on a fresh system, so only pass paths that exist.
+          paths="/etc /var /run /dev"
+          for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
+          # shellcheck disable=SC2086
+          ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" $paths || true
         fi
       }
 
