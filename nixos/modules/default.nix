@@ -3,6 +3,7 @@
   # the Nix store, while the `.te`/`.if` are left to the Reference Policy source.
 
   imports = [
+    ./bubblewrap.nix
     ./chromium.nix
     ./init-context.nix
     ./init.nix
