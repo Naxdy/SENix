@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ config, lib, ... }: {
   # Based on the refpolicy's policy/modules/system/init.fc
   config.security.selinux.modules.init = {
     layer = "system";
@@ -7,6 +7,20 @@
         systemd = [
           config.systemd.package
         ];
+        units = lib.unique (
+          config.boot.initrd.systemd.packages
+          ++ (lib.filter lib.isDerivation (
+            lib.mapAttrsToList (_: value: value.unit) (
+              lib.filterAttrs (
+                name: _:
+                let
+                  ignore = lib.hasInfix "selinux" name;
+                in
+                if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
+              ) config.boot.initrd.systemd.units
+            )
+          ))
+        );
       };
       rules = {
         #
@@ -60,6 +74,8 @@
 
         "@systemd@/libexec/dcc/start-.*" = "--	gen_context(system_u:object_r:initrc_exec_t,s0)";
         "@systemd@/libexec/dcc/stop-.*" = "--	gen_context(system_u:object_r:initrc_exec_t,s0)";
+
+        "@units@/.*\.service" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
 
         #
         # /var

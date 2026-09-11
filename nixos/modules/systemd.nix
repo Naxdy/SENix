@@ -19,7 +19,7 @@
                     ignore = lib.hasInfix "selinux" name;
                   in
                   if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
-                ) config.boot.initrd.systemd.units
+                ) config.systemd.units
               )
             ))
           );
@@ -159,9 +159,6 @@
           "@systemd@/lib/systemd/system/user@\.service" =
             "--	gen_context(system_u:object_r:systemd_user_manager_unit_t,s0)";
 
-          # Systemd unit files under /etc are NixOS symlinks into the store; label
-          # them `systemd_unit_t` (not `unlabeled_t`) so the init/initrc domains
-          # can report their status.
           "@units@/lib/systemd/user(/.*)?" = "gen_context(system_u:object_r:systemd_user_unit_t,s0)";
 
           "@units@/lib/systemd/system/[^/]*halt.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
