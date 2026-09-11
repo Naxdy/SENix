@@ -120,8 +120,9 @@
       # `restorecon`/`setfiles` must read the file_contexts + policy from
       # `/etc/selinux/<type>` (labeled `file_context_t`/`policy_config_t`).
       allow init_unit_t { file_context_t policy_config_t default_context_t }:dir { search read getattr open };
-      allow init_unit_t { file_context_t policy_config_t default_context_t }:file { read getattr open };
+      allow init_unit_t { file_context_t policy_config_t default_context_t }:file { read getattr open map };
       allow init_unit_t { file_context_t policy_config_t default_context_t }:lnk_file read;
+      allow init_unit_t { root_t device_t tmpfs_t fs_t }:filesystem { associate getattr };
       allow init_unit_t nscd_runtime_t:dir search;
       allow init_unit_t nscd_runtime_t:sock_file rw_sock_file_perms;
       allow init_unit_t { mount_runtime_t home_root_t }:dir { read search getattr open };

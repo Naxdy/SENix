@@ -57,7 +57,7 @@ let
         # underlying `/nix/store` never receives any xattrs and stays immutable.
         # The glob rules in `security.selinux.modules.*.fileContext` label any
         # store package without having to declare it.
-        fc=/run/selinux/${cfg.type}/active/file_contexts
+        fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
         pol=/run/selinux/${cfg.type}/active/policy.kern
         # `restorecon -R` does not descend the *stacked* `/nix/store` mount to
         # the writable metacopy view, so enumerate the top-level store entries
@@ -71,10 +71,10 @@ let
         echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
         grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20 || true
         echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
-        ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" "$fc" \
+        ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
           /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
         echo "--- setfiles DIRECT on the bin dir ---"
-        ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" "$fc" \
+        ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
           /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin 2>&1
         echo "=== end store setfiles diag ==="
         if [ -f "$fc" ] && [ -f "$pol" ]; then
@@ -84,7 +84,7 @@ let
           # paths. Pass the package paths as arguments — `find -exec … {} +`
           # batches them to avoid ARG_MAX on a real system (a glob would not).
           find /nix/store -mindepth 1 -maxdepth 1 -exec \
-            ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" '{}' +
+            ${pkgs.policycoreutils}/bin/setfiles -q "$fc" '{}' +
         fi
       }
 
@@ -120,7 +120,7 @@ let
         # on an initrd-time run, so nothing clears the marker here.
         ${storeOverlayScript}/bin/selinux-store-overlay
 
-        fc=/run/selinux/${cfg.type}/active/file_contexts
+        fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
         pol=/run/selinux/${cfg.type}/active/policy.kern
         if [ -f "$fc" ] && [ -f "$pol" ]; then
           # Label the writable non-store root. `/home`, `/opt` and `/srv` may be
@@ -131,7 +131,7 @@ let
           paths="/etc /var /run /dev"
           for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
           # shellcheck disable=SC2086
-          ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" $paths || true
+          ${pkgs.policycoreutils}/bin/setfiles -q "$fc" $paths || true
         fi
       }
 
