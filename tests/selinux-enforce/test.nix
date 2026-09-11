@@ -177,6 +177,12 @@ pkgs.testers.runNixOSTest {
       print("RESTORECON:\n" + out)
       status, out = machine.execute("getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn 2>&1")
       print("BIN CONTEXT:\n" + out)
+      status, out = machine.execute(
+          "ls -l ${enforceLearnApp}/bin/enforce-learn 2>&1; "
+          "echo readlink=$(readlink ${enforceLearnApp}/bin/enforce-learn 2>&1); "
+          "getfattr -h -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn 2>&1"
+      )
+      print("SYMLINK CHECK:\n" + out)
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
