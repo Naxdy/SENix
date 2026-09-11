@@ -123,7 +123,19 @@ pkgs.testers.runNixOSTest {
   testScript =
     # python
     ''
+      # Boot first: the store metadata only labels the store by the time the
+      # relabel runs, so the transient `unlabeled_t` unit files during early boot
+      # are handled by the init/initrc `service` access granted in the `libs`
+      # module.
       machine.wait_for_unit("multi-user.target")
+
+      # Now run the relabel and verify the store unit files are labeled
+      # `systemd_unit_t` (not left `unlabeled_t`).
+      machine.succeed("selinux-relabel")
+      machine.succeed(
+          "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/multi-user.target)"
+          + " | grep -q systemd_unit_t"
+      )
 
       # With the module present at boot, the binary must carry its label.
       machine.succeed(

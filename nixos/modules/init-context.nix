@@ -25,18 +25,13 @@
       allow init_exec_t root_t:filesystem associate;
       allow init_exec_t tmpfs_t:filesystem associate;
       allow unlabeled_t tmpfs_t:filesystem associate;
-      # Store files (and the non-store root's unlabeled directories) are
-      # intentionally left `unlabeled_t` — the metadata overlay only carries
-      # per-module labels — so every process domain must be able to search,
-      # read, map, execute and re-exec (execmod) them. The Reference Policy's
-      # `unlabeled_t` interfaces grant none of these modern permissions.
-      allow domain unlabeled_t:dir { search read getattr open };
-      allow domain unlabeled_t:file { map read open getattr execute execmod };
-      allow domain unlabeled_t:lnk_file { read getattr };
-      # Services inherit file descriptors (from the kernel / initrd) whose SID is
-      # `kernel_t`; without `use` they cannot dlopen store libraries through them.
-      allow domain kernel_t:fd use;
-      allow init_t unlabeled_t:service *;
+      # The activation scripts run store tools (grep, semodule, ...) under
+      # `init_t`; those tools mmap executable anonymous memory (e.g. regex) and
+      # agetty requests CAP_CHECKPOINT_RESTORE, neither of which the Reference
+      # Policy's `init` module grants to `init_t`.
+      allow init_t init_t:process execmem;
+      allow init_t init_t:capability2 checkpoint_restore;
+      type_transition kernel_t init_exec_t:process init_t;
     '';
   };
 }

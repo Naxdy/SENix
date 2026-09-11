@@ -57,9 +57,17 @@ let
           return 0
         fi
 
-        # Copy the baked `security.selinux` labels from the metadata image onto the
-        # overlaid store paths. `setfattr` triggers metadata-only copy-up, so labels
-        # land in the writable store upper; data stays in the immutable store.
+        # The `/nix(/store)` container and the store package trees must be
+        # traversable; label them `usr_t` (domains already traverse `usr_t`).
+        # Per-package dirs/files get `usr_t`/`lib_t`/`bin_t` from the
+        # module-provided file contexts below.
+        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix 2>/dev/null || true
+        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix/store 2>/dev/null || true
+
+        # Copy the baked per-module `security.selinux` labels from the metadata
+        # image onto the overlaid store paths. `setfattr` triggers metadata-only
+        # copy-up, so labels land in the writable store upper; data stays in the
+        # immutable store.
         find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
           if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null | tr -d '\0'); then
             rel=''${f#"$meta"}
@@ -103,7 +111,10 @@ let
         pol=/run/selinux/${cfg.type}/active/policy.kern
         if [ -f "$fc" ] && [ -f "$pol" ]; then
           # Label the writable non-store root. `/home`, `/opt` and `/srv` may be
-          # absent on a fresh system, so only pass paths that exist.
+          # absent on a fresh system, so only pass paths that exist. The root
+          # directory itself must be `root_t` (not `unlabeled_t`) so daemons can
+          # traverse it.
+          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:root_t / 2>/dev/null || true
           paths="/etc /var /run /dev"
           for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
           # shellcheck disable=SC2086

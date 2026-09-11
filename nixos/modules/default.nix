@@ -7,6 +7,7 @@
     ./chromium.nix
     ./init-context.nix
     ./init.nix
+    ./libraries.nix
     ./systemd.nix
   ];
 }

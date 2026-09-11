@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ config, lib, ... }: {
   # Based on the refpolicy's policy/modules/system/systemd.fc
   config.security.selinux.modules = {
     systemd = {
@@ -8,12 +8,26 @@
           systemd = [
             config.systemd.package
           ];
+          # packages providing systemd units and hooks
+          units = lib.unique (
+            config.systemd.packages
+            ++ (lib.filter lib.isDerivation (
+              lib.mapAttrsToList (_: value: value.unit) (
+                lib.filterAttrs (
+                  name: _:
+                  let
+                    ignore = lib.hasInfix "selinux" name;
+                  in
+                  if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
+                ) config.boot.initrd.systemd.units
+              )
+            ))
+          );
         };
         rules = {
           "/etc/\.updated" = "--	gen_context(system_u:object_r:systemd_update_run_t,s0)";
 
           "/etc/systemd/dont-synthesize-nobody" = "--	gen_context(system_u:object_r:systemd_conf_t,s0)";
-          "/etc/udev/hwdb\.bin" = "--	gen_context(system_u:object_r:systemd_hwdb_t,s0)";
 
           "/run/log/journal(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,s0)";
           "/run/log/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_log_t,s0)";
@@ -143,6 +157,35 @@
           "@systemd@/lib/systemd/system/systemd-userdbd\.(service|socket)" =
             "--	gen_context(system_u:object_r:systemd_userdbd_unit_t,s0)";
           "@systemd@/lib/systemd/system/user@\.service" =
+            "--	gen_context(system_u:object_r:systemd_user_manager_unit_t,s0)";
+
+          # Systemd unit files under /etc are NixOS symlinks into the store; label
+          # them `systemd_unit_t` (not `unlabeled_t`) so the init/initrc domains
+          # can report their status.
+          "@units@/lib/systemd/user(/.*)?" = "gen_context(system_u:object_r:systemd_user_unit_t,s0)";
+
+          "@units@/lib/systemd/system/[^/]*halt.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*hibernate.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*power.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*reboot.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*shutdown.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*sleep.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/[^/]*suspend.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-backlight.*" =
+            "--	gen_context(system_u:object_r:systemd_backlight_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-binfmt.*" =
+            "--	gen_context(system_u:object_r:systemd_binfmt_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-networkd.*" =
+            "gen_context(system_u:object_r:systemd_networkd_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-network-generator.*" =
+            "gen_context(system_u:object_r:systemd_networkd_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-rfkill.*" =
+            "--	gen_context(system_u:object_r:systemd_rfkill_unit_t,s0)";
+          "@units@/lib/systemd/system/systemd-socket-proxyd\.service" =
+            "--	gen_context(system_u:object_r:systemd_socket_proxyd_unit_file_t,s0)";
+          "@units@/lib/systemd/system/systemd-userdbd\.(service|socket)" =
+            "--	gen_context(system_u:object_r:systemd_userdbd_unit_t,s0)";
+          "@units@/lib/systemd/system/user@\.service" =
             "--	gen_context(system_u:object_r:systemd_user_manager_unit_t,s0)";
 
           "@systemd@/share/factory(/.*)?" = "gen_context(system_u:object_r:systemd_factory_conf_t,s0)";
