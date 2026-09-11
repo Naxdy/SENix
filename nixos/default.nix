@@ -458,17 +458,15 @@ in
         ${pkgs.policycoreutils}/bin/load_policy
         ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
 
-        # Label the systemd unit files against the loaded policy now, before
-        # switch_root, so the units carry `systemd_unit_t` when the real systemd
-        # starts managing them. `setfiles` does not descend the `/nix/store`
-        # mount point, so we walk the unit directories with `find` and `setfattr`
-        # directly (the same mechanism used for the systemd binary below, which
-        # does persist). Only the unit dirs are touched to stay within the
-        # initrd's memory.
-        # Label every store unit file (systemd's own units and the toplevel's
-        # NixOS-generated units) `systemd_unit_t`, so systemd can manage them
-        # before the boot-time relabel runs. Only unit paths are walked to stay
-        # within the initrd's memory.
+        # Label every store unit file `systemd_unit_t` before switch_root so the
+        # real systemd can manage them for the boot window (otherwise systemd
+        # cannot report/start units that are still `unlabeled_t`). `setfiles`
+        # does not descend the `/nix/store` mount and `restorecon` has no
+        # `/sysroot` alternate root, so we walk the unit paths with `find`+
+        # `setfattr` — the same mechanism used for the systemd binary below,
+        # which does persist. Only unit paths are touched to stay within the
+        # initrd's memory; the immutable store only carries the labels in the
+        # overlay upper, so it is never written to.
         ${pkgs.findutils}/bin/find /sysroot/nix/store \
           \( -path '*/systemd/system/*' -o -path '*/systemd/user/*' -o -path '*-unit-*/*' \) \
           \( -type f -o -type l \) \
