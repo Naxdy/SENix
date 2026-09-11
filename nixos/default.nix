@@ -63,6 +63,13 @@ let
         # (from SELINUXTYPE) — rather than overriding it with `-f`. The store is
         # never modified directly; labels are written to the overlay's writable
         # upper only.
+        echo "=== relabel restorecon context ==="
+        grep nix/store /proc/self/mountinfo
+        echo "--- ls enforce-learn (relabel view) ---"
+        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+        echo "--- fc has enforce_learn rule? ---"
+        grep -c 'rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
+        echo "=== end relabel restorecon context ==="
         ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store
       }
 
