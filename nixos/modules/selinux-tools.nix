@@ -52,6 +52,7 @@
         type file_context_t;
         type policy_config_t;
         type default_context_t;
+        type default_t;
         role system_r;
       ')
 
@@ -93,8 +94,10 @@
       allow init_unit_t { systemd_unit_t }:dir { read search getattr open relabelto relabelfrom };
       allow init_unit_t { systemd_unit_t }:lnk_file { read getattr relabelto relabelfrom };
       allow init_unit_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t newrole_exec_t run_init_exec_t enforce_learn_exec_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom entrypoint };
-      allow init_unit_t { unlabeled_t root_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom };
+      allow init_unit_t { unlabeled_t root_t default_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom };
       allow init_unit_t unlabeled_t:dir { read search open getattr };
+      allow init_unit_t default_t:dir { read search getattr open relabelto relabelfrom };
+      allow init_unit_t default_t:lnk_file read;
       allow init_unit_t { unlabeled_t root_t tmpfs_t }:dir { read search getattr open relabelto relabelfrom };
       allow init_unit_t { tmpfs_t root_t fs_t device_t }:dir search;
       allow init_unit_t { init_t kernel_t }:fd use;

@@ -70,14 +70,21 @@ let
         ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
         echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
         grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20 || true
-        echo "--- setfiles -f - grep enforce-learn ---"
-        find /nix/store -mindepth 1 -maxdepth 1 -print \
-          | ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" -f - "$fc" 2>&1 \
-          | grep -i 'enforce-learn' || true
+        echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
+        ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" "$fc" \
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+        echo "--- setfiles DIRECT on the bin dir ---"
+        ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" "$fc" \
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin 2>&1
         echo "=== end store setfiles diag ==="
         if [ -f "$fc" ] && [ -f "$pol" ]; then
-          find /nix/store -mindepth 1 -maxdepth 1 -print \
-            | ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" -f - "$fc"
+          # `setfiles` crosses the `/nix/store` mount when given the *store
+          # entries themselves* (a regular dir) rather than the mount point, and
+          # the fc rules (incl. the senix-module specifics) match the concrete
+          # paths. Pass the package paths as arguments — `find -exec … {} +`
+          # batches them to avoid ARG_MAX on a real system (a glob would not).
+          find /nix/store -mindepth 1 -maxdepth 1 -exec \
+            ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" '{}' +
         fi
       }
 
