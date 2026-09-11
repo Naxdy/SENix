@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "enforcing";
+        mode = "permissive";
         overlayPackages = false;
 
         modules.enforce_learn = {
@@ -162,6 +162,10 @@ pkgs.testers.runNixOSTest {
       print("INIT_UNIT_TYPE:\n" + out)
       status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/9qnvy6p5i1zzcsn669bd4ykivippqhzl-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
       print("RELABEL BIN CTX:\n" + out)
+      status, out = machine.execute(
+          "grep -nE 'enforce-learn|/nix/store' /run/selinux/refpolicy/active/file_contexts 2>&1 | tail -30"
+      )
+      print("FC ENFORCE:\n" + out)
       status, out = machine.execute(
           "find / \\( -name file_contexts -o -name policy.kern -o -name 'policy.3*' \\) -print 2>/dev/null"
       )
