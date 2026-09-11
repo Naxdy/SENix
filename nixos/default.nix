@@ -287,76 +287,78 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    nixpkgs.overlays = lib.mkIf cfg.overlayPackages [
-      (
-        final: prev:
-        let
-          # Building `coreutils` with `selinuxSupport` in this nixpkgs revision trips the
-          # bootstrap `fetchurlBoot` (it does not accept `nativeBuildInputs`). Drop it from
-          # the override set until upstream can build SELinux-enabled coreutils during bootstrap.
-          overridePkgs = [
-            {
-              name = "emacs";
-              flag = "withSelinux";
-            }
-            {
-              name = "systemd";
-              flag = "withSelinux";
-            }
-            {
-              name = "casync";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "erofs-utils";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "flatpak";
-              flag = "withSELinuxModule";
-            }
-            {
-              name = "postgresql";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "postgresql_14";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "postgresql_15";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "postgresql_16";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "postgresql_17";
-              flag = "selinuxSupport";
-            }
-            {
-              name = "postgresql_18";
-              flag = "selinuxSupport";
-            }
-          ];
-        in
-        builtins.listToAttrs (
-          map (
-            {
-              name,
-              flag,
-            }:
-            {
-              inherit name;
-              value = prev.${name}.override {
-                ${flag} = true;
-              };
-            }
-          ) overridePkgs
+    nixpkgs.overlays = lib.mkForce (
+      lib.optionals cfg.overlayPackages [
+        (
+          final: prev:
+          let
+            # Building `coreutils` with `selinuxSupport` in this nixpkgs revision trips the
+            # bootstrap `fetchurlBoot` (it does not accept `nativeBuildInputs`). Drop it from
+            # the override set until upstream can build SELinux-enabled coreutils during bootstrap.
+            overridePkgs = [
+              {
+                name = "emacs";
+                flag = "withSelinux";
+              }
+              {
+                name = "systemd";
+                flag = "withSelinux";
+              }
+              {
+                name = "casync";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "erofs-utils";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "flatpak";
+                flag = "withSELinuxModule";
+              }
+              {
+                name = "postgresql";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "postgresql_14";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "postgresql_15";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "postgresql_16";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "postgresql_17";
+                flag = "selinuxSupport";
+              }
+              {
+                name = "postgresql_18";
+                flag = "selinuxSupport";
+              }
+            ];
+          in
+          builtins.listToAttrs (
+            map (
+              {
+                name,
+                flag,
+              }:
+              {
+                inherit name;
+                value = prev.${name}.override {
+                  ${flag} = true;
+                };
+              }
+            ) overridePkgs
+          )
         )
-      )
-    ];
+      ]
+    );
 
     systemd.package = lib.mkDefault (
       pkgs.systemd.override {
