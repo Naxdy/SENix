@@ -68,6 +68,8 @@ let
         grep ' /nix/store ' /proc/self/mountinfo
         echo "--- ls enforce-learn ---"
         ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+        echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
+        grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20
         echo "--- setfiles -f - grep enforce-learn ---"
         find /nix/store -mindepth 1 -maxdepth 1 -print \
           | ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" -f - "$fc" 2>&1 \
