@@ -8,9 +8,6 @@
     layer = "kernel";
     fileContext = {
       rules = {
-        # Catch-all: any store file no other rule matches is `usr_t` (the `/usr`
-        # analogue), so nothing is left `unlabeled_t`.
-        "/nix/store(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
         # Store executables.
         "/nix/store/.*/bin(/.*)?" = "--	gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/.*/sbin(/.*)?" = "--	gen_context(system_u:object_r:bin_t,s0)";
