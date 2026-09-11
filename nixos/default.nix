@@ -67,15 +67,15 @@ let
         echo "=== store setfiles diag ==="
         grep ' /nix/store ' /proc/self/mountinfo
         echo "--- ls enforce-learn ---"
-        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1 || true
         echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
         grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20 || true
         echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
         ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1 || true
         echo "--- setfiles DIRECT on the bin dir ---"
         ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin 2>&1
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin 2>&1 || true
         echo "=== end store setfiles diag ==="
         if [ -f "$fc" ] && [ -f "$pol" ]; then
           # `setfiles` crosses the `/nix/store` mount when given the *store
