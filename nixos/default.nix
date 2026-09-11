@@ -56,7 +56,7 @@ let
         # recursive `restorecon` does.) The glob rules in
         # `security.selinux.modules.*.fileContext` label any store package without
         # having to declare it.
-        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store 2>/dev/null || true
+        ${pkgs.policycoreutils}/bin/restorecon -R -F -f /run/selinux/${cfg.type}/active/file_contexts /nix/store 2>/dev/null || true
       }
 
         setupStoreOverlay
