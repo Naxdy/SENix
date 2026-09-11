@@ -42,10 +42,12 @@ let
           # land in the tmpfs upper while file data continues to come from the
           # immutable store. NixOS's own `/nix/store` is already an overlay
           # (`.ro-store`/`.rw-store`), so skipping this on an idempotent re-run
-          # keeps us within the overlayfs depth limit.
+          # keeps us within the overlayfs depth limit. The store must never be
+          # modified directly, so if this overlay cannot be established, fail
+          # loudly rather than silently relabeling the immutable store in place.
           mount -t overlay overlay \
             -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
-            /nix/store 2>/dev/null || true
+            /nix/store
         fi
 
         # Label the store directly from the loaded policy's file_contexts instead
@@ -56,20 +58,12 @@ let
         # recursive `restorecon` does.) The glob rules in
         # `security.selinux.modules.*.fileContext` label any store package without
         # having to declare it.
-        echo "=== store-overlay state ==="
-        grep -E 'nix/store|/run/selinux' /proc/self/mounts
-        echo "--- /nix/store enforce-learn ---"
-        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/ 2>&1
-        echo "--- /sysroot/nix/store enforce-learn ---"
-        ls -la /sysroot/nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/ 2>&1
-        echo "--- find file_contexts (whole fs) ---"
-        find / -name 'file_contexts' 2>/dev/null
-        echo "--- find policy.kern / policy.* ---"
-        find / -name 'policy.kern' -o -name 'policy.3*' 2>/dev/null
-        echo "--- the intended fc+pol ---"
-        ls -la /run/selinux/${cfg.type}/active/file_contexts /run/selinux/${cfg.type}/active/policy.kern 2>&1 || true
-        echo "=== end store-overlay state ==="
-        [ -f /run/selinux/${cfg.type}/active/file_contexts ] && { ${pkgs.policycoreutils}/bin/restorecon -R -F -f /run/selinux/${cfg.type}/active/file_contexts /nix/store 2>/dev/null || true; } || true
+        # Label the store through the (now guaranteed) metacopy overlay. Let
+        # `restorecon` use its own context resolution — `/etc/selinux/<type>`
+        # (from SELINUXTYPE) — rather than overriding it with `-f`. The store is
+        # never modified directly; labels are written to the overlay's writable
+        # upper only.
+        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store
       }
 
         setupStoreOverlay
