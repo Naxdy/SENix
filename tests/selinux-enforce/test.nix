@@ -42,19 +42,10 @@ pkgs.testers.runNixOSTest {
         ../../nixos/default.nix
       ];
 
-      # `runNixOSTest` drives the machine with a pre-built read-only `pkgs`, so we
-      # must not try to apply the SELinux package overrides from the module.
-      nixpkgs.overlays = lib.mkForce [ ];
-
-      # `runNixOSTest` disables the module's overlay, so build systemd with
-      # SELinux support directly (so it mounts selinuxfs and loads the policy).
-      systemd.package = pkgs.systemd.override {
-        withSelinux = true;
-      };
-
       security.selinux = {
         enable = true;
         mode = "enforcing";
+        overlayPackages = false;
 
         modules.enforce_learn = {
           typeEnforcement = ''
@@ -136,10 +127,10 @@ pkgs.testers.runNixOSTest {
           };
         };
       };
-
       environment.systemPackages = [
         pkgs.attr
         pkgs.policycoreutils
+        pkgs.setools
       ];
     };
 
@@ -157,11 +148,21 @@ pkgs.testers.runNixOSTest {
       machine.wait_for_unit("multi-user.target")
       status, out = machine.execute("journalctl -k --no-pager -n 200 | grep -iE 'relabel|selinux|avc|denied|exec|init_unit'")
       print("KERNEL AVC:\n" + out)
+      status, out = machine.execute("semodule -l 2>&1 | grep -iE 'selinux_tools|selinuxutil|init_context|enforce_learn|base|^init '")
+      print("MODULES:\n" + out)
+      # The `init_t -> init_unit_t` transition is denied by the kernel even
+      # though `selinux_tools` is loaded; inspect the loaded policy binary.
+      status, out = machine.execute(
+          "sesearch -A -s init_t -t init_unit_t -c process -p transition /run/selinux/refpolicy/active/policy.kern 2>&1"
+      )
+      print("SESEARCH transition:\n" + out)
+      status, out = machine.execute("seinfo -a domain /run/selinux/refpolicy/active/policy.kern 2>&1 | grep -E 'init_t|init_unit_t'")
+      print("INIT_UNIT_IN_DOMAIN:\n" + out)
+      status, out = machine.execute("seinfo -t init_unit_t /run/selinux/refpolicy/active/policy.kern 2>&1")
+      print("INIT_UNIT_TYPE:\n" + out)
+      status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/9qnvy6p5i1zzcsn669bd4ykivippqhzl-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
+      print("RELABEL BIN CTX:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
-      # The boot-time `selinux-relabel.service` must have already applied the
-      # store labels to the real /nix/store (not just via the manual re-apply
-      # below); otherwise store labels would only exist after an explicit
-      # re-apply and daemon binaries would start unlabeled on a real boot.
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )

@@ -6,6 +6,7 @@
   config = {
     security.selinux = {
       enable = true;
+      overlayPackages = false;
       modules = {
         screen = {
           layer = "apps";

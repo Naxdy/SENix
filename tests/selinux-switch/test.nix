@@ -49,10 +49,6 @@ let
       imports = [
         ../../nixos/default.nix
       ];
-      nixpkgs.overlays = lib.mkForce [ ];
-      systemd.package = pkgs.systemd.override {
-        withSelinux = true;
-      };
       security.selinux = {
         enable = true;
         mode = "enforcing";

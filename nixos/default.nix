@@ -136,6 +136,15 @@ in
       '';
     };
 
+    overlayPackages = mkOption {
+      type = types.bool;
+      default = true;
+      example = false;
+      description = ''
+        Whether to add an overlay to nixpkgs that enables SELinux support for various packages.
+      '';
+    };
+
     policyVersion = mkOption {
       type = types.nullOr types.int;
       default = null;
@@ -278,7 +287,7 @@ in
   };
 
   config = lib.mkIf cfg.enable {
-    nixpkgs.overlays = [
+    nixpkgs.overlays = lib.mkIf cfg.overlayPackages [
       (
         final: prev:
         let
@@ -348,6 +357,12 @@ in
         )
       )
     ];
+
+    systemd.package = lib.mkDefault (
+      pkgs.systemd.override {
+        withSelinux = true;
+      }
+    );
 
     boot.kernelPatches = [
       {
@@ -427,7 +442,7 @@ in
         # The service runs before the policy is loaded, so request the
         # `init_unit_t` domain up front — it is granted the `associate` +
         # tool-transition accesses in the `selinux_tools` policy module.
-        SELinuxContext = "system_u:object_r:init_unit_t";
+        SELinuxContext = "system_u:system_r:init_unit_t";
       };
       script = ''
         # Install and link the policy modules, make the linked policy visible to
@@ -594,7 +609,7 @@ in
         RemainAfterExit = true;
         # Run as `init_unit_t`, which is granted the `associate` + tool
         # transitions in the `selinux_tools` policy module.
-        SELinuxContext = "system_u:object_r:init_unit_t";
+        SELinuxContext = "system_u:system_r:init_unit_t";
       };
       script = ''
         ${selinuxRelabelScript}/bin/selinux-relabel

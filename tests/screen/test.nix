@@ -10,19 +10,6 @@ pkgs.testers.runNixOSTest {
         ../../nixos/default.nix
       ];
 
-      # `runNixOSTest` drives the machine with a pre-built, read-only `pkgs`, so
-      # the SELinux package overrides declared in the module can not be applied
-      # here (they are irrelevant for the store-xattr assertions below). Forcing
-      # the empty overlays instead of defining them avoids a read-only conflict.
-      nixpkgs.overlays = lib.mkForce [ ];
-
-      # `runNixOSTest` disables the module's overlay, so build systemd with
-      # SELinux support directly (so it mounts selinuxfs and loads the policy,
-      # which is required for `security.selinux` xattrs to be readable).
-      systemd.package = pkgs.systemd.override {
-        withSelinux = true;
-      };
-
       environment.systemPackages = [
         pkgs.screen
         pkgs.tmux
