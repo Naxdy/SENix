@@ -61,8 +61,14 @@ let
         # labels through the metacopy overlay onto the writable upper, so the
         # underlying `/nix/store` never receives any xattrs and stays immutable.
         # Use its own context resolution (`/etc/selinux/<type>` from SELINUXTYPE)
-        # rather than `-f`, so the f = /run/selinux/.../active/file_contexts is
-        # not used (it references stale store hashes).
+        # rather than `-f`.
+        echo "=== store restorecon diag ==="
+        grep ' /nix/store ' /proc/self/mountinfo
+        echo "--- ls enforce-learn ---"
+        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
+        echo "--- restorecon -v grep enforce-learn ---"
+        ${pkgs.policycoreutils}/bin/restorecon -v -R /nix/store 2>&1 | grep -i 'enforce-learn' || true
+        echo "=== end store restorecon diag ==="
         ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store 2>/dev/null || true
       }
 
