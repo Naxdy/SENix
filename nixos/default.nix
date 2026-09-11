@@ -57,20 +57,13 @@ let
         # underlying `/nix/store` never receives any xattrs and stays immutable.
         # The glob rules in `security.selinux.modules.*.fileContext` label any
         # store package without having to declare it.
-        fc=/run/selinux/${cfg.type}/active/file_contexts
-        pol=/run/selinux/${cfg.type}/active/policy.kern
-        # `setfiles` descends regular directories but does not cross the
-        # `/nix/store` mount point, so we enumerate the top-level store entries
-        # with `find -maxdepth 1` (cheap — no deep walk) and hand them to
-        # `setfiles`; it then recurses into each store package directory (a
-        # regular dir, not a mount) and labels it through the metacopy overlay.
-        if [ -f "$fc" ] && [ -f "$pol" ]; then
-          # `-f -` makes `setfiles` read the list of paths to label from stdin,
-          # so we avoid `xargs`; `setfiles` then recurses into each store entry
-          # (regular dirs, not mounts) and labels them through the overlay.
-          find /nix/store -mindepth 1 -maxdepth 1 -print \
-            | ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" -f - "$fc"
-        fi
+        # `restorecon -R` descends the `/nix/store` mount point and writes the
+        # labels through the metacopy overlay onto the writable upper, so the
+        # underlying `/nix/store` never receives any xattrs and stays immutable.
+        # Use its own context resolution (`/etc/selinux/<type>` from SELINUXTYPE)
+        # rather than `-f`, so the f = /run/selinux/.../active/file_contexts is
+        # not used (it references stale store hashes).
+        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store 2>/dev/null || true
       }
 
         setupStoreOverlay
