@@ -51,26 +51,17 @@ let
         fi
 
         # Label the store directly from the loaded policy's file_contexts instead
-        # of a baked metadata image. `restorecon -R` walks the store and writes
-        # the labels through the metacopy overlay onto the writable upper, so the
+        # of a baked metadata image. Label the through the (now guaranteed)
+        # metacopy overlay using `setfiles`, which recurses into the given path
+        # and writes the labels onto the overlay's writable upper — the
         # underlying `/nix/store` never receives any xattrs and stays immutable.
-        # (`setfiles` on the `/nix/store` mount point does not descend; the
-        # recursive `restorecon` does.) The glob rules in
-        # `security.selinux.modules.*.fileContext` label any store package without
-        # having to declare it.
-        # Label the store through the (now guaranteed) metacopy overlay. Let
-        # `restorecon` use its own context resolution — `/etc/selinux/<type>`
-        # (from SELINUXTYPE) — rather than overriding it with `-f`. The store is
-        # never modified directly; labels are written to the overlay's writable
-        # upper only.
-        echo "=== relabel restorecon context ==="
-        grep nix/store /proc/self/mountinfo
-        echo "--- ls enforce-learn (relabel view) ---"
-        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
-        echo "--- fc has enforce_learn rule? ---"
-        grep -c 'rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
-        echo "=== end relabel restorecon context ==="
-        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store
+        # The glob rules in `security.selinux.modules.*.fileContext` label any
+        # store package without having to declare it.
+        fc=/run/selinux/${cfg.type}/active/file_contexts
+        pol=/run/selinux/${cfg.type}/active/policy.kern
+        if [ -f "$fc" ] && [ -f "$pol" ]; then
+          ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" /nix/store 2>/dev/null || true
+        fi
       }
 
         setupStoreOverlay
