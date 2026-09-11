@@ -131,11 +131,6 @@
       allow setfiles_t { unlabeled_t root_t }:dir { getattr relabelto relabelfrom };
       allow setfiles_t { tmpfs_t }:dir { getattr relabelto relabelfrom };
       allow setfiles_t tmpfs_t:filesystem associate;
-
-      # The initrd `selinux-init` runs as `systemd_unit_t` (systemd cannot apply
-      # `SELinuxContext=` before the policy is loaded), so it cannot label the
-      # store without this grant — the one Reference Policy type we extend.
-      allow systemd_unit_t { root_t device_t tmpfs_t fs_t }:filesystem associate;
     '';
     # `/var/empty` has no rule in the Reference Policy (only its subpaths like
     # `/var/empty/dev`); without one `setfiles` cannot determine a context for

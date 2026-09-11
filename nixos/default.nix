@@ -447,6 +447,7 @@ in
         SELinuxContext = "system_u:system_r:init_unit_t";
       };
       script = ''
+        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
         # Install and link the policy modules, make the linked policy visible to
         # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
         # and performs the kernel version conversion), then enforce. We cannot

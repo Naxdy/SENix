@@ -163,6 +163,12 @@ pkgs.testers.runNixOSTest {
       status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/9qnvy6p5i1zzcsn669bd4ykivippqhzl-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
       print("RELABEL BIN CTX:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
+      status, out = machine.execute("ls -la /run/selinux/refpolicy/active/file_contexts 2>&1; echo ---; grep -cE 'enforce_learn|nix/store' /run/selinux/refpolicy/active/file_contexts 2>&1")
+      print("FC:\n" + out)
+      status, out = machine.execute("restorecon -R -F -f /run/selinux/refpolicy/active/file_contexts /nix/store 2>&1")
+      print("RESTORECON:\n" + out)
+      status, out = machine.execute("getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn 2>&1")
+      print("BIN CONTEXT:\n" + out)
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
