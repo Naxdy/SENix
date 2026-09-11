@@ -420,6 +420,12 @@ in
 
     boot.initrd.systemd.services.selinux-init = {
       wantedBy = [ "initrd.target" ];
+      path = [
+        pkgs.policycoreutils
+        pkgs.attr
+        pkgs.findutils
+        pkgs.coreutils
+      ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
@@ -451,6 +457,23 @@ in
 
         ${pkgs.policycoreutils}/bin/load_policy
         ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
+
+        # Label the systemd unit files against the loaded policy now, before
+        # switch_root, so the units carry `systemd_unit_t` when the real systemd
+        # starts managing them. `setfiles` does not descend the `/nix/store`
+        # mount point, so we walk the unit directories with `find` and `setfattr`
+        # directly (the same mechanism used for the systemd binary below, which
+        # does persist). Only the unit dirs are touched to stay within the
+        # initrd's memory.
+        # Label every store unit file (systemd's own units and the toplevel's
+        # NixOS-generated units) `systemd_unit_t`, so systemd can manage them
+        # before the boot-time relabel runs. Only unit paths are walked to stay
+        # within the initrd's memory.
+        ${pkgs.findutils}/bin/find /sysroot/nix/store \
+          \( -path '*/systemd/system/*' -o -path '*/systemd/user/*' -o -path '*-unit-*/*' \) \
+          \( -type f -o -type l \) \
+          -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:systemd_unit_t {} + \
+          2>/dev/null || true
 
         SD=${config.systemd.package}/lib/systemd/systemd
         ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SD" || true

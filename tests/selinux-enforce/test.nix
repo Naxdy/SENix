@@ -146,6 +146,14 @@ pkgs.testers.runNixOSTest {
   testScript =
     # python
     ''
+      # The initrd `selinux-init` relabel must label the store unit files
+      # `systemd_unit_t` before switch_root (including the NixOS-generated
+      # `*-unit-*` packages), so systemd can manage them.
+      machine.succeed(
+          "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service)"
+          + " | grep -q systemd_unit_t"
+      )
+
       machine.wait_for_unit("multi-user.target")
       machine.wait_for_unit("selinux-relabel.service")
 
