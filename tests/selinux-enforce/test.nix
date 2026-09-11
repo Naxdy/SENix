@@ -155,8 +155,9 @@ pkgs.testers.runNixOSTest {
       )
 
       machine.wait_for_unit("multi-user.target")
+      status, out = machine.execute("journalctl -k --no-pager -n 200 | grep -iE 'relabel|selinux|avc|denied|exec|init_unit'")
+      print("KERNEL AVC:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
-
       # The boot-time `selinux-relabel.service` must have already applied the
       # store labels to the real /nix/store (not just via the manual re-apply
       # below); otherwise store labels would only exist after an explicit

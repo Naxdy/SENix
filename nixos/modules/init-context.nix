@@ -5,11 +5,10 @@
   # enforcing mode. The kernel assigns PID 1 the `init` SID at boot, and when
   # the policy is loaded it resolves to the context set here.
   #
-  # This module only *declares* `init_unit_t` (the domain the initrd/relabel
-  # service runs as via `SELinuxContext=`); the rules that reference
-  # system-layer types (the SELinux userland tools, the semanage store, etc.)
-  # live in the `selinux_tools` module, because a base module cannot see
-  # system-layer types.
+  # This module only *declares* the types a base module must own and grants the
+  # kernel-layer accesses. The domain for the initrd/relabel services
+  # (`init_unit_t`) and its system-layer grants live in the `selinux_tools`
+  # module, because a base module cannot see system-layer types.
   config.security.selinux.modules.init_context = {
     layer = "kernel";
     typeEnforcement = ''
@@ -20,14 +19,10 @@
       attribute initrc_transition_domain;
       type init_t, initrc_transition_domain;
       type init_exec_t;
-      type init_unit_t;
 
       typeattribute init_t domain;
-      typeattribute init_unit_t domain;
       role system_r types init_t;
-      role system_r types init_unit_t;
       role object_r types init_exec_t;
-      role object_r types init_unit_t;
 
       allow kernel_t init_exec_t:file execute;
       allow init_exec_t root_t:filesystem associate;
