@@ -56,7 +56,20 @@ let
         # recursive `restorecon` does.) The glob rules in
         # `security.selinux.modules.*.fileContext` label any store package without
         # having to declare it.
-        ${pkgs.policycoreutils}/bin/restorecon -R -F -f /run/selinux/${cfg.type}/active/file_contexts /nix/store 2>/dev/null || true
+        echo "=== store-overlay state ==="
+        grep -E 'nix/store|/run/selinux' /proc/self/mounts
+        echo "--- /nix/store enforce-learn ---"
+        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/ 2>&1
+        echo "--- /sysroot/nix/store enforce-learn ---"
+        ls -la /sysroot/nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/ 2>&1
+        echo "--- find file_contexts (whole fs) ---"
+        find / -name 'file_contexts' 2>/dev/null
+        echo "--- find policy.kern / policy.* ---"
+        find / -name 'policy.kern' -o -name 'policy.3*' 2>/dev/null
+        echo "--- the intended fc+pol ---"
+        ls -la /run/selinux/${cfg.type}/active/file_contexts /run/selinux/${cfg.type}/active/policy.kern 2>&1 || true
+        echo "=== end store-overlay state ==="
+        [ -f /run/selinux/${cfg.type}/active/file_contexts ] && { ${pkgs.policycoreutils}/bin/restorecon -R -F -f /run/selinux/${cfg.type}/active/file_contexts /nix/store 2>/dev/null || true; } || true
       }
 
         setupStoreOverlay

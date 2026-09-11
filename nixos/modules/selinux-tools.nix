@@ -131,6 +131,19 @@
       allow setfiles_t { unlabeled_t root_t }:dir { getattr relabelto relabelfrom };
       allow setfiles_t { tmpfs_t }:dir { getattr relabelto relabelfrom };
       allow setfiles_t tmpfs_t:filesystem associate;
+
+      # The initrd `selinux-init` cannot get `init_unit_t`: systemd spawns it
+      # before the policy is loaded, so `SELinuxContext=` is not applied and the
+      # process resolves to the unit-file type `systemd_unit_t` after
+      # `load_policy` (the boot log shows its `setfattr` running as
+      # `systemd_unit_t`, not `init_unit_t`). It must therefore be able to
+      # `associate` labels onto the filesystems it walks — the one Reference
+      # Policy type we extend.
+      allow systemd_unit_t { root_t device_t tmpfs_t fs_t }:filesystem associate;
+
+      # `init_unit_t` (the relabel) uses pipes / tmpfiles for logging + the
+      # shell; the Reference Policy grants it neither.
+      allow init_unit_t init_unit_t:fifo_file rw_fifo_file_perms;
     '';
     # `/var/empty` has no rule in the Reference Policy (only its subpaths like
     # `/var/empty/dev`); without one `setfiles` cannot determine a context for

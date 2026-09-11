@@ -162,6 +162,8 @@ pkgs.testers.runNixOSTest {
       print("INIT_UNIT_TYPE:\n" + out)
       status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/9qnvy6p5i1zzcsn669bd4ykivippqhzl-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
       print("RELABEL BIN CTX:\n" + out)
+      status, out = machine.execute("find /run/selinux /etc/selinux -maxdepth 5 -print 2>&1 | head -60")
+      print("SELINUX DIRS:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
       status, out = machine.execute("ls -la /run/selinux/refpolicy/active/file_contexts 2>&1; echo ---; grep -cE 'enforce_learn|nix/store' /run/selinux/refpolicy/active/file_contexts 2>&1")
       print("FC:\n" + out)
