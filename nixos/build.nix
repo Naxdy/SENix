@@ -282,146 +282,9 @@ let
     installPhase = "true";
   };
 
-  # Every store path referenced by any module's fileContext.storePaths.
-  storePaths = lib.concatLists (
-    lib.mapAttrsToList (
-      _: m: lib.concatLists (lib.mapAttrsToList (_: paths: paths) m.fileContext.storePaths)
-    ) mods
-  );
-  storePathsUnique = lib.unique storePaths;
-
-  # Raw file contexts (with `gen_context(...)` still unexpanded) across all modules.
-  squashfsFC = lib.concatStringsSep "\n" (
-    lib.filter (s: s != "") (
-      map (m: if m.fileContext.rules != { } then genFC m.fileContext else "") (lib.attrValues mods)
-    )
-  );
-  # Because `squashfsFC` is huge once every module contributes nixified rules,
-  # write it to a store file so the build phase never has to carry it inline
-  # (which overflows ARG_MAX).
-  squashfsFCDrv = pkgs.writeText "file_contexts" squashfsFC;
-  # Mirror a store path's tree into the staging area as empty files / symlinks /
-  # directories, so the SquashFS carries only metadata (never file contents).
-  mirrorStorePath = sp: ''
-    src=${toString sp}
-    dst="$staging/nix/store/$(basename "$src")"
-    mkdir -p "$dst"
-    (cd "$src" && find . -mindepth 1 | while IFS= read -r p; do
-      if [ -d "$p" ] && [ ! -L "$p" ]; then
-        mkdir -p "$dst/$p"
-      elif [ -L "$p" ]; then
-        ln -s "$(readlink "$p")" "$dst/$p"
-      else
-        touch "$dst/$p"
-      fi
-    done)
-  '';
-
-  mirrorStorePaths = lib.concatStrings (map mirrorStorePath storePathsUnique);
-  # Python helper: match staged store files against the expanded file contexts and
-  # emit `mksquashfs` pseudo `x` definitions. Writing the `security.selinux` xattr
-  # this way bakes it into the image without needing an active SELinux LSM on the
-  # build host (so a no-SELinux -> SELinux switch needs only a single rebuild).
-  pseudoGen = ''
-    import re, os, sys
-
-    def main(fc, store):
-        entries = []
-        with open(fc) as f:
-            for line in f:
-                line = line.rstrip('\n')
-                if not line or line.startswith('#'):
-                    continue
-                parts = line.split('\t')
-                if len(parts) < 2:
-                    continue
-                try:
-                    entries.append((re.compile(parts[0].strip()), parts[-1].strip()))
-                except re.error:
-                    pass
-        out = []
-        for root, dirs, files in os.walk(store):
-            for name in dirs + files:
-                full = os.path.join(root, name)
-                rel = os.path.relpath(full, store)
-                logical = '/nix/store/' + rel
-                ctx = None
-                for regex, c in entries:
-                    if regex.search(logical):
-                        ctx = c
-                if ctx:
-                    out.append('%s x security.selinux=%s' % (rel.replace('\\', '\\\\'), ctx))
-        sys.stdout.write('\n'.join(out))
-
-    main(sys.argv[1], sys.argv[2])
-  '';
-
-  squashfsDrv = pkgs.stdenv.mkDerivation {
-    pname = "selinux-store-metadata";
-    version = "1";
-    dontUnpack = true;
-    nativeBuildInputs = [
-      pkgs.squashfsTools
-      pkgs.python3
-      pkgs.gnum4
-      pkgs.gawk
-      pkgs.findutils
-    ];
-
-    buildInputs = [
-      cfg.refpolicy.package
-    ]
-    ++ storePathsUnique;
-
-    buildPhase = ''
-            runHook preBuild
-
-            set -euo pipefail
-
-            m4support=$(find ${supportDir} -maxdepth 1 -name '*.spt' | sort)
-            mls_sens=$(awk -F'[ :=]+' '/^MLS_SENS/ {print $NF}' ${cfg.refpolicy.package.src}/build.conf)
-            mls_cats=$(awk -F'[ :=]+' '/^MLS_CATS/ {print $NF}' ${cfg.refpolicy.package.src}/build.conf)
-            mcs_cats=$(awk -F'[ :=]+' '/^MCS_CATS/ {print $NF}' ${cfg.refpolicy.package.src}/build.conf)
-            M4PARAM="-D mls_num_sens=$mls_sens -D mls_num_cats=$mls_cats -D mcs_num_cats=$mcs_cats"
-
-            staging=$(mktemp -d)
-
-            # Materialize the raw file contexts, then expand the `gen_context`
-            # macros (the `divert.m4`/`undivert.m4` support files activate the
-            # macro definitions that the `.spt` support files divert).
-            cp ${squashfsFCDrv} "$staging/file_contexts"
-            m4 $M4PARAM -s ${policySrc}/support/divert.m4 $m4support ${policySrc}/support/undivert.m4 "$staging/file_contexts" > "$staging/file_contexts.x"
-
-            ${mirrorStorePaths}
-
-            # Write the matcher and generate per-file `security.selinux` xattr
-            # definitions as a `mksquashfs` pseudo file. This bakes the labels
-            # into the image unconditionally, so the build works on hosts without
-            # an active SELinux LSM (no-SELinux -> SELinux needs one rebuild).
-            cat > "$staging/matcher.py" <<'SENIX_PYEOF'
-      ${pseudoGen}
-      SENIX_PYEOF
-            python3 "$staging/matcher.py" \
-              "$staging/file_contexts.x" "$staging/nix/store" > "$staging/pseudo"
-
-            mksquashfs "$staging/nix/store" "$out" \
-              -pf "$staging/pseudo" -noappend -xattrs -no-progress > /dev/null
-            runHook postBuild
-    '';
-  };
 in
 {
   options.security.selinux.build = {
-    squashfs = mkOption {
-      type = types.package;
-      readOnly = true;
-      description = ''
-        The final SquashFS filesystem containing the SELinux file context / extended attribute metadata for paths within the Nix store.
-
-        When `security.selinux.storeOverlay` is enabled, this filesystem is overlaid over `/nix/store` at runtime to supply labels that cannot be stored on the read-only store.
-      '';
-    };
-
     policy = mkOption {
       type = types.package;
       readOnly = true;
@@ -435,7 +298,5 @@ in
     };
   };
 
-  config = {
-    security.selinux.build.squashfs = squashfsDrv;
-  };
+  config = { };
 }

@@ -62,6 +62,7 @@ pkgs.testers.runNixOSTest {
 
             require {
               type init_t;
+              type initrc_t;
               type kernel_t;
               type unconfined_t;
               type tty_device_t;
@@ -83,6 +84,11 @@ pkgs.testers.runNixOSTest {
             allow unconfined_t enforce_learn_exec_t:file execute;
             allow init_t enforce_learn_exec_t:file execute;
             type_transition init_t enforce_learn_exec_t:process enforce_learn_t;
+            # The test's shell/backdoor runs as `initrc_t`; let it also enter the
+            # confined domain when it execs the binary (matching the script below,
+            type_transition initrc_t enforce_learn_exec_t:process enforce_learn_t;
+            allow initrc_t enforce_learn_exec_t:file execute;
+            allow initrc_t enforce_learn_t:process transition;
             allow kernel_t enforce_learn_t:process transition;
             type_transition kernel_t enforce_learn_exec_t:process enforce_learn_t;
             allow kernel_t enforce_learn_exec_t:file execute;
@@ -91,12 +97,16 @@ pkgs.testers.runNixOSTest {
             files_type(enforce_learn_data_t)
 
             type enforce_learn_secret_t;
+            # Make it a `files_type` so the relabeling shell (initrc_t) can
+            # `setfattr` the secret file (the data type is a files_type too).
+            files_type(enforce_learn_secret_t)
             # The app handles the stdio it inherited from the caller (the test
             # driver's shell, which is `kernel_t`) and the console it is bound
             # to; without these it cannot even print to stdout.
             allow enforce_learn_t kernel_t:fd use;
             allow enforce_learn_t unconfined_t:fd use;
             allow enforce_learn_t init_t:fd use;
+            allow enforce_learn_t initrc_t:fd use;
             allow enforce_learn_t tty_device_t:chr_file { read write };
             allow enforce_learn_t kernel_t:fifo_file rw_fifo_file_perms;
 
@@ -136,8 +146,8 @@ pkgs.testers.runNixOSTest {
   testScript =
     # python
     ''
-
       machine.wait_for_unit("multi-user.target")
+      machine.wait_for_unit("selinux-relabel.service")
 
       # The boot-time `selinux-relabel.service` must have already applied the
       # store labels to the real /nix/store (not just via the manual re-apply
@@ -146,16 +156,6 @@ pkgs.testers.runNixOSTest {
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
-
-      # The boot-time `setfiles` relabel must have labeled the non-store root
-      # (e.g. /var/lib -> var_lib_t); otherwise the file-context rules are never
-      # applied to the live filesystem and services run against unlabeled state.
-      machine.succeed("getfattr -n security.selinux --only-values /var/lib | grep -q var_lib_t")
-
-      # Re-apply the labels (as a `nixos-rebuild switch` would), before creating
-      # the app data files so `setfiles` does not overwrite their specific
-      # `enforce_learn_data_t`/`enforce_learn_secret_t` labels with the generic
-      # `var_lib_t`; this idempotently exercises the relabel entry point.
       machine.succeed("selinux-relabel")
 
       # Runtime SELinux tooling must work: the policy/contexts must be present

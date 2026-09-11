@@ -48,7 +48,8 @@
         "@systemd@/lib/systemd/system-preset(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "@systemd@/lib/systemd/user-preset(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "@systemd@/lib/systemd/ntp-units\.d" = "-d gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "@systemd@/lib/systemd/system(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "@systemd@/(lib|example|share)/systemd/(system|user)(/.*)?" =
+          "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "@systemd@/share/containers/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "/run/systemd/generator(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "/run/systemd/generator\.early(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";

@@ -5,9 +5,11 @@
   imports = [
     ./bubblewrap.nix
     ./chromium.nix
+    ./corecommands.nix
     ./init-context.nix
     ./init.nix
     ./libraries.nix
+    ./selinux-core.nix
     ./systemd.nix
   ];
 }

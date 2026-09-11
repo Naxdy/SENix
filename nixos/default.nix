@@ -21,27 +21,26 @@ let
 
       setupStoreOverlay() {
         upper=/run/selinux/overlay
-        meta=/run/selinux/metadata
         store=/run/selinux/store
 
         # Always (re-)establish the overlay, but never stack it a second time.
         # A switch unmounts `/nix/store`; if we only set the overlay up on the
         # first run, a switch would leave the store without the metacopy layer
-        # and therefore without the baked labels (store files then report
-        # `unlabeled_t`). If the metacopy is already mounted (the unbind/remount
-        # of the store is still busy, or this is an idempotent re-run), mounting
-        # again would stack it past the kernel's depth limit, so only mount when
-        # `/proc/self/mounts` does not already carry our upperdir.
-        mkdir -p /run/selinux "$upper" "$meta" "$store"
+        # and therefore without the labels (store files then report `unlabeled_t`).
+        # If the metacopy is already mounted (the unbind/remount of the store is
+        # still busy, or this is an idempotent re-run), mounting again would stack
+        # it past the kernel's depth limit, so only mount when `/proc/self/mounts`
+        # does not already carry our upperdir.
+        mkdir -p /run/selinux "$upper" "$store"
         mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
         mkdir -p "$upper/upper" "$upper/work"
         # The real store, exposed as the lower layer so every store path (past,
         # present, or added at runtime with nix build) stays visible with data.
         mount --bind /nix/store "$store" 2>/dev/null || true
         if ! grep -q 'upperdir=/run/selinux/overlay/upper' /proc/self/mounts; then
-          # Overlay the metadata over the store: a writable tmpfs upper carries
-          # the labels (via metacopy) while file data continues to come from the
-          # store. NixOS's own `/nix/store` is already an overlay
+          # Overlay a writable upper over the store: labels written via metacopy
+          # land in the tmpfs upper while file data continues to come from the
+          # immutable store. NixOS's own `/nix/store` is already an overlay
           # (`.ro-store`/`.rw-store`), so skipping this on an idempotent re-run
           # keeps us within the overlayfs depth limit.
           mount -t overlay overlay \
@@ -49,31 +48,20 @@ let
             /nix/store 2>/dev/null || true
         fi
 
-        # Refresh the metadata image with the (possibly different) build.squashfs.
-        # If the loop device isn't available yet (e.g. very early initrd), defer;
-        # a later run (switch or the loop device coming up) will retry.
-        umount "$meta" 2>/dev/null || true
-        if ! mount -t squashfs -o ro,loop ${cfg.build.squashfs} "$meta" 2>/dev/null; then
-          return 0
-        fi
-
-        # The `/nix(/store)` container and the store package trees must be
-        # traversable; label them `usr_t` (domains already traverse `usr_t`).
-        # Per-package dirs/files get `usr_t`/`lib_t`/`bin_t` from the
-        # module-provided file contexts below.
+        # The `/nix(/store)` container must be traversable; label it `usr_t`
+        # (domains already traverse `usr_t`).
         ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix 2>/dev/null || true
         ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix/store 2>/dev/null || true
 
-        # Copy the baked per-module `security.selinux` labels from the metadata
-        # image onto the overlaid store paths. `setfattr` triggers metadata-only
-        # copy-up, so labels land in the writable store upper; data stays in the
-        # immutable store.
-        find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
-          if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null | tr -d '\0'); then
-            rel=''${f#"$meta"}
-            setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
-          fi
-        done
+        # Label the store directly from the loaded policy's file_contexts instead
+        # of a baked metadata image. `restorecon -R` walks the store and writes
+        # the labels through the metacopy overlay onto the writable upper, so the
+        # underlying `/nix/store` never receives any xattrs and stays immutable.
+        # (`setfiles` on the `/nix/store` mount point does not descend; the
+        # recursive `restorecon` does.) The glob rules in
+        # `security.selinux.modules.*.fileContext` label any store package without
+        # having to declare it.
+        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store 2>/dev/null || true
       }
 
         setupStoreOverlay
@@ -85,8 +73,8 @@ let
       pkgs.util-linux
       pkgs.coreutils
       pkgs.attr
-      pkgs.findutils
       pkgs.gnugrep
+      pkgs.policycoreutils
     ];
     text = storeOverlaySetup;
   };
@@ -574,8 +562,13 @@ in
     # store stays immutable: `setfiles` writes the labels onto the (writable)
     # overlay upper, not the store itself.
     systemd.services.selinux-relabel = {
-      wantedBy = [ "multi-user.target" ];
-      after = [ "sysinit.target" ];
+      # Run during sysinit, before multi-user.target is confirmed, so the store
+      # and the systemd unit files are labeled before systemd reports/controls
+      # unit status. (The store overlay applies the policy file_contexts directly
+      # via `setfiles` — no loop device / metadata image — so this can run this
+      # early without needing the store's squashfs mount.)
+      wantedBy = [ "sysinit.target" ];
+      before = [ "multi-user.target" ];
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;

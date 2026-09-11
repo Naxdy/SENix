@@ -8,6 +8,7 @@
       enable = true;
       modules = {
         screen = {
+          layer = "apps";
           typeEnforcement = builtins.readFile ./screen.te;
           interface = builtins.readFile ./screen.if;
           fileContext = {
