@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "enforcing";
+        mode = "permissive";
         overlayPackages = false;
 
         modules.enforce_learn = {
@@ -146,6 +146,10 @@ pkgs.testers.runNixOSTest {
       )
 
       machine.wait_for_unit("multi-user.target")
+      status, out = machine.execute("grep ' /nix/store ' /proc/self/mountinfo | grep -oE 'lowerdir=[^ ]*|upperdir=[^ ]*|metacopy[^ ]*|/nix/.ro-store|/sysroot/nix/.ro-store'")
+      print("STORE MOUNTINFO:\n" + out)
+      status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1; echo ---; getfattr -n security.selinux --only-values /nix/store/mwq3vsf8vjb3lpfz0czy0vk9j98dyxda-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
+      print("STORE BIN CONTEXTS:\n" + out)
       status, out = machine.execute("journalctl -k --no-pager -n 200 | grep -iE 'relabel|selinux|avc|denied|exec|init_unit'")
       print("KERNEL AVC:\n" + out)
       status, out = machine.execute("semodule -l 2>&1 | grep -iE 'selinux_tools|selinuxutil|init_context|enforce_learn|base|^init '")

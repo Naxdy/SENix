@@ -34,19 +34,22 @@ let
         mkdir -p /run/selinux "$upper" "$store"
         mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
         mkdir -p "$upper/upper" "$upper/work"
-        # The real store, exposed as the lower layer so every store path (past,
-        # present, or added at runtime with nix build) stays visible with data.
-        mount --bind /nix/store "$store" 2>/dev/null || true
+        # The metacopy overlay IS the store. Its lower is the real immutable
+        # store (`/sysroot/nix/.ro-store`) and its upper is our tmpfs, so every
+        # label (and any writable metadata) is written to the upper while the
+        # real store stays untouched. We deliberately do NOT layer this on top
+        # of NixOS's own `/nix/store` overlay (that created a multi-layer stack
+        # that `setfiles`/`restorecon` could not descend, and it exceeded the
+        # overlayfs depth limit). If this overlay cannot be established, fail
+        # loudly rather than silently relabeling the immutable store in place.
         if ! grep -q 'upperdir=/run/selinux/overlay/upper' /proc/self/mounts; then
-          # Overlay a writable upper over the store: labels written via metacopy
-          # land in the tmpfs upper while file data continues to come from the
-          # immutable store. NixOS's own `/nix/store` is already an overlay
-          # (`.ro-store`/`.rw-store`), so skipping this on an idempotent re-run
-          # keeps us within the overlayfs depth limit. The store must never be
-          # modified directly, so if this overlay cannot be established, fail
-          # loudly rather than silently relabeling the immutable store in place.
+          # The immutable store lives under `/sysroot/nix/.ro-store` in the
+          # initrd but `/nix/.ro-store` after switch_root; pick whichever
+          # exists so the overlay can be established in both phases.
+          lower=/sysroot/nix/.ro-store
+          [ -d /nix/.ro-store ] && lower=/nix/.ro-store
           mount -t overlay overlay \
-            -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
+            -o "lowerdir=$lower,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
             /nix/store
         fi
 
@@ -73,18 +76,22 @@ let
         echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
         ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
           /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1 || true
-        echo "--- setfiles DIRECT on the bin dir ---"
+        echo "--- setfiles DIR on the enforce-learn PACKAGE (recursion?) ---"
         ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin 2>&1 || true
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn 2>&1 || true
+        echo "--- restorecon -R on the enforce-learn PACKAGE (recursion?) ---"
+        ${pkgs.policycoreutils}/bin/restorecon -R -v -f "$fc" \
+          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn 2>&1 || true
         echo "=== end store setfiles diag ==="
         if [ -f "$fc" ] && [ -f "$pol" ]; then
-          # `setfiles` crosses the `/nix/store` mount when given the *store
-          # entries themselves* (a regular dir) rather than the mount point, and
-          # the fc rules (incl. the senix-module specifics) match the concrete
-          # paths. Pass the package paths as arguments — `find -exec … {} +`
-          # batches them to avoid ARG_MAX on a real system (a glob would not).
-          find /nix/store -mindepth 1 -maxdepth 1 -exec \
-            ${pkgs.policycoreutils}/bin/setfiles -q "$fc" '{}' +
+          # `restorecon -R` is the explicitly-recursive tool; it must descend the
+          # stacked `/nix/store` overlay into the store binaries through the
+          # metacopy view. Verbose here only for the diag; the real label below.
+          echo "--- restorecon -R -v (enforce + screen grep) ---"
+          ${pkgs.policycoreutils}/bin/restorecon -R -v -F -f "$fc" /nix/store 2>&1 \
+            | grep -iE 'enforce-learn|screen-5|bin/screen' || true
+          echo "=== end restorecon diag ==="
+          ${pkgs.policycoreutils}/bin/restorecon -R -F -f "$fc" /nix/store 2>/dev/null || true
         fi
       }
 
@@ -515,7 +522,7 @@ in
         # initrd's memory; the immutable store only carries the labels in the
         # overlay upper, so it is never written to.
         ${pkgs.findutils}/bin/find /sysroot/nix/store \
-          \( -path '*/systemd/system/*' -o -path '*/systemd/user/*' -o -path '*-unit-*/*' \) \
+          \( -path '*/systemd/system/*' -o -path '*/systemd/user/*' -o -path '*unit-*/*' \) \
           \( -type f -o -type l \) \
           -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:systemd_unit_t {} + \
           2>/dev/null || true
