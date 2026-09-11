@@ -9,6 +9,8 @@
     ./init-context.nix
     ./init.nix
     ./libraries.nix
-    ./systemd.nix
+    # ./nix.nix
+    ./selinuxutil.nix
+    ./selinux-tools.nix
   ];
 }

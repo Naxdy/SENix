@@ -48,11 +48,6 @@ let
             /nix/store 2>/dev/null || true
         fi
 
-        # The `/nix(/store)` container must be traversable; label it `usr_t`
-        # (domains already traverse `usr_t`).
-        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix 2>/dev/null || true
-        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:usr_t /nix/store 2>/dev/null || true
-
         # Label the store directly from the loaded policy's file_contexts instead
         # of a baked metadata image. `restorecon -R` walks the store and writes
         # the labels through the metacopy overlay onto the writable upper, so the
@@ -429,6 +424,11 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        # The service runs before the policy is loaded, so systemd cannot derive
+        # a domain from the (unlabeled) unit file; request `init_unit_t` up
+        # front so the relabeling below runs under a domain that can `associate`
+        # labels onto the filesystems it walks.
+        SELinuxContext = "system_u:object_r:init_unit_t";
       };
       script = ''
         # Install and link the policy modules, make the linked policy visible to
@@ -593,6 +593,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
+        # `init_unit_t` can associate labels and run the policy/relabel tooling.
+        SELinuxContext = "system_u:object_r:init_unit_t";
       };
       script = ''
         ${selinuxRelabelScript}/bin/selinux-relabel

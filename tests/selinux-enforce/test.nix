@@ -155,6 +155,9 @@ pkgs.testers.runNixOSTest {
       )
 
       machine.wait_for_unit("multi-user.target")
+      status, out = machine.execute("journalctl -u selinux-relabel.service --no-pager -n 80")
+      status, out = machine.execute("journalctl -k --no-pager -n 120 | grep -iE 'avc|denied|selinux-relabel'")
+      print("KERNEL AVC:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
 
       # The boot-time `selinux-relabel.service` must have already applied the
