@@ -424,11 +424,10 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        # The service runs before the policy is loaded, so systemd cannot derive
-        # a domain from the (unlabeled) unit file; request `init_unit_t` up
-        # front so the relabeling below runs under a domain that can `associate`
-        # labels onto the filesystems it walks.
-        SELinuxContext = "system_u:object_r:init_unit_t";
+        # The service runs before the policy is loaded, so systemd assigns it
+        # the unit file's (unlabeled) context; `systemd_unit_t` is granted the
+        # associate + tool-exec accesses in the `selinux_tools` policy module
+        # so the relabel can label the store without extra grants.
       };
       script = ''
         # Install and link the policy modules, make the linked policy visible to
@@ -593,8 +592,8 @@ in
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        # `init_unit_t` can associate labels and run the policy/relabel tooling.
-        SELinuxContext = "system_u:object_r:init_unit_t";
+        # Runs as `systemd_unit_t` (the unit's store context via the initrd
+        # relabel); `selinux_tools` grants it the associate + tool accesses.
       };
       script = ''
         ${selinuxRelabelScript}/bin/selinux-relabel

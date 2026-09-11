@@ -1,18 +1,12 @@
 { config, ... }: {
-  # Grants for the domain that the initrd `selinux-init` and boot-time
-  # `selinux-relabel` services run as (`init_unit_t`, declared in the
-  # `init_context` base module). Those services run *before* the policy is
-  # loaded, so systemd starts them with an explicit `SELinuxContext=`; they
-  # must be able to run the SELinux userland tools directly (no `type_transition
-  # ` exists from this new domain) and to `associate` a new label onto the
-  # filesystems they walk — the kernel gates `setfattr` of `security.selinux`
-  # on the `associate` permission on the `filesystem` class.
-  #
-  # These rules live in a system-layer module because they reference
-  # system-layer types (`semanage_exec_t`, `selinux_config_t`, ...) that a base
-  # module cannot see. `systemd_unit_t` gets the same treatment as a safety net:
-  # if systemd falls back to it when the service is started before the policy is
-  # loaded, the relabel still works.
+  # The initrd `selinux-init` and boot-time `selinux-relabel` services run as
+  # `systemd_unit_t` — systemd assigns the unit file's context because the
+  # policy is not (yet) fully loaded — and the relabel tooling they spawn
+  # (`restorecon`, `setfiles`) runs as `setfiles_t`. The Reference Policy's
+  # `setfiles_t` only reads the SELinux-specific types and relabels *from*
+  # `unlabeled_t`; it cannot read (hence label) the generic store/root types we
+  # assign. These rules live in a system-layer module because they reference
+  # system-layer types a base module cannot see.
   config.security.selinux.modules.selinux_tools = {
     layer = "system";
     typeEnforcement = ''
@@ -26,37 +20,49 @@
         type policy_config_t;
         type semanage_store_t;
         type systemd_unit_t;
-        type init_t;
-        type init_unit_t;
+        type setfiles_t;
         type root_t;
         type device_t;
         type tmpfs_t;
         type fs_t;
+        type usr_t;
         type bin_t;
         type shell_exec_t;
         type lib_t;
+        type ld_so_t;
+        type ldconfig_exec_t;
+        type etc_t;
+        type var_t;
+        type var_lib_t;
       ')
 
-      allow init_unit_t { root_t device_t tmpfs_t fs_t }:filesystem associate;
-      allow init_unit_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t }:file execute_no_trans;
-      allow init_unit_t { bin_t shell_exec_t }:file { read execute };
-      allow init_unit_t lib_t:file read;
-      allow init_unit_t lib_t:dir search;
-      allow init_unit_t init_unit_t:process execmem;
-      allow init_unit_t init_unit_t:capability2 checkpoint_restore;
-      allow init_unit_t { selinux_config_t policy_config_t semanage_store_t }:file { read write };
-      allow init_unit_t selinux_config_t:dir search;
-
-      # systemd (PID 1, `init_t`) spawns the init/relabel services with an
-      # explicit `SELinuxContext=`; the kernel requires a `process transition`
-      # to change the exec context to `init_unit_t`.
-      type_transition init_t init_unit_t:process init_unit_t;
-      allow init_t init_unit_t:process transition;
-      allow init_t init_unit_t:file { read execute getattr };
-      allow init_t init_unit_t:dir search;
+      # The initrd `selinux-init` runs `semodule`/`load_policy`/`setfattr` as
+      # `systemd_unit_t`; it must associate labels onto the filesystems it
+      # walks and exec the tool binaries directly (there is no `type_transition
+      # ` from this domain).
       allow systemd_unit_t { root_t device_t tmpfs_t fs_t }:filesystem associate;
       allow systemd_unit_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t }:file execute_no_trans;
       allow systemd_unit_t { bin_t shell_exec_t }:file { read execute };
+      allow systemd_unit_t lib_t:file read;
+
+      # `setfiles`/`restorecon` relabel the non-store root (`/etc`, `/var`);
+      # the Reference Policy grants them only the SELinux-specific reads +
+      # relabelfrom-unlabeled, so they cannot read/relabel the generic root
+      # types. (The store's `usr_t`/`bin_t`/`lib_t` files are handled by the
+      # matching file-context rules, which label the specific paths with the
+      # right `selinux_config_t`/`etc_t`/... types instead.)
+      allow setfiles_t { etc_t var_t var_lib_t }:file { read getattr open relabelto };
+      allow setfiles_t { etc_t var_t var_lib_t }:dir { read open getattr search relabelto };
+      allow setfiles_t { etc_t var_t var_lib_t }:lnk_file relabelto;
+      allow setfiles_t { fs_t root_t tmpfs_t device_t }:filesystem associate;
     '';
+    # `/var/empty` has no rule in the Reference Policy (only its subpaths like
+    # `/var/empty/dev`); without one `setfiles` cannot determine a context for
+    # it during the relabel, so give it the `/var` type explicitly.
+    fileContext = {
+      rules = {
+        "/var/empty" = "gen_context(system_u:object_r:var_t,s0)";
+      };
+    };
   };
 }

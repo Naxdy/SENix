@@ -155,9 +155,6 @@ pkgs.testers.runNixOSTest {
       )
 
       machine.wait_for_unit("multi-user.target")
-      status, out = machine.execute("journalctl -u selinux-relabel.service --no-pager -n 80")
-      status, out = machine.execute("journalctl -k --no-pager -n 120 | grep -iE 'avc|denied|selinux-relabel'")
-      print("KERNEL AVC:\n" + out)
       machine.wait_for_unit("selinux-relabel.service")
 
       # The boot-time `selinux-relabel.service` must have already applied the
@@ -168,10 +165,7 @@ pkgs.testers.runNixOSTest {
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
       machine.succeed("selinux-relabel")
-
       # Runtime SELinux tooling must work: the policy/contexts must be present
-      # on the real /etc/selinux (not only under /run), and restorecon must be
-      # able to relabel using them.
       machine.succeed("ls /etc/selinux/refpolicy/policy/ 2>&1")
       machine.succeed("sestatus 2>&1")
       machine.succeed("restorecon -R /etc 2>&1")

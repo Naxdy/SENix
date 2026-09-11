@@ -1,4 +1,5 @@
 {
+  config,
   pkgs,
   ...
 }:
@@ -10,6 +11,13 @@
         selinux = [
           pkgs.policycoreutils
         ];
+        # The NixOS-generated `/etc/selinux/config`. Its store path is matched
+        # by the `usr_t` catch-all `corecommands` glob, but it is really a
+        # SELinux config; label it `selinux_config_t` so `setfiles`/`restorecon`
+        # (which can read that type) can relabel it without a special grant.
+        selinux_config = [
+          config.environment.etc."selinux/config".source
+        ];
       };
       rules = {
         # SELinux userland utilities
@@ -17,8 +25,11 @@
         #
         # /etc
         #
+        # The store path of the generated `/etc/selinux/config` (the catch-all
+        # `usr_t` glob would otherwise label it). Only the file itself, not the
+        # `/etc/selinux` tree (which is covered below).
+        "@selinux_config@" = "gen_context(system_u:object_r:selinux_config_t,s0)";
         "/etc/selinux(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
-        "/etc/selinux/([^/]*/)?contexts(/.*)?" = "gen_context(system_u:object_r:default_context_t,s0)";
         "/etc/selinux/([^/]*/)?contexts/files(/.*)?" = "gen_context(system_u:object_r:file_context_t,s0)";
         "/etc/selinux/([^/]*/)?policy(/.*)?" =
           "gen_context(system_u:object_r:policy_config_t,mls_systemhigh)";
