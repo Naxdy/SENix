@@ -80,6 +80,7 @@ let
       pkgs.findutils
       pkgs.gnugrep
     ];
+    text = storeOverlaySetup;
   };
 
   # A single relabel entry point: label the immutable store via the metadata
