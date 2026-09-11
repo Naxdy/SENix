@@ -59,8 +59,17 @@ let
         # store package without having to declare it.
         fc=/run/selinux/${cfg.type}/active/file_contexts
         pol=/run/selinux/${cfg.type}/active/policy.kern
+        # `setfiles` descends regular directories but does not cross the
+        # `/nix/store` mount point, so we enumerate the top-level store entries
+        # with `find -maxdepth 1` (cheap — no deep walk) and hand them to
+        # `setfiles`; it then recurses into each store package directory (a
+        # regular dir, not a mount) and labels it through the metacopy overlay.
         if [ -f "$fc" ] && [ -f "$pol" ]; then
-          ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" "$fc" /nix/store 2>/dev/null || true
+          # `-f -` makes `setfiles` read the list of paths to label from stdin,
+          # so we avoid `xargs`; `setfiles` then recurses into each store entry
+          # (regular dirs, not mounts) and labels them through the overlay.
+          find /nix/store -mindepth 1 -maxdepth 1 -print \
+            | ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" -f - "$fc"
         fi
       }
 
@@ -74,6 +83,7 @@ let
       pkgs.coreutils
       pkgs.attr
       pkgs.gnugrep
+      pkgs.findutils
       pkgs.policycoreutils
     ];
     text = storeOverlaySetup;
