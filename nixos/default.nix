@@ -57,19 +57,26 @@ let
         # underlying `/nix/store` never receives any xattrs and stays immutable.
         # The glob rules in `security.selinux.modules.*.fileContext` label any
         # store package without having to declare it.
-        # `restorecon -R` descends the `/nix/store` mount point and writes the
-        # labels through the metacopy overlay onto the writable upper, so the
-        # underlying `/nix/store` never receives any xattrs and stays immutable.
-        # Use its own context resolution (`/etc/selinux/<type>` from SELINUXTYPE)
-        # rather than `-f`.
-        echo "=== store restorecon diag ==="
+        fc=/run/selinux/${cfg.type}/active/file_contexts
+        pol=/run/selinux/${cfg.type}/active/policy.kern
+        # `restorecon -R` does not descend the *stacked* `/nix/store` mount to
+        # the writable metacopy view, so enumerate the top-level store entries
+        # with `find -maxdepth 1` (cheap, no deep walk) and feed them to
+        # `setfiles -f -`; it then recurses into each package dir (which is the
+        # writable overlay view) and labels them through the metacopy upper.
+        echo "=== store setfiles diag ==="
         grep ' /nix/store ' /proc/self/mountinfo
         echo "--- ls enforce-learn ---"
         ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1
-        echo "--- restorecon -v grep enforce-learn ---"
-        ${pkgs.policycoreutils}/bin/restorecon -v -R /nix/store 2>&1 | grep -i 'enforce-learn' || true
-        echo "=== end store restorecon diag ==="
-        ${pkgs.policycoreutils}/bin/restorecon -R -F /nix/store 2>/dev/null || true
+        echo "--- setfiles -f - grep enforce-learn ---"
+        find /nix/store -mindepth 1 -maxdepth 1 -print \
+          | ${pkgs.policycoreutils}/bin/setfiles -v -c "$pol" -f - "$fc" 2>&1 \
+          | grep -i 'enforce-learn' || true
+        echo "=== end store setfiles diag ==="
+        if [ -f "$fc" ] && [ -f "$pol" ]; then
+          find /nix/store -mindepth 1 -maxdepth 1 -print \
+            | ${pkgs.policycoreutils}/bin/setfiles -q -c "$pol" -f - "$fc"
+        fi
       }
 
         setupStoreOverlay
