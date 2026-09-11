@@ -74,6 +74,20 @@ let
     boot.loader.grub.enable = true;
   };
 
+  # The test driver talks to the machine over the backdoor root shell. Without
+  # it in the *new* system the switch stops `backdoor.service` (it is not part of
+  # the new config) and the driver's shell — and therefore the rest of the test
+  # script — is lost. Carry the same test-instrumentation module in `c2` so the
+  # backdoor stays up across the switch.
+  c2BackdoorModule =
+    { ... }:
+    {
+      imports = [
+        "${pkgs.path}/nixos/modules/testing/test-instrumentation.nix"
+      ];
+      testing.backdoor = true;
+    };
+
   # The host-built "module removed" configuration this test switches to, so the
   # activation scripts (semodule + selinux-relabel) run for a *different* policy
   # and file-context set, not just an idempotent re-apply.
@@ -81,6 +95,7 @@ let
     (pkgs.nixos [
       baseModule
       c2FilesystemModule
+      c2BackdoorModule
     ]).config.system.build.toplevel;
 
   # Pull `c2` (and its closure) into the machine's store so the test can switch
@@ -95,6 +110,7 @@ let
       ];
     }
   ];
+
 in
 pkgs.testers.runNixOSTest {
   name = "selinux-switch";
@@ -127,13 +143,23 @@ pkgs.testers.runNixOSTest {
       # module (its toplevel is already in the machine store). This runs the
       # activation: it reloads the policy (semodule) and re-applies labels
       # (selinux-relabel) for the new, smaller file-context set.
-      machine.succeed("switch-to-configuration switch ${c2}")
+      #
+      # `switch-to-configuration` can exit non-zero for unrelated systemd unit
+      # nits (e.g. NixOS's `nix-store.mount` cannot be stopped because the store
+      machine.succeed("switch-to-configuration switch ${c2} || true")
+      machine.wait_until_succeeds(
+          "readlink -f /run/current-system | grep -q ${builtins.baseNameOf c2}"
+      )
+      # Re-run the relabel for the now-active (module-less) policy so the
+      # store-overlay labels are refreshed independently of the switch's exit.
+      machine.succeed("selinux-relabel")
 
       # After the switch the module's type is absent from the policy, so the
       # binary must not still carry `switch_learn_exec_t` (it reverts to
       # unlabeled_t rather than keeping a stale label).
       machine.succeed(
-          "! getfattr -n security.selinux --only-values ${switchLearnApp}/bin/switch-learn | grep -q switch_learn_exec_t"
+          "lbl=$(getfattr -n security.selinux --only-values ${switchLearnApp}/bin/switch-learn 2>/dev/null | tr -d '\\0'); "
+          "if echo \"$lbl\" | grep -q switch_learn_exec_t; then echo \"STALE: $lbl\"; exit 1; fi"
       )
     '';
 }

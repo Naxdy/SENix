@@ -24,36 +24,29 @@ let
         meta=/run/selinux/metadata
         store=/run/selinux/store
 
-        # Skip entirely if the same squashfs is already active — e.g. a switch
-        # that didn't change any referenced store paths (no new labels to apply).
-        if [ -e /run/selinux/overlay-active ] &&
-           [ "$(cat /run/selinux/store-overlay-squashfs 2>/dev/null)" = "${cfg.build.squashfs}" ]; then
-          return 0
-        fi
-
-        if [ ! -e /run/selinux/overlay-active ]; then
-          # Fresh setup (boot). The overlay itself is only mounted here; the Nix
-          # store (itself already an overlayfs) must not be stacked further on
-          # later re-runs, so we never unmount /nix/store once set up.
-          mkdir -p /run/selinux "$upper" "$meta" "$store"
-          mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper"
-          mkdir -p "$upper/upper" "$upper/work"
-          # The real store, exposed as the lower layer so every store path (past,
-          # present, or added at runtime with nix build) stays visible with data.
-          mount --bind /nix/store "$store"
-          # Overlay the metadata over the store: a writable tmpfs upper carries the
-          # labels (via metacopy) while file data continues to come from the store.
-          # NixOS's own `/nix/store` is already an overlay (`.ro-store`/`.rw-store`);
-          # stacking this on top can exceed the overlayfs depth limit, in which
-          # case we skip the metacopy overlay and let the `setfattr` loop below
-          # write the labels directly into the (writable) store upper instead.
+        # Always (re-)establish the overlay, but never stack it a second time.
+        # A switch unmounts `/nix/store`; if we only set the overlay up on the
+        # first run, a switch would leave the store without the metacopy layer
+        # and therefore without the baked labels (store files then report
+        # `unlabeled_t`). If the metacopy is already mounted (the unbind/remount
+        # of the store is still busy, or this is an idempotent re-run), mounting
+        # again would stack it past the kernel's depth limit, so only mount when
+        # `/proc/self/mounts` does not already carry our upperdir.
+        mkdir -p /run/selinux "$upper" "$meta" "$store"
+        mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
+        mkdir -p "$upper/upper" "$upper/work"
+        # The real store, exposed as the lower layer so every store path (past,
+        # present, or added at runtime with nix build) stays visible with data.
+        mount --bind /nix/store "$store" 2>/dev/null || true
+        if ! grep -q 'upperdir=/run/selinux/overlay/upper' /proc/self/mounts; then
+          # Overlay the metadata over the store: a writable tmpfs upper carries
+          # the labels (via metacopy) while file data continues to come from the
+          # store. NixOS's own `/nix/store` is already an overlay
+          # (`.ro-store`/`.rw-store`), so skipping this on an idempotent re-run
+          # keeps us within the overlayfs depth limit.
           mount -t overlay overlay \
             -o "lowerdir=$store,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
             /nix/store 2>/dev/null || true
-          # Mark as set up so later re-runs (e.g. a switch) only refresh labels and
-          # never re-mount the overlay (which would push overlayfs past its max
-          # stacking depth).
-          touch /run/selinux/overlay-active
         fi
 
         # Refresh the metadata image with the (possibly different) build.squashfs.
@@ -66,17 +59,13 @@ let
 
         # Copy the baked `security.selinux` labels from the metadata image onto the
         # overlaid store paths. `setfattr` triggers metadata-only copy-up, so labels
-        # land in the tmpfs upper; data stays in the store.
+        # land in the writable store upper; data stays in the immutable store.
         find "$meta" -mindepth 1 \( -type f -o -type l -o -type d \) | while IFS= read -r f; do
           if ctx=$(getfattr -n security.selinux --only-values "$f" 2>/dev/null | tr -d '\0'); then
             rel=''${f#"$meta"}
             setfattr -n security.selinux -v "$ctx" "/nix/store$rel"
           fi
         done
-
-        # Record which squashfs is currently mounted so idempotent re-runs can
-        # skip work when nothing changed.
-        echo "${cfg.build.squashfs}" > /run/selinux/store-overlay-squashfs
       }
 
         setupStoreOverlay
@@ -89,8 +78,8 @@ let
       pkgs.coreutils
       pkgs.attr
       pkgs.findutils
+      pkgs.gnugrep
     ];
-    text = storeOverlaySetup;
   };
 
   # A single relabel entry point: label the immutable store via the metadata
@@ -488,8 +477,12 @@ in
           # The full policy (base + all declared modules) comes from
           # `build.policy`; it is installed wholesale.
           pp=""
+          keep=""
           for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
-            [ -e "$f" ] && pp="$pp $f"
+            if [ -e "$f" ]; then
+              pp="$pp $f"
+              keep="$keep $(basename "$f" .pp)"
+            fi
           done
           cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ''${pp}"
           skipSELinuxActivation=0
@@ -502,6 +495,25 @@ in
 
           if [ $skipSELinuxActivation -eq 0 ]; then
             eval "$cmd"
+            # `semodule -i` installs/updates a module but never removes one that
+            # is no longer part of the policy (e.g. a module dropped by a
+            # rebuild/switch). Remove those stale modules so their types vanish
+            # from the active policy and their store labels revert. Only touch
+            # modules that were actually installed.
+            if [ -n "$keep" ]; then
+              # `semodule -i` installs/updates but never removes a module that is
+              # no longer part of the policy (e.g. one dropped by a rebuild or
+              # switch). Remove those stale modules so their types vanish from the
+              # active policy and their store labels revert. `keep` lists the
+              # module names from the current build; it is empty only where the
+              # build store is unavailable (e.g. early initrd), in which case the
+              # modules are the ones just installed, so there is nothing stale.
+              for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -l 2>/dev/null | tr -d '\0\r'); do
+                if ! echo " $keep " | grep -qw "$m"; then
+                  ${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -r "$m" || true
+                fi
+              done
+            fi
             echo "$cmd" >/var/lib/selinux/activate-check
           fi
         '';
