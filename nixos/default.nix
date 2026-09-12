@@ -80,9 +80,17 @@ let
         ls / -oah
         ls /nix -oah
 
-        ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -F "$fc" /nix/store | grep systemd || true
+        # Run `setfiles` on the main store directory first, which causes it to walk all subdirs
+        # and assign the correct permissions. This skips files however, so we run another
+        # pass over all regular files afterwards.
+        ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1 || true
+        find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s 2>&1 || true
+
+        # If this script is run from the initrd, the real nix store will be at `/sysroot/nix/store`
+        # instead, while `/nix/store` only houses the initrd store; we need to label both.
         if [ -d /sysroot ]; then
-          ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -r /sysroot -F "$fc" /sysroot/nix/store | grep systemd || true
+           ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" /sysroot/nix/store 2>&1 || true
+          find /sysroot/nix/store -type f -o -type d | ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" -s 2>&1 || true
         fi
       }
 
@@ -569,26 +577,18 @@ in
 
         ${lib.getExe storeOverlayScript}
 
-        # PID 1 (kernel_t) re-execs the compiled-in SYSTEMD_BINARY_PATH
-        # (`/run/current-system/systemd/lib/systemd/systemd`) at switch_root.
-        # That binary must be `init_exec_t` for the type_transition
-        # `kernel_t init_exec_t:process init_t` (refpolicy kernel_domtrans_to)
-        # to fire. The refpolicy init.fc labels exactly these four binaries
-        # init_exec_t (amended to nix store paths; the exact rules outrank the
-        # broad `/nix/store/.*/lib/*` lib_t glob for these paths). The
-        # whole-store `-r /sysroot` setfiles skips them, so drive exactly the
-        # refpolicy-listed binaries through setfiles with the correct spec
-        # (fc is only set inside setupStoreOverlay's subshell, hence the
-        # explicit path here) — the file_contexts decides the labels.
-        TGTFC=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-        shopt -s nullglob
-        for p in /sysroot/nix/store/*-systemd-*/lib/systemd/systemd \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-executor \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-shutdown \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-oomd; do
-          ${lib.getExe' pkgs.policycoreutils "setfiles"} -q -r /sysroot -F "$TGTFC" "$p" || true
-        done
-        shopt -u nullglob
+        # The whole-store `-r /sysroot` setfiles above labels directory entries
+        # but leaves regular FILES untagged (verified: zero file relabels,
+        # systemd binary stays unlabeled without this). PID 1 (kernel_t)
+        # re-execs the compiled-in SYSTEMD_BINARY_PATH
+        # (`/run/current-system/systemd/lib/systemd/systemd`) at switch_root and
+        # that binary must be `init_exec_t` for the type_transition
+        # `kernel_t init_exec_t:process init_t` (refpolicy kernel_domtrans_to).
+        # The refpolicy init.fc labels exactly these four binaries init_exec_t
+        # (amended to nix store paths; the exact rules outrank the broad
+        # `/nix/store/.*/lib/*` lib_t glob for these paths) — drive them through
+        # setfiles with the correct spec. Note `fc` is only set inside
+        # setupStoreOverlay's subshell, hence the explicit path here.
 
         echo "=== DIAG: AFTER STORE SETFILES ==="
         shopt -s nullglob
