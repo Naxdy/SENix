@@ -526,6 +526,13 @@ in
           \( -type f -o -type l \) \
           -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:systemd_unit_t {} + \
           2>/dev/null || true
+        # The relabel-start binary is unlabeled_t; a domain (`init_unit_t`)
+        # cannot `entrypoint` an unlabeled_t file, so label it bin_t before the
+        # boot-time relabel execs it.
+        ${pkgs.findutils}/bin/find /sysroot/nix/store -path '*-unit-script-*/bin/*' \
+          \( -type f -o -type l \) \
+          -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:bin_t {} + \
+          2>/dev/null || true
 
         SD=${config.systemd.package}/lib/systemd/systemd
         ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SD" || true
