@@ -6,7 +6,8 @@
     ./bubblewrap.nix
     ./chromium.nix
     ./corecommands.nix
-    ./init-context.nix
+    # this is what I meant bruh
+    # ./init-context.nix
     ./init.nix
     ./libraries.nix
     # ./nix.nix

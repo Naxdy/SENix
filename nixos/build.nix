@@ -257,11 +257,10 @@ let
       # writable again before any in-place `sed`/`make` runs.
       chmod -R u+w .
 
-      # The `init_context` base module (declared via `security.selinux.modules`)
-      # sets `sid init init_t` so PID 1 boots as `init_t`; drop the Reference
-      # Policy's own `sid init` (which is `unlabeled_t`) so there is exactly one
-      # `sid init` statement.
-      sed -i '/^sid init[[:space:]]/d' policy/modules/kernel/kernel.te
+      # PID 1's `init` SID context comes from the Reference Policy's own
+      # `kernel.te` (`sid init … unlabeled_t`) — we deliberately do not override
+      # it here; add/keep a `type_transition` (in `init_context`) so systemd
+      # re-execs into `init_t` instead.
 
       export INSTALL=${pkgs.coreutils}/bin/install
 

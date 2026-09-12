@@ -146,6 +146,12 @@ pkgs.testers.runNixOSTest {
       )
 
       machine.wait_for_unit("multi-user.target")
+      status, out = machine.execute(
+          "echo PID1=$(cat /proc/1/attr/current 2>&1); "
+          "echo SYSTEMD=$(getfattr -h -n security.selinux --only-values "
+          "/nix/store/2l1839hfcsxh5y0clkq2jf1kw1iwwb7c-systemd-261.2/lib/systemd/systemd 2>&1)"
+      )
+      print("PID1 + SYSTEMD:\n" + out)
       status, out = machine.execute("grep ' /nix/store ' /proc/self/mountinfo | grep -oE 'lowerdir=[^ ]*|upperdir=[^ ]*|metacopy[^ ]*|/nix/.ro-store|/sysroot/nix/.ro-store'")
       print("STORE MOUNTINFO:\n" + out)
       status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1; echo ---; getfattr -n security.selinux --only-values /nix/store/mwq3vsf8vjb3lpfz0czy0vk9j98dyxda-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
