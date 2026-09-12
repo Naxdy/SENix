@@ -125,9 +125,6 @@ pkgs.testers.runNixOSTest {
       # module.
       machine.wait_for_unit("multi-user.target")
 
-      # Now run the relabel and verify the store unit files are labeled
-      # `systemd_unit_t` (not left `unlabeled_t`).
-      machine.succeed("selinux-relabel")
       machine.succeed(
           "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/multi-user.target)"
           + " | grep -q systemd_unit_t"
@@ -141,26 +138,17 @@ pkgs.testers.runNixOSTest {
       # refpolicy home rules use `HOME_DIR` macros, which setfiles expands from
       # the real user homes, so a created home dir must get a home context.
       machine.succeed("mkdir -p /home/selinuxtest")
-      machine.succeed("selinux-relabel")
       machine.succeed("getfattr -n security.selinux --only-values /home/selinuxtest")
       machine.succeed(
           "getfattr -n security.selinux --only-values /home/selinuxtest | grep -qE 'user_home_dir_t|user_home_t|home_root_t'"
       )
 
-      # A `nixos-rebuild switch` to a configuration that no longer declares the
-      # module (its toplevel is already in the machine store). This runs the
-      # activation: it reloads the policy (semodule) and re-applies labels
-      # (selinux-relabel) for the new, smaller file-context set.
-      #
       # `switch-to-configuration` can exit non-zero for unrelated systemd unit
       # nits (e.g. NixOS's `nix-store.mount` cannot be stopped because the store
       machine.succeed("switch-to-configuration switch ${c2} || true")
       machine.wait_until_succeeds(
           "readlink -f /run/current-system | grep -q ${builtins.baseNameOf c2}"
       )
-      # Re-run the relabel for the now-active (module-less) policy so the
-      # store-overlay labels are refreshed independently of the switch's exit.
-      machine.succeed("selinux-relabel")
 
       # After the switch the module's type is absent from the policy, so the
       # binary must not still carry `switch_learn_exec_t` (it reverts to

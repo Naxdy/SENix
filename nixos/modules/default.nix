@@ -6,11 +6,9 @@
     ./bubblewrap.nix
     ./chromium.nix
     ./corecommands.nix
-    # this is what I meant bruh
-    # ./init-context.nix
+    ./dbus.nix
     ./init.nix
     ./libraries.nix
-    # ./nix.nix
     ./selinuxutil.nix
     ./selinux-tools.nix
   ];
