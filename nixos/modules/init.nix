@@ -6,6 +6,7 @@
       storePaths = {
         systemd = [
           config.systemd.package
+          config.boot.initrd.systemd.package
         ];
         units = lib.unique (
           config.boot.initrd.systemd.packages

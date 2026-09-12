@@ -46,11 +46,15 @@ let
           # The immutable store lives under `/sysroot/nix/.ro-store` in the
           # initrd but `/nix/.ro-store` after switch_root; pick whichever
           # exists so the overlay can be established in both phases.
-          lower=/sysroot/nix/.ro-store
-          [ -d /nix/.ro-store ] && lower=/nix/.ro-store
+          lower=/nix/.ro-store
+          mountpoint=/nix/store
+          if [ -d /sysroot ]; then
+            lower=/sysroot/nix/.ro-store
+            mountpoint=/sysroot/nix/store
+          fi
           mount -t overlay overlay \
             -o "lowerdir=$lower,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
-            /nix/store
+            "$mountpoint"
         fi
 
         # Label the store directly from the loaded policy's file_contexts instead
@@ -61,37 +65,24 @@ let
         # The glob rules in `security.selinux.modules.*.fileContext` label any
         # store package without having to declare it.
         fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-        pol=/run/selinux/${cfg.type}/active/policy.kern
         # `restorecon -R` does not descend the *stacked* `/nix/store` mount to
         # the writable metacopy view, so enumerate the top-level store entries
         # with `find -maxdepth 1` (cheap, no deep walk) and feed them to
         # `setfiles -f -`; it then recurses into each package dir (which is the
         # writable overlay view) and labels them through the metacopy upper.
         echo "=== store setfiles diag ==="
-        grep ' /nix/store ' /proc/self/mountinfo
+        cat /proc/self/mountinfo
         echo "--- ls enforce-learn ---"
-        ls -la /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1 || true
         echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
         grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20 || true
         echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
-        ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1 || true
-        echo "--- setfiles DIR on the enforce-learn PACKAGE (recursion?) ---"
-        ${pkgs.policycoreutils}/bin/setfiles -v "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn 2>&1 || true
-        echo "--- restorecon -R on the enforce-learn PACKAGE (recursion?) ---"
-        ${pkgs.policycoreutils}/bin/restorecon -R -v -f "$fc" \
-          /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn 2>&1 || true
-        echo "=== end store setfiles diag ==="
-        if [ -f "$fc" ] && [ -f "$pol" ]; then
-          # `restorecon -R` is the explicitly-recursive tool; it must descend the
-          # stacked `/nix/store` overlay into the store binaries through the
-          # metacopy view. Verbose here only for the diag; the real label below.
-          echo "--- restorecon -R -v (enforce + screen grep) ---"
-          ${pkgs.policycoreutils}/bin/restorecon -R -v -F -f "$fc" /nix/store 2>&1 \
-            | grep -iE 'enforce-learn|screen-5|bin/screen' || true
-          echo "=== end restorecon diag ==="
-          ${pkgs.policycoreutils}/bin/restorecon -R -F -f "$fc" /nix/store 2>/dev/null || true
+
+        ls / -oah
+        ls /nix -oah
+
+        ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -F "$fc" /nix/store | grep systemd
+        if [ -d /sysroot ]; then
+          ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -r /sysroot -F "$fc" /sysroot/nix/store | grep systemd
         fi
       }
 
@@ -474,6 +465,9 @@ in
         pkgs.attr
         pkgs.findutils
         pkgs.coreutils
+        pkgs.mount
+        pkgs.gnugrep
+        storeOverlayScript
       ];
       serviceConfig = {
         Type = "oneshot";
@@ -485,6 +479,7 @@ in
       };
       script = ''
         echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
+        echo "selinux-placeholder ${placeholder "out"}"
         # Install and link the policy modules, make the linked policy visible to
         # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
         # and performs the kernel version conversion), then enforce. We cannot
@@ -510,37 +505,21 @@ in
         fi
 
         ${pkgs.policycoreutils}/bin/load_policy
+
+        SD="${placeholder "out"}"
+        find "$SD" -type f -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_unit_t {} + || true
+
+        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
+
+        ${lib.getExe storeOverlayScript}
+
+        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
+
+        cat /proc/self/mountinfo
+
+        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)" # <-- we need to be init_t or init_unit_t here
+
         ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
-
-        # Label every store unit file `systemd_unit_t` before switch_root so the
-        # real systemd can manage them for the boot window (otherwise systemd
-        # cannot report/start units that are still `unlabeled_t`). `setfiles`
-        # does not descend the `/nix/store` mount and `restorecon` has no
-        # `/sysroot` alternate root, so we walk the unit paths with `find`+
-        # `setfattr` — the same mechanism used for the systemd binary below,
-        # which does persist. Only unit paths are touched to stay within the
-        # initrd's memory; the immutable store only carries the labels in the
-        # overlay upper, so it is never written to.
-        ${pkgs.findutils}/bin/find /sysroot/nix/store \
-          \( -path '*/systemd/system/*' -o -path '*/systemd/user/*' -o -path '*unit-*/*' \) \
-          \( -type f -o -type l \) \
-          -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:systemd_unit_t {} + \
-          2>/dev/null || true
-        # The relabel-start binary is unlabeled_t; a domain (`init_unit_t`)
-        # cannot `entrypoint` an unlabeled_t file, so label it bin_t before the
-        # boot-time relabel execs it.
-        ${pkgs.findutils}/bin/find /sysroot/nix/store -path '*-unit-script-*/bin/*' \
-          \( -type f -o -type l \) \
-          -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:bin_t {} + \
-          2>/dev/null || true
-
-        SD=${config.systemd.package}/lib/systemd/systemd
-        ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SD" || true
-
-        SRD=/sysroot/nix/store/$(basename ${config.systemd.package})/lib/systemd/systemd
-        if [ -f "$SRD" ]; then
-          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$SRD" || true
-        fi
       '';
     };
 
