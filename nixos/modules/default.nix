@@ -9,7 +9,8 @@
     ./dbus.nix
     ./init.nix
     ./libraries.nix
-    ./selinuxutil.nix
+    ./nscd.nix
     ./selinux-tools.nix
+    ./selinuxutil.nix
   ];
 }
