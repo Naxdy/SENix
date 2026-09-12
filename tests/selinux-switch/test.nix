@@ -51,7 +51,7 @@ let
       ];
       security.selinux = {
         enable = true;
-        mode = "enforcing";
+        mode = "permissive";
       };
       environment.systemPackages = [
         pkgs.attr

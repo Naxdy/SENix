@@ -16,8 +16,10 @@
         # Shared libraries. The `usr_t` catch-all and executable (`bin_t`) rules
         # live in `corecommands.nix` (the store analogue of `/usr`); only the
         # library-specific rules belong here.
-        "/nix/store/.*/lib(/.*)?" = "--	gen_context(system_u:object_r:lib_t,s0)";
-        "/nix/store/.*/lib64(/.*)?" = "--	gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/.*/lib" = "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/.*/lib/.*" = "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/.*/lib64" = "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/.*/lib64/.*" = "gen_context(system_u:object_r:lib_t,s0)";
         "/nix/store/.*/lib/ld-[^/]*\.so(\.[0-9]+)*" = "--	gen_context(system_u:object_r:ld_so_t,s0)";
         "/nix/store/.*/bin/ldconfig" = "--	gen_context(system_u:object_r:ldconfig_exec_t,s0)";
 

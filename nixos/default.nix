@@ -177,6 +177,26 @@ in
   };
 
   config = lib.mkIf cfg.enable {
+    assertions = [
+      {
+        assertion = !lib.any (e: e == "ro") config.boot.nixStoreMountOpts;
+        message = ''
+          With SELinux enabled, the Nix store must not be mounted readonly.
+
+          The metadata overlay already ensures that the underlying Nix store is not modified.
+
+          Please remove `ro` from the options declared in `config.boot.nixStoreMountOpts` or disable SELinux.
+        '';
+      }
+    ];
+
+    # We use this to remove `ro` as the store mount option, since our overlay
+    # already ensures the underlying store cannot be written to.
+    boot.nixStoreMountOpts = lib.mkDefault [
+      "nosuid"
+      "nodev"
+    ];
+
     nixpkgs.overlays = lib.mkForce (
       lib.optionals cfg.overlayPackages [
         (
@@ -367,6 +387,10 @@ in
                 fi
               done
             fi
+
+            echo "reet reet"
+            cat /proc/self/mountinfo
+
             echo "$cmd" >/var/lib/selinux/activate-check
           fi
         '';
@@ -415,36 +439,16 @@ in
           [end]
         '';
 
-      # TODO: unsure if this propagates past the initrd phase; Need to test:
-      # - does the metacopy overlay persist?
-      # - when doing `nix build`, are new paths visible?
-      # - when changing xattrs, are the underlying files affected? (should be NO)
-      mounts = [
-        {
-          where = "/sysroot/nix/store";
-          what = "overlay";
-          type = "overlay";
-          options = lib.concatStringsSep "," [
-            "lowerdir=/sysroot/nix/.ro-store"
-            "upperdir=/run/selinux/overlay/upper"
-            "workdir=/run/selinux/overlay/work"
-            "metacopy=on"
-          ];
-          unitConfig = {
-            DefaultDependencies = false;
-            RequiresMountsFor = [
-              "/sysroot/nix/.ro-store"
-            ];
-          };
-          requiredBy = [ "initrd-fs.target" ];
-          after = [
-            config.boot.initrd.systemd.services.selinux-init.name
-          ];
-        }
-      ];
-
       services = {
         # Prepares the necessary prerequisites for mounting the metacopy overlay.
+        #
+        # TODO: We'll need to use our own bespoke FUSE system here to prevent actual
+        # date writes to the upper, and only allow metadata. Even though the underlying
+        # nix store remains untouched, this would allow certain processes to poison the
+        # runtime view of the store.
+        #
+        # TODO: We need to fix unmounting on system shutdown, right now it fails
+        # with "target is busy".
         init-selinux-overlay = {
           requiredBy = [ "initrd-fs.target" ];
           before = [
@@ -456,20 +460,49 @@ in
             Type = "oneshot";
             RemainAfterExit = true;
           };
+          unitConfig = {
+            RequiresMountsFor = [
+              "/sysroot/run"
+              "/sysroot/nix/store"
+            ];
+          };
+          path = [
+            pkgs.coreutils
+            pkgs.util-linux
+          ];
           script = ''
             set -uo pipefail
-            export PATH="/bin:${
-              lib.makeBinPath [
-                pkgs.util-linux
-              ]
-            }"
 
-            upper=/run/selinux/overlay
-            store=/run/selinux/store
+            upper=/sysroot/run/selinux/overlay
 
-            mkdir -p /run/selinux "$upper" "$store"
-            mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
+            mkdir -p /run/selinux "$upper"
+            mount -t tmpfs -o size=0,mode=0755 tmpfs "$upper"
             mkdir -p "$upper/upper" "$upper/work"
+
+            echo "mounting metacopy overlay"
+
+            # The overlay is mounted with the same mount options
+            # as in `config.boot.nixStoreMountOpts` in order to ensure
+            # that the stage-2 boot script doesn't stack a bind mount
+            # on top of it.
+            #
+            # To prevent the store from accidentally being mounted `ro`,
+            # which would disable metadata / SELinux labelling,
+            # we have an assertion that checks for `ro` being present
+            # within `config.boot.nixStoreMountOpts`
+            mount -t overlay overlay \
+              -o ${
+                lib.concatStringsSep "," (
+                  config.boot.nixStoreMountOpts
+                  ++ [
+                    "lowerdir=/sysroot/nix/store"
+                    "upperdir=$upper/upper"
+                    "workdir=$upper/work"
+                    "metacopy=on"
+                  ]
+                )
+              } \
+              "/sysroot/nix/store"
           '';
         };
 
@@ -513,7 +546,7 @@ in
             for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
               [ -e "$f" ] && pp="$pp $f"
             done
-            ${pkgs.policycoreutils}/bin/semodule -s ${cfg.type} -i ''${pp}
+            semodule -s ${cfg.type} -i ''${pp}
 
             # semanage writes the store to `store-root` (`/run/selinux`) from
             # semanage.conf, but libselinux + setfiles/restorecon read the tree
@@ -532,18 +565,18 @@ in
             done
 
             printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
-
-            ${pkgs.policycoreutils}/bin/load_policy
           '';
         };
 
-        # The initrd relabel sets the correct labels on `/nix/store` (the initrd's nix store)
-        # and on `/sysroot/nix/store` (the proper system nix store).
+        # The initrd relabel sets the correct labels on `/nix/store` (the initrd's nix store), as
+        # well as the systemd package within the real nix store, so PID 1 gets the correct label.
         #
-        # The `/sysroot/nix/store` is mounted via a metacopy overlay in `config.boot.initrd.systemd.mounts`,
-        # which propagates past the initrd phase.
+        # Systemd then takes over and recursively labels everything in `/run/systemd/relabel-extra.d/10-senix.relabel`
         selinux-relabel = {
           wantedBy = [ "initrd.target" ];
+          requires = [
+            "initrd-fs.target"
+          ];
           after = [
             config.boot.initrd.systemd.services.selinux-init.name
           ];
@@ -558,58 +591,33 @@ in
             pkgs.policycoreutils
             pkgs.libselinux.bin
             pkgs.findutils
+            pkgs.coreutils
           ];
           script = ''
             set -euo pipefail
 
             fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
 
-            # Run `setfiles` on the main store directory first, which causes it to walk all subdirs
-            # and assign the correct permissions. This skips files however, so we run another
-            # pass over all regular files afterwards.
-            ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1
-
-            ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" /sysroot/nix/store
-            find /sysroot/nix/store -type f -o -type d | ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" -s
-
-            ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
+            # We let systemd handle all of the relabeling for us
+            mkdir -p /run/systemd/relabel-extra.d || true
+            echo "/" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/nix/store" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/etc" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/var" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/home" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/usr" >> /run/systemd/relabel-extra.d/10-senix.relabel
           '';
         };
       };
     };
 
     systemd.services = {
-      # Relabel userspace directories on boot.
-      # We skip `/nix/store` here because it's labeled during the initrd phase.
-      #
-      # TODO: untested
-      selinux-relabel-init = {
-        wantedBy = [ "sysinit.target" ];
-        before = [ "multi-user.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-          SELinuxContext = "system_u:system_r:init_unit_t";
-        };
-        script = ''
-          echo "relabel userspace"
-          ${pkgs.findutils}/bin/find /etc/selinux
-          set -euo pipefail
-
-          fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-
-          paths="/etc /var /run /dev"
-          for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
-          # shellcheck disable=SC2086
-          ${pkgs.policycoreutils}/bin/setfiles -F -q "$fc" $paths || true
-        '';
-      };
-
       # Runs on `nixos-rebuild switch` to relabel the nix store.
       # Here, we skip the userspace directories, because we don't want to
       # override any runtime changes a user may have made.
       #
-      # TODO: unstested
+      # TODO: Untested; need to confirm whether this works / gets called.
       selinux-relabel = {
         wantedBy = [ "nixos-activation.service" ];
         after = [ "nixos-activation.service" ];
@@ -618,14 +626,16 @@ in
           RemainAfterExit = true;
           SELinuxContext = "system_u:system_r:init_unit_t";
         };
+        path = [
+          pkgs.policycoreutils
+        ];
         script = ''
-          echo "relabel switch"
           set -euo pipefail
 
           fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
 
-          ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1
-          find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s
+          setfiles -F "$fc" /nix/store 2>&1
+          find /nix/store -type f -o -type d -o -type l | setfiles -F "$fc" -s
         '';
       };
     };
