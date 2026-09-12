@@ -51,7 +51,6 @@
         type mount_runtime_t;
         type home_root_t;
         type proc_t;
-        type enforce_learn_exec_t;
         type file_context_t;
         type policy_config_t;
         type default_context_t;
@@ -109,7 +108,7 @@
       allow init_unit_t { usr_t bin_t lib_t ld_so_t }:lnk_file { read getattr relabelto relabelfrom };
       allow init_unit_t { systemd_unit_t }:dir { read search getattr open relabelto relabelfrom };
       allow init_unit_t { systemd_unit_t }:lnk_file { read getattr relabelto relabelfrom };
-      allow init_unit_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t newrole_exec_t run_init_exec_t enforce_learn_exec_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom entrypoint };
+      allow init_unit_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t newrole_exec_t run_init_exec_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom entrypoint };
       allow init_unit_t { unlabeled_t root_t default_t }:file { read getattr open map execute execute_no_trans relabelto relabelfrom };
       allow init_unit_t unlabeled_t:dir { read search open getattr };
       allow init_unit_t default_t:dir { read search getattr open relabelto relabelfrom };
@@ -159,7 +158,7 @@
       allow setfiles_t { systemd_unit_t }:dir { read getattr open search relabelto relabelfrom };
       allow setfiles_t { etc_t var_t var_lib_t }:file { read getattr open relabelto relabelfrom };
       allow setfiles_t { etc_t var_t var_lib_t }:dir { read getattr open search relabelto relabelfrom };
-      allow setfiles_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t newrole_exec_t run_init_exec_t enforce_learn_exec_t }:file relabelto;
+      allow setfiles_t { semanage_exec_t load_policy_exec_t setfiles_exec_t checkpolicy_exec_t newrole_exec_t run_init_exec_t }:file relabelto;
       allow setfiles_t { unlabeled_t root_t }:file { getattr relabelto relabelfrom };
       allow setfiles_t { unlabeled_t root_t }:dir { getattr relabelto relabelfrom };
       allow setfiles_t { tmpfs_t }:dir { getattr relabelto relabelfrom };

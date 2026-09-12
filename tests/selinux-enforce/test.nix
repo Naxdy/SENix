@@ -61,10 +61,18 @@ pkgs.testers.runNixOSTest {
               type var_lib_t;
               type unlabeled_t;
               type fs_t;
+              type init_unit_t;
+              type setfiles_t;
             }
 
             type enforce_learn_exec_t;
             application_executable_file(enforce_learn_exec_t)
+
+            # Migrated from `selinux_tools` (which must not depend on this
+            # test-only type): the relabel domain + the labeler need access to
+            # the app binary's file type.
+            allow init_unit_t enforce_learn_exec_t:file { read getattr open map execute execute_no_trans relabelto relabelfrom entrypoint };
+            allow setfiles_t enforce_learn_exec_t:file relabelto;
 
             type enforce_learn_t;
             init_domain(enforce_learn_t, enforce_learn_exec_t)
