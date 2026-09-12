@@ -568,7 +568,6 @@ in
             # and assign the correct permissions. This skips files however, so we run another
             # pass over all regular files afterwards.
             ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1
-            find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s
 
             ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" /sysroot/nix/store
             find /sysroot/nix/store -type f -o -type d | ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" -s
