@@ -80,9 +80,9 @@ let
         ls / -oah
         ls /nix -oah
 
-        ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -F "$fc" /nix/store | grep systemd
+        ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -F "$fc" /nix/store | grep systemd || true
         if [ -d /sysroot ]; then
-          ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -r /sysroot -F "$fc" /sysroot/nix/store | grep systemd
+          ${lib.getExe' pkgs.policycoreutils "setfiles"} -v -r /sysroot -F "$fc" /sysroot/nix/store | grep systemd || true
         fi
       }
 
@@ -117,6 +117,13 @@ let
         # second overlay and exceed the overlayfs depth limit). It does not rely
         # on an initrd-time run, so nothing clears the marker here.
         ${storeOverlayScript}/bin/selinux-store-overlay
+
+        # Point libselinux/setfiles at the semanage store (the initrd generated
+        # it under `/run/selinux/<type>` per `store-root` in semanage.conf); the
+        # /etc/selinux/<type> directory from the initrd is replaced at
+        # switch_root and would otherwise lack the file_contexts entirely.
+        rm -rf /etc/selinux/${cfg.type}
+        ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
 
         fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
         pol=/run/selinux/${cfg.type}/active/policy.kern
@@ -495,16 +502,64 @@ in
         done
         ${pkgs.policycoreutils}/bin/semodule -s ${cfg.type} -i ''${pp}
 
-        mkdir -p /etc/selinux/${cfg.type}/policy
+        # semanage writes the store to `store-root` (`/run/selinux`) from
+        # semanage.conf, but libselinux + setfiles/restorecon read the tree
+        # `/etc/selinux/<type>/{policy, contexts/files}` (computed from
+        # SELINUXTYPE), which the semanage store does not lay out. Link
+        # `/etc/selinux/<type>` to the store and symlink the libselinux-visible
+        # files to the store's `active/` artifacts, so `load_policy` and
+        # `setfiles` find the linked policy and file contexts.
+        rm -rf /etc/selinux/${cfg.type}
+        ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
+        mkdir -p /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy
+        ln -sfn ../../active/file_contexts /etc/selinux/${cfg.type}/contexts/files/file_contexts
+        ln -sfn ../active/policy.kern /etc/selinux/${cfg.type}/policy/policy
+        for v in $(seq 40 -1 25); do
+          ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
+        done
+        ls -la /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy 2>&1 || true
 
         printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
 
-        SRC=/run/selinux/${cfg.type}/active/policy.kern
-        if [ -f "$SRC" ]; then
-          for v in $(seq 40 25); do cp "$SRC" /etc/selinux/${cfg.type}/policy/policy.$v; done
-        fi
+        echo "=== POST-SEMODULE STORE DUMP ==="
+        find /run/selinux -maxdepth 3 2>&1 | head -30 || true
+        echo "--- modules ---"
+        ${pkgs.policycoreutils}/bin/semodule -l 2>&1 | grep -E '(^| )init|selinux_tools|^base' | head || true
 
-        ${pkgs.policycoreutils}/bin/load_policy
+        ${pkgs.policycoreutils}/bin/load_policy 2>&1 || echo "LOAD_POLICY_FAILED rc=$?"
+
+        echo "=== DIAG: FC LAYOUT ==="
+        ls -la /etc/selinux/${cfg.type} 2>&1 | head -8 || true
+        readlink /etc/selinux/${cfg.type} 2>&1 || true
+        ls -la /etc/selinux/${cfg.type}/contexts/files/ 2>&1 | head || true
+        wc -l /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
+        grep -nE 'init_exec_t' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head || true
+        grep -nE 'systemd-261.2/lib/systemd/systemd' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head || true
+        echo "rc_grep=$?" || true
+        ls -la /run/selinux/${cfg.type}/contexts/files/ 2>&1 | head || true
+        wc -l /run/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
+
+        echo "=== DIAG: POLICY LOADED ==="
+        echo "SD_PLACEHOLDER=${placeholder "out"}" || true
+        echo "PROC1_CMD=$(tr '\0' ' ' </proc/1/cmdline)" || true
+        echo "PROC1_EXE=$(readlink /proc/1/exe 2>&1)" || true
+        echo "PROC1_CTX=$(cat /proc/1/attr/current 2>&1)" || true
+        # Where do the systemd + systemd-executor binaries sit at policy-load
+        # time (initrd store, sysroot store, /run/current-system), and what
+        # labels do they carry?  These are the binaries PID 1 may exec at
+        # switch_root, so they must be init_exec_t for the kernel_t->init_t
+        # type_transition to fire.
+        shopt -s nullglob
+        for p in /run/current-system/systemd/lib/systemd/systemd* \
+                 /nix/store/*-systemd-*/lib/systemd/systemd* \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd*; do
+          echo "PFX $p CTX=$(getfattr -h -n security.selinux --only-values "$p" 2>&1)" || true
+        done
+        shopt -u nullglob
+        echo "--- fc rules that hit systemd -> init_exec_t ---"
+        grep -nE 'init_exec_t|systemd' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head -20 || true
+        echo "--- installed modules (init/tools/base) ---"
+        ${pkgs.policycoreutils}/bin/semodule -l 2>/dev/null | grep -E '(^| )init|selinux_tools|^base' | head || true
 
         SD="${placeholder "out"}"
         find "$SD" -type f -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_unit_t {} + || true
@@ -513,9 +568,46 @@ in
 
         ${lib.getExe storeOverlayScript}
 
+        # PID 1 (kernel_t) re-execs the compiled-in SYSTEMD_BINARY_PATH
+        # (`/run/current-system/systemd/lib/systemd/systemd`) at switch_root.
+        # That binary must be `init_exec_t` for the
+        # `type_transition kernel_t init_exec_t:process init_t` to fire. The
+        # refpolicy init.fc labels exactly these four binaries `init_exec_t`
+        # (amended to the nix store layout), but the merged file_contexts gives
+        # the broad `/nix/store/.*/lib/*` `lib_t` rule precedence over them, so
+        # the store `setfiles` labels the systemd binaries `lib_t`. Re-label the
+        # critical binaries directly, on the (now ensured) metacopy store view,
+        # so the switch_root re-exec sees `init_exec_t`.
+        shopt -s nullglob
+        for p in /nix/store/*-systemd-*/lib/systemd/systemd \
+                 /nix/store/*-systemd-*/lib/systemd/systemd-executor \
+                 /nix/store/*-systemd-*/lib/systemd/systemd-shutdown \
+                 /nix/store/*-systemd-*/lib/systemd/systemd-oomd \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-executor \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-shutdown \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-oomd; do
+          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$p" 2>/dev/null || true
+        done
+        for p in /sysroot/nix/store/*-systemd-*/lib/systemd/systemd /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-executor; do
+          echo "SYSD_LABEL $p=$(getfattr -h -n security.selinux --only-values "$p" 2>/dev/null || echo MISSING)" || true
+        done
+        shopt -u nullglob
+
+        echo "=== DIAG: AFTER STORE SETFILES ==="
+        shopt -s nullglob
+        for p in /run/current-system/systemd/lib/systemd/systemd* \
+                 /nix/store/*-systemd-*/lib/systemd/systemd* \
+                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd*; do
+          echo "AFT $p CTX=$(getfattr -h -n security.selinux --only-values "$p" 2>&1)" || true
+        done
+        shopt -u nullglob
+        echo "PROC1_CTX_AFT=$(cat /proc/1/attr/current 2>&1)" || true
+        echo "SELF_CTX_AFT=$(cat /proc/self/attr/current 2>&1)" || true
+
         echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
 
-        cat /proc/self/mountinfo
+        cat /proc/self/mountinfo || true
 
         echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)" # <-- we need to be init_t or init_unit_t here
 

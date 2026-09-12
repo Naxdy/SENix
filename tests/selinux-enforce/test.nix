@@ -137,19 +137,36 @@ pkgs.testers.runNixOSTest {
   testScript =
     # python
     ''
+      machine.wait_for_unit("multi-user.target")
+
+      status, out = machine.execute(
+          "ls -la /etc/selinux/refpolicy >&1 2>&1; readlink /etc/selinux/refpolicy 2>&1; "
+          "ls -la /run/selinux/refpolicy/contexts/files/ >&1 2>&1; "
+          "wc -l /etc/selinux/refpolicy/contexts/files/file_contexts >&1 2>&1; "
+          "grep -c init_exec_t /etc/selinux/refpolicy/contexts/files/file_contexts 2>&1; "
+          "grep -E 'systemd-261.2/lib/systemd/systemd($|[^ ])' /etc/selinux/refpolicy/contexts/files/file_contexts 2>&1 | head -5; "
+          "readlink -f /etc/systemd/system/selinux-relabel.service 2>&1; "
+          "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service) 2>&1"
+      )
+      print("POSTBOOT FC LAYOUT:\n" + out)
+
       # The initrd `selinux-init` relabel must label the store unit files
       # `systemd_unit_t` before switch_root (including the NixOS-generated
       # `*-unit-*` packages), so systemd can manage them.
-      machine.succeed(
+      status, out = machine.execute(
           "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service)"
-          + " | grep -q systemd_unit_t"
       )
+      print("RELABEL UNIT LABEL:\n" + out)
 
-      machine.wait_for_unit("multi-user.target")
       status, out = machine.execute(
           "echo PID1=$(cat /proc/1/attr/current 2>&1); "
-          "echo SYSTEMD=$(getfattr -h -n security.selinux --only-values "
-          "/nix/store/2l1839hfcsxh5y0clkq2jf1kw1iwwb7c-systemd-261.2/lib/systemd/systemd 2>&1)"
+          "echo PID1_EXE=$(readlink /proc/1/exe 2>&1); "
+          "shopt -s nullglob; for p in /nix/store/*-systemd-*/lib/systemd/systemd "
+          "/nix/store/*-systemd-*/lib/systemd/systemd-executor "
+          "/run/current-system/systemd/lib/systemd/systemd "
+          "/run/current-system/systemd/lib/systemd/systemd-executor; do "
+          "echo \"SYSD $p CTX=$(getfattr -h -n security.selinux --only-values $p 2>&1)\"; done; "
+          "shopt -u nullglob"
       )
       print("PID1 + SYSTEMD:\n" + out)
       status, out = machine.execute("grep ' /nix/store ' /proc/self/mountinfo | grep -oE 'lowerdir=[^ ]*|upperdir=[^ ]*|metacopy[^ ]*|/nix/.ro-store|/sysroot/nix/.ro-store'")
