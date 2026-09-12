@@ -474,6 +474,7 @@ in
         pkgs.coreutils
         pkgs.mount
         pkgs.gnugrep
+        pkgs.gnused
         storeOverlayScript
       ];
       serviceConfig = {
@@ -570,27 +571,22 @@ in
 
         # PID 1 (kernel_t) re-execs the compiled-in SYSTEMD_BINARY_PATH
         # (`/run/current-system/systemd/lib/systemd/systemd`) at switch_root.
-        # That binary must be `init_exec_t` for the
-        # `type_transition kernel_t init_exec_t:process init_t` to fire. The
-        # refpolicy init.fc labels exactly these four binaries `init_exec_t`
-        # (amended to the nix store layout), but the merged file_contexts gives
-        # the broad `/nix/store/.*/lib/*` `lib_t` rule precedence over them, so
-        # the store `setfiles` labels the systemd binaries `lib_t`. Re-label the
-        # critical binaries directly, on the (now ensured) metacopy store view,
-        # so the switch_root re-exec sees `init_exec_t`.
+        # That binary must be `init_exec_t` for the type_transition
+        # `kernel_t init_exec_t:process init_t` (refpolicy kernel_domtrans_to)
+        # to fire. The refpolicy init.fc labels exactly these four binaries
+        # init_exec_t (amended to nix store paths; the exact rules outrank the
+        # broad `/nix/store/.*/lib/*` lib_t glob for these paths). The
+        # whole-store `-r /sysroot` setfiles skips them, so drive exactly the
+        # refpolicy-listed binaries through setfiles with the correct spec
+        # (fc is only set inside setupStoreOverlay's subshell, hence the
+        # explicit path here) — the file_contexts decides the labels.
+        TGTFC=/etc/selinux/${cfg.type}/contexts/files/file_contexts
         shopt -s nullglob
-        for p in /nix/store/*-systemd-*/lib/systemd/systemd \
-                 /nix/store/*-systemd-*/lib/systemd/systemd-executor \
-                 /nix/store/*-systemd-*/lib/systemd/systemd-shutdown \
-                 /nix/store/*-systemd-*/lib/systemd/systemd-oomd \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd \
+        for p in /sysroot/nix/store/*-systemd-*/lib/systemd/systemd \
                  /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-executor \
                  /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-shutdown \
                  /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-oomd; do
-          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_exec_t "$p" 2>/dev/null || true
-        done
-        for p in /sysroot/nix/store/*-systemd-*/lib/systemd/systemd /sysroot/nix/store/*-systemd-*/lib/systemd/systemd-executor; do
-          echo "SYSD_LABEL $p=$(getfattr -h -n security.selinux --only-values "$p" 2>/dev/null || echo MISSING)" || true
+          ${lib.getExe' pkgs.policycoreutils "setfiles"} -q -r /sysroot -F "$TGTFC" "$p" || true
         done
         shopt -u nullglob
 
