@@ -35,7 +35,13 @@
       # Policy's `init` module grants to `init_t`.
       allow init_t init_t:process execmem;
       allow init_t init_t:capability2 checkpoint_restore;
-      type_transition kernel_t init_exec_t:process init_t;
+      # PID 1 is the `init` initial SID, which the Reference Policy's `kernel.te`
+      # sets to `unlabeled_t`; systemd re-execs the `init_exec_t` binary, so we
+      # must transition FROM `unlabeled_t` (not `kernel_t`) to `init_t`.
+      type_transition unlabeled_t init_exec_t:process init_t;
+      allow unlabeled_t init_t:process transition;
+      allow unlabeled_t init_t:process2 nosuid_transition;
+      allow unlabeled_t init_exec_t:file execute;
     '';
   };
 }

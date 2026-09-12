@@ -241,16 +241,6 @@ let
           f.writelines(out)
       SENIX_PYEOF
 
-      # The `init` module only declares `init_t`/`init_exec_t`/`initrc_transition_domain`
-      # once; we move those into the `init_context` base module (which declares
-      # `sid init init_t`, only valid in the base). Strip them from `init.te`
-      # so the base is the single source of truth and checkmodule doesn't see a
-      sed -i \
-        -e 's|^\(\tclass passwd rootok;\)$|\1\n\ttype init_t;\n\ttype init_exec_t;|' \
-        -e '/^attribute initrc_transition_domain;/d' \
-        -e '/^type init_t, initrc_transition_domain;/d' \
-        -e '/^type init_exec_t;/d' \
-        policy/modules/system/init.te
       cp -a ${moduleSourceDrv}/. .
 
       # `cp -a` preserves the (read-only) source modes; ensure everything is

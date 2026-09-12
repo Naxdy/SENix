@@ -65,6 +65,19 @@
       allow init_t init_unit_t:process transition;
       allow init_t init_unit_t:file { read execute getattr };
 
+      # PID 1 resolves to `kernel_t` (the `kernel` SID); the `init` SID is the
+      # Reference Policy's own `unlabeled_t`. systemd re-execs the `init_exec_t`
+      # binary to become `init_t`, so we allow the transition from both possible
+      # starting contexts.
+      allow { kernel_t unlabeled_t } init_exec_t:file execute;
+      type_transition { kernel_t unlabeled_t } init_exec_t:process init_t;
+      allow { kernel_t unlabeled_t } init_t:process transition;
+      allow { kernel_t unlabeled_t } init_t:process2 nosuid_transition;
+      allow init_t init_t:process execmem;
+      allow init_t init_t:capability2 checkpoint_restore;
+      allow init_exec_t root_t:filesystem associate;
+      allow init_exec_t tmpfs_t:filesystem associate;
+
       # Promote to a full init-style domain (the interface grants the broad
       # file/dir/socket access a boot process needs to run bash + the tools).
       init_domain(init_unit_t, init_unit_t)
@@ -100,14 +113,19 @@
       allow init_unit_t default_t:lnk_file read;
       allow init_unit_t { unlabeled_t root_t tmpfs_t }:dir { read search getattr open relabelto relabelfrom };
       allow init_unit_t { tmpfs_t root_t fs_t device_t }:dir search;
-      allow init_unit_t { init_t kernel_t }:fd use;
+      allow init_unit_t { init_t kernel_t unlabeled_t }:fd use;
+      # PID 1 is `kernel_t` (the `kernel` SID) → `unlabeled_t` (the `init` SID);
+      # it spawns the relabel via `SELinuxContext=`, so allow that transition +
+      # the fd/socket inheritance from it.
+      allow { kernel_t unlabeled_t } init_unit_t:process transition;
+      allow { kernel_t unlabeled_t } init_unit_t:file execute;
       allow init_unit_t tmpfs_t:dir { write add_name remove_name create };
       allow init_unit_t { tmpfs_t tmp_t var_t root_t }:dir { write add_name remove_name };
       allow init_unit_t selinux_config_t:dir { create add_name search getattr open };
       allow init_unit_t unlabeled_t:file ioctl;
       allow init_unit_t systemd_unit_t:file ioctl;
-      allow init_unit_t init_t:unix_stream_socket { connectto rw_socket_perms };
-      allow init_unit_t init_t:fifo_file rw_fifo_file_perms;
+      allow init_unit_t { init_t kernel_t unlabeled_t }:unix_stream_socket { connectto rw_socket_perms };
+      allow init_unit_t { init_t kernel_t unlabeled_t }:fifo_file rw_fifo_file_perms;
       allow init_unit_t etc_t:file { read getattr open };
       allow init_unit_t etc_t:lnk_file read;
       allow init_unit_t unlabeled_t:lnk_file read;
