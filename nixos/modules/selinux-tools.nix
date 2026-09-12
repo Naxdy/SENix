@@ -40,6 +40,9 @@
         type kernel_t;
         type etc_t;
         type nscd_runtime_t;
+        type initrc_t;
+        type event_device_t;
+        class service { start status };
         type bin_t;
         type usr_t;
         type ldconfig_exec_t;
@@ -174,6 +177,37 @@
       # `init_unit_t` (the relabel) uses pipes / tmpfiles for logging + the
       # shell; the Reference Policy grants it neither.
       allow init_unit_t init_unit_t:fifo_file rw_fifo_file_perms;
+
+      #
+      # Running the relabel + seeding while enforcing (the selinux-enforce VM)
+      # needs these additional grants; observed from the permissive boot AVCs.
+      #
+      # The relabel walks /dev nodes, ioctls its own binaries, connects to the
+      # nscd socket, reads the /run/selinux fc tree, and transitions its
+      # spawned tools under nnp/nosuid.
+      allow init_unit_t event_device_t:chr_file { read write open getattr ioctl };
+      allow init_unit_t { root_t bin_t }:file ioctl;
+      allow init_unit_t initrc_t:unix_stream_socket connectto;
+      allow init_unit_t setfiles_t:process2 nosuid_transition;
+      allow init_unit_t tmpfs_t:file { read open getattr map };
+      # setfiles crawls unreachable/unlabelled tree objects + the /run/selinux
+      # store while relabeling the root + /dev.
+      allow setfiles_t unlabeled_t:file { read open getattr map };
+      allow setfiles_t unlabeled_t:lnk_file { read getattr };
+      allow setfiles_t tmpfs_t:file { read open getattr map };
+      allow setfiles_t event_device_t:chr_file { read getattr open };
+      # The seed/rc processes (agetty etc.) run as initrc_t.
+      allow initrc_t self:capability2 checkpoint_restore;
+      allow initrc_t self:process execmem;
+      # systemd (init_t / the rc domains) starting units whose unit files still
+      # carry plain store (usr_t) labels needs the service class.
+      allow { init_t initrc_t } usr_t:service { start status };
+      # The boot-time setfiles/`setenforce 1` operate on the selinuxfs security
+      # interface; without them enforcing never engages. Use the refpolicy
+      # interfaces so the selinux neverallows (can_setenforce / check_context)
+      # still hold.
+      selinux_set_enforce_mode(init_unit_t)
+      selinux_validate_context(init_unit_t)
     '';
     # `/var/empty` has no rule in the Reference Policy (only its subpaths like
     # `/var/empty/dev`); without one `setfiles` cannot determine a context for

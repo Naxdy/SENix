@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "permissive";
+        mode = "enforcing";
         overlayPackages = false;
 
         modules.enforce_learn = {
@@ -100,6 +100,7 @@ pkgs.testers.runNixOSTest {
             allow enforce_learn_t initrc_t:fd use;
             allow enforce_learn_t tty_device_t:chr_file { read write };
             allow enforce_learn_t kernel_t:fifo_file rw_fifo_file_perms;
+            allow enforce_learn_t initrc_t:fifo_file rw_fifo_file_perms;
 
             # Resolve `/var/lib/enforce_learn/...`: traverse the (unlabelled)
             # root filesystem directories.
@@ -168,6 +169,9 @@ pkgs.testers.runNixOSTest {
       out = machine.succeed(
           "${enforceLearnApp}/bin/enforce-learn; echo app_rc=$?"
       )
+      # The type_transition must actually confine the process: it runs in the
+      # `enforce_learn_t` domain, not as the caller.
+      machine.succeed("echo '%s' | grep -q 'domain=system_u:system_r:enforce_learn_t'" % out)
       with subtest("SELinux is enforcing"):
           machine.succeed("test \"$(getenforce)\" = Enforcing")
 
