@@ -139,81 +139,16 @@ pkgs.testers.runNixOSTest {
     ''
       machine.wait_for_unit("multi-user.target")
 
-      status, out = machine.execute(
-          "ls -la /etc/selinux/refpolicy >&1 2>&1; readlink /etc/selinux/refpolicy 2>&1; "
-          "ls -la /run/selinux/refpolicy/contexts/files/ >&1 2>&1; "
-          "wc -l /etc/selinux/refpolicy/contexts/files/file_contexts >&1 2>&1; "
-          "grep -c init_exec_t /etc/selinux/refpolicy/contexts/files/file_contexts 2>&1; "
-          "grep -E 'systemd-261.2/lib/systemd/systemd($|[^ ])' /etc/selinux/refpolicy/contexts/files/file_contexts 2>&1 | head -5; "
-          "readlink -f /etc/systemd/system/selinux-relabel.service 2>&1; "
-          "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service) 2>&1"
-      )
-      print("POSTBOOT FC LAYOUT:\n" + out)
-
       # The initrd `selinux-init` relabel must label the store unit files
       # `systemd_unit_t` before switch_root (including the NixOS-generated
       # `*-unit-*` packages), so systemd can manage them.
       status, out = machine.execute(
           "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service)"
       )
-      print("RELABEL UNIT LABEL:\n" + out)
 
-      status, out = machine.execute(
-          "echo PID1=$(cat /proc/1/attr/current 2>&1); "
-          "echo PID1_EXE=$(readlink /proc/1/exe 2>&1); "
-          "shopt -s nullglob; for p in /nix/store/*-systemd-*/lib/systemd/systemd "
-          "/nix/store/*-systemd-*/lib/systemd/systemd-executor "
-          "/run/current-system/systemd/lib/systemd/systemd "
-          "/run/current-system/systemd/lib/systemd/systemd-executor; do "
-          "echo \"SYSD $p CTX=$(getfattr -h -n security.selinux --only-values $p 2>&1)\"; done; "
-          "shopt -u nullglob"
-      )
-      print("PID1 + SYSTEMD:\n" + out)
-      status, out = machine.execute("grep ' /nix/store ' /proc/self/mountinfo | grep -oE 'lowerdir=[^ ]*|upperdir=[^ ]*|metacopy[^ ]*|/nix/.ro-store|/sysroot/nix/.ro-store'")
-      print("STORE MOUNTINFO:\n" + out)
-      status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/rmckqiyjhrg8napr86fgvvkkwm8s29qa-enforce-learn/bin/enforce-learn 2>&1; echo ---; getfattr -n security.selinux --only-values /nix/store/mwq3vsf8vjb3lpfz0czy0vk9j98dyxda-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
-      print("STORE BIN CONTEXTS:\n" + out)
-      status, out = machine.execute("journalctl -k --no-pager -n 200 | grep -iE 'relabel|selinux|avc|denied|exec|init_unit'")
-      print("KERNEL AVC:\n" + out)
-      status, out = machine.execute("semodule -l 2>&1 | grep -iE 'selinux_tools|selinuxutil|init_context|enforce_learn|base|^init '")
-      print("MODULES:\n" + out)
-      # The `init_t -> init_unit_t` transition is denied by the kernel even
-      # though `selinux_tools` is loaded; inspect the loaded policy binary.
-      status, out = machine.execute(
-          "sesearch -A -s init_t -t init_unit_t -c process -p transition /run/selinux/refpolicy/active/policy.kern 2>&1"
-      )
-      print("SESEARCH transition:\n" + out)
-      status, out = machine.execute("seinfo -a domain /run/selinux/refpolicy/active/policy.kern 2>&1 | grep -E 'init_t|init_unit_t'")
-      print("INIT_UNIT_IN_DOMAIN:\n" + out)
-      status, out = machine.execute("seinfo -t init_unit_t /run/selinux/refpolicy/active/policy.kern 2>&1")
-      print("INIT_UNIT_TYPE:\n" + out)
-      status, out = machine.execute("getfattr -n security.selinux --only-values /nix/store/9qnvy6p5i1zzcsn669bd4ykivippqhzl-unit-script-selinux-relabel-start/bin/selinux-relabel-start 2>&1")
-      print("RELABEL BIN CTX:\n" + out)
-      status, out = machine.execute(
-          "grep -nE 'enforce-learn|/nix/store' /run/selinux/refpolicy/active/file_contexts 2>&1 | tail -30"
-      )
-      print("FC ENFORCE:\n" + out)
-      status, out = machine.execute(
-          "find / \\( -name file_contexts -o -name policy.kern -o -name 'policy.3*' \\) -print 2>/dev/null"
-      )
-      print("FC POLICY PATHS:\n" + out)
-      machine.wait_for_unit("selinux-relabel.service")
-      status, out = machine.execute("ls -la /run/selinux/refpolicy/active/file_contexts 2>&1; echo ---; grep -cE 'enforce_learn|nix/store' /run/selinux/refpolicy/active/file_contexts 2>&1")
-      print("FC:\n" + out)
-      status, out = machine.execute("restorecon -R -F -f /run/selinux/refpolicy/active/file_contexts /nix/store 2>&1")
-      print("RESTORECON:\n" + out)
-      status, out = machine.execute("getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn 2>&1")
-      print("BIN CONTEXT:\n" + out)
-      status, out = machine.execute(
-          "ls -l ${enforceLearnApp}/bin/enforce-learn 2>&1; "
-          "echo readlink=$(readlink ${enforceLearnApp}/bin/enforce-learn 2>&1); "
-          "getfattr -h -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn 2>&1"
-      )
-      print("SYMLINK CHECK:\n" + out)
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
-      machine.succeed("selinux-relabel")
       # Runtime SELinux tooling must work: the policy/contexts must be present
       machine.succeed("ls /etc/selinux/refpolicy/policy/ 2>&1")
       machine.succeed("sestatus 2>&1")

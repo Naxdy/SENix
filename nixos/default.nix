@@ -8,159 +8,6 @@ let
   inherit (lib) mkOption types;
 
   cfg = config.security.selinux;
-
-  # The Nix store is immutable, so SELinux labels cannot be written onto it
-  # directly; they are carried by a metadata SquashFS and presented through a
-  # writable overlay (metacopy) so the store stays untouched. This is packaged
-  # as `selinux-store-overlay`; the `selinux-relabel` entry point below drives it
-  # and then labels the writable non-store root.
-  storeOverlaySetup =
-    # bash
-    ''
-      set -eu
-
-      setupStoreOverlay() {
-        upper=/run/selinux/overlay
-        store=/run/selinux/store
-
-        # Always (re-)establish the overlay, but never stack it a second time.
-        # A switch unmounts `/nix/store`; if we only set the overlay up on the
-        # first run, a switch would leave the store without the metacopy layer
-        # and therefore without the labels (store files then report `unlabeled_t`).
-        # If the metacopy is already mounted (the unbind/remount of the store is
-        # still busy, or this is an idempotent re-run), mounting again would stack
-        # it past the kernel's depth limit, so only mount when `/proc/self/mounts`
-        # does not already carry our upperdir.
-        mkdir -p /run/selinux "$upper" "$store"
-        mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
-        mkdir -p "$upper/upper" "$upper/work"
-        # The metacopy overlay IS the store. Its lower is the real immutable
-        # store (`/sysroot/nix/.ro-store`) and its upper is our tmpfs, so every
-        # label (and any writable metadata) is written to the upper while the
-        # real store stays untouched. We deliberately do NOT layer this on top
-        # of NixOS's own `/nix/store` overlay (that created a multi-layer stack
-        # that `setfiles`/`restorecon` could not descend, and it exceeded the
-        # overlayfs depth limit). If this overlay cannot be established, fail
-        # loudly rather than silently relabeling the immutable store in place.
-        if ! grep -q 'upperdir=/run/selinux/overlay/upper' /proc/self/mounts; then
-          # The immutable store lives under `/sysroot/nix/.ro-store` in the
-          # initrd but `/nix/.ro-store` after switch_root; pick whichever
-          # exists so the overlay can be established in both phases.
-          lower=/nix/.ro-store
-          mountpoint=/nix/store
-          if [ -d /sysroot ]; then
-            lower=/sysroot/nix/.ro-store
-            mountpoint=/sysroot/nix/store
-          fi
-          mount -t overlay overlay \
-            -o "lowerdir=$lower,upperdir=$upper/upper,workdir=$upper/work,metacopy=on" \
-            "$mountpoint"
-        fi
-
-        # Label the store directly from the loaded policy's file_contexts instead
-        # of a baked metadata image. Label the through the (now guaranteed)
-        # metacopy overlay using `setfiles`, which recurses into the given path
-        # and writes the labels onto the overlay's writable upper — the
-        # underlying `/nix/store` never receives any xattrs and stays immutable.
-        # The glob rules in `security.selinux.modules.*.fileContext` label any
-        # store package without having to declare it.
-        fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-        # `restorecon -R` does not descend the *stacked* `/nix/store` mount to
-        # the writable metacopy view, so enumerate the top-level store entries
-        # with `find -maxdepth 1` (cheap, no deep walk) and feed them to
-        # `setfiles -f -`; it then recurses into each package dir (which is the
-        # writable overlay view) and labels them through the metacopy upper.
-        echo "=== store setfiles diag ==="
-        cat /proc/self/mountinfo
-        echo "--- ls enforce-learn ---"
-        echo "--- active fc rules matching /nix/store + enforce_learn (in order) ---"
-        grep -nE '^(/nix/store|/nix/store.*enforce|.*enforce-learn)' "$fc" 2>&1 | head -20 || true
-        echo "--- setfiles DIRECT on enforce-learn binary (no -f) ---"
-
-        ls / -oah
-        ls /nix -oah
-
-        # Run `setfiles` on the main store directory first, which causes it to walk all subdirs
-        # and assign the correct permissions. This skips files however, so we run another
-        # pass over all regular files afterwards.
-        ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1 || true
-        find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s 2>&1 || true
-
-        # If this script is run from the initrd, the real nix store will be at `/sysroot/nix/store`
-        # instead, while `/nix/store` only houses the initrd store; we need to label both.
-        if [ -d /sysroot ]; then
-           ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" /sysroot/nix/store 2>&1 || true
-          find /sysroot/nix/store -type f -o -type d | ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" -s 2>&1 || true
-        fi
-      }
-
-        setupStoreOverlay
-    '';
-
-  storeOverlayScript = pkgs.writeShellApplication {
-    name = "selinux-store-overlay";
-    runtimeInputs = [
-      pkgs.util-linux
-      pkgs.coreutils
-      pkgs.attr
-      pkgs.gnugrep
-      pkgs.findutils
-      pkgs.policycoreutils
-    ];
-    text = storeOverlaySetup;
-  };
-
-  # A single relabel entry point: label the immutable store via the metadata
-  # overlay (which provides a writable upper), then `setfiles` the writable
-  # non-store root (`/etc`, `/var`, ...) from the policy's file_contexts.
-  selinuxRelabelSetup =
-    # bash
-    ''
-      set -eu
-
-      relabel() {
-        # `selinux-store-overlay` mounts the metadata overlay on `/nix/store`
-        # only once and is idempotent (it skips re-mounting if the store overlay
-        # is already active with the same metadata; re-mounting would stack a
-        # second overlay and exceed the overlayfs depth limit). It does not rely
-        # on an initrd-time run, so nothing clears the marker here.
-        ${storeOverlayScript}/bin/selinux-store-overlay
-
-        # Point libselinux/setfiles at the semanage store (the initrd generated
-        # it under `/run/selinux/<type>` per `store-root` in semanage.conf); the
-        # /etc/selinux/<type> directory from the initrd is replaced at
-        # switch_root and would otherwise lack the file_contexts entirely.
-        rm -rf /etc/selinux/${cfg.type}
-        ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
-
-        fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-        pol=/run/selinux/${cfg.type}/active/policy.kern
-        if [ -f "$fc" ] && [ -f "$pol" ]; then
-          # Label the writable non-store root. `/home`, `/opt` and `/srv` may be
-          # absent on a fresh system, so only pass paths that exist. The root
-          # directory itself must be `root_t` (not `unlabeled_t`) so daemons can
-          # traverse it.
-          ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:root_t / 2>/dev/null || true
-          paths="/etc /var /run /dev"
-          for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
-          # shellcheck disable=SC2086
-          ${pkgs.policycoreutils}/bin/setfiles -q "$fc" $paths || true
-        fi
-      }
-
-        relabel
-    '';
-
-  selinuxRelabelScript = pkgs.writeShellApplication {
-    name = "selinux-relabel";
-    runtimeInputs = [
-      pkgs.policycoreutils
-      pkgs.coreutils
-      pkgs.attr
-    ];
-    text = selinuxRelabelSetup;
-  };
-
 in
 {
   imports = [
@@ -432,193 +279,50 @@ in
       "loop"
     ];
 
-    # `systemd` is PID 1 and must run as `init_t` (not `kernel_t`) to boot
-    # directly into enforcing mode, but the store overlay/`semodule` (which
-    # labels files) only runs in stage 2 — after PID 1 is exec'd. So load the
-    # SELinux policy, label the systemd binary `init_exec_t`, and start
-    # enforcing from within the initrd, before the real init is exec'd. Together
-    # with the `type_transition ... -> init_t` in the `init_context` module this
-    # makes systemd run as `init_t`.
-    boot.initrd.systemd.storePaths = [
-      pkgs.attr
-      pkgs.policycoreutils
-      pkgs.libselinux.bin
-      cfg.build.policy
-    ];
-    # `semodule`/libsemanage hardcodes the HLL compiler dir and the external
-    # `setfiles`/`load_policy`/`sefcontext_compile` commands to `/usr/libexec`
-    # and `/sbin`/`/usr/sbin`, none of which exist in the read-only initrd.
-    # Supply a `semanage.conf` that points them at the store paths, and use a
-    # writable store under `/run` (the initrd `/var` is read-only).
-    boot.initrd.systemd.contents."/etc/selinux/semanage.conf".text =
-      lib.optionalString (cfg.policyVersion != null) ''
-        policy-version = ${toString cfg.policyVersion}
-      ''
-      + ''
-        store-root = /run/selinux
-        compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
-
-        [load_policy]
-        path = ${pkgs.policycoreutils}/bin/load_policy
-        [end]
-
-        [setfiles]
-        path = ${pkgs.policycoreutils}/bin/setfiles
-        args = -q -c $@ $<
-        [end]
-
-        [sefcontext_compile]
-        path = ${pkgs.libselinux.bin}/bin/sefcontext_compile
-        args = $@
-        [end]
-      '';
-
-    boot.initrd.systemd.services.selinux-init = {
-      wantedBy = [ "initrd.target" ];
-      path = [
-        pkgs.policycoreutils
-        pkgs.attr
-        pkgs.findutils
-        pkgs.coreutils
-        pkgs.mount
-        pkgs.gnugrep
-        pkgs.gnused
-        storeOverlayScript
-      ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        # The service runs before the policy is loaded, so request the
-        # `init_unit_t` domain up front — it is granted the `associate` +
-        # tool-transition accesses in the `selinux_tools` policy module.
-        SELinuxContext = "system_u:system_r:init_unit_t";
-      };
-      script = ''
-        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
-        echo "selinux-placeholder ${placeholder "out"}"
-        # Install and link the policy modules, make the linked policy visible to
-        # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
-        # and performs the kernel version conversion), then enforce. We cannot
-        # rely on the store overlay here (it is not up yet, and the initrd store
-        # cannot hold xattrs), so label the systemd binary `init_exec_t`
-        # directly — both the initrd copy and the real-root copy mounted at
-        # `/sysroot/nix/store`. That makes systemd's re-exec at switch_root
-        # transition to `init_t` via the `init_context` type_transition, so PID 1
-        # can start units in enforcing mode.
-        pp=""
-        for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
-          [ -e "$f" ] && pp="$pp $f"
-        done
-        ${pkgs.policycoreutils}/bin/semodule -s ${cfg.type} -i ''${pp}
-
-        # semanage writes the store to `store-root` (`/run/selinux`) from
-        # semanage.conf, but libselinux + setfiles/restorecon read the tree
-        # `/etc/selinux/<type>/{policy, contexts/files}` (computed from
-        # SELINUXTYPE), which the semanage store does not lay out. Link
-        # `/etc/selinux/<type>` to the store and symlink the libselinux-visible
-        # files to the store's `active/` artifacts, so `load_policy` and
-        # `setfiles` find the linked policy and file contexts.
-        rm -rf /etc/selinux/${cfg.type}
-        ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
-        mkdir -p /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy
-        ln -sfn ../../active/file_contexts /etc/selinux/${cfg.type}/contexts/files/file_contexts
-        ln -sfn ../active/policy.kern /etc/selinux/${cfg.type}/policy/policy
-        for v in $(seq 40 -1 25); do
-          ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
-        done
-        ls -la /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy 2>&1 || true
-
-        printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
-
-        echo "=== POST-SEMODULE STORE DUMP ==="
-        find /run/selinux -maxdepth 3 2>&1 | head -30 || true
-        echo "--- modules ---"
-        ${pkgs.policycoreutils}/bin/semodule -l 2>&1 | grep -E '(^| )init|selinux_tools|^base' | head || true
-
-        ${pkgs.policycoreutils}/bin/load_policy 2>&1 || echo "LOAD_POLICY_FAILED rc=$?"
-
-        echo "=== DIAG: FC LAYOUT ==="
-        ls -la /etc/selinux/${cfg.type} 2>&1 | head -8 || true
-        readlink /etc/selinux/${cfg.type} 2>&1 || true
-        ls -la /etc/selinux/${cfg.type}/contexts/files/ 2>&1 | head || true
-        wc -l /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
-        grep -nE 'init_exec_t' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head || true
-        grep -nE 'systemd-261.2/lib/systemd/systemd' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head || true
-        echo "rc_grep=$?" || true
-        ls -la /run/selinux/${cfg.type}/contexts/files/ 2>&1 | head || true
-        wc -l /run/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 || true
-
-        echo "=== DIAG: POLICY LOADED ==="
-        echo "SD_PLACEHOLDER=${placeholder "out"}" || true
-        echo "PROC1_CMD=$(tr '\0' ' ' </proc/1/cmdline)" || true
-        echo "PROC1_EXE=$(readlink /proc/1/exe 2>&1)" || true
-        echo "PROC1_CTX=$(cat /proc/1/attr/current 2>&1)" || true
-        # Where do the systemd + systemd-executor binaries sit at policy-load
-        # time (initrd store, sysroot store, /run/current-system), and what
-        # labels do they carry?  These are the binaries PID 1 may exec at
-        # switch_root, so they must be init_exec_t for the kernel_t->init_t
-        # type_transition to fire.
-        shopt -s nullglob
-        for p in /run/current-system/systemd/lib/systemd/systemd* \
-                 /nix/store/*-systemd-*/lib/systemd/systemd* \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd*; do
-          echo "PFX $p CTX=$(getfattr -h -n security.selinux --only-values "$p" 2>&1)" || true
-        done
-        shopt -u nullglob
-        echo "--- fc rules that hit systemd -> init_exec_t ---"
-        grep -nE 'init_exec_t|systemd' /etc/selinux/${cfg.type}/contexts/files/file_contexts 2>&1 | head -20 || true
-        echo "--- installed modules (init/tools/base) ---"
-        ${pkgs.policycoreutils}/bin/semodule -l 2>/dev/null | grep -E '(^| )init|selinux_tools|^base' | head || true
-
-        SD="${placeholder "out"}"
-        find "$SD" -type f -exec ${pkgs.attr}/bin/setfattr -n security.selinux -v system_u:object_r:init_unit_t {} + || true
-
-        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
-
-        ${lib.getExe storeOverlayScript}
-
-        # The whole-store `-r /sysroot` setfiles above labels directory entries
-        # but leaves regular FILES untagged (verified: zero file relabels,
-        # systemd binary stays unlabeled without this). PID 1 (kernel_t)
-        # re-execs the compiled-in SYSTEMD_BINARY_PATH
-        # (`/run/current-system/systemd/lib/systemd/systemd`) at switch_root and
-        # that binary must be `init_exec_t` for the type_transition
-        # `kernel_t init_exec_t:process init_t` (refpolicy kernel_domtrans_to).
-        # The refpolicy init.fc labels exactly these four binaries init_exec_t
-        # (amended to nix store paths; the exact rules outrank the broad
-        # `/nix/store/.*/lib/*` lib_t glob for these paths) — drive them through
-        # setfiles with the correct spec. Note `fc` is only set inside
-        # setupStoreOverlay's subshell, hence the explicit path here.
-
-        echo "=== DIAG: AFTER STORE SETFILES ==="
-        shopt -s nullglob
-        for p in /run/current-system/systemd/lib/systemd/systemd* \
-                 /nix/store/*-systemd-*/lib/systemd/systemd* \
-                 /sysroot/nix/store/*-systemd-*/lib/systemd/systemd*; do
-          echo "AFT $p CTX=$(getfattr -h -n security.selinux --only-values "$p" 2>&1)" || true
-        done
-        shopt -u nullglob
-        echo "PROC1_CTX_AFT=$(cat /proc/1/attr/current 2>&1)" || true
-        echo "SELF_CTX_AFT=$(cat /proc/self/attr/current 2>&1)" || true
-
-        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)"
-
-        cat /proc/self/mountinfo || true
-
-        echo "selinux-init context: $(cat /proc/self/attr/current 2>/dev/null)" # <-- we need to be init_t or init_unit_t here
-
-        ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
-      '';
-    };
-
     security.lsm = [
       "selinux"
     ];
 
+    environment = {
+      etc."selinux/config".text = ''
+        SELINUX=${cfg.mode}
+        SELINUXTYPE=${cfg.type}
+      '';
+
+      etc."selinux/semanage.conf".text =
+        lib.optionalString (cfg.policyVersion != null) ''
+          policy-version = ${toString cfg.policyVersion}
+        ''
+        + ''
+          compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
+
+          [load_policy]
+          path = ${lib.getExe' pkgs.policycoreutils "load_policy"}
+          [end]
+
+          [setfiles]
+          path = ${lib.getExe' pkgs.policycoreutils "setfiles"}
+          args = -q -c $@ $<
+          [end]
+
+          [sefcontext_compile]
+          path = ${lib.getExe' pkgs.libselinux "sefcontext_compile"}
+          args = -r $@
+          [end]
+        '';
+
+      systemPackages = [
+        pkgs.libselinux
+        pkgs.policycoreutils
+      ];
+    };
+
+    # Activates a policy on system boot (after initrd) and on switch.
     system.activationScripts.selinux = {
       deps = [
         "etc"
       ];
+
       text =
         # bash
         ''
@@ -668,76 +372,264 @@ in
         '';
     };
 
-    environment = {
-      etc."selinux/config".text = ''
-        SELINUX=${cfg.mode}
-        SELINUXTYPE=${cfg.type}
-      '';
+    boot.initrd.systemd = {
+      # `systemd` is PID 1 and must run as `init_t` (not `kernel_t`) to boot
+      # directly into enforcing mode, but the store overlay/`semodule` (which
+      # labels files) only runs in stage 2 — after PID 1 is exec'd. So load the
+      # SELinux policy, label the systemd binary `init_exec_t`, and start
+      # enforcing from within the initrd, before the real init is exec'd. Together
+      # with the `type_transition ... -> init_t` in the `init_context` module this
+      # makes systemd run as `init_t`.
+      storePaths = [
+        pkgs.attr
+        pkgs.policycoreutils
+        pkgs.libselinux.bin
+        cfg.build.policy
+      ];
 
-      etc."selinux/semanage.conf".text =
+      # `semodule`/libsemanage hardcodes the HLL compiler dir and the external
+      # `setfiles`/`load_policy`/`sefcontext_compile` commands to `/usr/libexec`
+      # and `/sbin`/`/usr/sbin`, none of which exist in the read-only initrd.
+      # Supply a `semanage.conf` that points them at the store paths, and use a
+      # writable store under `/run` (the initrd `/var` is read-only).
+      contents."/etc/selinux/semanage.conf".text =
         lib.optionalString (cfg.policyVersion != null) ''
           policy-version = ${toString cfg.policyVersion}
         ''
         + ''
+          store-root = /run/selinux
           compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
 
           [load_policy]
-          path = ${lib.getExe' pkgs.policycoreutils "load_policy"}
+          path = ${pkgs.policycoreutils}/bin/load_policy
           [end]
 
           [setfiles]
-          path = ${lib.getExe' pkgs.policycoreutils "setfiles"}
+          path = ${pkgs.policycoreutils}/bin/setfiles
           args = -q -c $@ $<
           [end]
 
           [sefcontext_compile]
-          path = ${lib.getExe' pkgs.libselinux "sefcontext_compile"}
-          args = -r $@
+          path = ${pkgs.libselinux.bin}/bin/sefcontext_compile
+          args = $@
           [end]
         '';
 
-      systemPackages = [
-        pkgs.libselinux
-        pkgs.policycoreutils
-        selinuxRelabelScript
+      # TODO: unsure if this propagates past the initrd phase; Need to test:
+      # - does the metacopy overlay persist?
+      # - when doing `nix build`, are new paths visible?
+      # - when changing xattrs, are the underlying files affected? (should be NO)
+      mounts = [
+        {
+          where = "/sysroot/nix/store";
+          what = "overlay";
+          type = "overlay";
+          options = lib.concatStringsSep "," [
+            "lowerdir=/sysroot/nix/.ro-store"
+            "upperdir=/run/selinux/overlay/upper"
+            "workdir=/run/selinux/overlay/work"
+            "metacopy=on"
+          ];
+          unitConfig = {
+            DefaultDependencies = false;
+            RequiresMountsFor = [
+              "/sysroot/nix/.ro-store"
+            ];
+          };
+          requiredBy = [ "initrd-fs.target" ];
+          after = [
+            config.boot.initrd.systemd.services.selinux-init.name
+          ];
+        }
       ];
-    };
 
-    # Apply the SELinux file-context labels at boot on the real root. This runs
-    # after switch_root, because the store labels must land on the real
-    # `/nix/store` (the initrd's store is discarded at switch_root) and the
-    # `setfiles` needs the `file_contexts` generated by the initrd
-    # `selinux-init` service's `semodule` (kept under `/run/selinux`). The Nix
-    # store stays immutable: `setfiles` writes the labels onto the (writable)
-    # overlay upper, not the store itself.
-    systemd.services.selinux-relabel = {
-      # Run during sysinit, before multi-user.target is confirmed, so the store
-      # and the systemd unit files are labeled before systemd reports/controls
-      # unit status. (The store overlay applies the policy file_contexts directly
-      # via `setfiles` — no loop device / metadata image — so this can run this
-      # early without needing the store's squashfs mount.)
-      wantedBy = [ "sysinit.target" ];
-      before = [ "multi-user.target" ];
-      serviceConfig = {
-        Type = "oneshot";
-        RemainAfterExit = true;
-        # Run as `init_unit_t`, which is granted the `associate` + tool
-        # transitions in the `selinux_tools` policy module.
-        SELinuxContext = "system_u:system_r:init_unit_t";
+      services = {
+        # Prepares the necessary prerequisites for mounting the metacopy overlay.
+        init-selinux-overlay = {
+          requiredBy = [ "initrd-fs.target" ];
+          before = [
+            "initrd-fs.target"
+            "shutdown.target"
+          ];
+          conflicts = [ "shutdown.target" ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+          };
+          script = ''
+            set -uo pipefail
+            export PATH="/bin:${
+              lib.makeBinPath [
+                pkgs.util-linux
+              ]
+            }"
+
+            upper=/run/selinux/overlay
+            store=/run/selinux/store
+
+            mkdir -p /run/selinux "$upper" "$store"
+            mount -t tmpfs -o size=64m,mode=0755 tmpfs "$upper" 2>/dev/null || true
+            mkdir -p "$upper/upper" "$upper/work"
+          '';
+        };
+
+        selinux-init = {
+          wantedBy = [ "initrd.target" ];
+          path = [
+            pkgs.policycoreutils
+            pkgs.attr
+            pkgs.findutils
+            pkgs.coreutils
+            pkgs.mount
+            pkgs.gnugrep
+            pkgs.gnused
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            RemainAfterExit = true;
+            # The service runs before the policy is loaded, so request the
+            # `init_unit_t` domain up front — it is granted the `associate` +
+            # tool-transition accesses in the `selinux_tools` policy module.
+            SELinuxContext = "system_u:system_r:init_unit_t";
+          };
+          unitConfig = {
+            RequiresMountsFor = [
+              "/sysroot/run"
+            ];
+          };
+          script = ''
+            set -euo pipefail
+
+            # Install and link the policy modules, make the linked policy visible to
+            # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
+            # and performs the kernel version conversion), then enforce. We cannot
+            # rely on the store overlay here (it is not up yet, and the initrd store
+            # cannot hold xattrs), so label the systemd binary `init_exec_t`
+            # directly — both the initrd copy and the real-root copy mounted at
+            # `/sysroot/nix/store`. That makes systemd's re-exec at switch_root
+            # transition to `init_t` via the `init_context` type_transition, so PID 1
+            # can start units in enforcing mode.
+            pp=""
+            for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
+              [ -e "$f" ] && pp="$pp $f"
+            done
+            ${pkgs.policycoreutils}/bin/semodule -s ${cfg.type} -i ''${pp}
+
+            # semanage writes the store to `store-root` (`/run/selinux`) from
+            # semanage.conf, but libselinux + setfiles/restorecon read the tree
+            # `/etc/selinux/<type>/{policy, contexts/files}` (computed from
+            # SELINUXTYPE), which the semanage store does not lay out. Link
+            # `/etc/selinux/<type>` to the store and symlink the libselinux-visible
+            # files to the store's `active/` artifacts, so `load_policy` and
+            # `setfiles` find the linked policy and file contexts.
+            rm -rf /etc/selinux/${cfg.type}
+            ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
+            mkdir -p /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy
+            ln -sfn ../../active/file_contexts /etc/selinux/${cfg.type}/contexts/files/file_contexts
+            ln -sfn ../active/policy.kern /etc/selinux/${cfg.type}/policy/policy
+            for v in $(seq 40 -1 25); do
+              ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
+            done
+
+            printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
+
+            ${pkgs.policycoreutils}/bin/load_policy
+          '';
+        };
+
+        # The initrd relabel sets the correct labels on `/nix/store` (the initrd's nix store)
+        # and on `/sysroot/nix/store` (the proper system nix store).
+        #
+        # The `/sysroot/nix/store` is mounted via a metacopy overlay in `config.boot.initrd.systemd.mounts`,
+        # which propagates past the initrd phase.
+        selinux-relabel = {
+          wantedBy = [ "initrd.target" ];
+          after = [
+            config.boot.initrd.systemd.services.selinux-init.name
+          ];
+          serviceConfig = {
+            Type = "oneshot";
+            # The service runs before the policy is loaded, so request the
+            # `init_unit_t` domain up front — it is granted the `associate` +
+            # tool-transition accesses in the `selinux_tools` policy module.
+            SELinuxContext = "system_u:system_r:init_unit_t";
+          };
+          path = [
+            pkgs.policycoreutils
+            pkgs.libselinux.bin
+            pkgs.findutils
+          ];
+          script = ''
+            set -euo pipefail
+
+            fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+
+            # Run `setfiles` on the main store directory first, which causes it to walk all subdirs
+            # and assign the correct permissions. This skips files however, so we run another
+            # pass over all regular files afterwards.
+            ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1
+            find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s
+
+            ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" /sysroot/nix/store
+            find /sysroot/nix/store -type f -o -type d | ${lib.getExe' pkgs.policycoreutils "setfiles"} -r /sysroot -F "$fc" -s
+
+            ${lib.optionalString (cfg.mode == "enforcing") "${lib.getExe' pkgs.libselinux.bin "setenforce"} 1"}
+          '';
+        };
       };
-      script = ''
-        ${selinuxRelabelScript}/bin/selinux-relabel
-      '';
     };
 
-    # A `nixos-rebuild switch` re-applies the labels for the new configuration.
-    system.activationScripts.selinuxRelabel = {
-      deps = [
-        "etc"
-      ];
-      text = ''
-        ${selinuxRelabelScript}/bin/selinux-relabel
-      '';
+    systemd.services = {
+      # Relabel userspace directories on boot.
+      # We skip `/nix/store` here because it's labeled during the initrd phase.
+      #
+      # TODO: untested
+      selinux-relabel-init = {
+        wantedBy = [ "sysinit.target" ];
+        before = [ "multi-user.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          SELinuxContext = "system_u:system_r:init_unit_t";
+        };
+        script = ''
+          echo "relabel userspace"
+          ${pkgs.findutils}/bin/find /etc/selinux
+          set -euo pipefail
+
+          fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+
+          paths="/etc /var /run /dev"
+          for p in /home /opt /srv; do [ -d "$p" ] && paths="$paths $p"; done
+          # shellcheck disable=SC2086
+          ${pkgs.policycoreutils}/bin/setfiles -F -q "$fc" $paths || true
+        '';
+      };
+
+      # Runs on `nixos-rebuild switch` to relabel the nix store.
+      # Here, we skip the userspace directories, because we don't want to
+      # override any runtime changes a user may have made.
+      #
+      # TODO: unstested
+      selinux-relabel = {
+        wantedBy = [ "nixos-activation.service" ];
+        after = [ "nixos-activation.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+          SELinuxContext = "system_u:system_r:init_unit_t";
+        };
+        script = ''
+          echo "relabel switch"
+          set -euo pipefail
+
+          fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+
+          ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" /nix/store 2>&1
+          find /nix/store -type f | ${lib.getExe' pkgs.policycoreutils "setfiles"} -F "$fc" -s
+        '';
+      };
     };
+
   };
 }
