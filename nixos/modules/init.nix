@@ -8,9 +8,9 @@
           config.systemd.package
           config.boot.initrd.systemd.package
         ];
+        packages = lib.unique (config.systemd.packages ++ config.boot.initrd.systemd.packages);
         units = lib.unique (
-          config.boot.initrd.systemd.packages
-          ++ (lib.filter lib.isDerivation (
+          (lib.filter lib.isDerivation (
             lib.mapAttrsToList (_: value: value.unit) (
               lib.filterAttrs (
                 name: _:
@@ -19,6 +19,17 @@
                 in
                 if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
               ) config.boot.initrd.systemd.units
+            )
+          ))
+          ++ (lib.filter lib.isDerivation (
+            lib.mapAttrsToList (_: value: value.unit) (
+              lib.filterAttrs (
+                name: _:
+                let
+                  ignore = lib.hasInfix "selinux" name;
+                in
+                if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
+              ) config.systemd.units
             )
           ))
         );
@@ -76,7 +87,8 @@
         "@systemd@/libexec/dcc/start-.*" = "--	gen_context(system_u:object_r:initrc_exec_t,s0)";
         "@systemd@/libexec/dcc/stop-.*" = "--	gen_context(system_u:object_r:initrc_exec_t,s0)";
 
-        "@units@/.*\.service" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "@units@/[^/]+\.service" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "@packages@/lib/systemd/system(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
 
         #
         # /var
