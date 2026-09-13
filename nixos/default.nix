@@ -452,63 +452,6 @@ in
         #
         # TODO: We need to fix unmounting on system shutdown, right now it fails
         # with "target is busy".
-        init-selinux-overlay = {
-          requiredBy = [ "initrd-fs.target" ];
-          before = [
-            "initrd-fs.target"
-            "shutdown.target"
-          ];
-          conflicts = [ "shutdown.target" ];
-          serviceConfig = {
-            Type = "oneshot";
-            RemainAfterExit = true;
-          };
-          unitConfig = {
-            RequiresMountsFor = [
-              "/sysroot/run"
-              "/sysroot/nix/store"
-            ];
-          };
-          path = [
-            pkgs.coreutils
-            pkgs.util-linux
-          ];
-          script = ''
-            set -uo pipefail
-
-            upper=/sysroot/run/selinux/overlay
-
-            mkdir -p /run/selinux "$upper"
-            mount -t tmpfs -o size=0,mode=0755 tmpfs "$upper"
-            mkdir -p "$upper/upper" "$upper/work"
-
-            echo "mounting metacopy overlay"
-
-            # The overlay is mounted with the same mount options
-            # as in `config.boot.nixStoreMountOpts` in order to ensure
-            # that the stage-2 boot script doesn't stack a bind mount
-            # on top of it.
-            #
-            # To prevent the store from accidentally being mounted `ro`,
-            # which would disable metadata / SELinux labelling,
-            # we have an assertion that checks for `ro` being present
-            # within `config.boot.nixStoreMountOpts`
-            mount -t overlay overlay \
-              -o ${
-                lib.concatStringsSep "," (
-                  config.boot.nixStoreMountOpts
-                  ++ [
-                    "lowerdir=/sysroot/nix/store"
-                    "upperdir=$upper/upper"
-                    "workdir=$upper/work"
-                    "metacopy=on"
-                  ]
-                )
-              } \
-              "/sysroot/nix/store"
-          '';
-        };
-
         selinux-init = {
           wantedBy = [ "initrd.target" ];
           path = [
@@ -531,6 +474,7 @@ in
           unitConfig = {
             RequiresMountsFor = [
               "/sysroot/run"
+              "/sysroot/nix/store"
             ];
           };
           script = ''
@@ -567,41 +511,6 @@ in
               ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
             done
 
-            printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
-
-          '';
-        };
-
-        # The initrd relabel sets the correct labels on `/nix/store` (the initrd's nix store), as
-        # well as the systemd package within the real nix store, so PID 1 gets the correct label.
-        #
-        # Systemd then takes over and recursively labels everything in `/run/systemd/relabel-extra.d/10-senix.relabel`
-        selinux-relabel = {
-          wantedBy = [ "initrd.target" ];
-          requires = [
-            "initrd-fs.target"
-          ];
-          after = [
-            config.boot.initrd.systemd.services.selinux-init.name
-          ];
-          serviceConfig = {
-            Type = "oneshot";
-            # The service runs before the policy is loaded, so request the
-            # `init_unit_t` domain up front — it is granted the `associate` +
-            # tool-transition accesses in the `selinux_tools` policy module.
-            SELinuxContext = "system_u:system_r:init_unit_t";
-          };
-          path = [
-            pkgs.policycoreutils
-            pkgs.libselinux.bin
-            pkgs.findutils
-            pkgs.coreutils
-          ];
-          script = ''
-            set -euo pipefail
-
-            fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-
             # We let systemd handle all of the relabeling for us
             mkdir -p /run/systemd/relabel-extra.d || true
             echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
@@ -611,13 +520,52 @@ in
             echo "/home" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/usr" >> /run/systemd/relabel-extra.d/10-senix.relabel
 
+            printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
+
+            upper=/sysroot/run/selinux/overlay
+
+            mkdir -p /run/selinux "$upper"
+            mount -t tmpfs -o size=0,mode=0755 tmpfs "$upper"
+            mkdir -p "$upper/upper" "$upper/work"
+
             load_policy -i
+
+            echo "mounting metacopy overlay..."
+
+            # The overlay is mounted with the same mount options
+            # as in `config.boot.nixStoreMountOpts` in order to ensure
+            # that the stage-2 boot script doesn't stack a bind mount
+            # on top of it.
+            #
+            # To prevent the store from accidentally being mounted `ro`,
+            # which would disable metadata / SELinux labelling,
+            # we have an assertion that checks for `ro` being present
+            # within `config.boot.nixStoreMountOpts`
+            mount -t overlay overlay \
+              -o ${
+                lib.concatStringsSep "," (
+                  config.boot.nixStoreMountOpts
+                  ++ [
+                    "fscontext=system_u:object_r:senix_meta_t:s0"
+                    "defcontext=system_u:object_r:senix_meta_t:s0"
+                    "lowerdir=/sysroot/nix/store"
+                    "upperdir=$upper/upper"
+                    "workdir=$upper/work"
+                    "metacopy=on"
+                  ]
+                )
+              } \
+              "/sysroot/nix/store"
+
+            fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+
+            echo "relabeling systemd..."
 
             # We need to label the systemd binary in order for it to be able to
             # relabel everything else.
-            find /sysroot/${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
-            setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store -e /sysroot/tmp -e /sysroot/usr
+            find /sysroot${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
           '';
+
         };
       };
     };
