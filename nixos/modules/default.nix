@@ -7,6 +7,7 @@
     ./chromium.nix
     ./corecommands.nix
     ./dbus.nix
+    # ./files.nix
     ./init.nix
     ./libraries.nix
     ./nscd.nix

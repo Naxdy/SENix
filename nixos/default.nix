@@ -565,6 +565,7 @@ in
             done
 
             printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
+
           '';
         };
 
@@ -600,13 +601,19 @@ in
 
             # We let systemd handle all of the relabeling for us
             mkdir -p /run/systemd/relabel-extra.d || true
-            echo "/" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/nix/store" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/etc" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/var" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/home" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/usr" >> /run/systemd/relabel-extra.d/10-senix.relabel
+
+            load_policy -i
+
+            # We need to label the systemd binary in order for it to be able to
+            # relabel everything else.
+            find /sysroot/${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
+            setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store -e /sysroot/tmp -e /sysroot/usr
           '';
         };
       };
