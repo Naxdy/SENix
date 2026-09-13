@@ -55,13 +55,10 @@
         type policy_config_t;
         type default_context_t;
         type default_t;
-        role system_r;
       ')
 
       # The domain for the initrd `selinux-init` + boot-time `selinux-relabel`
       type init_unit_t;
-      role object_r types init_unit_t;
-      role system_r types init_unit_t;
       typeattribute init_unit_t domain;
       type_transition init_t init_unit_t:process init_unit_t;
       allow init_t init_unit_t:process transition;

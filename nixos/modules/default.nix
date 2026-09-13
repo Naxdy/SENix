@@ -13,5 +13,6 @@
     ./nscd.nix
     ./selinux-tools.nix
     ./selinuxutil.nix
+    ./senix-store.nix
   ];
 }

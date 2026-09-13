@@ -86,6 +86,9 @@ in
                 description = ''
                   Interface (`.if`) rules for this module, either as a Nix store path to a `.if` file
                   (accepted by `types.pathInStore`), or a raw string of the interface content.
+
+                  Note that the rule must start with a `<summary>` doc comment, or else the module
+                  won't be included in the final policy.
                 '';
               };
               typeEnforcement = mkOption {

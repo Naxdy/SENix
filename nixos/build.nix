@@ -74,7 +74,6 @@ let
   # a build phase (which would overflow ARG_MAX).
   moduleSourceDrv =
     let
-      stubIf = pkgs.writeText "stub.if" "";
       stubFc = pkgs.writeText "stub.fc" "";
     in
     pkgs.linkFarm "selinux-module-sources" (
@@ -110,12 +109,21 @@ let
                 ]
               else if isCustom then
                 # Custom modules don't have a `.if` in the Reference Policy tree;
-                # the build requires one, so provide an empty file.
+                # the build requires one anyway. It must also be *documented*:
+                # sedoctool.py only registers a module in modules.conf if its
+                # XML carries a module-level `<summary>`, so an empty stub would
+                # silently drop the module from the build. Provide a documented
+                # stub, which the `all_layers` pipeline turns into a registered
+                # (loadable) module with no manual modules.conf editing.
                 [
                   {
                     inherit dir;
                     name = "${dir}/${name}.if";
-                    path = stubIf;
+                    path = pkgs.writeText "${name}.if" ''
+                      ## <summary>
+                      ## SENix custom module.
+                      ## </summary>
+                    '';
                   }
                 ]
               else
@@ -166,18 +174,9 @@ let
       ]
     );
 
-  # Custom modules (not part of the Reference Policy) — detected by scanning the
-  # source, not by their declared `layer` (which may point into the Reference
-  # Policy, e.g. `kernel`, to make a custom module a base module). These aren't
-  # in the refpolicy's generated `modules.conf`, so we append them; built-in
-  # Reference Policy modules are left as-is (we build all of them). Custom
-  # modules placed in the `kernel` layer are appended as `base` so their
-  # statements (e.g. `sid init`) are compiled into the base policy.
-  customInfo = lib.concatStringsSep " " (
-    map (name: "${name}=${if mods.${name}.layer == "kernel" then "base" else "module"}") (
-      lib.filter (name: moduleLayer name == "senix") moduleNames
-    )
-  );
+  # Custom modules (not part of the Reference Policy) are detected by scanning
+  # the source tree (never by their declared `layer`); they are registered by
+  # `make conf`'s `all_layers` pipeline exactly like built-in modules.
 
   # Common make flags for the Reference Policy build (single line so they can
   # be interpolated directly into a `make` invocation).
@@ -187,90 +186,65 @@ let
   # module is compiled, and any module declared in `config.security.selinux.modules`
   # is overlaid (taking precedence over the built-in module of the same name).
   policyDrv = pkgs.stdenv.mkDerivation {
-    pname = "selinux-policy";
-    version = "1";
-    dontUnpack = true;
+    pname = "senix-policy";
+    version = "0";
+
+    src = policySrc;
 
     nativeBuildInputs = [
-      pkgs.gnumake
       pkgs.gnum4
-      pkgs.checkpolicy
-      pkgs.policycoreutils
-      pkgs.semodule-utils
-      pkgs.gawk
-      pkgs.gnused
       pkgs.python3
-      pkgs.gnugrep
       pkgs.getopt
-      pkgs.findutils
     ];
-    buildPhase = ''
-      runHook preBuild
 
-      set -euo pipefail
+    configurePhase = ''
+      runHook preConfigure
 
-      # Build in a writable copy of the Reference Policy sources.
-      cp -a ${policySrc}/. "$PWD/refpolicy"
-      chmod -R u+w "$PWD/refpolicy"
-      cd refpolicy
+      # `make conf`'s `all_layers` scan auto-disovers the SENix-only modules
+      # overlaid by `postPatch`, and - because every custom module ships a
+      # documented `.if` stub (see `moduleSourceDrv`) - sedoctool.py registers
+      # each one in modules.conf as a loadable module. No manual patching of
+      # modules.conf is needed.
+      make conf ''${makeFlags[@]}
 
-      # Generate build.conf / modules.conf and any `.te`/`.if`/`.fc` from
-      # `.in`/`.m4` sources (e.g. `kernel/corenetwork`).
-      make conf \
-        ${refpolicyTools}
-
-      # Append custom (senix) modules to modules.conf; every built-in module
-      python3 - policy/modules.conf ${customInfo} <<'SENIX_PYEOF'
-      import sys
-
-      conf = sys.argv[1]
-      entries = [e.split("=", 1) for e in sys.argv[2:] if "=" in e]
-      existing = set()
-      out = []
-      with open(conf) as f:
-          for line in f:
-              s = line.strip()
-              parts = s.split()
-              if len(parts) == 3 and parts[1] == "=":
-                  existing.add(parts[0])
-              out.append(line)
-      for name, status in entries:
-          if name not in existing:
-              out.append(f"{name} = {status}\n")
-      with open(conf, "w") as f:
-          f.writelines(out)
-      SENIX_PYEOF
-
-      cp -a ${moduleSourceDrv}/. .
-
-      # `cp -a` preserves the (read-only) source modes; ensure everything is
-      # writable again before any in-place `sed`/`make` runs.
-      chmod -R u+w .
-
-      # PID 1's `init` SID context comes from the Reference Policy's own
-      # `kernel.te` (`sid init … unlabeled_t`) — we deliberately do not override
-      # it here; add/keep a `type_transition` (in `init_context`) so systemd
-      # re-execs into `init_t` instead.
-
-      export INSTALL=${pkgs.coreutils}/bin/install
-
-      mkdir -p tmp
-
-      make all install install-headers ${refpolicyTools} prefix=$out DESTDIR=$out
-
-
-      # The Reference Policy's `install` also stages modules under
-      # `$(prefix)/usr`, doubling everything (deduped but confusing); drop it.
-      rm -rf "$out/usr"
-
-      runHook postBuild
+      runHook postConfigure
     '';
-    # `buildPhase` runs `make install` with `prefix=$out DESTDIR=$out`; the
-    # default stdenv `installPhase` would run `make install` again without those
-    # (installing to `/usr`), so make it a no-op.
-    installPhase = "true";
-  };
 
+    postPatch = ''
+      # The store-backed source tree may be read-only; the Reference Policy
+      # build writes generated files (.te/.if/.fc from .in, modules.conf, ...)
+      # into it, so make it writable first.
+      chmod -R u+w .
+      # Overlay the SENix module sources onto the Reference Policy source tree:
+      # a module with the same name+layer as a built-in overrides it (the files
+      # are copied over it), while new modules are placed next to their layer
+      # neighbours. Also adds the `senix` layer metadata.xml. `moduleSourceDrv`
+      # is a `linkFarm`, so resolve (-L: dereference) and copy the actual file
+      # contents - keeping symlinks would leave writable-looking paths that
+      # actually point into the read-only /nix/store, so any in-place write
+      # fails. The copies inherit the read-only store modes, so make them
+      # writable too after copying.
+      cp -aL ${moduleSourceDrv}/. .
+      chmod -R u+w .
+    '';
+
+    makeFlags = [
+      "CHECKPOLICY=${lib.getExe pkgs.checkpolicy}"
+      "CHECKMODULE=${lib.getExe' pkgs.checkpolicy "checkmodule"}"
+      "SEMODULE=${lib.getExe' pkgs.policycoreutils "semodule"}"
+      "SEMOD_PKG=${lib.getExe' pkgs.semodule-utils "semodule_package"}"
+      "SEMOD_LNK=${lib.getExe' pkgs.semodule-utils "semodule_link"}"
+      "SEMOD_EXP=${lib.getExe' pkgs.semodule-utils "semodule_expand"}"
+      "DESTDIR=${placeholder "out"}"
+      "prefix=${placeholder "out"}"
+      "DISTRO=nixos"
+      "SYSTEMD=y"
+      "UBAC=y"
+      "TYPE=mls"
+    ]
+    ++ lib.optional (cfg.policyVersion != null) "OUTPUT_POLICY=${toString cfg.policyVersion}"
+    ++ lib.optional (cfg.policyVersion != null) "OUTPUT_MODULE=${toString cfg.policyVersion}";
+  };
 in
 {
   options.security.selinux.build = {
