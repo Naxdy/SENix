@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "permissive";
+        mode = "enforcing";
         overlayPackages = false;
 
         modules.enforce_learn = {
@@ -141,36 +141,6 @@ pkgs.testers.runNixOSTest {
         pkgs.policycoreutils
         pkgs.setools
       ];
-
-      # EXPERIMENT: does mounting a tmpfs with a custom `context=` work once
-      # SELinux is fully up post-boot? Runs after multi-user.target. All output
-      # goes to the journal (visible in the test log).
-      systemd.services.senix-mount-test = {
-        wantedBy = [ "multi-user.target" ];
-        after = [ "local-fs.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        path = [
-          pkgs.util-linux
-          pkgs.coreutils
-          pkgs.attr
-        ];
-        script = ''
-          set -ux
-          mkdir -p /tmp/senix-mnt
-          echo "SENIX myctx=$(cat /proc/self/attr/current) enforcing=$(cat /sys/fs/selinux/enforce)"
-          mount -t tmpfs -o context=system_u:object_r:senix_meta_t:s0 tmpfs /tmp/senix-mnt \
-            && echo "SENIX context=senix_meta_t := OK" || echo "SENIX context=senix_meta_t := FAIL"
-          mount -t tmpfs -o context=system_u:object_r:usr_t:s0 tmpfs /tmp/senix-mnt \
-            && echo "SENIX context=usr_t := OK" || echo "SENIX context=usr_t := FAIL"
-          setfattr -n security.selinux -v system_u:object_r:senix_meta_t:s0 /tmp/senix-mnt \
-            && echo "SENIX setxattr senix_meta_t := OK" || echo "SENIX setxattr senix_meta_t := FAIL"
-          setfattr -n security.selinux -v system_u:object_r:usr_t:s0 /tmp/senix-mnt \
-            && echo "SENIX setxattr usr_t := OK" || echo "SENIX setxattr usr_t := FAIL"
-        '';
-      };
     };
 
   testScript =

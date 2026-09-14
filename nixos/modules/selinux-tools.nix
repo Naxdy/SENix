@@ -215,8 +215,6 @@
       allow init_unit_t tmpfs_t:file { read open getattr map };
       # setfiles crawls unreachable/unlabelled tree objects + the /run/selinux
       # store while relabeling the root + /dev.
-      allow setfiles_t unlabeled_t:file { read open getattr map };
-      allow setfiles_t unlabeled_t:lnk_file { read getattr };
       allow setfiles_t tmpfs_t:file { read open getattr map };
       allow setfiles_t event_device_t:chr_file { read getattr open };
       # The seed/rc processes (agetty etc.) run as initrc_t.
