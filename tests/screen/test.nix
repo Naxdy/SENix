@@ -28,11 +28,6 @@ pkgs.testers.runNixOSTest {
       screen_bin = machine.succeed("readlink -f \"$(command -v screen)\"").strip()
       tmux_bin = machine.succeed("readlink -f \"$(command -v tmux)\"").strip()
 
-      # Re-apply the labels (as a `nixos-rebuild switch` would); this exercises
-      # the `selinux-relabel` entry point and must be idempotent with the boot
-      # application.
-      machine.succeed("selinux-relabel")
-
       with subtest("the screen binary carries the screen_exec_t context"):
           machine.succeed(
               "getfattr -n security.selinux --only-values \"%s\" | grep -q screen_exec_t" % screen_bin

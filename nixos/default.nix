@@ -226,8 +226,9 @@ in
           final: prev:
           let
             # Building `coreutils` with `selinuxSupport` in this nixpkgs revision trips the
-            # bootstrap `fetchurlBoot` (it does not accept `nativeBuildInputs`). Drop it from
+            # bootstrap `fetchurlBoot` (it does not accept `nativeBuildInputs`). Exclude it from
             # the override set until upstream can build SELinux-enabled coreutils during bootstrap.
+            # Everything else can be overridden by default.
             overridePkgs = [
               {
                 name = "emacs";
@@ -421,13 +422,6 @@ in
     };
 
     boot.initrd.systemd = {
-      # `systemd` is PID 1 and must run as `init_t` (not `kernel_t`) to boot
-      # directly into enforcing mode, but the store overlay/`semodule` (which
-      # labels files) only runs in stage 2 — after PID 1 is exec'd. So load the
-      # SELinux policy, label the systemd binary `init_exec_t`, and start
-      # enforcing from within the initrd, before the real init is exec'd. Together
-      # with the `type_transition ... -> init_t` in the `init_context` module this
-      # makes systemd run as `init_t`.
       storePaths = [
         pkgs.attr
         pkgs.policycoreutils
@@ -470,11 +464,8 @@ in
         #
         # TODO: We'll need to use our own bespoke FUSE system here to prevent actual
         # date writes to the upper, and only allow metadata. Even though the underlying
-        # nix store remains untouched, this would allow certain processes to poison the
-        # runtime view of the store.
-        #
-        # TODO: We need to fix unmounting on system shutdown, right now it fails
-        # with "target is busy".
+        # nix store remains untouched, the current setup allows certain processes to pollute
+        # the runtime view of the store.
         selinux-init = {
           wantedBy = [ "initrd-fs.target" ];
           before = [ "initrd-fs.target" ];
@@ -490,10 +481,6 @@ in
           serviceConfig = {
             Type = "oneshot";
             RemainAfterExit = true;
-            # The service runs before the policy is loaded, so request the
-            # `init_unit_t` domain up front — it is granted the `associate` +
-            # tool-transition accesses in the `selinux_tools` policy module.
-            SELinuxContext = "system_u:system_r:init_unit_t";
           };
           unitConfig = {
             RequiresMountsFor = [
@@ -504,15 +491,6 @@ in
           script = ''
             set -euo pipefail
 
-            # Install and link the policy modules, make the linked policy visible to
-            # `load_policy` (which reads `/etc/selinux/<type>/policy/policy.<ver>`
-            # and performs the kernel version conversion), then enforce. We cannot
-            # rely on the store overlay here (it is not up yet, and the initrd store
-            # cannot hold xattrs), so label the systemd binary `init_exec_t`
-            # directly — both the initrd copy and the real-root copy mounted at
-            # `/sysroot/nix/store`. That makes systemd's re-exec at switch_root
-            # transition to `init_t` via the `init_context` type_transition, so PID 1
-            # can start units in enforcing mode.
             pp=""
             for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
               [ -e "$f" ] && pp="$pp $f"
@@ -535,7 +513,7 @@ in
               ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
             done
 
-            # We let systemd handle all of the relabeling for us
+            # We let systemd handle all of the relabeling for us.
             mkdir -p /run/systemd/relabel-extra.d || true
             echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/nix/store" >> /run/systemd/relabel-extra.d/10-senix.relabel
@@ -609,7 +587,6 @@ in
             find /sysroot${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
             setfiles -r /sysroot -F "$fc" /sysroot
           '';
-
         };
       };
     };
@@ -626,7 +603,6 @@ in
         serviceConfig = {
           Type = "oneshot";
           RemainAfterExit = true;
-          SELinuxContext = "system_u:system_r:init_unit_t";
         };
         path = [
           pkgs.policycoreutils
@@ -641,6 +617,5 @@ in
         '';
       };
     };
-
   };
 }

@@ -188,35 +188,17 @@ let
       pkgs.getopt
     ];
 
+    postPatch = ''
+      cp -aL ${moduleSourceDrv}/. .
+      chmod -R u+w .
+    '';
+
     configurePhase = ''
       runHook preConfigure
 
-      # `make conf`'s `all_layers` scan auto-disovers the SENix-only modules
-      # overlaid by `postPatch`, and - because every custom module ships a
-      # documented `.if` stub (see `moduleSourceDrv`) - sedoctool.py registers
-      # each one in modules.conf as a loadable module. No manual patching of
-      # modules.conf is needed.
       make conf ''${makeFlags[@]}
 
       runHook postConfigure
-    '';
-
-    postPatch = ''
-      # The store-backed source tree may be read-only; the Reference Policy
-      # build writes generated files (.te/.if/.fc from .in, modules.conf, ...)
-      # into it, so make it writable first.
-      chmod -R u+w .
-      # Overlay the SENix module sources onto the Reference Policy source tree:
-      # a module with the same name+layer as a built-in overrides it (the files
-      # are copied over it), while new modules are placed next to their layer
-      # neighbours. Also adds the `senix` layer metadata.xml. `moduleSourceDrv`
-      # is a `linkFarm`, so resolve (-L: dereference) and copy the actual file
-      # contents - keeping symlinks would leave writable-looking paths that
-      # actually point into the read-only /nix/store, so any in-place write
-      # fails. The copies inherit the read-only store modes, so make them
-      # writable too after copying.
-      cp -aL ${moduleSourceDrv}/. .
-      chmod -R u+w .
     '';
 
     makeFlags = [
@@ -251,6 +233,4 @@ in
       '';
     };
   };
-
-  config = { };
 }

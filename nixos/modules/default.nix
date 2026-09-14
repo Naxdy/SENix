@@ -11,8 +11,8 @@
     ./init.nix
     ./libraries.nix
     ./nscd.nix
-    ./selinux-tools.nix
     ./selinuxutil.nix
+    ./senix-init.nix
     ./senix-store.nix
   ];
 }

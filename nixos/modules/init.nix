@@ -14,22 +14,14 @@
             lib.mapAttrsToList (_: value: value.unit) (
               lib.filterAttrs (
                 name: _:
-                let
-                  ignore = lib.hasInfix "selinux" name;
-                in
-                if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
+                # need to exclude our own services to avoid infinite recursion
+                !(lib.hasInfix "selinux" name)
               ) config.boot.initrd.systemd.units
             )
           ))
           ++ (lib.filter lib.isDerivation (
             lib.mapAttrsToList (_: value: value.unit) (
-              lib.filterAttrs (
-                name: _:
-                let
-                  ignore = lib.hasInfix "selinux" name;
-                in
-                if ignore then builtins.trace "ignoring ${name}" (!ignore) else ignore
-              ) config.systemd.units
+              lib.filterAttrs (name: _: !(lib.hasInfix "selinux" name)) config.systemd.units
             )
           ))
         );

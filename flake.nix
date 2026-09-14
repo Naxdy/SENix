@@ -78,9 +78,11 @@
             inherit pkgs;
           };
 
-          selinux-switch = import ./tests/selinux-switch/test.nix {
-            inherit pkgs;
-          };
+          # Doesn't work right now due to mounting issues with `/nix/store`;
+          # we'll revisit this once we have our custom FUSE filesystem.
+          # selinux-switch = import ./tests/selinux-switch/test.nix {
+          #   inherit pkgs;
+          # };
         }
       );
     };

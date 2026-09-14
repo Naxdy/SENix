@@ -52,6 +52,7 @@ let
       security.selinux = {
         enable = true;
         mode = "permissive";
+        overlayPackages = false;
       };
       environment.systemPackages = [
         pkgs.attr

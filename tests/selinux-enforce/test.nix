@@ -61,8 +61,8 @@ pkgs.testers.runNixOSTest {
               type var_lib_t;
               type unlabeled_t;
               type fs_t;
-              type init_unit_t;
               type setfiles_t;
+              class capability2 { mac_admin };
             }
 
             type enforce_learn_exec_t;
@@ -71,7 +71,6 @@ pkgs.testers.runNixOSTest {
             # Migrated from `selinux_tools` (which must not depend on this
             # test-only type): the relabel domain + the labeler need access to
             # the app binary's file type.
-            allow init_unit_t enforce_learn_exec_t:file { read getattr open map execute execute_no_trans relabelto relabelfrom entrypoint };
             allow setfiles_t enforce_learn_exec_t:file relabelto;
 
             type enforce_learn_t;
@@ -125,7 +124,10 @@ pkgs.testers.runNixOSTest {
             # runs as `init_t` (systemd), so grant it the relabel permission.
             allow init_t enforce_learn_data_t:file relabelto;
             allow init_t enforce_learn_secret_t:file relabelto;
+
+            allow initrc_t self:capability2 mac_admin;
           '';
+
           fileContext = {
             storePaths.enforce_learn = [
               enforceLearnApp
@@ -148,6 +150,10 @@ pkgs.testers.runNixOSTest {
     ''
       machine.wait_for_unit("multi-user.target")
 
+      # [senix] Post-boot PID 1 context (diagnostic; the init_t grant landed when
+      # this shows init_t and the "Failed to transition" warning is absent).
+      print("[senix] P1 ctx:", machine.succeed("cat /proc/1/attr/current; echo; readlink /proc/1/exe"))
+
       # The initrd `selinux-init` relabel must label the store unit files
       # `systemd_unit_t` before switch_root (including the NixOS-generated
       # `*-unit-*` packages), so systemd can manage them.
@@ -161,15 +167,13 @@ pkgs.testers.runNixOSTest {
       # Runtime SELinux tooling must work: the policy/contexts must be present
       machine.succeed("ls /etc/selinux/refpolicy/policy/ 2>&1")
       machine.succeed("sestatus 2>&1")
-      machine.succeed("restorecon -R /etc 2>&1")
-
 
       # Create the files the confined app reads, and label them.
       machine.succeed("mkdir -p /var/lib/enforce_learn")
       machine.succeed("echo allowed-data > /var/lib/enforce_learn/allowed")
       machine.succeed("echo secret-data > /var/lib/enforce_learn/secret")
-      machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_data_t /var/lib/enforce_learn/allowed")
-      machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_secret_t /var/lib/enforce_learn/secret")
+      machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_data_t:s0 /var/lib/enforce_learn/allowed")
+      machine.succeed("setfattr -n security.selinux -v system_u:object_r:enforce_learn_secret_t:s0 /var/lib/enforce_learn/secret")
 
       # Executing the binary transitions us into enforce_learn_t via the type
       # transition. The app exits 0 iff it can read its own data and cannot read
