@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ ... }: {
   # The store is labelled at boot through a metacopy overlay whose upper
   # filesystem is a dedicated tmpfs ("the meta tmpfs") mounted at
   # `/run/selinux/overlay` (see `init-selinux-overlay`). Objects are copy-up'd

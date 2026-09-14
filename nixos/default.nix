@@ -391,9 +391,6 @@ in
               done
             fi
 
-            echo "reet reet"
-            cat /proc/self/mountinfo
-
             echo "$cmd" >/var/lib/selinux/activate-check
           fi
         '';

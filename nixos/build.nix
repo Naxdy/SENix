@@ -240,7 +240,7 @@ let
       "DISTRO=nixos"
       "SYSTEMD=y"
       "UBAC=y"
-      "TYPE=mls"
+      "TYPE=mcs"
     ]
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_POLICY=${toString cfg.policyVersion}"
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_MODULE=${toString cfg.policyVersion}";
