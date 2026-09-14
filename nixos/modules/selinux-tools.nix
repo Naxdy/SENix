@@ -140,6 +140,25 @@
       mls_file_write_all_levels(init_t)
       mls_file_write_all_levels(init_unit_t)
       mls_file_write_all_levels(setfiles_t)
+      # PID 1 is `init_t` (the `kernel_t -> init_t` exec transition works and is
+      # verified), but the boot-time fd/socket objects systemd hands to its
+      # child units are still labeled with the `kernel` initial SID
+      # (`kernel_t`, pinned by kernel.te to mls_systemhigh): every task is born
+      # with SECINITSID_KERNEL and objects created in that early window (exec
+      # fds, kernel-netlink peers) keep it forever. Using such an fd is
+      # `fd:use` against `kernel_t:s15:c0.c1023`, which refpolicy never grants
+      # (it only covers init_t/initrc_t-owned fds) and which the MLS constraint
+      # `mlsconstrain fd use (l1 eq l2 or t1==mlsfduse or t2==mlsfdshare)`
+      # refuses at unequal levels. Legitimize it with refpolicy's own escape
+      # hatch: `mls_fd_share_all_levels` marks *the owner type's* fds as
+      # shareable across levels, the unit domains get the explicit `use`.
+      # Mirrors the grants Fedora ships in policy/modules/kernel/kernel.te
+      # (`mls_fd_share_all_levels(kernel_t)` + `mls_fd_use_all_levels(kernel_t)`
+      # under ifdef(`enable_mls'); the reverse direction is currently inert for
+      # us since no kernel_t task consumes foreign fds, but is kept for parity).
+      mls_fd_share_all_levels(kernel_t)
+      mls_fd_use_all_levels(kernel_t)
+      allow { initrc_t init_unit_t } kernel_t:fd use;
       # PID 1 is `kernel_t` (the `kernel` SID) → `unlabeled_t` (the `init` SID);
       # it spawns the relabel via `SELinuxContext=`, so allow that transition +
       # the fd/socket inheritance from it.
