@@ -12,7 +12,6 @@ let
   moduleNames = builtins.attrNames mods;
 
   policySrc = cfg.refpolicy.package.src;
-  supportDir = "${policySrc}/policy/support";
 
   # The Reference Policy layer directories that exist in the source tree.
   refpolicyLayers = lib.attrNames (
@@ -173,14 +172,6 @@ let
         }
       ]
     );
-
-  # Custom modules (not part of the Reference Policy) are detected by scanning
-  # the source tree (never by their declared `layer`); they are registered by
-  # `make conf`'s `all_layers` pipeline exactly like built-in modules.
-
-  # Common make flags for the Reference Policy build (single line so they can
-  # be interpolated directly into a `make` invocation).
-  refpolicyTools = "CHECKPOLICY=${pkgs.checkpolicy}/bin/checkpolicy CHECKMODULE=${pkgs.checkpolicy}/bin/checkmodule SEMODULE=${pkgs.policycoreutils}/bin/semodule SEMOD_PKG=${pkgs.semodule-utils}/bin/semodule_package SEMOD_LNK=${pkgs.semodule-utils}/bin/semodule_link SEMOD_EXP=${pkgs.semodule-utils}/bin/semodule_expand DISTRO=nixos SYSTEMD=y UBAC=y";
 
   # The policy is built from the Reference Policy sources in full: every built-in
   # module is compiled, and any module declared in `config.security.selinux.modules`
