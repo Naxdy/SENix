@@ -453,7 +453,8 @@ in
         # TODO: We need to fix unmounting on system shutdown, right now it fails
         # with "target is busy".
         selinux-init = {
-          wantedBy = [ "initrd.target" ];
+          wantedBy = [ "initrd-fs.target" ];
+          before = [ "initrd-fs.target" ];
           path = [
             pkgs.policycoreutils
             pkgs.attr
@@ -525,10 +526,25 @@ in
             upper=/sysroot/run/selinux/overlay
 
             mkdir -p /run/selinux "$upper"
-            mount -t tmpfs -o size=0,mode=0755 tmpfs "$upper"
-            mkdir -p "$upper/upper" "$upper/work"
 
             load_policy -i
+
+            # The meta tmpfs must carry the `senix_meta_t` identity, but a mount
+            # with security options can only succeed after the policy is loaded -
+            # so mount it AFTER `load_policy -i`. We use `fscontext=` for the
+            # superblock (not `context=`, which would pin the labels and inhibit
+            # relabelling). Note that `defcontext=` cannot be used here: the
+            # kernel only accepts it for filesystems with XATTR/NATIVE labeling
+            # behavior, and tmpfs has a genfscon entry (so GENFS behavior) and is
+            # rejected with "defcontext option is invalid for this filesystem
+            # type". With `SECURITY_FS_USE_SB`, every inode created without an
+            # explicit xattr (i.e. the metacopy overlay's copy-up targets)
+            # inherits the superblock label `senix_meta_t:s0` - never
+            # `unlabeled_t`, never a high MLS level - so the create's
+            # `associate` is the already granted self-associate, and later
+            # relabels s0->s0 pass MLS.
+            mount -t tmpfs -o fscontext=system_u:object_r:senix_meta_t:s0,size=0,mode=0755 tmpfs "$upper"
+            mkdir -p "$upper/upper" "$upper/work"
 
             echo "mounting metacopy overlay..."
 
@@ -546,8 +562,6 @@ in
                 lib.concatStringsSep "," (
                   config.boot.nixStoreMountOpts
                   ++ [
-                    "fscontext=system_u:object_r:senix_meta_t:s0"
-                    "defcontext=system_u:object_r:senix_meta_t:s0"
                     "lowerdir=/sysroot/nix/store"
                     "upperdir=$upper/upper"
                     "workdir=$upper/work"
@@ -564,6 +578,7 @@ in
             # We need to label the systemd binary in order for it to be able to
             # relabel everything else.
             find /sysroot${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
+            setfiles -r /sysroot -F "$fc" /sysroot
           '';
 
         };

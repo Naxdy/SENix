@@ -113,6 +113,33 @@
       allow init_unit_t { unlabeled_t root_t tmpfs_t }:dir { read search getattr open relabelto relabelfrom };
       allow init_unit_t { tmpfs_t root_t fs_t device_t }:dir search;
       allow init_unit_t { init_t kernel_t unlabeled_t }:fd use;
+
+      # We operate single-level (s0) on top of an MLS policy; refpolicy assigns
+      # the `kernel`/`unlabeled` SIDs `mls_systemhigh` (:s15:c0.c1023), so
+      # unlabelled store objects carry the high level. The compiled policy's
+      # `validatetrans` constraints on file/dir require the new label to carry
+      # the same level as the old (or key off the mlsfileupgrade /
+      # mlsfiledowngrade exemptions). Grant the boot/relabel domains BOTH of
+      # those designated exemptions (upgrade + downgrade) so systemd/the initrd
+      # can label the store regardless of the range on the current label. Also
+      # give them all-levels file read/write so they can work with the objects
+      # while they still carry the high level. (Macros from mls.if.)
+      mls_file_upgrade(init_t)
+      mls_file_upgrade(init_unit_t)
+      mls_file_upgrade(setfiles_t)
+      mls_file_upgrade(kernel_t)
+      mls_file_upgrade(initrc_t)
+      mls_file_downgrade(init_t)
+      mls_file_downgrade(init_unit_t)
+      mls_file_downgrade(setfiles_t)
+      mls_file_downgrade(kernel_t)
+      mls_file_downgrade(initrc_t)
+      mls_file_read_all_levels(init_t)
+      mls_file_read_all_levels(init_unit_t)
+      mls_file_read_all_levels(setfiles_t)
+      mls_file_write_all_levels(init_t)
+      mls_file_write_all_levels(init_unit_t)
+      mls_file_write_all_levels(setfiles_t)
       # PID 1 is `kernel_t` (the `kernel` SID) → `unlabeled_t` (the `init` SID);
       # it spawns the relabel via `SELinuxContext=`, so allow that transition +
       # the fd/socket inheritance from it.
