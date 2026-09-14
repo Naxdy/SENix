@@ -1,4 +1,4 @@
-{ config, ... }: {
+{ ... }: {
   # The initrd `selinux-init` and boot-time `selinux-relabel` services. The
   # boot-time service runs as a dedicated `init_unit_t` domain (requested up
   # front via `SELinuxContext=`), and the SELinux userland tools it spawns run

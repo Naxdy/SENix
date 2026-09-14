@@ -8,6 +8,10 @@ let
   inherit (lib) mkOption types;
 
   cfg = config.security.selinux;
+
+  setsebools = lib.escapeShellArgs (
+    lib.mapAttrsToList (name: value: "${name}=${if value then "on" else "off"}") cfg.booleans
+  );
 in
 {
   imports = [
@@ -23,6 +27,23 @@ in
       example = true;
       description = ''
         Whether to enable SELinux support via [SENix](https://github.com/Naxdy/SENix).
+      '';
+    };
+
+    booleans = mkOption {
+      type = types.submodule {
+        freeformType = types.attrsOf types.bool;
+      };
+      default = { };
+      defaultText = "Defaults are provided by various modules.";
+      example = {
+        dbus_broker_system_bus = true;
+        dbus_can_network = true;
+      };
+      description = ''
+        Booleans for consumption by tunable policies.
+
+        This is used to the `booleans.local` file in `/etc/selinux/''${config.security.selinux.type}`.
       '';
     };
 
@@ -176,7 +197,6 @@ in
         SELinux enforcement mode.
       '';
     };
-
   };
 
   config = lib.mkIf cfg.enable {
@@ -307,32 +327,34 @@ in
     ];
 
     environment = {
-      etc."selinux/config".text = ''
-        SELINUX=${cfg.mode}
-        SELINUXTYPE=${cfg.type}
-      '';
-
-      etc."selinux/semanage.conf".text =
-        lib.optionalString (cfg.policyVersion != null) ''
-          policy-version = ${toString cfg.policyVersion}
-        ''
-        + ''
-          compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
-
-          [load_policy]
-          path = ${lib.getExe' pkgs.policycoreutils "load_policy"}
-          [end]
-
-          [setfiles]
-          path = ${lib.getExe' pkgs.policycoreutils "setfiles"}
-          args = -q -c $@ $<
-          [end]
-
-          [sefcontext_compile]
-          path = ${lib.getExe' pkgs.libselinux "sefcontext_compile"}
-          args = -r $@
-          [end]
+      etc = {
+        "selinux/config".text = ''
+          SELINUX=${cfg.mode}
+          SELINUXTYPE=${cfg.type}
         '';
+
+        "selinux/semanage.conf".text =
+          lib.optionalString (cfg.policyVersion != null) ''
+            policy-version = ${toString cfg.policyVersion}
+          ''
+          + ''
+            compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
+
+            [load_policy]
+            path = ${lib.getExe' pkgs.policycoreutils "load_policy"}
+            [end]
+
+            [setfiles]
+            path = ${lib.getExe' pkgs.policycoreutils "setfiles"}
+            args = -q -c $@ $<
+            [end]
+
+            [sefcontext_compile]
+            path = ${lib.getExe' pkgs.libselinux "sefcontext_compile"}
+            args = -r $@
+            [end]
+          '';
+      };
 
       systemPackages = [
         pkgs.libselinux
@@ -391,6 +413,8 @@ in
               done
             fi
 
+            ${lib.getExe' pkgs.policycoreutils "setsebool"} -P ${setsebools}
+
             echo "$cmd" >/var/lib/selinux/activate-check
           fi
         '';
@@ -416,28 +440,30 @@ in
       # and `/sbin`/`/usr/sbin`, none of which exist in the read-only initrd.
       # Supply a `semanage.conf` that points them at the store paths, and use a
       # writable store under `/run` (the initrd `/var` is read-only).
-      contents."/etc/selinux/semanage.conf".text =
-        lib.optionalString (cfg.policyVersion != null) ''
-          policy-version = ${toString cfg.policyVersion}
-        ''
-        + ''
-          store-root = /run/selinux
-          compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
+      contents = {
+        "/etc/selinux/semanage.conf".text =
+          lib.optionalString (cfg.policyVersion != null) ''
+            policy-version = ${toString cfg.policyVersion}
+          ''
+          + ''
+            store-root = /run/selinux
+            compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
 
-          [load_policy]
-          path = ${pkgs.policycoreutils}/bin/load_policy
-          [end]
+            [load_policy]
+            path = ${pkgs.policycoreutils}/bin/load_policy
+            [end]
 
-          [setfiles]
-          path = ${pkgs.policycoreutils}/bin/setfiles
-          args = -q -c $@ $<
-          [end]
+            [setfiles]
+            path = ${pkgs.policycoreutils}/bin/setfiles
+            args = -q -c $@ $<
+            [end]
 
-          [sefcontext_compile]
-          path = ${pkgs.libselinux.bin}/bin/sefcontext_compile
-          args = $@
-          [end]
-        '';
+            [sefcontext_compile]
+            path = ${pkgs.libselinux.bin}/bin/sefcontext_compile
+            args = $@
+            [end]
+          '';
+      };
 
       services = {
         # Prepares the necessary prerequisites for mounting the metacopy overlay.
@@ -522,9 +548,11 @@ in
 
             upper=/sysroot/run/selinux/overlay
 
-            mkdir -p /run/selinux "$upper"
+            mkdir -p "$upper"
 
             load_policy -i
+
+            setsebool -P ${setsebools}
 
             # The meta tmpfs must carry the `senix_meta_t` identity, but a mount
             # with security options can only succeed after the policy is loaded -
@@ -573,7 +601,11 @@ in
             echo "relabeling systemd..."
 
             # We need to label the systemd binary in order for it to be able to
-            # relabel everything else.
+            # relabel everything else post-initrd boot. We ALSO need to relabel
+            # the entire initrd `/nix/store` in order to ensure the post-initrd
+            # domain transition to `init_t` works, and fd's don't accidentally
+            # get `kernel_t` ownership.
+            setfiles -F "$fc" /nix/store
             find /sysroot${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
             setfiles -r /sysroot -F "$fc" /sysroot
           '';
