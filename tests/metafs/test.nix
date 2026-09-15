@@ -12,6 +12,7 @@ pkgs.testers.runNixOSTest {
       environment.systemPackages = [
         metafs
         pkgs.attr
+        pkgs.fuse
       ];
     };
 
@@ -33,7 +34,7 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f"printf 'nested' > {src}/sub/nested.txt")
           machine.succeed(f"ln -s hello.txt {src}/link")
           machine.succeed(f"head -c 1048576 /dev/urandom > {src}/big.bin")
-          daemon = int(machine.succeed(f"metafs {src} {mnt} >/tmp/metafs.log 2>&1 & echo $!"))
+          daemon = int(machine.succeed(f"metafs -f {src} {mnt} >/tmp/metafs.log 2>&1 & echo $!"))
           machine.wait_until_succeeds(
               f"grep -q {mnt} /proc/self/mounts",
               timeout=dt.timedelta(seconds=30),
@@ -114,7 +115,7 @@ pkgs.testers.runNixOSTest {
           origin_ino = machine.succeed(f"stat -c %i {self_dir}/origin.txt").strip()
 
           self_daemon = int(
-              machine.succeed(f"metafs {self_dir} {self_dir} >/tmp/metafs-self.log 2>&1 & echo $!")
+              machine.succeed(f"metafs -f {self_dir} {self_dir} >/tmp/metafs-self.log 2>&1 & echo $!")
           )
           machine.wait_until_succeeds(
               f"grep -q {self_dir} /proc/self/mounts",
@@ -140,5 +141,22 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f'test "$(cat "{self_dir}/origin.txt")" = "origin"')
           machine.succeed(f'test "$(find "{self_dir}" -mindepth 1 | wc -l)" -eq 3')
           machine.succeed(f'! getfattr -d "{self_dir}/origin.txt" 2>/dev/null | grep -q "user\\."')
+
+      with subtest("the overlay can be mounted through mount(8)"):
+          # `mount -t fuse.metafs` dispatches to the mount.fuse helper, which
+          # runs `metafs <source> <mountpoint> -o <opts>`; metafs must accept
+          # that argv, daemonize, and report readiness so mount(8) returns.
+          m8_dir = "/tmp/metafs-mnt8"
+          machine.succeed(f"rm -rf {m8_dir} && mkdir -p {m8_dir}")
+          machine.succeed(f"printf 'via-mount\\n' > {m8_dir}/f.txt")
+          machine.succeed(f"mount -t fuse.metafs {m8_dir} {m8_dir}", timeout=dt.timedelta(seconds=30))
+
+          machine.succeed(f'test "$(cat "{m8_dir}/f.txt")" = "via-mount"')
+          machine.fail(f"echo x > {m8_dir}/new.txt")
+          machine.succeed(f"setfattr -n user.color -v amber {m8_dir}/f.txt")
+          machine.succeed(f'test "$(getfattr -n user.color --only-values "{m8_dir}/f.txt")" = "amber"')
+
+          machine.succeed(f"umount {m8_dir}")
+          machine.succeed(f'test "$(cat "{m8_dir}/f.txt")" = "via-mount"')
     '';
 }

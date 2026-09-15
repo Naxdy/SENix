@@ -2,7 +2,7 @@
   craneLib,
 }:
 let
-  cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
+  cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
 
   craneArgs = {
     pname = cargoToml.package.name;
@@ -20,6 +20,14 @@ in
 craneLib.buildPackage (
   craneBuildArgs
   // {
+    # Ship metafs also as the `mount(8)` FUSE helper under the fstype-specific
+    # name. mount(8) resolves helpers as `mount.<fstype>` through its
+    # compiled-in search path and prefers the specific name over the generic
+    # `mount.fuse`, enabling a plain `mount -t fuse.metafs ...` from fstab.
+    postInstall = ''
+      ln -s "$out/bin/${cargoToml.package.name}" "$out/bin/mount.fuse.metafs"
+    '';
+
     passthru.tests = {
       test = craneLib.cargoTest craneBuildArgs;
 
