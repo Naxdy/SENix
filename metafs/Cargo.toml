@@ -10,3 +10,13 @@ unwrap_used = { level = "warn", priority = -1 }
 cognitive_complexity = { level = "allow", priority = 0 }
 
 [dependencies]
+clap = { version = "4", features = ["derive"] }
+dashmap = "6"
+fuser = "0.18"
+libc = "0.2"
+log = "0.4"
+env_logger = "0.11"
+nix = { version = "0.31", features = ["fs"] }
+
+[dev-dependencies]
+tempfile = "3"

@@ -129,8 +129,14 @@
             inherit pkgs;
           };
 
-          # Doesn't work right now due to mounting issues with `/nix/store`;
-          # we'll revisit this once we have our custom FUSE filesystem.
+          metafs = import ./tests/metafs/test.nix {
+            inherit pkgs;
+            metafs = self.packages.${system}.metafs;
+          };
+
+          # Deferred: integrate the metafs overlay into the SELinux boot path
+          # and re-enable this once switching between configurations is wired
+          # through the FUSE filesystem.
           # selinux-switch = import ./tests/selinux-switch/test.nix {
           #   inherit pkgs;
           # };

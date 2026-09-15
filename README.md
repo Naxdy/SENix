@@ -16,9 +16,10 @@ The following is a list of minimum requirements that _have_ to be in place befor
 - [ ] Allow multiple entries per path in `config.security.selinux.modules.*.fileContext.rules`
 - [ ] Declaratively flag duplicate wildcards within the same layers for `.fc` rules
 - [ ] Add systemd service for `restorecond`
-- [ ] Replace the `tmpfs` metacopy overlay with a bespoke FUSE filesystem to allow returning `EROFS` on write attempts.
-      Even though right now the store remains technically immutable, since the upper is a writable `tmpfs`, processes with
-      write permissions can pollute the runtime view of the store.
+- [x] Replace the `tmpfs` metacopy overlay with a bespoke FUSE filesystem to allow returning `EROFS` on write attempts
+      (see `./metafs`). The store stays strictly read-only: every mutation returns `EROFS`, while extended
+      attributes are kept in an in-memory map so SELinux can still label store objects without touching
+      the real Nix store.
 - [ ] Migrate more `.fc` modules from the refpolicy and integrate them into the module system
 - [ ] Add more modules for things that need it, e.g. Nix itself, core system components
 - [ ] Decide on a framework to reliably facilitate `nixos-rebuild switch` (completely untested atm)
