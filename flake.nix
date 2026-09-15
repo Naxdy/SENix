@@ -6,6 +6,13 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    fenix = {
+      url = "github:nix-community/fenix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
@@ -13,6 +20,8 @@
       self,
       nixpkgs,
       treefmt-nix,
+      fenix,
+      crane,
     }:
     let
       inherit (nixpkgs) lib;
@@ -30,16 +39,37 @@
             pkgs = import nixpkgs {
               inherit system;
               config.allowUnfree = true;
+              overlays = [
+                fenix.overlays.default
+              ];
             };
 
-            treefmtEval = treefmt-nix.lib.evalModule pkgs ./treefmt.nix;
+            treefmtEval = treefmt-nix.lib.evalModule pkgs (
+              import ./treefmt.nix {
+                inherit rustToolchain;
+              }
+            );
 
             treefmt = treefmtEval.config.build.wrapper;
+
+            rustToolchain = pkgs.fenix.stable.withComponents [
+              "cargo"
+              "clippy"
+              "rust-analyzer"
+              "rust-src"
+              "rust-std"
+              "rustc"
+              "rustfmt"
+            ];
+
+            craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
           in
           f {
             inherit
-              system
+              craneLib
               pkgs
+              rustToolchain
+              system
               treefmt
               treefmtEval
               ;
@@ -48,13 +78,25 @@
     in
     {
       devShells = forEachSupportedSystem (
-        { pkgs, treefmt, ... }:
+        {
+          pkgs,
+          rustToolchain,
+          treefmt,
+          ...
+        }:
         {
           default = pkgs.mkShell {
             packages = [
+              rustToolchain
               treefmt
             ];
           };
+        }
+      );
+
+      packages = forEachSupportedSystem (
+        { pkgs, craneLib, ... }: {
+          metafs = pkgs.callPackage ./metafs { inherit craneLib; };
         }
       );
 
@@ -67,7 +109,16 @@
           treefmtEval,
           ...
         }:
-        {
+        let
+          testsFrom =
+            pname:
+            lib.mapAttrs' (name: value: {
+              name = "${pname}-${name}";
+              inherit value;
+            }) self.packages.${system}.${pname}.passthru.tests;
+        in
+        (testsFrom "metafs")
+        // {
           treefmt = treefmtEval.config.build.check self;
 
           selinux = import ./tests/screen/test.nix {
