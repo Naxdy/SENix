@@ -1,7 +1,24 @@
 {
-  craneLib,
+  crane,
+  stdenv,
+  pkgs,
 }:
 let
+  craneLib = (crane.mkLib pkgs).overrideToolchain (
+    p:
+    let
+      targetToolchain = p.fenix.targets.${stdenv.hostPlatform.rust.rustcTargetSpec}.stable;
+
+      toolchain = p.fenix.stable;
+    in
+    p.fenix.combine [
+      toolchain.cargo
+      toolchain.clippy
+      toolchain.rust-src
+      targetToolchain.rust-std
+    ]
+  );
+
   cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
 
   craneArgs = {
@@ -25,7 +42,7 @@ craneLib.buildPackage (
     # compiled-in search path and prefers the specific name over the generic
     # `mount.fuse`, enabling a plain `mount -t fuse.metafs ...` from fstab.
     postInstall = ''
-      ln -s "$out/bin/${cargoToml.package.name}" "$out/bin/mount.fuse.metafs"
+      ln -s "$out/bin/${cargoToml.package.name}" "$out/bin/mount.fuse.${cargoToml.package.name}"
     '';
 
     passthru.tests = {

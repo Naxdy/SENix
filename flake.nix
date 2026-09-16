@@ -41,6 +41,7 @@
               config.allowUnfree = true;
               overlays = [
                 fenix.overlays.default
+                self.overlays.default
               ];
             };
 
@@ -61,12 +62,9 @@
               "rustc"
               "rustfmt"
             ];
-
-            craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
           in
           f {
             inherit
-              craneLib
               pkgs
               rustToolchain
               system
@@ -95,10 +93,14 @@
       );
 
       packages = forEachSupportedSystem (
-        { pkgs, craneLib, ... }: {
-          metafs = pkgs.callPackage ./metafs { inherit craneLib; };
+        { pkgs, ... }: {
+          metafs = pkgs.pkgsStatic.callPackage ./metafs { inherit crane; };
         }
       );
+
+      overlays.default = final: prev: {
+        inherit (self.packages.${final.stdenv.hostPlatform.system}) metafs;
+      };
 
       formatter = forEachSupportedSystem ({ treefmt, ... }: treefmt);
 

@@ -20,6 +20,12 @@ use fuser::{Config, MountOption, Session, SessionACL};
 use log::debug;
 use metafs::fs::MetaFs;
 
+// Avoid musl's default allocator due to lackluster performance
+// https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// Mount an existing directory as a strictly read-only FUSE overlay.
 ///
 /// Every mutation returns `EROFS`, while extended attributes are kept in an
