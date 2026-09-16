@@ -14,11 +14,44 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
+use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
+use std::time::Duration;
 
 use clap::Parser;
 use fuser::{Config, MountOption, Session, SessionACL};
-use log::debug;
+use log::{Metadata, Record, debug};
 use metafs::fs::MetaFs;
+
+/// A `log` backend that writes every record to `/dev/kmsg` through the held
+/// descriptor, so daemon and fuser diagnostics remain visible on the console
+/// even after journald stops at the initrd root switch.
+struct KmsgLogger;
+
+impl log::Log for KmsgLogger {
+    fn enabled(&self, metadata: &Metadata<'_>) -> bool {
+        metadata.level() <= log::max_level()
+    }
+
+    fn log(&self, record: &Record<'_>) {
+        if self.enabled(record.metadata()) {
+            write_kmsg(&format!("metafs[{}]: {}", record.level(), record.args()));
+        }
+    }
+
+    fn flush(&self) {}
+}
+
+static KMSG_LOGGER: KmsgLogger = KmsgLogger;
+
+/// Report panics (e.g. a stuck request worker) to the kernel log; the default
+/// panic hook would only reach stderr, which is detached/invisible here.
+fn install_panic_hook() {
+    let default = std::panic::take_hook();
+    std::panic::set_hook(Box::new(move |info| {
+        write_kmsg(&format!("metafs: worker panicked: {info}"));
+        default(info);
+    }));
+}
 
 // Avoid musl's default allocator due to lackluster performance
 // https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance
@@ -88,8 +121,17 @@ struct Cli {
 fn main() -> ExitCode {
     let cli = Cli::parse();
 
-    let level = if cli.verbose { "debug" } else { "info" };
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(level)).init();
+    open_kmsg();
+    install_panic_hook();
+    // Log through /dev/kmsg using a held descriptor: journald stops at the
+    // initrd root switch, so stderr-based logging would be invisible in a
+    // frozen or hung boot, whereas kernel messages always reach the console.
+    log::set_logger(&KMSG_LOGGER).expect("logger set");
+    log::set_max_level(if cli.verbose {
+        log::LevelFilter::Trace
+    } else {
+        log::LevelFilter::Info
+    });
     if let Some(fstype) = &cli.fstype {
         debug!("mount(8) forwarded filesystem type {fstype:?}");
     }
@@ -98,6 +140,8 @@ fn main() -> ExitCode {
     }
 
     let source = strip_type_prefix(&cli.source);
+    install_signal_handlers();
+    mark_survivor();
     let config = session_config(&cli.options, cli.read_only, cli.read_write);
 
     let result = if cli.foreground {
@@ -105,7 +149,6 @@ fn main() -> ExitCode {
     } else {
         mount_daemonized(&source, &cli.mountpoint, &config)
     };
-
     match result {
         Ok(()) => ExitCode::SUCCESS,
         Err(e) => {
@@ -183,8 +226,15 @@ fn translate_mount_option(config: &mut Config, option: &str) {
 /// Mount and serve in the calling process (blocking until unmount).
 fn mount_foreground(source: &Path, mountpoint: &Path, config: &Config) -> io::Result<()> {
     let fs = MetaFs::new(source)?;
+    let requests = fs.requests();
     let session = Session::new(fs, mountpoint, config)?;
-    session.run()
+    write_kmsg(&format!("metafs: mounted at {}", mountpoint.display()));
+    spawn_heartbeat(requests, mountpoint.to_path_buf());
+    log::info!("metafs: mounted at {}, serving", mountpoint.display());
+    let result = session.run();
+    write_kmsg("metafs: session ended");
+    log::info!("metafs: session ended");
+    result
 }
 
 /// Mount in a forked, detached process, returning to the caller only once the
@@ -260,4 +310,222 @@ fn detach_stdio() {
 
 fn errno(e: nix::errno::Errno) -> io::Error {
     io::Error::from_raw_os_error(e as i32)
+}
+
+/// File descriptor for `/dev/kmsg`, opened once at startup and reused from
+/// within signal handlers (where allocating / opening is risky).
+static KMSG_FD: AtomicI32 = AtomicI32::new(-1);
+
+/// Write a message to the kernel log.
+///
+/// Kernel messages are forwarded to the consoles, so they reach the captured
+/// serial boot log even after journald stops at the initrd root switch. Used
+/// for diagnostics of the switch-root transition.
+fn write_kmsg(msg: &str) {
+    let fd = KMSG_FD.load(Ordering::Relaxed);
+    if fd < 0 {
+        return;
+    }
+    // Include the syslog-info level prefix "<6>" and a trailing newline; the
+    // kernel timestamp/prefixing is done by the kmsg device itself.
+    let mut buf = String::with_capacity(msg.len() + 8);
+    buf.push_str("<6>");
+    buf.push_str(msg);
+    buf.push('\n');
+    // SAFETY: `fd` is an open writable descriptor; the buffer is valid for the
+    // length given. `write(2)` is async-signal-safe.
+    unsafe {
+        libc::write(fd, buf.as_ptr().cast(), buf.len());
+    }
+}
+
+/// Open `/dev/kmsg` once so later (including signal-handler) writes cannot
+/// fail on descriptor exhaustion.
+fn open_kmsg() {
+    // SAFETY: constant arguments, path is NUL-terminated.
+    let fd = unsafe { libc::open(c"/dev/kmsg".as_ptr(), libc::O_WRONLY | libc::O_CLOEXEC) };
+    KMSG_FD.store(fd, Ordering::Relaxed);
+}
+
+/// Signal handler: log the signal and continue (the daemon only exits when
+/// its FUSE connection ends). Kept async-signal-safe: no allocation, direct
+/// `write(2)` to the pre-opened kmsg descriptor.
+extern "C" fn on_term_signal(_sig: libc::c_int) {
+    let fd = KMSG_FD.load(Ordering::Relaxed);
+    if fd >= 0 {
+        const MSG: &[u8] = b"<6>metafs: caught termination signal, staying alive\n";
+        // SAFETY: static buffer, valid fd.
+        unsafe {
+            libc::write(fd, MSG.as_ptr().cast(), MSG.len());
+        }
+    }
+}
+
+/// Report periodic diagnostics to the kernel log.
+fn spawn_heartbeat(requests: std::sync::Arc<AtomicU64>, mountpoint: PathBuf) {
+    static DUMPED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
+    std::thread::spawn(move || {
+        let pid = std::process::id();
+        loop {
+            let store = store_mounts_summary();
+            // `.` is the CWD, which the daemon anchors to the backing store.
+            let backing_desc = match std::fs::read_dir(".") {
+                Ok(rd) => format!("entries={}", rd.count()),
+                Err(e) => format!("error={e}"),
+            };
+            if store.is_empty() && !DUMPED.swap(true, std::sync::atomic::Ordering::Relaxed) {
+                // Something tectonic happened to the mount table (e.g. the
+                // initrd root switch); dump it once, then stay quiet.
+                for (mnt, fstype) in mountinfo_entries() {
+                    write_kmsg(&format!("metafs mounts {pid}: {mnt} ({fstype})"));
+                }
+                write_kmsg(&format!(
+                    "metafs probes {pid}: {}",
+                    match std::fs::read_to_string("/proc/self/mountinfo") {
+                        Ok(s) => format!("mountinfo ok:{}lines", s.lines().count()),
+                        Err(e) => format!("mountinfo err:{e}"),
+                    }
+                ));
+                write_kmsg("metafs mounts: end");
+            }
+            write_kmsg(&format!(
+                "metafs heartbeat pid={pid}: last_op={} survivor={} fuse={:?} store_mounts=<{}> mountpoint={} backing={backing_desc} requests={}",
+                metafs::fs::last_op(),
+                survivor_xattr(),
+                fuse_mountpoint(),
+                store.join(" "),
+                mountpoint.display(),
+                requests.load(std::sync::atomic::Ordering::Relaxed),
+            ));
+            std::thread::sleep(Duration::from_secs(5));
+        }
+    });
+}
+
+/// Ask systemd to keep this daemon across the switch-root killing spree by
+/// setting the same cgroup xattr systemd itself would set for
+/// `SurviveFinalKillSignal=yes` (see `systemd.io/ROOT_STORAGE_DAEMONS`). This is
+/// belt-and-suspenders in case systemd has not (yet) applied it to our unit.
+fn mark_survivor() {
+    let Some(path) = std::fs::read_to_string("/proc/self/cgroup")
+        .ok()
+        .and_then(|cg| {
+            cg.lines()
+                .next()
+                .and_then(|l| l.split_once(':').map(|(_, p)| p.trim().to_string()))
+        })
+    else {
+        return;
+    };
+    if path.is_empty() {
+        return;
+    }
+    let cgpath = std::ffi::CString::new(format!("/sys/fs/cgroup{path}")).unwrap_or_default();
+    let mut name = b"user.survive_final_kill_signal".to_vec();
+    name.push(0);
+    let mut value = b"1".to_vec();
+    value.push(0);
+    // SAFETY: the three pointers reference valid, NUL-terminated buffers;
+    // `setxattr` cannot fail dangerously (the error is only reported).
+    let r = unsafe {
+        libc::setxattr(
+            cgpath.as_ptr(),
+            name.as_ptr().cast(),
+            value.as_ptr().cast(),
+            1,
+            0,
+        )
+    };
+    write_kmsg(if r == 0 {
+        "metafs: survivor cgroup xattr applied"
+    } else {
+        "metafs: survivor cgroup xattr failed (best effort)"
+    });
+}
+
+/// Whether the current process's cgroup carries the
+/// `user.survive_final_kill_signal` xattr (i.e. whether systemd's
+/// switch-root killing spree will spare it).
+fn survivor_xattr() -> bool {
+    let Some(path) = std::fs::read_to_string("/proc/self/cgroup")
+        .ok()
+        .and_then(|cg| {
+            cg.lines()
+                .next()
+                .and_then(|l| l.split_once(':').map(|(_, p)| p.trim().to_string()))
+        })
+    else {
+        return false;
+    };
+    if path.is_empty() {
+        return false;
+    }
+    let cgpath = std::ffi::CString::new(format!("/sys/fs/cgroup{path}")).unwrap_or_default();
+    let mut name = b"user.survive_final_kill_signal".to_vec();
+    name.push(0);
+    // SAFETY: pointers reference valid buffers; a positive return means the
+    // attribute exists.
+    let mut value = [0u8; 16];
+    unsafe {
+        libc::getxattr(
+            cgpath.as_ptr(),
+            name.as_ptr().cast(),
+            value.as_mut_ptr().cast(),
+            value.len(),
+        ) > 0
+    }
+}
+
+/// Ignore `SIGTERM`/`SIGHUP` so the daemon survives systemd's switch-root and
+/// shutdown killing sprees (see `systemd.io/ROOT_STORAGE_DAEMONS`): the daemon
+/// only exits when the mounted filesystem is unmounted, which ends the FUSE
+/// connection and makes `Session::run` return.
+fn install_signal_handlers() {
+    open_kmsg();
+    // SAFETY: `sigaction` with a constant handler function, an empty signal
+    // mask and SA_RESTART (so syscalls are not interrupted with EINTR).
+    #[allow(clippy::borrow_as_ptr)]
+    unsafe {
+        let mut action: libc::sigaction = std::mem::zeroed();
+        let handler: unsafe extern "C" fn(libc::c_int) = on_term_signal;
+        action.sa_sigaction = handler as libc::sighandler_t;
+        libc::sigemptyset(&raw mut action.sa_mask);
+        action.sa_flags = libc::SA_RESTART;
+        libc::sigaction(libc::SIGTERM, &raw const action, std::ptr::null_mut());
+        libc::sigaction(libc::SIGHUP, &raw const action, std::ptr::null_mut());
+    }
+}
+
+/// Scan `/proc/self/mountinfo` for a `fuse.metafs` mount and return its
+/// mountpoint, if present.
+fn fuse_mountpoint() -> Option<String> {
+    mountinfo_entries()
+        .iter()
+        .find(|(_mnt, fstype)| fstype == "fuse.metafs")
+        .map(|(mnt, _)| mnt.clone())
+}
+
+/// Return a short summary of mounts under `/nix` (or the initrd's `/sysroot`
+/// variant), to reveal whether the store stack survived a root switch.
+fn store_mounts_summary() -> Vec<String> {
+    mountinfo_entries()
+        .into_iter()
+        .filter(|(mnt, _)| mnt.starts_with("/nix") || mnt.starts_with("/sysroot/nix"))
+        .map(|(mnt, fstype)| format!("{mnt}:{fstype}"))
+        .collect()
+}
+
+/// Parse `/proc/self/mountinfo` into (mountpoint, fstype) pairs.
+fn mountinfo_entries() -> Vec<(String, String)> {
+    let Ok(info) = std::fs::read_to_string("/proc/self/mountinfo") else {
+        return Vec::new();
+    };
+    info.lines()
+        .filter_map(|line| {
+            let fields: Vec<&str> = line.split(' ').collect();
+            let fs = line.split(" - ").nth(1)?;
+            let fstype = fs.split(' ').next()?;
+            Some((fields.get(4)?.to_string(), fstype.to_string()))
+        })
+        .collect()
 }

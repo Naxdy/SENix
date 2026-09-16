@@ -24,14 +24,53 @@ use std::time::Duration;
 use dashmap::DashMap;
 use fuser::{
     AccessFlags, BsdFileFlags, Errno, FileAttr, FileHandle, FileType, Filesystem, FopenFlags,
-    Generation, INodeNo, InitFlags, KernelConfig, LockOwner, OpenFlags, RenameFlags, ReplyAttr,
-    ReplyCreate, ReplyData, ReplyDirectory, ReplyDirectoryPlus, ReplyEmpty, ReplyEntry, ReplyOpen,
-    ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow, WriteFlags,
+    Generation, INodeNo, InitFlags, IoctlFlags, KernelConfig, LockOwner, OpenFlags, RenameFlags,
+    ReplyAttr, ReplyCreate, ReplyData, ReplyDirectory, ReplyDirectoryPlus, ReplyEmpty, ReplyEntry,
+    ReplyIoctl, ReplyOpen, ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow, WriteFlags,
 };
-use nix::sys::statvfs;
+use log::{debug, error, info};
 use std::time::UNIX_EPOCH;
 
 use crate::xattrs::{SetError, XattrStore};
+
+/// Most recently entered request handler, by index (diagnostics: reveals which
+/// handler is in flight if a request is being lost / stuck).
+static LAST_OP: AtomicU64 = AtomicU64::new(0);
+const OP_NAMES: [&str; 16] = [
+    "lookup",
+    "getattr",
+    "setattr",
+    "readlink",
+    "open",
+    "read",
+    "write",
+    "readdir",
+    "readdirplus",
+    "release",
+    "access",
+    "statfs",
+    "setxattr",
+    "getxattr",
+    "listxattr",
+    "removexattr",
+];
+
+/// Record that a request handler has been entered.
+fn mark_op(index: usize) {
+    LAST_OP.store((index + 1) as u64, Ordering::Relaxed);
+}
+
+/// Name of the most recently entered handler (for the diagnostics heartbeat).
+pub fn last_op() -> &'static str {
+    OP_NAMES
+        .get(
+            usize::try_from(LAST_OP.load(Ordering::Relaxed))
+                .unwrap_or(0)
+                .saturating_sub(1),
+        )
+        .copied()
+        .unwrap_or("none")
+}
 
 /// How long the kernel may cache lookups and attributes.
 const TTL: Duration = Duration::from_secs(1);
@@ -58,17 +97,21 @@ struct Node {
 /// instance is shared by every request-handling thread.
 pub struct MetaFs {
     /// File descriptor for the backing root directory, opened *before* the
-    /// overlay is mounted. Every backing access is addressed through it, so
-    /// the overlay can even be stacked directly on top of its own source
-    /// (source == mountpoint) without re-entering this FUSE mount.
+    /// overlay is mounted. The daemon's working directory is switched into it
+    /// so that every backing path can be resolved *relative to the descriptor*
+    /// (never through the process root). That keeps the backing reachable even
+    /// after an initrd root switch detaches the old path tree — exactly like
+    /// the open handle itself — and also when the overlay is stacked directly
+    /// on top of its own source.
     source_fd: File,
-    /// `/proc/self/fd/<fd>` prefix that resolves to the real backing directory
-    /// regardless of what is mounted at the source path.
-    backing_root: PathBuf,
-    /// Overlay inode number -> underlying path / parent overlay inode.
+    /// Count of FUSE requests served (diagnostics: reveals whether the kernel
+    /// is still routing requests to us after an initrd root switch).
+    requests: Arc<AtomicU64>,
+    /// Overlay inode number -> underlying (working-directory-relative) path /
+    /// parent overlay inode.
     ///
     /// The reserved root inode (`INodeNo::ROOT`, i.e. 1) is never stored here;
-    /// it is resolved to [`Self::backing_root`] directly.
+    /// it resolves to the working directory itself (`.`).
     inodes: DashMap<u64, Node>,
     /// Open file handle -> underlying file object.
     open_files: DashMap<u64, File>,
@@ -85,12 +128,14 @@ impl MetaFs {
     /// Create a filesystem backed by `source`.
     ///
     /// `source` must exist and be a directory and may be the same path as the
-    /// mountpoint: all backing accesses are resolved through a descriptor
-    /// opened here, before any overlay mount shadows the path.
+    /// mountpoint. The daemon's working directory is switched into the backing
+    /// directory (via `fchdir` on the opened descriptor), after which all
+    /// backing accesses are expressed relative to that directory.
     ///
     /// # Errors
     ///
-    /// Returns an error if `source` cannot be opened or is not a directory.
+    /// Returns an error if `source` cannot be opened, is not a directory, or
+    /// if `fchdir` fails.
     pub fn new(source: &Path) -> io::Result<Self> {
         let source_fd = File::open(source)?;
         if !source_fd.metadata()?.is_dir() {
@@ -99,10 +144,19 @@ impl MetaFs {
                 format!("source is not a directory: {}", source.display()),
             ));
         }
-        let backing_root = PathBuf::from(format!("/proc/self/fd/{}", source_fd.as_raw_fd()));
+        // Anchor the process working directory to the backing directory so
+        // that relative paths resolve directly from the descriptor's dentry,
+        // independent of the process root (which may no longer resolve after
+        // an initrd root switch).
+        nix::unistd::fchdir(&source_fd).map_err(|e| io::Error::from_raw_os_error(e as i32))?;
+        debug!(
+            "metafs: backing via dirfd={}, source={}",
+            source_fd.as_raw_fd(),
+            source.display()
+        );
         Ok(Self {
             source_fd,
-            backing_root,
+            requests: Arc::new(AtomicU64::new(0)),
             inodes: DashMap::new(),
             open_files: DashMap::new(),
             listings: DashMap::new(),
@@ -111,16 +165,20 @@ impl MetaFs {
         })
     }
 
-    /// Resolve an overlay inode number to an addressable path on the backing
-    /// filesystem. The path always goes through the pre-opened directory
-    /// descriptor, so it reaches the real filesystem even when the overlay is
-    /// mounted on top of the source path itself.
+    /// Resolve an overlay inode number to a working-directory-relative path on
+    /// the backing filesystem. The root resolves to `.` (the directory the
+    /// daemon is anchored in), every other inode to the stored relative path.
     fn underlying_path(&self, ino: INodeNo) -> Option<PathBuf> {
         if ino == INodeNo::ROOT {
-            Some(self.backing_root.clone())
+            Some(PathBuf::from("."))
         } else {
             self.inodes.get(&ino.0).map(|node| node.path.clone())
         }
+    }
+
+    /// Shared count of requests served so far (for the diagnostics heartbeat).
+    pub fn requests(&self) -> Arc<AtomicU64> {
+        Arc::clone(&self.requests)
     }
 
     /// Register the inode -> path mapping after a stat, unless it collides with
@@ -137,7 +195,15 @@ impl MetaFs {
 
     /// Build the `FileAttr` equivalent of `lstat(2)` on `path`.
     fn build_attr(path: &Path) -> io::Result<FileAttr> {
-        Self::file_attr_from_md(&fs::symlink_metadata(path)?)
+        let md = fs::symlink_metadata(path).map_err(|e| {
+            if e.kind() == ErrorKind::NotFound {
+                debug!("metafs: backing lstat {}: {e}", path.display());
+            } else {
+                error!("metafs: backing lstat {} failed: {e}", path.display());
+            }
+            e
+        })?;
+        Self::file_attr_from_md(&md)
     }
 
     /// Build the `FileAttr` for an overlay inode.
@@ -147,7 +213,16 @@ impl MetaFs {
     /// stacked directly on top of its own source.
     fn build_attr_for(&self, ino: INodeNo) -> io::Result<FileAttr> {
         if ino == INodeNo::ROOT {
-            return Self::file_attr_from_md(&self.source_fd.metadata()?);
+            return match self.source_fd.metadata() {
+                Ok(md) => Self::file_attr_from_md(&md),
+                Err(e) => {
+                    error!(
+                        "metafs: fstat of backing fd {} failed: {e}",
+                        self.source_fd.as_raw_fd()
+                    );
+                    Err(e)
+                }
+            };
         }
         let path = self.underlying_path(ino).ok_or_else(|| {
             io::Error::new(ErrorKind::NotFound, format!("no path for inode {ino}"))
@@ -217,19 +292,42 @@ impl MetaFs {
             },
         ];
 
-        for child in fs::read_dir(&dir_path)? {
-            let child = child?;
-            let child_path = child.path();
-            let attr = Self::build_attr(&child_path)?;
-            self.remember(attr.ino, child_path, ino);
-            entries.push(ListingEntry {
-                name: child.file_name(),
-                ino: attr.ino.0,
-                kind: attr.kind,
-                attr,
-            });
+        match fs::read_dir(&dir_path) {
+            Ok(reader) => {
+                for child in reader {
+                    match child {
+                        Ok(child) => {
+                            let child_path = child.path();
+                            let attr = Self::build_attr(&child_path)?;
+                            self.remember(attr.ino, child_path, ino);
+                            entries.push(ListingEntry {
+                                name: child.file_name(),
+                                ino: attr.ino.0,
+                                kind: attr.kind,
+                                attr,
+                            });
+                        }
+                        Err(e) => {
+                            error!("metafs: read_dir {} entry failed: {e}", dir_path.display());
+                            return Err(e);
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                error!(
+                    "metafs: read_dir {} for ino {ino} failed: {e}",
+                    dir_path.display()
+                );
+                return Err(e);
+            }
         }
 
+        debug!(
+            "metafs: listing {ino} via {}: {} real entries",
+            dir_path.display(),
+            entries.len().saturating_sub(2)
+        );
         entries.sort_by(|a, b| a.name.cmp(&b.name));
         let listing = Arc::new(entries);
         self.listings.insert(ino.0, Arc::clone(&listing));
@@ -261,6 +359,8 @@ impl Filesystem for MetaFs {
     }
 
     fn lookup(&self, _req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEntry) {
+        mark_op(0);
+        self.requests.fetch_add(1, Ordering::Relaxed);
         let Some(parent_path) = self.underlying_path(parent) else {
             reply.error(Errno::ENOENT);
             return;
@@ -276,6 +376,7 @@ impl Filesystem for MetaFs {
     }
 
     fn getattr(&self, _req: &Request, ino: INodeNo, _fh: Option<FileHandle>, reply: ReplyAttr) {
+        mark_op(1);
         match self.build_attr_for(ino) {
             Ok(attr) => reply.attr(&TTL, &attr),
             Err(e) => reply.error(e.into()),
@@ -300,12 +401,13 @@ impl Filesystem for MetaFs {
         _flags: Option<BsdFileFlags>,
         reply: ReplyAttr,
     ) {
-        // chmod / chown / truncate / utimes would modify the underlying file;
+        mark_op(2); // chmod / chown / truncate / utimes would modify the underlying file;
         // reject it instead.
         reply.error(Errno::EROFS);
     }
 
     fn readlink(&self, _req: &Request, ino: INodeNo, reply: ReplyData) {
+        mark_op(3);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -399,6 +501,7 @@ impl Filesystem for MetaFs {
     }
 
     fn open(&self, _req: &Request, ino: INodeNo, _flags: OpenFlags, reply: ReplyOpen) {
+        mark_op(4);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -425,6 +528,7 @@ impl Filesystem for MetaFs {
         _lock_owner: Option<LockOwner>,
         reply: ReplyData,
     ) {
+        mark_op(5);
         let mut buf = vec![0u8; size as usize];
         // Prefer the open handle; fall back to opening by path for reads that
         // arrive without a prior `open` (e.g. kernel read-ahead).
@@ -456,6 +560,7 @@ impl Filesystem for MetaFs {
         _lock_owner: Option<LockOwner>,
         reply: ReplyWrite,
     ) {
+        mark_op(6);
         reply.error(Errno::EROFS);
     }
 
@@ -481,6 +586,7 @@ impl Filesystem for MetaFs {
         _flush: bool,
         reply: ReplyEmpty,
     ) {
+        mark_op(9);
         self.open_files.remove(&fh.0);
         reply.ok();
     }
@@ -500,6 +606,7 @@ impl Filesystem for MetaFs {
         offset: u64,
         mut reply: ReplyDirectory,
     ) {
+        mark_op(7);
         let listing = match self.dir_listing(ino) {
             Ok(listing) => listing,
             Err(e) => {
@@ -527,6 +634,7 @@ impl Filesystem for MetaFs {
         offset: u64,
         mut reply: ReplyDirectoryPlus,
     ) {
+        mark_op(8);
         let listing = match self.dir_listing(ino) {
             Ok(listing) => listing,
             Err(e) => {
@@ -586,13 +694,10 @@ impl Filesystem for MetaFs {
         reply.ok();
     }
 
-    fn statfs(&self, _req: &Request, ino: INodeNo, reply: ReplyStatfs) {
-        let Some(path) = self.underlying_path(ino) else {
-            reply.error(Errno::ENOENT);
-            return;
-        };
+    fn statfs(&self, _req: &Request, _ino: INodeNo, reply: ReplyStatfs) {
+        mark_op(11);
         #[allow(clippy::cast_possible_truncation)]
-        match statvfs::statvfs(&path) {
+        match nix::sys::statvfs::fstatvfs(&self.source_fd) {
             Ok(st) => reply.statfs(
                 st.blocks(),
                 st.blocks_free(),
@@ -617,6 +722,7 @@ impl Filesystem for MetaFs {
         _position: u32,
         reply: ReplyEmpty,
     ) {
+        mark_op(12);
         match self
             .xattrs
             .set(ino.0, name.to_os_string(), value.to_vec(), flags)
@@ -628,6 +734,7 @@ impl Filesystem for MetaFs {
     }
 
     fn getxattr(&self, _req: &Request, ino: INodeNo, name: &OsStr, size: u32, reply: ReplyXattr) {
+        mark_op(13);
         let Some(value) = self.xattrs.get(ino.0, name) else {
             reply.error(Errno::NO_XATTR);
             return;
@@ -643,6 +750,7 @@ impl Filesystem for MetaFs {
     }
 
     fn listxattr(&self, _req: &Request, ino: INodeNo, size: u32, reply: ReplyXattr) {
+        mark_op(14);
         let names = self.xattrs.list(ino.0);
         // Each name is NUL-terminated in the wire format.
         let total = u32::try_from(names.iter().map(|n| n.len()).sum::<usize>() + names.len())
@@ -662,6 +770,7 @@ impl Filesystem for MetaFs {
     }
 
     fn removexattr(&self, _req: &Request, ino: INodeNo, name: &OsStr, reply: ReplyEmpty) {
+        mark_op(15);
         if self.xattrs.remove(ino.0, name) {
             reply.ok();
         } else {
@@ -670,6 +779,7 @@ impl Filesystem for MetaFs {
     }
 
     fn access(&self, _req: &Request, ino: INodeNo, mask: AccessFlags, reply: ReplyEmpty) {
+        mark_op(10);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -705,5 +815,28 @@ impl Filesystem for MetaFs {
         reply: ReplyEmpty,
     ) {
         reply.error(Errno::EROFS);
+    }
+
+    fn ioctl(
+        &self,
+        _req: &Request,
+        _ino: INodeNo,
+        _fh: FileHandle,
+        _flags: IoctlFlags,
+        _cmd: u32,
+        in_data: &[u8],
+        out_size: u32,
+        reply: ReplyIoctl,
+    ) {
+        if in_data.is_empty() && out_size == 0 {
+            // Nothing to shuttle; ack the probe without attempting to fill
+            // caller-provided buffers (fuser would reject those later).
+            reply.ioctl(0, &[]);
+        } else {
+            // Unsupported ioctls on regular files. Quietly report ENOSYS so
+            // callers fall back to generic handling (this also avoids fuser's
+            // per-request "not implemented" warning flooding the console).
+            reply.error(Errno::ENOSYS);
+        }
     }
 }
