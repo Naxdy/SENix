@@ -215,10 +215,7 @@ in
 
     # We use this to remove `ro` as the store mount option, since our overlay
     # already ensures the underlying store cannot be written to.
-    boot.nixStoreMountOpts = lib.mkDefault [
-      "nosuid"
-      "nodev"
-    ];
+    boot.nixStoreMountOpts = lib.mkForce [ ];
 
     nixpkgs.overlays = lib.mkForce (
       lib.optionals cfg.overlayPackages [
@@ -360,65 +357,92 @@ in
       systemPackages = [
         pkgs.libselinux
         pkgs.policycoreutils
+        pkgs.metafs
       ];
     };
 
     # Activates a policy on system boot (after initrd) and on switch.
-    system.activationScripts.selinux = {
-      deps = [
-        "etc"
-      ];
+    system.activationScripts = {
+      selinux-policy = {
+        deps = [
+          "etc"
+        ];
 
-      text =
-        # bash
-        ''
-          install -d -m0755 /var/lib/selinux
-          # The full policy (base + all declared modules) comes from
-          # `build.policy`; it is installed wholesale.
-          pp=""
-          keep=""
-          for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
-            if [ -e "$f" ]; then
-              pp="$pp $f"
-              keep="$keep $(basename "$f" .pp)"
-            fi
-          done
-          cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ''${pp}"
-          skipSELinuxActivation=0
+        text =
+          # bash
+          ''
+            install -d -m0755 /var/lib/selinux
+            # The full policy (base + all declared modules) comes from
+            # `build.policy`; it is installed wholesale.
+            pp=""
+            keep=""
+            for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
+              if [ -e "$f" ]; then
+                pp="$pp $f"
+                keep="$keep $(basename "$f" .pp)"
+              fi
+            done
+            cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ''${pp}"
+            skipSELinuxActivation=0
 
-          if [ -f /var/lib/selinux/activate-check ]; then
-            if [ "$(cat /var/lib/selinux/activate-check)" == "$cmd" ]; then
-              skipSELinuxActivation=1
-            fi
-          fi
-
-          if [ $skipSELinuxActivation -eq 0 ]; then
-            eval "$cmd"
-            # `semodule -i` installs/updates a module but never removes one that
-            # is no longer part of the policy (e.g. a module dropped by a
-            # rebuild/switch). Remove those stale modules so their types vanish
-            # from the active policy and their store labels revert. Only touch
-            # modules that were actually installed.
-            if [ -n "$keep" ]; then
-              # `semodule -i` installs/updates but never removes a module that is
-              # no longer part of the policy (e.g. one dropped by a rebuild or
-              # switch). Remove those stale modules so their types vanish from the
-              # active policy and their store labels revert. `keep` lists the
-              # module names from the current build; it is empty only where the
-              # build store is unavailable (e.g. early initrd), in which case the
-              # modules are the ones just installed, so there is nothing stale.
-              for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -l 2>/dev/null | tr -d '\0\r'); do
-                if ! echo " $keep " | grep -qw "$m"; then
-                  ${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -r "$m" || true
-                fi
-              done
+            if [ -f /var/lib/selinux/activate-check ]; then
+              if [ "$(cat /var/lib/selinux/activate-check)" == "$cmd" ]; then
+                skipSELinuxActivation=1
+              fi
             fi
 
-            ${lib.getExe' pkgs.policycoreutils "setsebool"} -P ${setsebools}
+            if [ $skipSELinuxActivation -eq 0 ]; then
+              eval "$cmd"
+              # `semodule -i` installs/updates a module but never removes one that
+              # is no longer part of the policy (e.g. a module dropped by a
+              # rebuild/switch). Remove those stale modules so their types vanish
+              # from the active policy and their store labels revert. Only touch
+              # modules that were actually installed.
+              if [ -n "$keep" ]; then
+                # `semodule -i` installs/updates but never removes a module that is
+                # no longer part of the policy (e.g. one dropped by a rebuild or
+                # switch). Remove those stale modules so their types vanish from the
+                # active policy and their store labels revert. `keep` lists the
+                # module names from the current build; it is empty only where the
+                # build store is unavailable (e.g. early initrd), in which case the
+                # modules are the ones just installed, so there is nothing stale.
+                for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -l 2>/dev/null | tr -d '\0\r'); do
+                  if ! echo " $keep " | grep -qw "$m"; then
+                    ${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -r "$m" || true
+                  fi
+                done
+              fi
 
-            echo "$cmd" >/var/lib/selinux/activate-check
-          fi
-        '';
+              ${lib.getExe' pkgs.policycoreutils "setsebool"} -P ${setsebools}
+
+              echo "$cmd" >/var/lib/selinux/activate-check
+            fi
+          '';
+      };
+
+      # selinux-metafs = {
+      #   deps = [
+      #     "usrbinenv"
+      #   ];
+      #   text =
+      #     # bash
+      #     ''
+      #       if ! cat /proc/self/mountinfo | grep -q metafs; then
+      #         if [ ! -e /run/current-system ]; then
+      #           mkdir -p /run/current-system/sw/bin
+      #
+      #           ln -sf "${lib.getExe' pkgs.metafs "mount.fuse.metafs"}" /run/current-system/sw/bin/mount.fuse.metafs
+      #           echo "mounting metafs..."
+      #           mount -t fuse.metafs /nix/store /nix/store
+      #
+      #           rm -rf /run/current-system
+      #         else
+      #           echo "mounting metafs..."
+      #           mount -t fuse.metafs /nix/store /nix/store
+      #         fi
+      #       fi
+      #     '';
+      # };
     };
 
     boot.initrd.systemd = {
@@ -426,6 +450,7 @@ in
         pkgs.attr
         pkgs.policycoreutils
         pkgs.libselinux.bin
+        pkgs.metafs
         cfg.build.policy
       ];
 
@@ -524,98 +549,79 @@ in
 
             printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
 
-            upper=/sysroot/run/selinux/overlay
-
-            mkdir -p "$upper"
-
             load_policy -i
 
             setsebool -P ${setsebools}
 
-            # The meta tmpfs must carry the `senix_meta_t` identity, but a mount
-            # with security options can only succeed after the policy is loaded -
-            # so mount it AFTER `load_policy -i`. We use `fscontext=` for the
-            # superblock (not `context=`, which would pin the labels and inhibit
-            # relabelling). Note that `defcontext=` cannot be used here: the
-            # kernel only accepts it for filesystems with XATTR/NATIVE labeling
-            # behavior, and tmpfs has a genfscon entry (so GENFS behavior) and is
-            # rejected with "defcontext option is invalid for this filesystem
-            # type". With `SECURITY_FS_USE_SB`, every inode created without an
-            # explicit xattr (i.e. the metacopy overlay's copy-up targets)
-            # inherits the superblock label `senix_meta_t:s0` - never
-            # `unlabeled_t`, never a high MLS level - so the create's
-            # `associate` is the already granted self-associate, and later
-            # relabels s0->s0 pass MLS.
-            mount -t tmpfs -o fscontext=system_u:object_r:senix_meta_t:s0,size=0,mode=0755 tmpfs "$upper"
-            mkdir -p "$upper/upper" "$upper/work"
-
-            echo "mounting metacopy overlay..."
-
-            # The overlay is mounted with the same mount options
-            # as in `config.boot.nixStoreMountOpts` in order to ensure
-            # that the stage-2 boot script doesn't stack a bind mount
-            # on top of it.
-            #
-            # To prevent the store from accidentally being mounted `ro`,
-            # which would disable metadata / SELinux labelling,
-            # we have an assertion that checks for `ro` being present
-            # within `config.boot.nixStoreMountOpts`
-            mount -t overlay overlay \
-              -o ${
-                lib.concatStringsSep "," (
-                  config.boot.nixStoreMountOpts
-                  ++ [
-                    "lowerdir=/sysroot/nix/store"
-                    "upperdir=$upper/upper"
-                    "workdir=$upper/work"
-                    "metacopy=on"
-                  ]
-                )
-              } \
-              "/sysroot/nix/store"
-
             fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
 
-            echo "relabeling systemd..."
+            echo "relabeling initrd..."
 
-            # We need to label the systemd binary in order for it to be able to
-            # relabel everything else post-initrd boot. We ALSO need to relabel
-            # the entire initrd `/nix/store` in order to ensure the post-initrd
-            # domain transition to `init_t` works, and fd's don't accidentally
-            # get `kernel_t` ownership.
+            # We need to relabel the initrd's nix store in order to
+            # ensure that systemd's post-initrd transition to `init_t` works.
             setfiles -F "$fc" /nix/store
-            find /sysroot${config.systemd.package} -type f -o -type d -o -type l | setfiles -r /sysroot -F "$fc" -s
-            setfiles -r /sysroot -F "$fc" /sysroot
+            setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store
           '';
+        };
+
+        selinux-metafs = {
+          wantedBy = [ "initrd-nixos-activation.service" ];
+          after = [ "initrd-nixos-activation.service" ];
+          serviceConfig = {
+            Type = "exec";
+            # `--switch-root`: the overlay must survive the initrd root switch;
+            # systemd itself relabels /nix/store immediately after the switch
+            # (through this very overlay), so there is no chance to re-mount.
+            # source == mountpoint here.
+            ExecStart = "${lib.getExe pkgs.metafs} -f /sysroot/nix/store /sysroot/nix/store -o nosuid,nodev";
+          };
+          unitConfig = {
+            DefaultDependencies = false;
+            IgnoreOnIsolate = true;
+            SurviveFinalKillSignal = true;
+            RefuseManualStop = true;
+          };
         };
       };
     };
 
     systemd.services = {
+      selinux-metafs = {
+        serviceConfig = {
+          Type = "exec";
+          ExecStart = "${lib.getExe pkgs.metafs} -f /nix/store /nix/store -o nosuid,nodev";
+        };
+        unitConfig = {
+          DefaultDependencies = false;
+          IgnoreOnIsolate = true;
+          SurviveFinalKillSignal = true;
+          RefuseManualStop = true;
+        };
+      };
       # Runs on `nixos-rebuild switch` to relabel the nix store.
       # Here, we skip the userspace directories, because we don't want to
       # override any runtime changes a user may have made.
       #
       # TODO: Untested; need to confirm whether this works / gets called.
-      selinux-relabel = {
-        wantedBy = [ "nixos-activation.service" ];
-        after = [ "nixos-activation.service" ];
-        serviceConfig = {
-          Type = "oneshot";
-          RemainAfterExit = true;
-        };
-        path = [
-          pkgs.policycoreutils
-        ];
-        script = ''
-          set -euo pipefail
-
-          fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
-
-          setfiles -F "$fc" /nix/store 2>&1
-          find /nix/store -type f -o -type d -o -type l | setfiles -F "$fc" -s
-        '';
-      };
+      # selinux-relabel = {
+      #   wantedBy = [ "nixos-activation.service" ];
+      #   after = [ "nixos-activation.service" ];
+      #   serviceConfig = {
+      #     Type = "oneshot";
+      #     RemainAfterExit = true;
+      #   };
+      #   path = [
+      #     pkgs.policycoreutils
+      #   ];
+      #   script = ''
+      #     set -euo pipefail
+      #
+      #     fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+      #
+      #     setfiles -F "$fc" /nix/store 2>&1
+      #     find /nix/store -type f -o -type d -o -type l | setfiles -F "$fc" -s
+      #   '';
+      # };
     };
   };
 }
