@@ -202,7 +202,7 @@ fn session_config(forwarded: &[String], read_only: bool, read_write: bool) -> Co
     config.n_threads = Some(threads);
     #[cfg(target_os = "linux")]
     {
-        config.clone_fd = threads > 1;
+        config.clone_fd = false;
     }
 
     if read_only {

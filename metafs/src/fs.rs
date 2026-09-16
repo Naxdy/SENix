@@ -14,7 +14,7 @@
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, ErrorKind};
-use std::os::unix::fs::{FileExt, MetadataExt};
+use std::os::unix::fs::MetadataExt;
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -104,9 +104,6 @@ pub struct MetaFs {
     /// the open handle itself — and also when the overlay is stacked directly
     /// on top of its own source.
     source_fd: File,
-    /// Whether the kernel negotiated `FUSE_PASSTHROUGH` at INIT time; gates the
-    /// passthrough path in `open` (older kernels fall back to the proxy).
-    passthrough: std::sync::atomic::AtomicBool,
     /// Count of FUSE requests served (diagnostics: reveals whether the kernel
     /// is still routing requests to us after an initrd root switch).
     requests: Arc<AtomicU64>,
@@ -116,8 +113,6 @@ pub struct MetaFs {
     /// The reserved root inode (`INodeNo::ROOT`, i.e. 1) is never stored here;
     /// it resolves to the working directory itself (`.`).
     inodes: DashMap<u64, Node>,
-    /// Open file handle -> underlying file object.
-    open_files: DashMap<u64, File>,
     /// Overlay inode -> the kernel passthrough backing ID, kept alive for the
     /// lifetime of the process. Only one backing ID may be handed to the
     /// kernel per inode, and it must stay alive for as long as any open
@@ -164,10 +159,8 @@ impl MetaFs {
         );
         Ok(Self {
             source_fd,
-            passthrough: std::sync::atomic::AtomicBool::new(false),
             requests: Arc::new(AtomicU64::new(0)),
             inodes: DashMap::new(),
-            open_files: DashMap::new(),
             backings: DashMap::new(),
             listings: DashMap::new(),
             xattrs: XattrStore::new(),
@@ -354,31 +347,17 @@ impl MetaFs {
     }
 }
 
-/// Fill `buf` from `file` starting at `offset`, returning the number of bytes
-/// actually read (less than `buf.len()` only at end of file).
-fn read_full_at(file: &File, buf: &mut [u8], offset: u64) -> io::Result<usize> {
-    let mut done = 0;
-    while done < buf.len() {
-        let n = file.read_at(&mut buf[done..], offset + done as u64)?;
-        if n == 0 {
-            break;
-        }
-        done += n;
-    }
-    Ok(done)
-}
-
 impl Filesystem for MetaFs {
     fn init(&mut self, _req: &Request, config: &mut KernelConfig) -> io::Result<()> {
         // Ask the kernel to use READDIRPLUS / directory caching and, most
-        // importantly, FUSE passthrough (kernel >= 6.9). With passthrough the
-        // kernel forwards reads straight to the backing fd registered in
-        // `open`, so the data plane is handled entirely by the kernel.
+        // importantly, FUSE passthrough (assumed available). Passthrough does
+        // not become active until the connection's `max_stack_depth` is > 0
+        // (the kernel refuses the backing-open ioctl with EPERM otherwise);
+        // 2 also permits backing files on a stacked filesystem (e.g. the
+        // NixOS store overlay). No userspace read proxy is involved.
         let _ = config.add_capabilities(InitFlags::FUSE_DO_READDIRPLUS);
-        self.passthrough.store(
-            config.add_capabilities(InitFlags::FUSE_PASSTHROUGH).is_ok(),
-            Ordering::Relaxed,
-        );
+        let _ = config.add_capabilities(InitFlags::FUSE_PASSTHROUGH);
+        let _ = config.set_max_stack_depth(2);
         Ok(())
     }
 
@@ -540,66 +519,25 @@ impl Filesystem for MetaFs {
         };
         let fh = self.next_fh.fetch_add(1, Ordering::Relaxed);
 
-        // Keep a private copy so the fallback `read` path still works on
-        // kernels without passthrough support; the kernel itself registers
-        // the (duplicated) backing fd through the `open_backing` ioctl.
-        if let Ok(copy) = file.try_clone() {
-            self.open_files.insert(fh, copy);
-        }
-
-        // Register the backing file for kernel passthrough and reuse a single
-        // BackingId per inode, as the kernel requires. If unavailable, fall
-        // back to the classic proxied open (our read handler takes over).
-        if !self.passthrough.load(Ordering::Relaxed) {
-            reply.opened(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE);
-            return;
-        }
+        // FUSE passthrough: register the backing file with the kernel so
+        // reads are served straight from this fd. The kernel refuses a
+        // different backing ID for an inode that already has one, so reuse a
+        // single BackingId per inode (kept alive for the process lifetime).
         match reply.open_backing(&file) {
             Ok(backing) => {
                 let entry = self
                     .backings
                     .entry(ino.0)
                     .or_insert_with(|| Arc::new(backing));
-                reply.opened_passthrough(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE, &entry);
+                reply.opened_passthrough(FileHandle(fh), FopenFlags::empty(), &entry);
             }
             Err(e) => {
-                debug!(
+                log::warn!(
                     "metafs: passthrough unavailable for {}: {e}",
                     path.display()
                 );
-                reply.opened(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE);
+                reply.opened(FileHandle(fh), FopenFlags::empty());
             }
-        }
-    }
-
-    fn read(
-        &self,
-        _req: &Request,
-        ino: INodeNo,
-        fh: FileHandle,
-        offset: u64,
-        size: u32,
-        _flags: OpenFlags,
-        _lock_owner: Option<LockOwner>,
-        reply: ReplyData,
-    ) {
-        mark_op(5);
-        let mut buf = vec![0u8; size as usize];
-        // Prefer the open handle; fall back to opening by path for reads that
-        // arrive without a prior `open` (e.g. kernel read-ahead).
-        let result = if let Some(file) = self.open_files.get(&fh.0) {
-            read_full_at(&file, &mut buf, offset)
-        } else {
-            let Some(path) = self.underlying_path(ino) else {
-                reply.error(Errno::ENOENT);
-                return;
-            };
-            File::open(&path).and_then(|file| read_full_at(&file, &mut buf, offset))
-        };
-
-        match result {
-            Ok(n) => reply.data(&buf[..n]),
-            Err(e) => reply.error(e.into()),
         }
     }
 
@@ -616,6 +554,10 @@ impl Filesystem for MetaFs {
         reply: ReplyWrite,
     ) {
         mark_op(6);
+        // Passthrough is the only data path: the kernel forwards writes
+        // straight to the backing fd, so this handler is never reached for
+        // ordinary writes. Keep it strict (EROFS) as a defensive answer for
+        // whatever might sneak through.
         reply.error(Errno::EROFS);
     }
 
@@ -635,14 +577,15 @@ impl Filesystem for MetaFs {
         &self,
         _req: &Request,
         _ino: INodeNo,
-        fh: FileHandle,
+        _fh: FileHandle,
         _flags: OpenFlags,
         _lock_owner: Option<LockOwner>,
         _flush: bool,
         reply: ReplyEmpty,
     ) {
         mark_op(9);
-        self.open_files.remove(&fh.0);
+        // The backing BackingId is intentionally kept alive for the process
+        // lifetime; nothing to release in userspace.
         reply.ok();
     }
 

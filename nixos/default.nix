@@ -560,26 +560,30 @@ in
             # We need to relabel the initrd's nix store in order to
             # ensure that systemd's post-initrd transition to `init_t` works.
             setfiles -F "$fc" /nix/store
+            setfiles -r /sysroot -F "$fc" /sysroot${config.systemd.package}
             setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store
           '';
         };
 
         selinux-metafs = {
-          wantedBy = [ "initrd-nixos-activation.service" ];
-          after = [ "initrd-nixos-activation.service" ];
+          wantedBy = [ "selinux-init.service" ];
+          before = [ "selinux-init.service" ];
           serviceConfig = {
             Type = "exec";
             # `--switch-root`: the overlay must survive the initrd root switch;
             # systemd itself relabels /nix/store immediately after the switch
             # (through this very overlay), so there is no chance to re-mount.
             # source == mountpoint here.
-            ExecStart = "${lib.getExe pkgs.metafs} -f /sysroot/nix/store /sysroot/nix/store -o nosuid,nodev";
+            ExecStart = "${lib.getExe pkgs.metafs} -f /sysroot/nix/store /sysroot/nix/store -o nosuid,nodev,fscontext=system_u:object_r:senix_meta_t:s0 --seclabel";
           };
           unitConfig = {
             DefaultDependencies = false;
             IgnoreOnIsolate = true;
             SurviveFinalKillSignal = true;
             RefuseManualStop = true;
+            RequiresMountsFor = [
+              "/sysroot/nix/store"
+            ];
           };
         };
       };
@@ -589,7 +593,7 @@ in
       selinux-metafs = {
         serviceConfig = {
           Type = "exec";
-          ExecStart = "${lib.getExe pkgs.metafs} -f /nix/store /nix/store -o nosuid,nodev";
+          ExecStart = "${lib.getExe pkgs.metafs} -f /nix/store /nix/store -o nosuid,nodev --seclabel";
         };
         unitConfig = {
           DefaultDependencies = false;

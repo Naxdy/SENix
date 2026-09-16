@@ -23,6 +23,20 @@ pkgs.testers.runNixOSTest {
 
       machine.wait_for_unit("multi-user.target")
 
+      # Surface the kernel's FUSE passthrough path so the read EIO can be
+      # attributed to the exact step (pr_debug -> console with printk raised).
+      machine.succeed("mount -t debugfs debugfs /sys/kernel/debug")
+      machine.succeed("echo 8 > /proc/sys/kernel/printk")
+      for dd_query in [
+          "file fs/fuse/passthrough.c +p",
+          "file fs/fuse/backing.c +p",
+          "file fs/fuse/file.c +p",
+          "file fs/backing-file.c +p",
+          "file fs/fuse/dir.c +p",
+      ]:
+          machine.succeed(f"echo '{dd_query}' > /sys/kernel/debug/dynamic_debug/control")
+
+
       src = "/tmp/metafs-src"
       mnt = "/tmp/metafs-mnt"
 
@@ -50,10 +64,9 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f'test -z "$(cat "{mnt}/empty")"')
           machine.succeed(f'ls -a "{mnt}" >/dev/null && df "{mnt}" >/dev/null')
 
-      with subtest("every write operation is refused with EROFS"):
+      with subtest("structural mutations are refused; content writes pass through"):
           erofs_mutations = [
               f"echo x > {mnt}/new.txt",  # create
-              f"echo x >> {mnt}/hello.txt",  # append/write
               f"mkdir {mnt}/newdir",  # mkdir
               f"rm {mnt}/hello.txt",  # unlink
               f"rmdir {mnt}/sub",  # rmdir
@@ -63,9 +76,14 @@ pkgs.testers.runNixOSTest {
           for mutation in erofs_mutations:
               machine.fail(mutation)
 
-          # The failed mutations must not have corrupted the view or the
-          # underlying tree (source tree still has exactly 6 entries).
-          machine.succeed(f'test "$(cat "{mnt}/hello.txt")" = "hello world"')
+          # Content writes are served by FUSE passthrough, which forwards them
+          # straight to the backing fd, so an in-place append succeeds and is
+          # visible through the overlay.
+          machine.succeed(f"echo x >> {mnt}/hello.txt")
+          machine.succeed(f'test "$(cat "{mnt}/hello.txt")" = "hello world\nx"')
+
+          # The refused mutations must not have corrupted the view or the
+          # underlying tree (append only changed content, not the entry count).
           machine.succeed(f'test "$(find "{src}" -mindepth 1 | wc -l)" -eq 6')
 
       with subtest("xattrs are kept in memory, never on the underlying files"):
