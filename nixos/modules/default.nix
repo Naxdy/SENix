@@ -14,5 +14,6 @@
     ./selinuxutil.nix
     ./senix-init.nix
     ./senix-store.nix
+    ./systemd.nix
   ];
 }
