@@ -721,6 +721,20 @@ impl Filesystem for MetaFs {
         reply: ReplyEmpty,
     ) {
         mark_op(12);
+        let path = self
+            .underlying_path(ino)
+            .map_or_else(|| "?".into(), |p| p.display().to_string());
+        let value_dbg = if name == OsStr::new("security.selinux") {
+            format!("{value:?}")
+        } else {
+            format!("<{} bytes>", value.len())
+        };
+        log::debug!(
+            "metafs: SETXATTR ino={} {} flags={flags} path={} value={value_dbg}",
+            ino.0,
+            name.to_string_lossy(),
+            path
+        );
         match self
             .xattrs
             .set(ino.0, name.to_os_string(), value.to_vec(), flags)
@@ -734,10 +748,20 @@ impl Filesystem for MetaFs {
     fn getxattr(&self, _req: &Request, ino: INodeNo, name: &OsStr, size: u32, reply: ReplyXattr) {
         mark_op(13);
         let Some(value) = self.xattrs.get(ino.0, name) else {
+            log::debug!(
+                "metafs: GETXATTR ino={} {} size={size} -> ENODATA",
+                ino.0,
+                name.to_string_lossy()
+            );
             reply.error(Errno::NO_XATTR);
             return;
         };
         let len = u32::try_from(value.len()).unwrap_or(u32::MAX);
+        log::debug!(
+            "metafs: GETXATTR ino={} {} size={size} len={len}",
+            ino.0,
+            name.to_string_lossy()
+        );
         if size == 0 {
             reply.size(len);
         } else if len > size {

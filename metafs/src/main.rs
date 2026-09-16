@@ -99,6 +99,17 @@ struct Cli {
     #[arg(short = 'v', long = "verbose")]
     verbose: bool,
 
+    /// Mark the mount as an `SELinux` label source (`seclabel`).
+    ///
+    /// `SELinux` routes `security.selinux` xattr operations to the filesystem
+    /// only when the superblock is marked label-bearing (`SBLABEL_MNT`);
+    /// without it `selinux_inode_setxattr` short-circuits with `EOPNOTSUPP`
+    /// before a request ever reaches the daemon. Only meaningful on systems
+    /// where the `SELinux` `LSM` is active (the kernel rejects the option on
+    /// others), so it is opt-in.
+    #[arg(long)]
+    seclabel: bool,
+
     /// Accepted for compatibility with mount(8) helpers; the filesystem type
     /// is implied by the helper name.
     #[arg(short = 't', value_name = "TYPE", hide = true)]
@@ -142,12 +153,12 @@ fn main() -> ExitCode {
     let source = strip_type_prefix(&cli.source);
     install_signal_handlers();
     mark_survivor();
-    let config = session_config(&cli.options, cli.read_only, cli.read_write);
+    let config = session_config(&cli.options, cli.read_only, cli.read_write, cli.seclabel);
 
     let result = if cli.foreground {
-        mount_foreground(&source, &cli.mountpoint, &config)
+        mount_foreground(&source, &cli.mountpoint, &config, cli.seclabel)
     } else {
-        mount_daemonized(&source, &cli.mountpoint, &config)
+        mount_daemonized(&source, &cli.mountpoint, &config, cli.seclabel)
     };
     match result {
         Ok(()) => ExitCode::SUCCESS,
@@ -174,7 +185,13 @@ fn strip_type_prefix(source: &Path) -> PathBuf {
 
 /// Build the session configuration, honoring mount options plus the read-only
 /// / read-write switch.
-fn session_config(forwarded: &[String], read_only: bool, read_write: bool) -> Config {
+#[allow(clippy::too_many_lines)]
+fn session_config(
+    forwarded: &[String],
+    read_only: bool,
+    read_write: bool,
+    seclabel: bool,
+) -> Config {
     let mut config = Config::default();
     config
         .mount_options
@@ -217,6 +234,17 @@ fn session_config(forwarded: &[String], read_only: bool, read_write: bool) -> Co
             translate_mount_option(&mut config, option);
         }
     }
+
+    if seclabel {
+        // SELinux routes `security.selinux` xattr operations to the backing
+        // filesystem only when the superblock is labeled (`SBLABEL_MNT`); the
+        // `seclabel` mount flag sets it and the kernel rejects the option on
+        // non-SELinux systems, so it is only added on request.
+        config
+            .mount_options
+            .push(MountOption::CUSTOM("seclabel".to_string()));
+    }
+
     config
 }
 
@@ -232,33 +260,117 @@ fn translate_mount_option(config: &mut Config, option: &str) {
         "rw" => config.mount_options.push(MountOption::RW),
         "allow_other" => config.acl = SessionACL::All,
         "allow_root" => config.acl = SessionACL::RootAndOwner,
+        // SELinux label source flag; see `session_config`.
+        "seclabel" => config
+            .mount_options
+            .push(MountOption::CUSTOM("seclabel".to_string())),
         _ => debug!("ignoring unrecognized mount option {option:?}"),
     }
 }
 
 /// Mount and serve in the calling process (blocking until unmount).
-fn mount_foreground(source: &Path, mountpoint: &Path, config: &Config) -> io::Result<()> {
+fn mount_foreground(
+    source: &Path,
+    mountpoint: &Path,
+    config: &Config,
+    seclabel: bool,
+) -> io::Result<()> {
     let fs = MetaFs::new(source)?;
     let requests = fs.requests();
-    let session = Session::new(fs, mountpoint, config)?;
-    write_kmsg(&format!("metafs: mounted at {}", mountpoint.display()));
+    write_kmsg(&format!("metafs: mounting {}", mountpoint.display()));
     spawn_heartbeat(requests, mountpoint.to_path_buf());
-    log::info!("metafs: mounted at {}, serving", mountpoint.display());
-    let result = session.run();
-    write_kmsg("metafs: session ended");
-    log::info!("metafs: session ended");
+    let result = serve_filesystem(fs, mountpoint, config, seclabel, || Ok(()));
+    write_kmsg(&format!(
+        "metafs: {}",
+        if result.is_ok() {
+            "session ended"
+        } else {
+            "session ended with error"
+        }
+    ));
     result
 }
 
-/// Mount in a forked, detached process, returning to the caller only once the
-/// filesystem is attached (or reporting the mount error).
+/// Create a session and serve until unmounted.
 ///
-/// `mount(8)` invokes the FUSE helper and waits for it to exit, so a
-/// foreground daemon would hang the mount command. We instead fork, let the
-/// child attach the filesystem, and exit the parent with success only after
-/// the child signals that the mount is live. The child redirects its standard
-/// streams and serves requests until unmounted.
-fn mount_daemonized(source: &Path, mountpoint: &Path, config: &Config) -> io::Result<()> {
+/// With `--seclabel`, the `SELinux` policy declares fuse `fs_use_xattr`, so the
+/// kernel probes `security.selinux` on the root inode synchronously inside
+/// `mount(2)` (`sb_check_xattr_support`). That probe must be answered by the
+/// daemon, but a daemon blocked inside its own `mount()` can never answer it.
+/// We therefore start the request loop in a helper thread via
+/// [`Session::from_fd`] (which never mounts) and perform `mount(2)` from the
+/// calling thread, so every mount-time request is serviced the moment it is
+/// queued. `before_serve` (e.g. the daemonized readiness handshake) runs once
+/// the filesystem is attached.
+fn serve_filesystem(
+    fs: MetaFs,
+    mountpoint: &Path,
+    config: &Config,
+    seclabel: bool,
+    before_serve: impl FnOnce() -> io::Result<()>,
+) -> io::Result<()> {
+    if !seclabel {
+        // fuser's own mount path, untouched for non-SELinux use (e.g. the
+        // plain metafs VM test): no policy probe is issued, so no deadlock.
+        let session = Session::new(fs, mountpoint, config)?;
+        log::info!("metafs: mounted at {}, serving", mountpoint.display());
+        return before_serve().and_then(|()| session.run());
+    }
+
+    let fuse = std::fs::File::options()
+        .read(true)
+        .write(true)
+        .open("/dev/fuse")
+        .map_err(|e| io::Error::new(e.kind(), format!("open /dev/fuse: {e}")))?;
+    let data = fuse_mount_data(fuse.as_raw_fd(), mountpoint, "seclabel")?;
+    let target = mountpoint.to_path_buf();
+    let config = config.clone();
+
+    let handle = std::thread::spawn(move || -> io::Result<()> {
+        let session = Session::from_fd(fs, fuse.into(), config.acl, config.clone())?;
+        let result = session.run();
+        // `from_fd` does not unmount on drop; detach so the mount never leaks
+        // (best effort — the caller may have already unmounted).
+        let _ = nix::mount::umount2(&target, nix::mount::MntFlags::MNT_DETACH);
+        result
+    });
+
+    let flags = nix::mount::MsFlags::MS_NOSUID | nix::mount::MsFlags::MS_NODEV;
+    nix::mount::mount(
+        Some("metafs"),
+        mountpoint,
+        Some("fuse"),
+        flags,
+        Some(data.as_str()),
+    )
+    .map_err(errno)?;
+    log::info!("metafs: mounted {} data={data}", mountpoint.display());
+
+    before_serve()?;
+    handle.join().unwrap_or(Ok(()))
+}
+
+/// Build the mount(2) data for a FUSE mount: the device descriptor and
+/// `rootmode` plus the access/label options. `extra` is appended verbatim so
+/// the caller can request `SELinux` labeling.
+fn fuse_mount_data(
+    fd: std::os::unix::io::RawFd,
+    mountpoint: &Path,
+    extra: &str,
+) -> io::Result<String> {
+    use std::os::unix::fs::PermissionsExt;
+    let rootmode = std::fs::metadata(mountpoint)?.permissions().mode() & libc::S_IFMT;
+    Ok(format!(
+        "fd={fd},rootmode={rootmode:o},user_id=0,group_id=0,default_permissions,allow_other,{extra}"
+    ))
+}
+
+fn mount_daemonized(
+    source: &Path,
+    mountpoint: &Path,
+    config: &Config,
+    seclabel: bool,
+) -> io::Result<()> {
     let (read, write) = nix::unistd::pipe().map_err(errno)?;
     // SAFETY: `fork` is safe to call as long as the program does not rely on
     // atfork handlers for correctness, which none of our dependencies do.
@@ -280,25 +392,26 @@ fn mount_daemonized(source: &Path, mountpoint: &Path, config: &Config) -> io::Re
         nix::unistd::ForkResult::Child => {
             drop(read);
             let _ = nix::unistd::setsid();
-            let mut ready = File::from(write);
+            let ready = File::from(write);
+            let mut ready_error = ready.try_clone()?;
 
-            let session =
-                match MetaFs::new(source).and_then(|fs| Session::new(fs, mountpoint, config)) {
-                    Ok(session) => {
-                        // Mount attached: report success to the parent, detach
-                        // from the caller's streams, then serve requests.
-                        drop(ready);
-                        detach_stdio();
-                        session
-                    }
-                    Err(e) => {
-                        let _ = writeln!(ready, "{e}");
-                        drop(ready);
-                        std::process::exit(1);
-                    }
-                };
-            let result = session.run();
-            std::process::exit(i32::from(result.is_err()));
+            let result = MetaFs::new(source).and_then(|fs| {
+                serve_filesystem(fs, mountpoint, config, seclabel, move || {
+                    // Mount attached: report success to the parent, detach
+                    // from the caller's streams, then serve requests.
+                    drop(ready);
+                    detach_stdio();
+                    Ok(())
+                })
+            });
+            match result {
+                Ok(()) => std::process::exit(0),
+                Err(e) => {
+                    let _ = writeln!(ready_error, "{e}");
+                    drop(ready_error);
+                    std::process::exit(1);
+                }
+            }
         }
     }
 }
