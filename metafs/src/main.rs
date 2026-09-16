@@ -182,6 +182,19 @@ fn session_config(forwarded: &[String], read_only: bool, read_write: bool) -> Co
     config
         .mount_options
         .push(MountOption::Subtype("metafs".to_string()));
+    // Let the kernel enforce permissions itself from the (faithful) modes we
+    // report; the backing filesystem is immutable, so its permission bits are
+    // exactly what should govern access. This also avoids every `access(2)`
+    // round-tripping to the daemon.
+    config.mount_options.push(MountOption::DefaultPermissions);
+    // The kernel's `fuse_permission` denies access with EACCES to processes
+    // that are neither the mount owner nor covered by `allow_other`/`allow_root`
+    // (see `fuse_allow_current_process()`). The overlay serves the whole system
+    // as its store, so every process — including services running under
+    // dedicated users such as dbus or systemd-network — must be able to read
+    // and execute the underlying files. Default to allow_other; the `-o`
+    // options can still request `allow_root` explicitly.
+    config.acl = SessionACL::All;
 
     let threads = std::thread::available_parallelism()
         .map_or(4, std::num::NonZeroUsize::get)

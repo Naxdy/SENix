@@ -28,7 +28,7 @@ use fuser::{
     ReplyAttr, ReplyCreate, ReplyData, ReplyDirectory, ReplyDirectoryPlus, ReplyEmpty, ReplyEntry,
     ReplyIoctl, ReplyOpen, ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow, WriteFlags,
 };
-use log::{debug, error, info};
+use log::{debug, error};
 use std::time::UNIX_EPOCH;
 
 use crate::xattrs::{SetError, XattrStore};
@@ -104,6 +104,9 @@ pub struct MetaFs {
     /// the open handle itself — and also when the overlay is stacked directly
     /// on top of its own source.
     source_fd: File,
+    /// Whether the kernel negotiated `FUSE_PASSTHROUGH` at INIT time; gates the
+    /// passthrough path in `open` (older kernels fall back to the proxy).
+    passthrough: std::sync::atomic::AtomicBool,
     /// Count of FUSE requests served (diagnostics: reveals whether the kernel
     /// is still routing requests to us after an initrd root switch).
     requests: Arc<AtomicU64>,
@@ -115,6 +118,11 @@ pub struct MetaFs {
     inodes: DashMap<u64, Node>,
     /// Open file handle -> underlying file object.
     open_files: DashMap<u64, File>,
+    /// Overlay inode -> the kernel passthrough backing ID, kept alive for the
+    /// lifetime of the process. Only one backing ID may be handed to the
+    /// kernel per inode, and it must stay alive for as long as any open
+    /// handle exists, so we never drop it.
+    backings: DashMap<u64, Arc<fuser::BackingId>>,
     /// Cached, name-sorted directory listings. The source is immutable, so a
     /// listing never goes stale.
     listings: DashMap<u64, Arc<Vec<ListingEntry>>>,
@@ -156,9 +164,11 @@ impl MetaFs {
         );
         Ok(Self {
             source_fd,
+            passthrough: std::sync::atomic::AtomicBool::new(false),
             requests: Arc::new(AtomicU64::new(0)),
             inodes: DashMap::new(),
             open_files: DashMap::new(),
+            backings: DashMap::new(),
             listings: DashMap::new(),
             xattrs: XattrStore::new(),
             next_fh: AtomicU64::new(1),
@@ -203,7 +213,16 @@ impl MetaFs {
             }
             e
         })?;
-        Self::file_attr_from_md(&md)
+        let attr = Self::file_attr_from_md(&md)?;
+        if attr.kind == FileType::RegularFile && attr.perm & 0o111 == 0 {
+            log::debug!(
+                "metafs: non-exec regular {} perm={:#06o} size={}",
+                path.display(),
+                attr.perm,
+                attr.size
+            );
+        }
+        Ok(attr)
     }
 
     /// Build the `FileAttr` for an overlay inode.
@@ -351,10 +370,15 @@ fn read_full_at(file: &File, buf: &mut [u8], offset: u64) -> io::Result<usize> {
 
 impl Filesystem for MetaFs {
     fn init(&mut self, _req: &Request, config: &mut KernelConfig) -> io::Result<()> {
-        // Ask the kernel to use READDIRPLUS and cache directory contents; both
-        // are safe because the source never changes. Ignored on kernels too old
-        // to support them (the plain readdir fallback still works).
+        // Ask the kernel to use READDIRPLUS / directory caching and, most
+        // importantly, FUSE passthrough (kernel >= 6.9). With passthrough the
+        // kernel forwards reads straight to the backing fd registered in
+        // `open`, so the data plane is handled entirely by the kernel.
         let _ = config.add_capabilities(InitFlags::FUSE_DO_READDIRPLUS);
+        self.passthrough.store(
+            config.add_capabilities(InitFlags::FUSE_PASSTHROUGH).is_ok(),
+            Ordering::Relaxed,
+        );
         Ok(())
     }
 
@@ -506,14 +530,45 @@ impl Filesystem for MetaFs {
             reply.error(Errno::ENOENT);
             return;
         };
-        match File::open(&path) {
-            Ok(file) => {
-                let fh = self.next_fh.fetch_add(1, Ordering::Relaxed);
-                self.open_files.insert(fh, file);
-                // Nothing can invalidate the page cache, so keep it around.
+        let file = match File::open(&path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("metafs: open {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        let fh = self.next_fh.fetch_add(1, Ordering::Relaxed);
+
+        // Keep a private copy so the fallback `read` path still works on
+        // kernels without passthrough support; the kernel itself registers
+        // the (duplicated) backing fd through the `open_backing` ioctl.
+        if let Ok(copy) = file.try_clone() {
+            self.open_files.insert(fh, copy);
+        }
+
+        // Register the backing file for kernel passthrough and reuse a single
+        // BackingId per inode, as the kernel requires. If unavailable, fall
+        // back to the classic proxied open (our read handler takes over).
+        if !self.passthrough.load(Ordering::Relaxed) {
+            reply.opened(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE);
+            return;
+        }
+        match reply.open_backing(&file) {
+            Ok(backing) => {
+                let entry = self
+                    .backings
+                    .entry(ino.0)
+                    .or_insert_with(|| Arc::new(backing));
+                reply.opened_passthrough(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE, &entry);
+            }
+            Err(e) => {
+                debug!(
+                    "metafs: passthrough unavailable for {}: {e}",
+                    path.display()
+                );
                 reply.opened(FileHandle(fh), FopenFlags::FOPEN_KEEP_CACHE);
             }
-            Err(e) => reply.error(e.into()),
         }
     }
 
@@ -785,9 +840,18 @@ impl Filesystem for MetaFs {
             return;
         };
         let flags = nix::unistd::AccessFlags::from_bits_truncate(mask.bits());
-        match nix::unistd::access(&path, flags) {
-            Ok(()) => reply.ok(),
-            Err(e) => reply.error(Errno::from_i32(e as i32)),
+        if let Err(e) = nix::unistd::access(&path, flags) {
+            match &e {
+                nix::errno::Errno::ENOENT => debug!("metafs: access {}: {e}", path.display()),
+                _ => error!(
+                    "metafs: access {} mask={} failed: {e}",
+                    path.display(),
+                    mask
+                ),
+            }
+            reply.error(Errno::from_i32(e as i32));
+        } else {
+            reply.ok();
         }
     }
 
