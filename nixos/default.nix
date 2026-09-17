@@ -576,6 +576,7 @@ in
             # source == mountpoint here.
             ExecStart = "${lib.getExe pkgs.metafs} -f /sysroot/nix/store /sysroot/nix/store -o nosuid,nodev,fscontext=system_u:object_r:senix_meta_t:s0 --seclabel";
           };
+          restartIfChanged = false;
           unitConfig = {
             DefaultDependencies = false;
             IgnoreOnIsolate = true;
@@ -590,11 +591,45 @@ in
     };
 
     systemd.services = {
+      selinux-metafs-remount = {
+        description = "Remount MetaFS Store";
+        wantedBy = [
+          "sysinit.target"
+        ];
+        before = [
+          "sysinit.target"
+          "shutdown.target"
+          "nix-daemon.socket"
+          "nix-daemon.service"
+        ]
+        ++ (lib.optional (
+          config.systemd.services ? register-nix-paths
+        ) config.systemd.services.register-nix-paths.name);
+        after = [
+          "local-fs.target"
+        ];
+        conflicts = [
+          "shutdown.target"
+        ];
+        restartIfChanged = false;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = [
+          pkgs.util-linux
+        ];
+        script = ''
+          mount -o remount,ro /nix/store
+        '';
+      };
+
       selinux-metafs = {
         serviceConfig = {
           Type = "exec";
           ExecStart = "${lib.getExe pkgs.metafs} -f /nix/store /nix/store -o nosuid,nodev --seclabel";
         };
+        restartIfChanged = false;
         unitConfig = {
           DefaultDependencies = false;
           IgnoreOnIsolate = true;
