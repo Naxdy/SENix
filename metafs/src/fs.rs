@@ -41,45 +41,6 @@ use std::time::UNIX_EPOCH;
 
 use crate::xattrs::{SetError, XattrStore};
 
-/// Most recently entered request handler, by index (diagnostics: reveals which
-/// handler is in flight if a request is being lost / stuck).
-static LAST_OP: AtomicU64 = AtomicU64::new(0);
-const OP_NAMES: [&str; 16] = [
-    "lookup",
-    "getattr",
-    "setattr",
-    "readlink",
-    "open",
-    "read",
-    "write",
-    "readdir",
-    "readdirplus",
-    "release",
-    "access",
-    "statfs",
-    "setxattr",
-    "getxattr",
-    "listxattr",
-    "removexattr",
-];
-
-/// Record that a request handler has been entered.
-fn mark_op(index: usize) {
-    LAST_OP.store((index + 1) as u64, Ordering::Relaxed);
-}
-
-/// Name of the most recently entered handler (for the diagnostics heartbeat).
-pub fn last_op() -> &'static str {
-    OP_NAMES
-        .get(
-            usize::try_from(LAST_OP.load(Ordering::Relaxed))
-                .unwrap_or(0)
-                .saturating_sub(1),
-        )
-        .copied()
-        .unwrap_or("none")
-}
-
 /// How long the kernel may cache lookups and attributes.
 const TTL: Duration = Duration::from_secs(1);
 
@@ -186,11 +147,6 @@ impl MetaFs {
         } else {
             self.inodes.get(&ino.0).map(|node| node.path.clone())
         }
-    }
-
-    /// Shared count of requests served so far (for the diagnostics heartbeat).
-    pub fn requests(&self) -> Arc<AtomicU64> {
-        Arc::clone(&self.requests)
     }
 
     /// Register the inode -> path mapping after a stat, unless it collides with
@@ -419,7 +375,6 @@ impl Filesystem for MetaFs {
     }
 
     fn lookup(&self, _req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEntry) {
-        mark_op(0);
         self.requests.fetch_add(1, Ordering::Relaxed);
         let Some(parent_path) = self.underlying_path(parent) else {
             reply.error(Errno::ENOENT);
@@ -436,7 +391,6 @@ impl Filesystem for MetaFs {
     }
 
     fn getattr(&self, _req: &Request, ino: INodeNo, _fh: Option<FileHandle>, reply: ReplyAttr) {
-        mark_op(1);
         match self.build_attr_for(ino) {
             Ok(attr) => reply.attr(&TTL, &attr),
             Err(e) => reply.error(e.into()),
@@ -461,7 +415,6 @@ impl Filesystem for MetaFs {
         _flags: Option<BsdFileFlags>,
         reply: ReplyAttr,
     ) {
-        mark_op(2);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -519,7 +472,6 @@ impl Filesystem for MetaFs {
     }
 
     fn readlink(&self, _req: &Request, ino: INodeNo, reply: ReplyData) {
-        mark_op(3);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -771,7 +723,6 @@ impl Filesystem for MetaFs {
     }
 
     fn open(&self, _req: &Request, ino: INodeNo, flags: OpenFlags, reply: ReplyOpen) {
-        mark_op(4);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
@@ -830,7 +781,6 @@ impl Filesystem for MetaFs {
         _lock_owner: Option<LockOwner>,
         reply: ReplyWrite,
     ) {
-        mark_op(6);
         // Normally the kernel forwards writes straight to the passthrough
         // backing fd and this handler is never entered. If one does arrive
         // (e.g. an open whose passthrough registration failed), write through
@@ -878,7 +828,6 @@ impl Filesystem for MetaFs {
         _flush: bool,
         reply: ReplyEmpty,
     ) {
-        mark_op(9);
         // The backing BackingId is intentionally kept alive for the process
         // lifetime; nothing to release in userspace.
         reply.ok();
@@ -900,7 +849,6 @@ impl Filesystem for MetaFs {
         offset: u64,
         mut reply: ReplyDirectory,
     ) {
-        mark_op(7);
         let listing = match self.dir_listing(ino) {
             Ok(listing) => listing,
             Err(e) => {
@@ -928,7 +876,6 @@ impl Filesystem for MetaFs {
         offset: u64,
         mut reply: ReplyDirectoryPlus,
     ) {
-        mark_op(8);
         let listing = match self.dir_listing(ino) {
             Ok(listing) => listing,
             Err(e) => {
@@ -989,7 +936,6 @@ impl Filesystem for MetaFs {
     }
 
     fn statfs(&self, _req: &Request, _ino: INodeNo, reply: ReplyStatfs) {
-        mark_op(11);
         #[allow(clippy::cast_possible_truncation)]
         match nix::sys::statvfs::fstatvfs(&self.source_fd) {
             Ok(st) => reply.statfs(
@@ -1016,7 +962,6 @@ impl Filesystem for MetaFs {
         _position: u32,
         reply: ReplyEmpty,
     ) {
-        mark_op(12);
         let path = self
             .underlying_path(ino)
             .map_or_else(|| "?".into(), |p| p.display().to_string());
@@ -1042,7 +987,6 @@ impl Filesystem for MetaFs {
     }
 
     fn getxattr(&self, _req: &Request, ino: INodeNo, name: &OsStr, size: u32, reply: ReplyXattr) {
-        mark_op(13);
         let Some(value) = self.xattrs.get(ino.0, name) else {
             log::debug!(
                 "metafs: GETXATTR ino={} {} size={size} -> ENODATA",
@@ -1068,7 +1012,6 @@ impl Filesystem for MetaFs {
     }
 
     fn listxattr(&self, _req: &Request, ino: INodeNo, size: u32, reply: ReplyXattr) {
-        mark_op(14);
         let names = self.xattrs.list(ino.0);
         // Each name is NUL-terminated in the wire format.
         let total = u32::try_from(names.iter().map(|n| n.len()).sum::<usize>() + names.len())
@@ -1088,7 +1031,6 @@ impl Filesystem for MetaFs {
     }
 
     fn removexattr(&self, _req: &Request, ino: INodeNo, name: &OsStr, reply: ReplyEmpty) {
-        mark_op(15);
         if self.xattrs.remove(ino.0, name) {
             reply.ok();
         } else {
@@ -1097,7 +1039,6 @@ impl Filesystem for MetaFs {
     }
 
     fn access(&self, _req: &Request, ino: INodeNo, mask: AccessFlags, reply: ReplyEmpty) {
-        mark_op(10);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;

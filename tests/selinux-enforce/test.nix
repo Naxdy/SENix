@@ -153,6 +153,7 @@ pkgs.testers.runNixOSTest {
       # [senix] Post-boot PID 1 context (diagnostic; the init_t grant landed when
       # this shows init_t and the "Failed to transition" warning is absent).
       print("[senix] P1 ctx:", machine.succeed("cat /proc/1/attr/current; echo; readlink /proc/1/exe"))
+      print("[senix] mountinfo:", machine.succeed("cat /proc/self/mountinfo"))
 
       # The initrd `selinux-init` relabel must label the store unit files
       # `systemd_unit_t` before switch_root (including the NixOS-generated

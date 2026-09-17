@@ -14,8 +14,7 @@ use std::os::unix::ffi::{OsStrExt, OsStringExt};
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::sync::atomic::{AtomicI32, AtomicU64, Ordering};
-use std::time::Duration;
+use std::sync::atomic::{AtomicI32, Ordering};
 
 use clap::Parser;
 use fuser::{Config, MountOption, Session, SessionACL};
@@ -289,9 +288,7 @@ fn mount_foreground(
     seclabel: bool,
 ) -> io::Result<()> {
     let fs = MetaFs::new(source)?;
-    let requests = fs.requests();
     write_kmsg(&format!("metafs: mounting {}", mountpoint.display()));
-    spawn_heartbeat(requests, mountpoint.to_path_buf());
     let result = serve_filesystem(fs, mountpoint, config, seclabel, || Ok(()));
     write_kmsg(&format!(
         "metafs: {}",
@@ -505,47 +502,6 @@ extern "C" fn on_term_signal(_sig: libc::c_int) {
     }
 }
 
-/// Report periodic diagnostics to the kernel log.
-fn spawn_heartbeat(requests: std::sync::Arc<AtomicU64>, mountpoint: PathBuf) {
-    static DUMPED: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
-    std::thread::spawn(move || {
-        let pid = std::process::id();
-        loop {
-            let store = store_mounts_summary();
-            // `.` is the CWD, which the daemon anchors to the backing store.
-            let backing_desc = match std::fs::read_dir(".") {
-                Ok(rd) => format!("entries={}", rd.count()),
-                Err(e) => format!("error={e}"),
-            };
-            if store.is_empty() && !DUMPED.swap(true, std::sync::atomic::Ordering::Relaxed) {
-                // Something tectonic happened to the mount table (e.g. the
-                // initrd root switch); dump it once, then stay quiet.
-                for (mnt, fstype) in mountinfo_entries() {
-                    write_kmsg(&format!("metafs mounts {pid}: {mnt} ({fstype})"));
-                }
-                write_kmsg(&format!(
-                    "metafs probes {pid}: {}",
-                    match std::fs::read_to_string("/proc/self/mountinfo") {
-                        Ok(s) => format!("mountinfo ok:{}lines", s.lines().count()),
-                        Err(e) => format!("mountinfo err:{e}"),
-                    }
-                ));
-                write_kmsg("metafs mounts: end");
-            }
-            write_kmsg(&format!(
-                "metafs heartbeat pid={pid}: last_op={} survivor={} fuse={:?} store_mounts=<{}> mountpoint={} backing={backing_desc} requests={}",
-                metafs::fs::last_op(),
-                survivor_xattr(),
-                fuse_mountpoint(),
-                store.join(" "),
-                mountpoint.display(),
-                requests.load(std::sync::atomic::Ordering::Relaxed),
-            ));
-            std::thread::sleep(Duration::from_secs(5));
-        }
-    });
-}
-
 /// Ask systemd to keep this daemon across the switch-root killing spree by
 /// setting the same cgroup xattr systemd itself would set for
 /// `SurviveFinalKillSignal=yes` (see `systemd.io/ROOT_STORAGE_DAEMONS`). This is
@@ -587,39 +543,6 @@ fn mark_survivor() {
     });
 }
 
-/// Whether the current process's cgroup carries the
-/// `user.survive_final_kill_signal` xattr (i.e. whether systemd's
-/// switch-root killing spree will spare it).
-fn survivor_xattr() -> bool {
-    let Some(path) = std::fs::read_to_string("/proc/self/cgroup")
-        .ok()
-        .and_then(|cg| {
-            cg.lines()
-                .next()
-                .and_then(|l| l.split_once(':').map(|(_, p)| p.trim().to_string()))
-        })
-    else {
-        return false;
-    };
-    if path.is_empty() {
-        return false;
-    }
-    let cgpath = std::ffi::CString::new(format!("/sys/fs/cgroup{path}")).unwrap_or_default();
-    let mut name = b"user.survive_final_kill_signal".to_vec();
-    name.push(0);
-    // SAFETY: pointers reference valid buffers; a positive return means the
-    // attribute exists.
-    let mut value = [0u8; 16];
-    unsafe {
-        libc::getxattr(
-            cgpath.as_ptr(),
-            name.as_ptr().cast(),
-            value.as_mut_ptr().cast(),
-            value.len(),
-        ) > 0
-    }
-}
-
 /// Ignore `SIGTERM`/`SIGHUP` so the daemon survives systemd's switch-root and
 /// shutdown killing sprees (see `systemd.io/ROOT_STORAGE_DAEMONS`): the daemon
 /// only exits when the mounted filesystem is unmounted, which ends the FUSE
@@ -638,38 +561,4 @@ fn install_signal_handlers() {
         libc::sigaction(libc::SIGTERM, &raw const action, std::ptr::null_mut());
         libc::sigaction(libc::SIGHUP, &raw const action, std::ptr::null_mut());
     }
-}
-
-/// Scan `/proc/self/mountinfo` for a `fuse.metafs` mount and return its
-/// mountpoint, if present.
-fn fuse_mountpoint() -> Option<String> {
-    mountinfo_entries()
-        .iter()
-        .find(|(_mnt, fstype)| fstype == "fuse.metafs")
-        .map(|(mnt, _)| mnt.clone())
-}
-
-/// Return a short summary of mounts under `/nix` (or the initrd's `/sysroot`
-/// variant), to reveal whether the store stack survived a root switch.
-fn store_mounts_summary() -> Vec<String> {
-    mountinfo_entries()
-        .into_iter()
-        .filter(|(mnt, _)| mnt.starts_with("/nix") || mnt.starts_with("/sysroot/nix"))
-        .map(|(mnt, fstype)| format!("{mnt}:{fstype}"))
-        .collect()
-}
-
-/// Parse `/proc/self/mountinfo` into (mountpoint, fstype) pairs.
-fn mountinfo_entries() -> Vec<(String, String)> {
-    let Ok(info) = std::fs::read_to_string("/proc/self/mountinfo") else {
-        return Vec::new();
-    };
-    info.lines()
-        .filter_map(|line| {
-            let fields: Vec<&str> = line.split(' ').collect();
-            let fs = line.split(" - ").nth(1)?;
-            let fstype = fs.split(' ').next()?;
-            Some((fields.get(4)?.to_string(), fstype.to_string()))
-        })
-        .collect()
 }
