@@ -8,14 +8,17 @@ let
 in
 {
   options.security.selinux.refpolicy = {
-    package = mkOption {
+    src = mkOption {
       type = types.package;
-      default = pkgs.selinux-refpolicy.override { policyVersion = "refpolicy"; };
-      defaultText = lib.literalExpression ''
-        pkgs.selinux-refpolicy.override { policyVersion = "refpolicy"; }
-      '';
+      default = pkgs.fetchFromGitHub {
+        owner = "SELinuxProject";
+        repo = "refpolicy";
+        rev = "2a1d069a8e9820ced0087efad43ddba6acf3dabf";
+        hash = "sha256-q+KfyRJC10N/iKozNFYJ2GysD6bzZs2+eh9LKLYsgX4=";
+      };
+      defaultText = "Refpolicy source.";
       description = ''
-        The SELinux refpolicy source to use as the base of the declarative policy.
+        The source code for the SELinux refpolicy to be used as a base for the declarative policy.
       '';
     };
   };

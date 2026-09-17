@@ -11,7 +11,7 @@ let
   mods = cfg.modules;
   moduleNames = builtins.attrNames mods;
 
-  policySrc = cfg.refpolicy.package.src;
+  policySrc = cfg.refpolicy.src;
 
   # The Reference Policy layer directories that exist in the source tree.
   refpolicyLayers = lib.attrNames (
@@ -191,6 +191,9 @@ let
     postPatch = ''
       cp -aL ${moduleSourceDrv}/. .
       chmod -R u+w .
+
+      substituteInPlace ./Makefile \
+        --replace-fail "/bin/bash" "${lib.getExe pkgs.bash}"
     '';
 
     configurePhase = ''

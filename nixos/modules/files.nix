@@ -53,7 +53,8 @@
         #
         "/etc" = "-d	gen_context(system_u:object_r:etc_t,s0)";
         "/etc/.*" = "gen_context(system_u:object_r:etc_t,s0)";
-        "@etc@" = "-- gen_context(system_u:object_r:etc_t,s0)";
+        "@etc@" = "-d gen_context(system_u:object_r:etc_t,s0)";
+        "@etc@/.*" = "gen_context(system_u:object_r:etc_t,s0)";
         "/etc/\.fstab\.hal\..+" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
         "/etc/blkid(/.*)?" = "gen_context(system_u:object_r:etc_runtime_t,s0)";
         "/etc/cmtab" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";

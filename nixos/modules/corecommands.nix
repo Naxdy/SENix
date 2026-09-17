@@ -8,11 +8,6 @@
     layer = "kernel";
     fileContext = {
       rules = {
-        # Catch-all for the store (the NixOS analogue of `/usr`), so files not
-        # matched by the more specific `bin_t`/`lib_t`/per-package rules below
-        # get a readable type instead of falling to the default/unlabeled. The
-        # specific rules come later in the fc and win via last-match-wins.
-        "/nix/store(/.*)?" = "--	gen_context(system_u:object_r:usr_t,s0)";
         # Store executables.
         "/nix/store/.*/bin(/.*)?" = "--	gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/.*/sbin(/.*)?" = "--	gen_context(system_u:object_r:bin_t,s0)";
