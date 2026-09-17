@@ -264,6 +264,19 @@ fn translate_mount_option(config: &mut Config, option: &str) {
         "seclabel" => config
             .mount_options
             .push(MountOption::CUSTOM("seclabel".to_string())),
+        // SELinux mount-context options are meaningful (e.g. as the boot-time
+        // store's superblock context) and must reach the kernel verbatim.
+        // `fscontext=`/`context=` only set labels; they do not turn off xattr
+        // labeling (which `fs_use_xattr fuse` supplies), so forwarding is safe.
+        o if o.starts_with("context=")
+            || o.starts_with("fscontext=")
+            || o.starts_with("defcontext=")
+            || o.starts_with("rootcontext=") =>
+        {
+            config
+                .mount_options
+                .push(MountOption::CUSTOM(o.to_string()));
+        }
         _ => debug!("ignoring unrecognized mount option {option:?}"),
     }
 }
@@ -392,23 +405,28 @@ fn mount_daemonized(
         nix::unistd::ForkResult::Child => {
             drop(read);
             let _ = nix::unistd::setsid();
-            let ready = File::from(write);
-            let mut ready_error = ready.try_clone()?;
+            // Single ownership of the readiness pipe write end; `take()` moves
+            // it out exactly once on whichever path runs, so the parent always
+            // sees EOF (success) or the error text. A stray held-open write
+            // end would block `mount(8)` forever.
+            let mut ready: Option<File> = Some(File::from(write));
 
             let result = MetaFs::new(source).and_then(|fs| {
-                serve_filesystem(fs, mountpoint, config, seclabel, move || {
-                    // Mount attached: report success to the parent, detach
-                    // from the caller's streams, then serve requests.
-                    drop(ready);
+                // Mount attached: report success to the parent, detach from the
+                // caller's streams, then serve requests.
+                let signal_ready = || {
+                    drop(ready.take());
                     detach_stdio();
                     Ok(())
-                })
+                };
+                serve_filesystem(fs, mountpoint, config, seclabel, signal_ready)
             });
             match result {
                 Ok(()) => std::process::exit(0),
                 Err(e) => {
-                    let _ = writeln!(ready_error, "{e}");
-                    drop(ready_error);
+                    if let Some(mut r) = ready.take() {
+                        let _ = writeln!(r, "{e}");
+                    }
                     std::process::exit(1);
                 }
             }

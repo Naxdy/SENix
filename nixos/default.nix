@@ -516,6 +516,8 @@ in
           script = ''
             set -euo pipefail
 
+            sleep 1
+
             pp=""
             for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
               [ -e "$f" ] && pp="$pp $f"
@@ -576,7 +578,6 @@ in
             # source == mountpoint here.
             ExecStart = "${lib.getExe pkgs.metafs} -f /sysroot/nix/store /sysroot/nix/store -o nosuid,nodev,fscontext=system_u:object_r:senix_meta_t:s0 --seclabel";
           };
-          restartIfChanged = false;
           unitConfig = {
             DefaultDependencies = false;
             IgnoreOnIsolate = true;
@@ -616,11 +617,14 @@ in
           Type = "oneshot";
           RemainAfterExit = true;
         };
+        unitConfig.DefaultDependencies = false;
         path = [
           pkgs.util-linux
         ];
         script = ''
-          mount -o remount,ro /nix/store
+          mount --bind /nix/store /nix/store
+
+          mount -o remount,ro,bind /nix/store
         '';
       };
 

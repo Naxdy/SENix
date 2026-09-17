@@ -1,20 +1,27 @@
 //! A read-only pass-through filesystem over an existing directory.
 //!
-//! [`MetaFs`] exposes an existing filesystem tree (the *source*) through FUSE
-//! while strictly forbidding any write to it or its contents:
+//! [`MetaFs`] exposes an existing filesystem tree (the *source*) through FUSE as
+//! a faithful read-write pass-through overlay:
 //!
-//! * every mutation operation — `create`, `write`, `rename`, `setattr`, … —
-//!   is answered with `EROFS`, so nothing can ever pollute the source;
-//! * every read operation is passed through to the source and its exact
-//!   result forwarded back;
+//! * every operation — reads, writes, and structural mutations such as
+//!   `create`, `mkdir`, `unlink`, `rename`, `setattr` — is passed through to
+//!   the source exactly like the kernel would use it directly;
+//! * read and write *content* I/O is handed to the kernel as FUSE passthrough,
+//!   which uses an open descriptor of the backing file directly and never
+//!   round-trips through this process;
 //! * extended attributes are stored in an in-memory map keyed by inode number
 //!   ([`XattrStore`]), so a process such as `SELinux` can label files without
 //!   ever writing to the underlying filesystem.
+//!
+//! Making the filesystem read-only for the outside world is deliberately left
+//! to the mount table (`MS_RDONLY`): nothing in this crate forces it, so the
+//! Nix daemon can simply remount the store read-write inside its own private
+//! mount namespace while every other process still sees a read-only overlay.
 
 use std::ffi::OsStr;
 use std::fs::{self, File};
 use std::io::{self, ErrorKind};
-use std::os::unix::fs::MetadataExt;
+use std::os::unix::fs::{FileExt, MetadataExt, PermissionsExt, symlink};
 use std::os::unix::io::AsRawFd;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -24,9 +31,10 @@ use std::time::Duration;
 use dashmap::DashMap;
 use fuser::{
     AccessFlags, BsdFileFlags, Errno, FileAttr, FileHandle, FileType, Filesystem, FopenFlags,
-    Generation, INodeNo, InitFlags, IoctlFlags, KernelConfig, LockOwner, OpenFlags, RenameFlags,
-    ReplyAttr, ReplyCreate, ReplyData, ReplyDirectory, ReplyDirectoryPlus, ReplyEmpty, ReplyEntry,
-    ReplyIoctl, ReplyOpen, ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow, WriteFlags,
+    Generation, INodeNo, InitFlags, IoctlFlags, KernelConfig, LockOwner, OpenAccMode, OpenFlags,
+    RenameFlags, ReplyAttr, ReplyCreate, ReplyData, ReplyDirectory, ReplyDirectoryPlus, ReplyEmpty,
+    ReplyEntry, ReplyIoctl, ReplyOpen, ReplyStatfs, ReplyWrite, ReplyXattr, Request, TimeOrNow,
+    WriteFlags,
 };
 use log::{debug, error};
 use std::time::UNIX_EPOCH;
@@ -91,7 +99,7 @@ struct Node {
     parent: u64,
 }
 
-/// The metacopy-style pass-through filesystem.
+/// A faithful pass-through filesystem with in-memory extended attributes.
 ///
 /// All fields are interior-mutable and the type is `Send + Sync`, so one
 /// instance is shared by every request-handling thread.
@@ -118,8 +126,9 @@ pub struct MetaFs {
     /// kernel per inode, and it must stay alive for as long as any open
     /// handle exists, so we never drop it.
     backings: DashMap<u64, Arc<fuser::BackingId>>,
-    /// Cached, name-sorted directory listings. The source is immutable, so a
-    /// listing never goes stale.
+    /// Cached, name-sorted directory listings. The cache is invalidated by
+    /// every structural mutation (create, unlink, rename, ...), since the
+    /// source is now writable.
     listings: DashMap<u64, Arc<Vec<ListingEntry>>>,
     /// The only mutable state: in-memory extended attributes.
     xattrs: XattrStore,
@@ -274,6 +283,54 @@ impl MetaFs {
         })
     }
 
+    /// Convert a nix errno into an `io::Error` for reply propagation.
+    fn errno(e: nix::errno::Errno) -> io::Error {
+        io::Error::from_raw_os_error(e as i32)
+    }
+
+    /// Apply `atime`/`mtime` to the backing file behind `path`.
+    ///
+    /// `TimeOrNow::Now` is expressed as `UTIME_NOW` so the kernel can stamp the
+    /// current time itself.
+    fn set_times(path: &Path, atime: TimeOrNow, mtime: TimeOrNow) -> io::Result<()> {
+        use std::ffi::CString;
+        let c_path = CString::new(path.as_os_str().as_encoded_bytes())?;
+        let mut times = [libc::timespec {
+            tv_sec: 0,
+            tv_nsec: 0,
+        }; 2];
+        for (slot, time) in times.iter_mut().zip([atime, mtime]) {
+            match time {
+                TimeOrNow::SpecificTime(t) => {
+                    let d = t.duration_since(UNIX_EPOCH).unwrap_or_default();
+                    slot.tv_sec = i64::try_from(d.as_secs()).unwrap_or(i64::MAX);
+                    slot.tv_nsec = i64::from(d.subsec_nanos());
+                }
+                TimeOrNow::Now => slot.tv_nsec = libc::UTIME_NOW,
+            }
+        }
+        // SAFETY: `c_path` is NUL-terminated and remains valid for the call;
+        // `times` points to a 2-element array the kernel validates.
+        let rc = unsafe { libc::utimensat(libc::AT_FDCWD, c_path.as_ptr(), times.as_ptr(), 0) };
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(Self::errno(nix::errno::Errno::last()))
+        }
+    }
+
+    /// Common tail for operations that materialize a new directory entry
+    /// (`mkdir`, `symlink`, `link`, `mknod`): drop the parent's cached listing
+    /// (it is now stale), register the new inode, and return its attributes.
+    ///
+    /// Callers must ensure the entry already exists on the backing filesystem.
+    fn attr_after_create(&self, path: PathBuf, parent: INodeNo) -> io::Result<FileAttr> {
+        let attr = Self::build_attr(&path)?;
+        self.remember(attr.ino, path, parent);
+        self.listings.remove(&parent.0);
+        Ok(attr)
+    }
+
     /// Return the cached, name-sorted listing for a directory inode, building
     /// and caching it on first use.
     fn dir_listing(&self, ino: INodeNo) -> io::Result<Arc<Vec<ListingEntry>>> {
@@ -389,13 +446,13 @@ impl Filesystem for MetaFs {
     fn setattr(
         &self,
         _req: &Request,
-        _ino: INodeNo,
-        _mode: Option<u32>,
-        _uid: Option<u32>,
-        _gid: Option<u32>,
-        _size: Option<u64>,
-        _atime: Option<TimeOrNow>,
-        _mtime: Option<TimeOrNow>,
+        ino: INodeNo,
+        mode: Option<u32>,
+        uid: Option<u32>,
+        gid: Option<u32>,
+        size: Option<u64>,
+        atime: Option<TimeOrNow>,
+        mtime: Option<TimeOrNow>,
         _ctime: Option<std::time::SystemTime>,
         _fh: Option<FileHandle>,
         _crtime: Option<std::time::SystemTime>,
@@ -404,9 +461,61 @@ impl Filesystem for MetaFs {
         _flags: Option<BsdFileFlags>,
         reply: ReplyAttr,
     ) {
-        mark_op(2); // chmod / chown / truncate / utimes would modify the underlying file;
-        // reject it instead.
-        reply.error(Errno::EROFS);
+        mark_op(2);
+        let Some(path) = self.underlying_path(ino) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        // Apply attribute changes to the backing file; this is a genuine
+        // read-write pass-through.
+        if let Some(mode) = mode {
+            let perms = fs::Permissions::from_mode(mode & 0o7777);
+            if let Err(e) = fs::set_permissions(&path, perms) {
+                error!("metafs: chmod {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        }
+        if uid.is_some() || gid.is_some() {
+            let u = uid.map(nix::unistd::Uid::from_raw);
+            let g = gid.map(nix::unistd::Gid::from_raw);
+            if let Err(e) = nix::unistd::chown(&path, u, g) {
+                error!("metafs: chown {} failed: {e}", path.display());
+                reply.error(Errno::from_i32(e as i32));
+                return;
+            }
+        }
+        if let Some(size) = size {
+            match File::options().write(true).open(&path) {
+                Ok(f) => {
+                    if let Err(e) = f.set_len(size) {
+                        error!("metafs: truncate {} failed: {e}", path.display());
+                        reply.error(e.into());
+                        return;
+                    }
+                }
+                Err(e) => {
+                    error!("metafs: truncate open {} failed: {e}", path.display());
+                    reply.error(e.into());
+                    return;
+                }
+            }
+        }
+        if (atime.is_some() || mtime.is_some())
+            && let Err(e) = Self::set_times(
+                &path,
+                atime.unwrap_or(TimeOrNow::Now),
+                mtime.unwrap_or(TimeOrNow::Now),
+            )
+        {
+            error!("metafs: utimens {} failed: {e}", path.display());
+            reply.error(e.into());
+            return;
+        }
+        match Self::build_attr(&path) {
+            Ok(attr) => reply.attr(&TTL, &attr),
+            Err(e) => reply.error(e.into()),
+        }
     }
 
     fn readlink(&self, _req: &Request, ino: INodeNo, reply: ReplyData) {
@@ -424,69 +533,227 @@ impl Filesystem for MetaFs {
     fn mknod(
         &self,
         _req: &Request,
-        _parent: INodeNo,
-        _name: &OsStr,
-        _mode: u32,
-        _umask: u32,
-        _rdev: u32,
+        parent: INodeNo,
+        name: &OsStr,
+        mode: u32,
+        umask: u32,
+        rdev: u32,
         reply: ReplyEntry,
     ) {
-        reply.error(Errno::EROFS);
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let path = parent_path.join(name);
+        let mode = mode & 0o7777 & !umask;
+        let kind = mode & libc::S_IFMT;
+        let result: io::Result<()> = match kind {
+            libc::S_IFREG => File::options()
+                .create_new(true)
+                .write(true)
+                .open(&path)
+                .map(|_| ()),
+            libc::S_IFIFO => std::ffi::CString::new(path.as_os_str().as_encoded_bytes())
+                .map_or_else(
+                    |_| Err(ErrorKind::InvalidData.into()),
+                    |c_path| {
+                        // SAFETY: `c_path` is NUL-terminated; mode is a valid file type.
+                        let rc = unsafe {
+                            libc::mkfifo(c_path.as_ptr(), (mode | libc::S_IFIFO) as libc::mode_t)
+                        };
+                        if rc == 0 {
+                            Ok(())
+                        } else {
+                            Err(io::Error::from_raw_os_error(nix::errno::Errno::last_raw()))
+                        }
+                    },
+                ),
+            libc::S_IFCHR | libc::S_IFBLK | libc::S_IFSOCK => {
+                let flag = match kind {
+                    libc::S_IFCHR => nix::sys::stat::SFlag::S_IFCHR,
+                    libc::S_IFBLK => nix::sys::stat::SFlag::S_IFBLK,
+                    _ => nix::sys::stat::SFlag::S_IFSOCK,
+                };
+                // FUSE encodes device numbers with the legacy scheme; decode
+                // before handing them to mknod.
+                let major = ((rdev >> 8) & 0xfff) as libc::c_uint;
+                let minor = ((rdev & 0xff) | ((rdev >> 12) & 0xfff00)) as libc::c_uint;
+                nix::sys::stat::mknod(
+                    &path,
+                    flag,
+                    nix::sys::stat::Mode::from_bits_truncate(mode as nix::sys::stat::mode_t),
+                    libc::makedev(major, minor),
+                )
+                .map_err(Self::errno)
+            }
+            _ => Err(ErrorKind::Unsupported.into()),
+        };
+        match result.and_then(|()| self.attr_after_create(path, parent)) {
+            Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
+            Err(e) => {
+                if kind == libc::S_IFREG {
+                    log::debug!("metafs: mknod {}: {e}", parent_path.join(name).display());
+                }
+                reply.error(e.into());
+            }
+        }
     }
 
     fn mkdir(
         &self,
         _req: &Request,
-        _parent: INodeNo,
-        _name: &OsStr,
-        _mode: u32,
-        _umask: u32,
+        parent: INodeNo,
+        name: &OsStr,
+        mode: u32,
+        umask: u32,
         reply: ReplyEntry,
     ) {
-        reply.error(Errno::EROFS);
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let path = parent_path.join(name);
+        let result = nix::unistd::mkdir(
+            &path,
+            nix::sys::stat::Mode::from_bits_truncate(mode & !umask),
+        )
+        .map_err(Self::errno)
+        .and_then(|()| self.attr_after_create(path, parent));
+        match result {
+            Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
+            Err(e) => reply.error(e.into()),
+        }
     }
 
-    fn unlink(&self, _req: &Request, _parent: INodeNo, _name: &OsStr, reply: ReplyEmpty) {
-        reply.error(Errno::EROFS);
+    fn unlink(&self, _req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEmpty) {
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        match fs::remove_file(parent_path.join(name)) {
+            Ok(()) => {
+                self.listings.remove(&parent.0);
+                reply.ok();
+            }
+            Err(e) => {
+                debug!(
+                    "metafs: unlink {}/{}: {e}",
+                    parent_path.display(),
+                    name.to_string_lossy()
+                );
+                reply.error(e.into());
+            }
+        }
     }
 
-    fn rmdir(&self, _req: &Request, _parent: INodeNo, _name: &OsStr, reply: ReplyEmpty) {
-        reply.error(Errno::EROFS);
+    fn rmdir(&self, _req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEmpty) {
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        match fs::remove_dir(parent_path.join(name)) {
+            Ok(()) => {
+                self.listings.remove(&parent.0);
+                reply.ok();
+            }
+            Err(e) => {
+                debug!(
+                    "metafs: rmdir {}/{}: {e}",
+                    parent_path.display(),
+                    name.to_string_lossy()
+                );
+                reply.error(e.into());
+            }
+        }
     }
 
     fn symlink(
         &self,
         _req: &Request,
-        _parent: INodeNo,
-        _link_name: &OsStr,
-        _target: &Path,
+        parent: INodeNo,
+        link_name: &OsStr,
+        target: &Path,
         reply: ReplyEntry,
     ) {
-        reply.error(Errno::EROFS);
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let path = parent_path.join(link_name);
+        let result = symlink(target, &path).and_then(|()| self.attr_after_create(path, parent));
+        match result {
+            Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
+            Err(e) => reply.error(e.into()),
+        }
     }
 
     fn rename(
         &self,
         _req: &Request,
-        _parent: INodeNo,
-        _name: &OsStr,
-        _newparent: INodeNo,
-        _newname: &OsStr,
+        parent: INodeNo,
+        name: &OsStr,
+        newparent: INodeNo,
+        newname: &OsStr,
         _flags: RenameFlags,
         reply: ReplyEmpty,
     ) {
-        reply.error(Errno::EROFS);
+        let (Some(parent_path), Some(new_parent_path)) = (
+            self.underlying_path(parent),
+            self.underlying_path(newparent),
+        ) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let from = parent_path.join(name);
+        let to = new_parent_path.join(newname);
+        // Capture the moved inode so its path mapping can follow it.
+        let moved_ino = Self::build_attr(&from).ok().map(|a| a.ino.0);
+        match fs::rename(&from, &to) {
+            Ok(()) => {
+                if let Some(ino) = moved_ino
+                    && let Some(mut node) = self.inodes.get_mut(&ino)
+                {
+                    node.path = to;
+                    node.parent = newparent.0;
+                }
+                self.listings.remove(&parent.0);
+                self.listings.remove(&newparent.0);
+                reply.ok();
+            }
+            Err(e) => {
+                error!(
+                    "metafs: rename {} -> {} failed: {e}",
+                    from.display(),
+                    to.display()
+                );
+                reply.error(e.into());
+            }
+        }
     }
 
     fn link(
         &self,
         _req: &Request,
-        _ino: INodeNo,
-        _newparent: INodeNo,
-        _newname: &OsStr,
+        ino: INodeNo,
+        newparent: INodeNo,
+        newname: &OsStr,
         reply: ReplyEntry,
     ) {
-        reply.error(Errno::EROFS);
+        let (Some(old_path), Some(new_parent_path)) =
+            (self.underlying_path(ino), self.underlying_path(newparent))
+        else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let path = new_parent_path.join(newname);
+        // A hard link shares the *same* inode, so `remember` keeps the existing
+        // path mapping (identical content either way).
+        let result =
+            fs::hard_link(&old_path, &path).and_then(|()| self.attr_after_create(path, newparent));
+        match result {
+            Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
+            Err(e) => reply.error(e.into()),
+        }
     }
 
     #[cfg(target_os = "macos")]
@@ -503,13 +770,23 @@ impl Filesystem for MetaFs {
         reply.error(Errno::EROFS);
     }
 
-    fn open(&self, _req: &Request, ino: INodeNo, _flags: OpenFlags, reply: ReplyOpen) {
+    fn open(&self, _req: &Request, ino: INodeNo, flags: OpenFlags, reply: ReplyOpen) {
         mark_op(4);
         let Some(path) = self.underlying_path(ino) else {
             reply.error(Errno::ENOENT);
             return;
         };
-        let file = match File::open(&path) {
+        // Open the backing with the requested access mode so the kernel can
+        // forward both reads and writes straight through: passthrough I/O uses
+        // this exact descriptor, and a read-only fd cannot serve forwarded
+        // writes.
+        let write = flags.acc_mode() != OpenAccMode::O_RDONLY;
+        let mut options = File::options();
+        options.read(true);
+        if write {
+            options.write(true);
+        }
+        let file = match options.open(&path) {
             Ok(file) => file,
             Err(e) => {
                 error!("metafs: open {} failed: {e}", path.display());
@@ -544,21 +821,39 @@ impl Filesystem for MetaFs {
     fn write(
         &self,
         _req: &Request,
-        _ino: INodeNo,
+        ino: INodeNo,
         _fh: FileHandle,
-        _offset: u64,
-        _data: &[u8],
+        offset: u64,
+        data: &[u8],
         _write_flags: WriteFlags,
         _flags: OpenFlags,
         _lock_owner: Option<LockOwner>,
         reply: ReplyWrite,
     ) {
         mark_op(6);
-        // Passthrough is the only data path: the kernel forwards writes
-        // straight to the backing fd, so this handler is never reached for
-        // ordinary writes. Keep it strict (EROFS) as a defensive answer for
-        // whatever might sneak through.
-        reply.error(Errno::EROFS);
+        // Normally the kernel forwards writes straight to the passthrough
+        // backing fd and this handler is never entered. If one does arrive
+        // (e.g. an open whose passthrough registration failed), write through
+        // to the backing filesystem exactly as the kernel would.
+        let Some(path) = self.underlying_path(ino) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let file = match File::options().write(true).open(&path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("metafs: write open {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        match file.write_all_at(data, offset) {
+            Ok(()) => {
+                let written = u32::try_from(data.len()).unwrap_or(u32::MAX);
+                reply.written(written);
+            }
+            Err(e) => reply.error(e.into()),
+        }
     }
 
     fn flush(
@@ -590,10 +885,11 @@ impl Filesystem for MetaFs {
     }
 
     fn opendir(&self, _req: &Request, _ino: INodeNo, _flags: OpenFlags, reply: ReplyOpen) {
-        reply.opened(
-            FileHandle(0),
-            FopenFlags::FOPEN_KEEP_CACHE | FopenFlags::FOPEN_CACHE_DIR,
-        );
+        // Keep the page-cache flag for file content but not the directory-
+        // entry cache: this filesystem is mutable, and `self.listings` (which
+        // we invalidate on every structural change) is the only authoritative
+        // readdir source.
+        reply.opened(FileHandle(0), FopenFlags::FOPEN_KEEP_CACHE);
     }
 
     fn readdir(
@@ -825,27 +1121,124 @@ impl Filesystem for MetaFs {
     fn create(
         &self,
         _req: &Request,
-        _parent: INodeNo,
-        _name: &OsStr,
-        _mode: u32,
-        _umask: u32,
-        _flags: i32,
+        parent: INodeNo,
+        name: &OsStr,
+        mode: u32,
+        umask: u32,
+        flags: i32,
         reply: ReplyCreate,
     ) {
-        reply.error(Errno::EROFS);
+        let Some(parent_path) = self.underlying_path(parent) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let path = parent_path.join(name);
+        let write = (flags & libc::O_ACCMODE) != libc::O_RDONLY;
+        let mut options = File::options();
+        options.read(true);
+        if write {
+            options.write(true);
+        }
+        let file = match options.create(true).open(&path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("metafs: create {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        // Honour the requested mode (FUSE passes the caller's umask).
+        let perms = fs::Permissions::from_mode(mode & 0o7777 & !umask);
+        if let Err(e) = fs::set_permissions(&path, perms) {
+            debug!("metafs: create chmod {}: {e}", path.display());
+        }
+        let md = match file.metadata() {
+            Ok(md) => md,
+            Err(e) => {
+                error!("metafs: create stat {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        let attr = match Self::file_attr_from_md(&md) {
+            Ok(attr) => attr,
+            Err(e) => {
+                error!("metafs: create stat {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        self.remember(attr.ino, path.clone(), parent);
+        self.listings.remove(&parent.0);
+        let fh = self.next_fh.fetch_add(1, Ordering::Relaxed);
+        match reply.open_backing(&file) {
+            Ok(backing) => {
+                let entry = self
+                    .backings
+                    .entry(attr.ino.0)
+                    .or_insert_with(|| Arc::new(backing));
+                reply.created_passthrough(
+                    &TTL,
+                    &attr,
+                    Generation(0),
+                    FileHandle(fh),
+                    FopenFlags::empty(),
+                    &entry,
+                );
+            }
+            Err(e) => {
+                log::warn!(
+                    "metafs: passthrough unavailable for {}: {e}",
+                    path.display()
+                );
+                reply.created(
+                    &TTL,
+                    &attr,
+                    Generation(0),
+                    FileHandle(fh),
+                    FopenFlags::empty(),
+                );
+            }
+        }
     }
 
     fn fallocate(
         &self,
         _req: &Request,
-        _ino: INodeNo,
+        ino: INodeNo,
         _fh: FileHandle,
-        _offset: u64,
-        _length: u64,
-        _mode: i32,
+        offset: u64,
+        length: u64,
+        mode: i32,
         reply: ReplyEmpty,
     ) {
-        reply.error(Errno::EROFS);
+        let Some(path) = self.underlying_path(ino) else {
+            reply.error(Errno::ENOENT);
+            return;
+        };
+        let file = match File::options().write(true).open(&path) {
+            Ok(file) => file,
+            Err(e) => {
+                error!("metafs: fallocate open {} failed: {e}", path.display());
+                reply.error(e.into());
+                return;
+            }
+        };
+        // SAFETY: `file` is a valid writable fd; the offset/length/mode are
+        // directly forwarded from the caller.
+        let rc = unsafe {
+            libc::fallocate(
+                file.as_raw_fd(),
+                mode,
+                i64::try_from(offset).unwrap_or(i64::MAX),
+                i64::try_from(length).unwrap_or(i64::MAX),
+            )
+        };
+        if rc == 0 {
+            reply.ok();
+        } else {
+            reply.error(Errno::from_i32(nix::errno::Errno::last_raw()));
+        }
     }
 
     fn ioctl(

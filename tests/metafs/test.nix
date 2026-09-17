@@ -64,27 +64,41 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f'test -z "$(cat "{mnt}/empty")"')
           machine.succeed(f'ls -a "{mnt}" >/dev/null && df "{mnt}" >/dev/null')
 
-      with subtest("structural mutations are refused; content writes pass through"):
-          erofs_mutations = [
-              f"echo x > {mnt}/new.txt",  # create
-              f"mkdir {mnt}/newdir",  # mkdir
-              f"rm {mnt}/hello.txt",  # unlink
-              f"rmdir {mnt}/sub",  # rmdir
-              f"mv {mnt}/hello.txt {mnt}/moved",  # rename
-              f"ln -s x {mnt}/sl",  # symlink
-          ]
-          for mutation in erofs_mutations:
-              machine.fail(mutation)
+      with subtest("structural mutations pass through to the underlying filesystem"):
+          # Create a file and a directory *through the overlay*; both must exist
+          # on the real backing tree and be fully readable there.
+          machine.succeed(f"echo through-overlay > {mnt}/fresh.txt")
+          machine.succeed(f"mkdir {mnt}/newdir")
+          machine.succeed(f"printf nested > {mnt}/newdir/entry.bin")
+          machine.succeed(f'test "$(cat "{src}/newdir/entry.bin")" = "nested"')
+          machine.succeed(f'cat "{src}/fresh.txt" | grep -q through-overlay')
 
-          # Content writes are served by FUSE passthrough, which forwards them
-          # straight to the backing fd, so an in-place append succeeds and is
-          # visible through the overlay.
+          # Rename across the overlay lands on the backing filesystem.
+          machine.succeed(f"mv {mnt}/fresh.txt {mnt}/renamed.txt")
+          machine.succeed(f'test ! -e "{src}/fresh.txt"')
+          machine.succeed(f'cat "{src}/renamed.txt" | grep -q through-overlay')
+
+          # Unlink / rmdir remove the real backed entries.
+          machine.succeed(f"rm {mnt}/renamed.txt")
+          machine.succeed(f"rm {mnt}/newdir/entry.bin")
+          machine.succeed(f"rmdir {mnt}/newdir")
+          machine.succeed(f'test ! -e "{src}/renamed.txt"')
+          machine.succeed(f'test ! -e "{src}/newdir"')
+
+          # Symlinking through the overlay creates a real symlink on the backing.
+          machine.succeed(f"ln -s hello.txt {mnt}/sl")
+          machine.succeed(f'test -L "{src}/sl" && test "$(readlink "{src}/sl")" = "hello.txt"')
+          machine.succeed(f'cat "{mnt}/sl" | grep -q "^hello world"')
+          machine.succeed(f"rm {mnt}/sl")
+
+          # In-place content writes are served by FUSE passthrough and land on
+          # the backing file itself.
           machine.succeed(f"echo x >> {mnt}/hello.txt")
           machine.succeed(f'test "$(cat "{mnt}/hello.txt")" = "hello world\nx"')
+          machine.succeed(f'test "$(cat "{src}/hello.txt")" = "hello world\nx"')
 
-          # The refused mutations must not have corrupted the view or the
-          # underlying tree (append only changed content, not the entry count).
-          machine.succeed(f'test "$(find "{src}" -mindepth 1 | wc -l)" -eq 6')
+          # The overlay and the backing agree on the resulting entry count.
+          machine.succeed(f'test "$(find "{src}" -mindepth 1 | wc -l)" = "$(find "{mnt}" -mindepth 1 | wc -l)"')
 
       with subtest("xattrs are kept in memory, never on the underlying files"):
           machine.succeed(f"setfattr -n user.color -v red {mnt}/hello.txt")
@@ -145,19 +159,22 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f'test "$(cat "{self_dir}/dir/nested.txt")" = "nested"')
           machine.succeed(f'test "$(stat -c %i "{self_dir}/origin.txt")" = "{origin_ino}"')
 
-          # Writes are still refused.
-          machine.fail(f"echo x > {self_dir}/new.txt")
-          machine.fail(f"mkdir {self_dir}/newdir")
+          # Writes pass through to the real directory behind the self-mount.
+          machine.succeed(f"mkdir {self_dir}/newdir")
+          machine.succeed(f"echo written > {self_dir}/newdir/new.txt")
+          machine.succeed(f'test "$(cat "{self_dir}/newdir/new.txt")" = "written"')
 
           # Xattrs are still held in memory.
           machine.succeed(f"setfattr -n user.color -v green {self_dir}/origin.txt")
           machine.succeed(f'test "$(getfattr -n user.color --only-values "{self_dir}/origin.txt")" = "green"')
 
-          # Tear down; the real directory is visible again and was untouched.
+          # Tear down; the real directory is visible again with the mutations
+          # written through the overlay (but no xattrs on it).
           machine.succeed(f"umount {self_dir}")
           machine.succeed(f"kill {self_daemon} || true")
           machine.succeed(f'test "$(cat "{self_dir}/origin.txt")" = "origin"')
-          machine.succeed(f'test "$(find "{self_dir}" -mindepth 1 | wc -l)" -eq 3')
+          machine.succeed(f'test "$(cat "{self_dir}/newdir/new.txt")" = "written"')
+          machine.succeed(f'test "$(find "{self_dir}" -mindepth 1 | wc -l)" -eq 5')
           machine.succeed(f'! getfattr -d "{self_dir}/origin.txt" 2>/dev/null | grep -q "user\\."')
 
       with subtest("the overlay can be mounted through mount(8)"):
@@ -170,11 +187,12 @@ pkgs.testers.runNixOSTest {
           machine.succeed(f"mount -t fuse.metafs {m8_dir} {m8_dir}", timeout=dt.timedelta(seconds=30))
 
           machine.succeed(f'test "$(cat "{m8_dir}/f.txt")" = "via-mount"')
-          machine.fail(f"echo x > {m8_dir}/new.txt")
+          machine.succeed(f"echo via-o > {m8_dir}/new.txt")
           machine.succeed(f"setfattr -n user.color -v amber {m8_dir}/f.txt")
           machine.succeed(f'test "$(getfattr -n user.color --only-values "{m8_dir}/f.txt")" = "amber"')
 
           machine.succeed(f"umount {m8_dir}")
           machine.succeed(f'test "$(cat "{m8_dir}/f.txt")" = "via-mount"')
+          machine.succeed(f'test "$(cat "{m8_dir}/new.txt")" = "via-o"')
     '';
 }
