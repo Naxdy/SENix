@@ -3,9 +3,10 @@
 //! The filesystem itself is strictly read-only: every operation that would
 //! mutate the underlying filesystem is answered with `EROFS`. Extended
 //! attributes are the one exception — they are stored entirely in memory,
-//! keyed by inode number, so that consumers such as `SELinux` can attach
-//! labels to files without ever writing to the underlying (immutable)
-//! filesystem.
+//! keyed by the *overlay* inode number (assigned per path, not per backing
+//! inode), so that consumers such as `SELinux` can attach labels to files
+//! without ever writing to the underlying (immutable) filesystem — and can
+//! attach *different* labels to two hard-linked store paths.
 
 use std::collections::BTreeMap;
 use std::ffi::{OsStr, OsString};

@@ -9,16 +9,20 @@
 //! * read and write *content* I/O is handed to the kernel as FUSE passthrough,
 //!   which uses an open descriptor of the backing file directly and never
 //!   round-trips through this process;
-//! * extended attributes are stored in an in-memory map keyed by inode number
-//!   ([`XattrStore`]), so a process such as `SELinux` can label files without
-//!   ever writing to the underlying filesystem.
+//! * overlay inode numbers are synthetic and assigned *per path* (never taken
+//!   from the backing `st_ino`), so two hard-linked store objects — which
+//!   share one backing inode and therefore one on-disk xattr set — still
+//!   expose distinct overlay inodes and can carry independent labels;
+//! * extended attributes are stored in an in-memory map keyed by overlay inode
+//!   number ([`XattrStore`]), so a process such as `SELinux` can label files
+//!   without ever writing to the underlying filesystem.
 //!
 //! Making the filesystem read-only for the outside world is deliberately left
 //! to the mount table (`MS_RDONLY`): nothing in this crate forces it, so the
 //! Nix daemon can simply remount the store read-write inside its own private
 //! mount namespace while every other process still sees a read-only overlay.
 
-use std::ffi::OsStr;
+use std::ffi::{OsStr, OsString};
 use std::fs::{self, File};
 use std::io::{self, ErrorKind};
 use std::os::unix::fs::{FileExt, MetadataExt, PermissionsExt, symlink};
@@ -81,7 +85,20 @@ pub struct MetaFs {
     ///
     /// The reserved root inode (`INodeNo::ROOT`, i.e. 1) is never stored here;
     /// it resolves to the working directory itself (`.`).
+    ///
+    /// Overlay inode numbers are *synthetic and per path*: they are minted by
+    /// `next_ino`, never taken from the backing `st_ino`. Two hard-linked
+    /// store objects therefore expose distinct overlay inodes even though they
+    /// share one backing inode (and one on-disk xattr set), letting each path
+    /// carry its own `SELinux` label in `xattrs`.
     inodes: DashMap<u64, Node>,
+    /// Overlay inode allocator; ids start at 2 (1 is reserved for the root)
+    /// and are never recycled for the daemon lifetime.
+    next_ino: AtomicU64,
+    /// Parent overlay inode -> child name -> child overlay inode (the reverse
+    /// of `inodes`). Keeps the synthetic id stable across lookup, readdir and
+    /// stat so the kernel never sees a path change identity.
+    path_inos: DashMap<u64, DashMap<OsString, u64>>,
     /// Overlay inode -> the kernel passthrough backing ID, kept alive for the
     /// lifetime of the process. Only one backing ID may be handed to the
     /// kernel per inode, and it must stay alive for as long as any open
@@ -131,6 +148,8 @@ impl MetaFs {
             source_fd,
             requests: Arc::new(AtomicU64::new(0)),
             inodes: DashMap::new(),
+            next_ino: AtomicU64::new(2),
+            path_inos: DashMap::new(),
             backings: DashMap::new(),
             listings: DashMap::new(),
             xattrs: XattrStore::new(),
@@ -159,6 +178,26 @@ impl MetaFs {
                 parent: parent.0,
             });
         }
+    }
+
+    /// Stable synthetic overlay inode for the child `name` of overlay inode
+    /// `parent`.
+    ///
+    /// Overlay inodes are assigned *per path*, not per backing inode: two
+    /// hard-linked store objects (one backing inode, therefore one on-disk
+    /// xattr set) receive distinct overlay inodes so metafs can carry
+    /// independent labels for each path. The root (`INodeNo::ROOT`, i.e. 1)
+    /// is never minted here; ids are monotonic and never recycled. Concurrent
+    /// lookups for the same child race to the same `DashMap` entry, so only
+    /// one id is ever handed out for a given path.
+    fn ino_for(&self, parent: u64, name: &OsStr) -> u64 {
+        let children = self.path_inos.entry(parent).or_default();
+        if let Some(ino) = children.get(name) {
+            return *ino;
+        }
+        *children
+            .entry(name.to_os_string())
+            .or_insert_with(|| self.next_ino.fetch_add(1, Ordering::Relaxed))
     }
 
     /// Build the `FileAttr` equivalent of `lstat(2)` on `path`.
@@ -190,21 +229,27 @@ impl MetaFs {
     /// stacked directly on top of its own source.
     fn build_attr_for(&self, ino: INodeNo) -> io::Result<FileAttr> {
         if ino == INodeNo::ROOT {
-            return match self.source_fd.metadata() {
+            let mut attr = match self.source_fd.metadata() {
                 Ok(md) => Self::file_attr_from_md(&md),
                 Err(e) => {
                     error!(
                         "metafs: fstat of backing fd {} failed: {e}",
                         self.source_fd.as_raw_fd()
                     );
-                    Err(e)
+                    return Err(e);
                 }
-            };
+            }?;
+            attr.ino = INodeNo::ROOT;
+            return Ok(attr);
         }
         let path = self.underlying_path(ino).ok_or_else(|| {
             io::Error::new(ErrorKind::NotFound, format!("no path for inode {ino}"))
         })?;
-        Self::build_attr(&path)
+        let mut attr = Self::build_attr(&path)?;
+        // The caller addresses this inode by its *overlay* number; never echo
+        // the backing inode (hard-link aliases differ per path, not per inode).
+        attr.ino = ino;
+        Ok(attr)
     }
 
     /// Convert raw metadata into the `FileAttr` we report to the kernel.
@@ -280,8 +325,14 @@ impl MetaFs {
     /// (it is now stale), register the new inode, and return its attributes.
     ///
     /// Callers must ensure the entry already exists on the backing filesystem.
-    fn attr_after_create(&self, path: PathBuf, parent: INodeNo) -> io::Result<FileAttr> {
-        let attr = Self::build_attr(&path)?;
+    fn attr_after_create(
+        &self,
+        path: PathBuf,
+        parent: INodeNo,
+        name: &OsStr,
+    ) -> io::Result<FileAttr> {
+        let mut attr = Self::build_attr(&path)?;
+        attr.ino = INodeNo(self.ino_for(parent.0, name));
         self.remember(attr.ino, path, parent);
         self.listings.remove(&parent.0);
         Ok(attr)
@@ -313,7 +364,11 @@ impl MetaFs {
                 name: "..".into(),
                 ino: parent_ino,
                 kind: FileType::Directory,
-                attr: dir_attr,
+                attr: {
+                    let mut attr = dir_attr;
+                    attr.ino = INodeNo(parent_ino);
+                    attr
+                },
             },
         ];
 
@@ -323,10 +378,13 @@ impl MetaFs {
                     match child {
                         Ok(child) => {
                             let child_path = child.path();
-                            let attr = Self::build_attr(&child_path)?;
+                            let name = child.file_name();
+                            let mut attr = Self::build_attr(&child_path)?;
+                            // Per-path overlay inode, consistent with `lookup`.
+                            attr.ino = INodeNo(self.ino_for(ino.0, &name));
                             self.remember(attr.ino, child_path, ino);
                             entries.push(ListingEntry {
-                                name: child.file_name(),
+                                name,
                                 ino: attr.ino.0,
                                 kind: attr.kind,
                                 attr,
@@ -382,7 +440,9 @@ impl Filesystem for MetaFs {
         };
         let path = parent_path.join(name);
         match Self::build_attr(&path) {
-            Ok(attr) => {
+            Ok(mut attr) => {
+                // Assign the per-path overlay inode, never the backing ino.
+                attr.ino = INodeNo(self.ino_for(parent.0, name));
                 self.remember(attr.ino, path, parent);
                 reply.entry(&TTL, &attr, Generation(0));
             }
@@ -540,7 +600,7 @@ impl Filesystem for MetaFs {
             }
             _ => Err(ErrorKind::Unsupported.into()),
         };
-        match result.and_then(|()| self.attr_after_create(path, parent)) {
+        match result.and_then(|()| self.attr_after_create(path, parent, name)) {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => {
                 if kind == libc::S_IFREG {
@@ -570,7 +630,7 @@ impl Filesystem for MetaFs {
             nix::sys::stat::Mode::from_bits_truncate(mode & !umask),
         )
         .map_err(Self::errno)
-        .and_then(|()| self.attr_after_create(path, parent));
+        .and_then(|()| self.attr_after_create(path, parent, name));
         match result {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => reply.error(e.into()),
@@ -632,7 +692,8 @@ impl Filesystem for MetaFs {
             return;
         };
         let path = parent_path.join(link_name);
-        let result = symlink(target, &path).and_then(|()| self.attr_after_create(path, parent));
+        let result =
+            symlink(target, &path).and_then(|()| self.attr_after_create(path, parent, link_name));
         match result {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => reply.error(e.into()),
@@ -658,15 +719,23 @@ impl Filesystem for MetaFs {
         };
         let from = parent_path.join(name);
         let to = new_parent_path.join(newname);
-        // Capture the moved inode so its path mapping can follow it.
-        let moved_ino = Self::build_attr(&from).ok().map(|a| a.ino.0);
+        // The moved object keeps its synthetic overlay inode; claim the new
+        // name under the *same* inode so its xattrs (and label) move with it.
+        let moved_ino = self
+            .path_inos
+            .get(&parent.0)
+            .and_then(|m| m.get(name).map(|v| *v));
         match fs::rename(&from, &to) {
             Ok(()) => {
-                if let Some(ino) = moved_ino
-                    && let Some(mut node) = self.inodes.get_mut(&ino)
-                {
-                    node.path = to;
-                    node.parent = newparent.0;
+                if let Some(ino) = moved_ino {
+                    if let Some(mut node) = self.inodes.get_mut(&ino) {
+                        node.path = to;
+                        node.parent = newparent.0;
+                    }
+                    self.path_inos
+                        .entry(newparent.0)
+                        .or_default()
+                        .insert(newname.to_os_string(), ino);
                 }
                 self.listings.remove(&parent.0);
                 self.listings.remove(&newparent.0);
@@ -698,10 +767,10 @@ impl Filesystem for MetaFs {
             return;
         };
         let path = new_parent_path.join(newname);
-        // A hard link shares the *same* inode, so `remember` keeps the existing
-        // path mapping (identical content either way).
-        let result =
-            fs::hard_link(&old_path, &path).and_then(|()| self.attr_after_create(path, newparent));
+        // A hard link shares *content* with the source object, but gets its
+        // own synthetic overlay inode so it can carry an independent label.
+        let result = fs::hard_link(&old_path, &path)
+            .and_then(|()| self.attr_after_create(path, newparent, newname));
         match result {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => reply.error(e.into()),
@@ -1101,7 +1170,7 @@ impl Filesystem for MetaFs {
                 return;
             }
         };
-        let attr = match Self::file_attr_from_md(&md) {
+        let mut attr = match Self::file_attr_from_md(&md) {
             Ok(attr) => attr,
             Err(e) => {
                 error!("metafs: create stat {} failed: {e}", path.display());
@@ -1109,6 +1178,7 @@ impl Filesystem for MetaFs {
                 return;
             }
         };
+        attr.ino = INodeNo(self.ino_for(parent.0, name));
         self.remember(attr.ino, path.clone(), parent);
         self.listings.remove(&parent.0);
         let fh = self.next_fh.fetch_add(1, Ordering::Relaxed);

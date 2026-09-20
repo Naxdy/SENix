@@ -193,11 +193,13 @@ fn read_operations_pass_through_to_underlying() {
     assert!(names.iter().any(|n| n.as_os_str() == "."));
     assert!(names.iter().any(|n| n.as_os_str() == ".."));
 
-    // Stat fields (size, mode, inode) are forwarded from the underlying file.
+    // Stat fields (size, mode) are forwarded; the overlay inode is synthetic
+    // per path, so it must be a valid nonzero id, not necessarily the backing
+    // inode.
     let src_md = fs::metadata(source.path().join("hello.txt")).unwrap();
     let mnt_md = fs::metadata(mountpoint.path().join("hello.txt")).unwrap();
     assert_eq!(mnt_md.len(), src_md.len());
-    assert_eq!(mnt_md.ino(), src_md.ino());
+    assert!(mnt_md.ino() != 0);
     assert_eq!(
         mnt_md.permissions().mode() & 0o777,
         src_md.permissions().mode() & 0o777
@@ -358,6 +360,50 @@ fn xattrs_are_stored_in_memory_and_leave_underlying_untouched() {
             .unwrap()
             .is_empty()
     );
+}
+
+#[test]
+fn hardlinked_paths_get_distinct_overlay_inodes_and_labels() {
+    if !fuse_available() {
+        eprintln!("skipping: /dev/fuse unavailable");
+        return;
+    }
+
+    // Mirror the Nix store content-addressed optimizer: byte-identical files
+    // become hard links to one backing inode.
+    let source = TempDir::new().unwrap();
+    let a_path = source.path().join("a.conf");
+    let b_path = source.path().join("b.conf");
+    fs::write(&a_path, b"shared-content\n").unwrap();
+    fs::hard_link(&a_path, &b_path).unwrap();
+    assert_eq!(
+        fs::metadata(&a_path).unwrap().ino(),
+        fs::metadata(&b_path).unwrap().ino()
+    );
+
+    let mountpoint = TempDir::new().unwrap();
+    let _session = mount(source.path(), mountpoint.path()).unwrap();
+
+    let mnt_a = mountpoint.path().join("a.conf");
+    let mnt_b = mountpoint.path().join("b.conf");
+    let ino_a = fs::metadata(&mnt_a).unwrap().ino();
+    let ino_b = fs::metadata(&mnt_b).unwrap().ino();
+    // Hard-linked aliases must not be collapsed into one overlay inode —
+    // that is what lets them carry independent SELinux labels.
+    assert_ne!(ino_a, ino_b);
+    // Reading through both paths yields the same (shared) content.
+    assert_eq!(fs::read(&mnt_a).unwrap(), b"shared-content\n");
+    assert_eq!(fs::read(&mnt_b).unwrap(), b"shared-content\n");
+
+    // Each path owns its xattr space even though they share a backing inode.
+    sys_setxattr(&mnt_a, "user.color", b"red", 0).unwrap();
+    sys_setxattr(&mnt_b, "user.color", b"blue", 0).unwrap();
+    assert_eq!(sys_getxattr(&mnt_a, "user.color").unwrap(), b"red");
+    assert_eq!(sys_getxattr(&mnt_b, "user.color").unwrap(), b"blue");
+
+    // The shared backing inode is never written through the overlay.
+    assert!(sys_listxattr(&a_path).unwrap().is_empty());
+    assert!(sys_listxattr(&b_path).unwrap().is_empty());
 }
 
 #[test]

@@ -44,7 +44,7 @@ pkgs.testers.runNixOSTest {
 
       security.selinux = {
         enable = true;
-        mode = "permissive";
+        mode = "enforcing";
         overlayPackages = false;
 
         modules.enforce_learn = {

@@ -25,6 +25,7 @@
             )
           ))
         );
+        tmpfiles = config.systemd.tmpfiles.packages;
       };
       rules = {
         #
@@ -69,8 +70,9 @@
         "@systemd@/(lib|example|share)/systemd/(system|user)(/.*)?" =
           "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "@systemd@/share/containers/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "@systemd@/example/tmpfiles\\.d" = "-d  gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
-        "@systemd@/example/tmpfiles\\.d/.*" = "gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
+        "@systemd@/example/tmpfiles\\.d(/.*)?" =
+          "gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
+        "@tmpfiles@/lib/tmpfiles\\.d(/.*)?" = "gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
 
         "/run/systemd/generator(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         "/run/systemd/generator\.early(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";

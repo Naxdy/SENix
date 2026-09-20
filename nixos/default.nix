@@ -145,6 +145,7 @@ in
 
                         Any entry in `rules` containing `@attr@` will be replicated for each path listed here.
                       '';
+                      apply = lib.mapAttrs (_: value: lib.unique value);
                     };
                     rules = mkOption {
                       type = types.attrsOf types.str;
