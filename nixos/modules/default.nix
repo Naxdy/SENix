@@ -10,6 +10,7 @@
     ./files.nix
     ./init.nix
     ./libraries.nix
+    ./logging.nix
     ./nscd.nix
     ./selinuxutil.nix
     ./senix-init.nix
