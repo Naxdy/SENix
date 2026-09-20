@@ -53,7 +53,14 @@ let
         attr = builtins.elemAt m 0;
         rest = builtins.elemAt m 1;
       in
-      map (sp: "${toString sp}${rest}\t${value}") fileContext.storePaths.${attr};
+      map (
+        sp:
+        let
+          storepath = lib.removePrefix "/nix/store" sp;
+          path = "/nix/store${lib.escapeRegex storepath}";
+        in
+        "${path}${rest}\t${value}"
+      ) fileContext.storePaths.${attr};
 
   genFC =
     fileContext:

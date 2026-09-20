@@ -6,7 +6,7 @@
       storePaths = {
         etc = lib.unique (
           builtins.filter (lib.hasPrefix "/nix/store") (
-            lib.mapAttrsToList (_: value: lib.escapeRegex "${value.source}") (
+            lib.mapAttrsToList (_: value: value.source) (
               builtins.removeAttrs config.environment.etc [
                 # specified in `selinuxutil.nix`
                 "selinux/config"
