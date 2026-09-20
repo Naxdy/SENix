@@ -166,7 +166,7 @@ pkgs.testers.runNixOSTest {
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
       # Runtime SELinux tooling must work: the policy/contexts must be present
-      machine.succeed("ls /etc/selinux/refpolicy/policy/ 2>&1")
+      machine.succeed("ls /etc/selinux/targeted/policy/ 2>&1")
       machine.succeed("sestatus 2>&1")
 
       # Create the files the confined app reads, and label them.

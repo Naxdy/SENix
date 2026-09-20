@@ -43,7 +43,7 @@ in
       description = ''
         Booleans for consumption by tunable policies.
 
-        This is used to the `booleans.local` file in `/etc/selinux/''${config.security.selinux.type}`.
+        This is used to the `booleans.local` file in `/etc/selinux/targeted`.
       '';
     };
 
@@ -173,15 +173,6 @@ in
       default = { };
       description = ''
         An attribute set of extra modules to include in the final policy.
-      '';
-    };
-
-    type = mkOption {
-      type = types.str;
-      default = "refpolicy";
-      example = "targeted";
-      description = ''
-        The SELinux policy type.
       '';
     };
 
@@ -328,7 +319,7 @@ in
       etc = {
         "selinux/config".text = ''
           SELINUX=${cfg.mode}
-          SELINUXTYPE=${cfg.type}
+          SELINUXTYPE=targeted
         '';
 
         "selinux/semanage.conf".text =
@@ -382,7 +373,7 @@ in
                 keep="$keep $(basename "$f" .pp)"
               fi
             done
-            cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -i ''${pp}"
+            cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -i ''${pp}"
             skipSELinuxActivation=0
 
             if [ -f /var/lib/selinux/activate-check ]; then
@@ -406,9 +397,9 @@ in
                 # module names from the current build; it is empty only where the
                 # build store is unavailable (e.g. early initrd), in which case the
                 # modules are the ones just installed, so there is nothing stale.
-                for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -l 2>/dev/null | tr -d '\0\r'); do
+                for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -l 2>/dev/null | tr -d '\0\r'); do
                   if ! echo " $keep " | grep -qw "$m"; then
-                    ${lib.getExe' pkgs.policycoreutils "semodule"} -s ${lib.escapeShellArg cfg.type} -r "$m" || true
+                    ${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -r "$m" || true
                   fi
                 done
               fi
@@ -522,7 +513,7 @@ in
             for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
               [ -e "$f" ] && pp="$pp $f"
             done
-            semodule -s ${cfg.type} -i ''${pp}
+            semodule -s targeted -i ''${pp}
 
             # semanage writes the store to `store-root` (`/run/selinux`) from
             # semanage.conf, but libselinux + setfiles/restorecon read the tree
@@ -531,13 +522,13 @@ in
             # `/etc/selinux/<type>` to the store and symlink the libselinux-visible
             # files to the store's `active/` artifacts, so `load_policy` and
             # `setfiles` find the linked policy and file contexts.
-            rm -rf /etc/selinux/${cfg.type}
-            ln -s /run/selinux/${cfg.type} /etc/selinux/${cfg.type}
-            mkdir -p /etc/selinux/${cfg.type}/contexts/files /etc/selinux/${cfg.type}/policy
-            ln -sfn ../../active/file_contexts /etc/selinux/${cfg.type}/contexts/files/file_contexts
-            ln -sfn ../active/policy.kern /etc/selinux/${cfg.type}/policy/policy
+            rm -rf /etc/selinux/targeted
+            ln -s /run/selinux/targeted /etc/selinux/targeted
+            mkdir -p /etc/selinux/targeted/contexts/files /etc/selinux/targeted/policy
+            ln -sfn ../../active/file_contexts /etc/selinux/targeted/contexts/files/file_contexts
+            ln -sfn ../active/policy.kern /etc/selinux/targeted/policy/policy
             for v in $(seq 40 -1 25); do
-              ln -sfn policy /etc/selinux/${cfg.type}/policy/policy.$v || true
+              ln -sfn policy /etc/selinux/targeted/policy/policy.$v || true
             done
 
             # We let systemd handle all of the relabeling for us.
@@ -549,13 +540,13 @@ in
             echo "/home" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/usr" >> /run/systemd/relabel-extra.d/10-senix.relabel
 
-            printf 'SELINUXTYPE=${cfg.type}\n' > /etc/selinux/config
+            printf 'SELINUXTYPE=targeted\n' > /etc/selinux/config
 
             load_policy -i
 
             setsebool -P ${setsebools}
 
-            fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+            fc=/etc/selinux/targeted/contexts/files/file_contexts
 
             echo "relabeling initrd..."
 
@@ -659,7 +650,7 @@ in
       #   script = ''
       #     set -euo pipefail
       #
-      #     fc=/etc/selinux/${cfg.type}/contexts/files/file_contexts
+      #     fc=/etc/selinux/targeted/contexts/files/file_contexts
       #
       #     setfiles -F "$fc" /nix/store 2>&1
       #     find /nix/store -type f -o -type d -o -type l | setfiles -F "$fc" -s
