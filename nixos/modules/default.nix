@@ -3,15 +3,13 @@
   # the Nix store, while the `.te`/`.if` are left to the Reference Policy source.
 
   imports = [
+    ./base
     ./bubblewrap.nix
     ./chromium.nix
-    ./corecommands.nix
     ./dbus.nix
     ./files.nix
     ./init.nix
-    ./libraries.nix
     ./logging.nix
-    ./miscfiles.nix
     ./nscd.nix
     ./selinuxutil.nix
     ./senix-init.nix

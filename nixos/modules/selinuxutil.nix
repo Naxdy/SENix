@@ -20,51 +20,9 @@
         ];
       };
       rules = {
-        # SELinux userland utilities
-
         #
         # /etc
         "@selinux_config@(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
-        "/etc/selinux(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
-        "/etc/selinux/([^/]*/)?contexts/files(/.*)?" = "gen_context(system_u:object_r:file_context_t,s0)";
-        "/etc/selinux/([^/]*/)?policy(/.*)?" =
-          "gen_context(system_u:object_r:policy_config_t,mls_systemhigh)";
-        "/etc/selinux/([^/]*/)?setrans\.conf" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
-        "/etc/selinux/([^/]*/)?seusers" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
-        "/etc/selinux/([^/]*/)?modules(/.*)?" = "gen_context(system_u:object_r:semanage_store_t,s0)";
-        "/etc/selinux/([^/]*/)?modules/semanage\.read\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_read_lock_t,s0)";
-        "/etc/selinux/([^/]*/)?modules/semanage\.trans\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_trans_lock_t,s0)";
-        "/etc/selinux/([^/]*/)?users(/.*)?" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
-
-        #
-        # /root
-        #
-        "/root/\.default_contexts" = "-- 	gen_context(system_u:object_r:default_context_t,s0)";
-
-        #
-        # /run
-        #
-        "/run/selinux(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
-        "/run/selinux/([^/]*/)?contexts(/.*)?" = "gen_context(system_u:object_r:default_context_t,s0)";
-        "/run/selinux/([^/]*/)?contexts/files(/.*)?" = "gen_context(system_u:object_r:file_context_t,s0)";
-        "/run/selinux/([^/]*/)?policy(/.*)?" =
-          "gen_context(system_u:object_r:policy_config_t,mls_systemhigh)";
-        "/run/selinux/([^/]*/)?setrans\.conf" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
-        "/run/selinux/([^/]*/)?seusers" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
-        "/run/selinux/([^/]*/)?modules(/.*)?" = "gen_context(system_u:object_r:semanage_store_t,s0)";
-        "/run/selinux/([^/]*/)?modules/semanage\.read\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_read_lock_t,s0)";
-        "/run/selinux/([^/]*/)?modules/semanage\.trans\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_trans_lock_t,s0)";
-        "/run/selinux/([^/]*/)?users(/.*)?" =
-          "--	gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
 
         #
         # @selinux@
@@ -85,14 +43,6 @@
         "@selinux@/libexec/selinux/semanage_migrate_store" =
           "--	gen_context(system_u:object_r:semanage_exec_t,s0)";
 
-        #
-        # /var/lib
-        #
-        "/var/lib/selinux(/.*)?" = "gen_context(system_u:object_r:semanage_store_t,s0)";
-        "/var/lib/selinux/[^/]+/semanage\.read\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_read_lock_t,s0)";
-        "/var/lib/selinux/[^/]+/semanage\.trans\.LOCK" =
-          "--	gen_context(system_u:object_r:semanage_trans_lock_t,s0)";
         "@selinux@/lib/selinux/semanage_migrate_store" =
           "--	gen_context(system_u:object_r:semanage_exec_t,s0)";
       };

@@ -19,6 +19,11 @@ in
         "*.md"
         "*.nix"
       ];
+      # `nixos/modules/base` is generated verbatim from the Reference Policy
+      # (see scripts/gen-base.py); spell-checking upstream policy text is noise.
+      excludes = [
+        "nixos/modules/base/**"
+      ];
     };
   };
 }

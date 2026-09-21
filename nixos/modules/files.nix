@@ -1,5 +1,4 @@
 { config, lib, ... }: {
-  # TODO: still contains a lot of `/usr` paths that we don't need
   config.security.selinux = {
     exclusions.etc = [
       "selinux/config"
@@ -18,142 +17,19 @@
           );
         };
         rules = {
-          #
-          # /
-          #
-          "/.*" = "gen_context(system_u:object_r:default_t,s0)";
-          "/			-d" = "gen_context(system_u:object_r:root_t,s0)";
-          "/\.journal" = "<<none>>";
-          "/afs" = "-d	gen_context(system_u:object_r:mnt_t,s0)";
-          "/initrd\.img.*" = "-l	gen_context(system_u:object_r:boot_t,s0)";
-          "/vmlinuz.*" = "-l	gen_context(system_u:object_r:boot_t,s0)";
-
-          #
-          # /boot
-          #
-          "/boot" = "-d	gen_context(system_u:object_r:boot_t,s0)";
-          "/boot/.*" = "gen_context(system_u:object_r:boot_t,s0)";
-          "/boot/\.journal" = "<<none>>";
-          "/boot/efi(/.*)?/System\.map(-.*)?" = "-- gen_context(system_u:object_r:system_map_t,s0)";
-          "/boot/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/boot/lost\+found/.*" = "<<none>>";
-          "/boot/System\.map(-.*)?" = "--	gen_context(system_u:object_r:system_map_t,s0)";
-
-          #
-          # /efi
-          #
-          "/efi" = "-d	gen_context(system_u:object_r:boot_t,s0)";
-
-          #
-          # /emul
-          #
-          "/emul" = "-d	gen_context(system_u:object_r:usr_t,s0)";
-          "/emul/.*" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          #
-          # /etc
-          #
-          "/etc" = "-d	gen_context(system_u:object_r:etc_t,s0)";
-          "/etc/.*" = "gen_context(system_u:object_r:etc_t,s0)";
           "@etc@(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-          "/etc/\.fstab\.hal\..+" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/blkid(/.*)?" = "gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/cmtab" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/fstab\.REVOKE" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/ioctl\.save" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/killpower" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/localtime" = "-l	gen_context(system_u:object_r:etc_t,s0)";
-          "/etc/machine-id" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/mtab" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/mtab~[0-9]*" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/mtab\.tmp" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/mtab\.fuselock" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/nohotplug" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/nologin.*" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
 
-          "/etc/cups/client\.conf" = "--	gen_context(system_u:object_r:etc_t,s0)";
+          "/nix" = "-d	gen_context(system_u:object_r:usr_t,s0)";
+          "/nix/store" = "-d	gen_context(system_u:object_r:usr_t,s0)";
 
-          "/etc/ipsec\.d/examples(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
+          "/usr" = "-d	gen_context(system_u:object_r:usr_t,s0)";
 
-          "/etc/network/ifstate" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-
-          "/etc/ptal/ptal-printd-like" = "-- 	gen_context(system_u:object_r:etc_runtime_t,s0)";
-
-          "/etc/sysconfig/hwconf" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/sysconfig/iptables\.save" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-          "/etc/sysconfig/firstboot" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
-
-          #
-          # HOME_ROOT
-          # expanded by genhomedircon
-          #
-          "HOME_ROOT" = [
-            "-d	gen_context(system_u:object_r:home_root_t,s0-mls_systemhigh)"
-            "-l	gen_context(system_u:object_r:home_root_t,s0)"
-          ];
-          "HOME_ROOT/\.journal" = "<<none>>";
-          "HOME_ROOT/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "HOME_ROOT/lost\+found/.*" = "<<none>>";
-
-          #
-          # /initrd
-          #
-          # initrd mount point, only used during boot
-          "/initrd" = "-d	gen_context(system_u:object_r:root_t,s0)";
-
-          #
-          # /lost+found
-          #
-          "/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/lost\+found/.*" = "<<none>>";
-
-          #
-          # /media
-          #
-          # Mount points; do not relabel subdirectories, since
-          # we don't want to change any removable media by default.
-          "/media(/[^/]*)?" = [
-            "-l	gen_context(system_u:object_r:mnt_t,s0)"
-            "-d	gen_context(system_u:object_r:mnt_t,s0)"
-          ];
-          "/media/[^/]*/.*" = "<<none>>";
-          "/media/\.hal-.*" = "--	gen_context(system_u:object_r:mnt_t,s0)";
-
-          #
-          # /misc
-          #
-          "/misc" = "-d	gen_context(system_u:object_r:mnt_t,s0)";
-
-          #
-          # /mnt
-          #
-          "/mnt(/[^/]*)" = "-l	gen_context(system_u:object_r:mnt_t,s0)";
-          "/mnt(/[^/]*)?" = "-d	gen_context(system_u:object_r:mnt_t,s0)";
-          "/mnt/[^/]*/.*" = "<<none>>";
-
-          #
-          # /net
-          #
-          "/net" = "-d	gen_context(system_u:object_r:mnt_t,s0)";
-
-          #
-          # /opt
-          #
-          "/opt" = "-d	gen_context(system_u:object_r:usr_t,s0)";
-          "/opt/.*" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/opt/(.*/)?var/lib(64)?(/.*)?" = "gen_context(system_u:object_r:var_lib_t,s0)";
-
-          #
-          # /run
-          #
-          "/run" = [
-            "-d	gen_context(system_u:object_r:var_run_t,s0-mls_systemhigh)"
-            "-l	gen_context(system_u:object_r:var_run_t,s0)"
-          ];
-          "/run/shm" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
-          "/run/.*" = "<<none>>";
-          "/run/machine-id" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
+          # NixOS keeps a real `/lib64` directory (holding the binary-compat
+          # `ld-linux-x86-64.so.2` link), unlike the FHS's symlink to
+          # `/usr/lib64`, so it needs its own rule — `systemd-tmpfiles` creates
+          # the loader link there and everything without a rule hits the
+          # reference policy's `/.* → default_t` catch-all.
+          "/lib64(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
 
           # NixOS's system profile pointers. Everything resolves them — units,
           # generators, `mount`, `journalctl`, activation scripts, tooling — and
@@ -165,59 +41,22 @@
           "/run/booted-system" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
           "/run/current-system" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
 
+          # Systemd's per-unit credential stores (`ImportCredential=`, `LoadCredential=`).
+          # PID1 creates the tree itself, via `mkdir_label()` and — after mounting each
+          # unit's credential tmpfs — `label_fix_full()` with the mount path as the
+          # file-contexts lookup key, i.e. it expects the policy to carry a label for
+          # it. Without one every directory in the tree keeps the generic `tmpfs_t`
+          # fallback: the top-level one because PID1 creates it in the initrd, before
+          # the policy is active, and the per-unit ones because they are `tmpfs`
+          # mount roots (`fs_use_trans tmpfs`). `tmpfs_t` directories may not be
+          # traversed by anything, so even the services importing their own
+          # credentials are denied `search` on them.
           #
-          # /selinux
-          #
-          "/selinux" = "-d	<<none>>";
-          "/selinux/.*" = "<<none>>";
-
-          #
-          # /srv
-          #
-          "/srv" = [
-            "-d	gen_context(system_u:object_r:var_t,s0)"
-            "-l	gen_context(system_u:object_r:var_t,s0)"
-          ];
-          "/srv/.*" = "gen_context(system_u:object_r:var_t,s0)";
-
-          #
-          # /tmp
-          #
-          "/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/tmp/.*" = "<<none>>";
-          "/tmp/\.journal" = "<<none>>";
-
-          "/tmp/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/tmp/lost\+found/.*" = "<<none>>";
-
-          "/tmp/systemd-private-[^/]+" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/tmp/systemd-private-[^/]+/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/tmp/systemd-private-[^/]+/tmp/.*" = "<<none>>";
-
-          #
-          # /usr
-          #
-          "/usr" = "-d	gen_context(system_u:object_r:usr_t,s0)";
-          "/usr/.*" = "gen_context(system_u:object_r:usr_t,s0)";
-          "/usr/\.journal" = "<<none>>";
-
-          "/usr/doc(/.*)?/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/usr/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-
-          # NixOS keeps a real `/lib64` directory (holding the binary-compat
-          # `ld-linux-x86-64.so.2` link), unlike the FHS's symlink to
-          # `/usr/lib64`, so it needs its own rule — `systemd-tmpfiles` creates
-          # the loader link there and everything without a rule hits the
-          # reference policy's `/.* → default_t` catch-all.
-          "/lib64(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
-
-          #
-          # /nix/store
-          #
-          "/nix" = "-d	gen_context(system_u:object_r:usr_t,s0)";
-          "/nix/store" = "-d	gen_context(system_u:object_r:usr_t,s0)";
-          "/nix/store/.*" = "gen_context(system_u:object_r:usr_t,s0)";
+          # Label the tree like the rest of the unlabelled `/run` content — which is
+          # what it inherits from `/run` itself on a boot where the policy is active
+          # when PID1 creates it — so that it is searchable by every domain, as
+          # systemd's credential design requires.
+          "/run/credentials(/.*)?" = "gen_context(system_u:object_r:var_run_t,s0)";
 
           # The Nix daemon's state (`/nix/var/nix/{db,profiles,gcroots,…}`) is
           # program variable data — and the GC roots are symlinks into the
@@ -225,116 +64,6 @@
           # paths hit the reference policy's `/.* → default_t` catch-all, which
           # is neither a meaningful label nor one tmpfiles may manage.
           "/nix/var(/.*)?" = "gen_context(system_u:object_r:var_lib_t,s0)";
-          "/nix/store/[^/]+/doc(/.*)?/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/nix/store/[^/]+/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-
-          # Avoid calling m4's include by using en empty string
-          "/usr/include`'(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/usr/lib/modules(/.*)?" = "gen_context(system_u:object_r:modules_object_t,s0)";
-
-          "/usr/local/\.journal" = "<<none>>";
-
-          "/usr/local/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-
-          "/usr/local/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/usr/local/lost\+found/.*" = "<<none>>";
-
-          "/usr/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/usr/lost\+found/.*" = "<<none>>";
-
-          "/usr/share/doc(/.*)?/README.*" = "gen_context(system_u:object_r:usr_t,s0)";
-          "/usr/share/docbook2X/xslt/man(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/usr/share/munin/plugins/plugin\.sh" = "--	gen_context(system_u:object_r:usr_t,s0)";
-
-          "/usr/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/usr/tmp/.*" = "<<none>>";
-
-          "/usr/local/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-
-          "/usr/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-          "/usr/src/kernels/.+/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          # TODO: these are not yet vetted
-          "/nix/store/[^/]+/include`'(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/nix/store/[^/]+/lib/modules(/.*)?" = "gen_context(system_u:object_r:modules_object_t,s0)";
-
-          "/nix/store/[^/]+/local/\.journal" = "<<none>>";
-
-          "/nix/store/[^/]+/local/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-
-          "/nix/store/[^/]+/local/lost\+found" =
-            "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/nix/store/[^/]+/local/lost\+found/.*" = "<<none>>";
-
-          "/nix/store/[^/]+/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/nix/store/[^/]+/lost\+found/.*" = "<<none>>";
-
-          "/nix/store/[^/]+/share/doc(/.*)?/README.*" = "gen_context(system_u:object_r:usr_t,s0)";
-          "/nix/store/[^/]+/share/docbook2X/xslt/man(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          "/nix/store/[^/]+/share/munin/plugins/plugin\.sh" = "--	gen_context(system_u:object_r:usr_t,s0)";
-
-          "/nix/store/[^/]+/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/nix/store/[^/]+/tmp/.*" = "<<none>>";
-
-          "/nix/store/[^/]+/local/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-
-          "/nix/store/[^/]+/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-          "/nix/store/[^/]+/src/kernels/.+/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
-
-          #
-          # /var
-          #
-          "/var" = "-d	gen_context(system_u:object_r:var_t,s0)";
-          "/var/.*" = "gen_context(system_u:object_r:var_t,s0)";
-          "/var/\.journal" = "<<none>>";
-
-          "/var/db/.*\.db" = "--	gen_context(system_u:object_r:etc_t,s0)";
-
-          "/var/ftp/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
-
-          "/var/lib(/.*)?" = "gen_context(system_u:object_r:var_lib_t,s0)";
-
-          "/var/lib/dkms(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-
-          "/var/lib/nfs/rpc_pipefs(/.*)?" = "<<none>>";
-
-          "/var/lock" = [
-            "-d	gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)"
-            "-l	gen_context(system_u:object_r:var_lock_t,s0)"
-          ];
-          "/var/lock/subsys" = "-d	gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)";
-          "/var/lock/.*" = "<<none>>";
-
-          "/var/log/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/var/log/lost\+found/.*" = "<<none>>";
-
-          "/var/log/audit/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/var/log/audit/lost\+found/.*" = "<<none>>";
-
-          "/var/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/var/lost\+found/.*" = "<<none>>";
-
-          "/var/run" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
-
-          "/var/spool(/.*)?" = "gen_context(system_u:object_r:var_spool_t,s0)";
-          "/var/spool/postfix/pid" = "-d	gen_context(system_u:object_r:var_run_t,s0)";
-
-          "/var/tmp" = [
-            "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)"
-            "-l	gen_context(system_u:object_r:tmp_t,s0)"
-          ];
-          "/var/tmp/.*" = "<<none>>";
-          "/var/tmp/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-          "/var/tmp/lost\+found/.*" = "<<none>>";
-          "/var/tmp/systemd-private-[^/]+" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/var/tmp/systemd-private-[^/]+/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-          "/var/tmp/systemd-private-[^/]+/tmp/.*" = "<<none>>";
-          "/var/tmp/vi\.recover" = "-d	gen_context(system_u:object_r:tmp_t,s0)";
         };
       };
     };

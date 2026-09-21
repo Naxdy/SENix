@@ -33,13 +33,6 @@
           );
         };
         rules = {
-          "/etc/\.updated" = "--	gen_context(system_u:object_r:systemd_update_run_t,s0)";
-
-          "/etc/systemd/dont-synthesize-nobody" = "--	gen_context(system_u:object_r:systemd_conf_t,s0)";
-
-          "/run/log/journal(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,s0)";
-          "/run/log/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_log_t,s0)";
-
           "@systemd@/bin/journalctl" = "--	gen_context(system_u:object_r:systemd_journalctl_exec_t,s0)";
           "@systemd@/bin/systemd-analyze" = "--	gen_context(system_u:object_r:systemd_analyze_exec_t,s0)";
           "@systemd@/bin/systemd-cgtop" = "--	gen_context(system_u:object_r:systemd_cgtop_exec_t,s0)";
@@ -128,17 +121,6 @@
           "@systemd@/lib/systemd/systemd-userwork" =
             "--	gen_context(system_u:object_r:systemd_userdbd_exec_t,s0)";
 
-          # Systemd unit files
-          "HOME_DIR/\.config/containers/systemd(/.*)?" =
-            "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
-          "HOME_DIR/\.config/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
-          "HOME_DIR/\.local/share/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_data_home_t,s0)";
-
-          # homed files
-          "HOME_DIR/\.identity" = "--	gen_context(system_u:object_r:systemd_homed_record_t,s0)";
-          "HOME_DIR/\.identity-blob(/.*)?" = "gen_context(system_u:object_r:systemd_homed_record_t,s0)";
-          "HOME_ROOT/.+\.home" = "--	gen_context(system_u:object_r:systemd_homed_storage_t,s0)";
-
           "@systemd@/lib/systemd/user(/.*)?" = "gen_context(system_u:object_r:systemd_user_unit_t,s0)";
 
           "@systemd@/lib/systemd/system/[^/]*halt.*" = "--	gen_context(system_u:object_r:power_unit_t,s0)";
@@ -194,80 +176,6 @@
             "--	gen_context(system_u:object_r:systemd_user_manager_unit_t,s0)";
 
           "@systemd@/share/factory(/.*)?" = "gen_context(system_u:object_r:systemd_factory_conf_t,s0)";
-
-          "/var/\.updated" = "--	gen_context(system_u:object_r:systemd_update_run_t,s0)";
-
-          "/var/lib/systemd/catalog(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,s0)";
-
-          "/var/lib/systemd/backlight(/.*)?" =
-            "gen_context(system_u:object_r:systemd_backlight_var_lib_t,s0)";
-          "/var/lib/systemd/coredump(/.*)?" = "gen_context(system_u:object_r:systemd_coredump_var_lib_t,s0)";
-          "/var/lib/systemd/home(/.*)?" = "gen_context(system_u:object_r:systemd_homed_var_lib_t,s0)";
-          "/var/lib/systemd/linger(/.*)?" = "gen_context(system_u:object_r:systemd_logind_var_lib_t,s0)";
-          "/var/lib/systemd/network(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_var_lib_t,s0)";
-          "/var/lib/systemd/pstore(/.*)?" = "gen_context(system_u:object_r:systemd_pstore_var_lib_t,s0)";
-          "/var/lib/systemd/rfkill(/.*)?" = "gen_context(system_u:object_r:systemd_rfkill_var_lib_t,s0)";
-
-          "/run/\.nologin[^/]*" = "--	gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-          "/run/nologin" = "--	gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-
-          # Systemd's per-unit credential stores (`ImportCredential=`, `LoadCredential=`).
-          # PID1 creates the tree itself, via `mkdir_label()` and — after mounting each
-          # unit's credential tmpfs — `label_fix_full()` with the mount path as the
-          # file-contexts lookup key, i.e. it expects the policy to carry a label for
-          # it. Without one every directory in the tree keeps the generic `tmpfs_t`
-          # fallback: the top-level one because PID1 creates it in the initrd, before
-          # the policy is active, and the per-unit ones because they are `tmpfs`
-          # mount roots (`fs_use_trans tmpfs`). `tmpfs_t` directories may not be
-          # traversed by anything, so even the services importing their own
-          # credentials are denied `search` on them.
-          #
-          # Label the tree like the rest of the unlabelled `/run` content — which is
-          # what it inherits from `/run` itself on a boot where the policy is active
-          # when PID1 creates it — so that it is searchable by every domain, as
-          # systemd's credential design requires.
-          "/run/credentials(/.*)?" = "gen_context(system_u:object_r:var_run_t,s0)";
-
-          "/run/user/%{USERID}/systemd" = "-d	gen_context(system_u:object_r:systemd_user_runtime_t,s0)";
-          "/run/user/%{USERID}/systemd/generator(/.*)?" =
-            "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
-          "/run/user/%{USERID}/systemd/generator\.early(/.*)?" =
-            "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
-          "/run/user/%{USERID}/systemd/generator\.late(/.*)?" =
-            "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
-          "/run/user/%{USERID}/systemd/transient(/.*)?" =
-            "gen_context(system_u:object_r:systemd_user_transient_unit_t,s0)";
-          "/run/user/%{USERID}/systemd/user(/.*)?" =
-            "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
-
-          "/run/systemd/ask-password(/.*)?" = "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
-          "/run/systemd/ask-password-block(/.*)?" =
-            "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
-          "/run/systemd/home(/.*)?" = "gen_context(system_u:object_r:systemd_homed_runtime_t,s0)";
-          "/run/systemd/user-home-mount" =
-            "-d	gen_context(system_u:object_r:systemd_homed_runtime_work_dir_t,s0)";
-          "/run/systemd/network(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
-          "/run/systemd/notify" = "-s	gen_context(system_u:object_r:systemd_runtime_notify_t,s0)";
-          "/run/systemd/resolve(/.*)?" = "gen_context(system_u:object_r:systemd_resolved_runtime_t,s0)";
-          "/run/systemd/seats(/.*)?" = "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-          "/run/systemd/sessions(/.*)?" = "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-          "/run/systemd/shutdown(/.*)?" = "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
-          "/run/systemd/users(/.*)?" = "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
-          "/run/systemd/userdb(/.*)?" = "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
-          "/run/systemd/inhibit(/.*)?" = "gen_context(system_u:object_r:systemd_logind_inhibit_runtime_t,s0)";
-          "/run/systemd/nspawn(/.*)?" = "gen_context(system_u:object_r:systemd_nspawn_runtime_t,s0)";
-          "/run/systemd/machines(/.*)?" = "gen_context(system_u:object_r:systemd_machined_runtime_t,s0)";
-          "/run/systemd/netif(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
-          "/run/systemd/nsresource(/.*)?" = "gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
-          "/run/systemd/io\.systemd\.NamespaceResource" =
-            "-s	gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
-
-          "/run/tmpfiles\.d" = "-d	gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
-          "/run/tmpfiles\.d/.*" = "<<none>>";
-
-          "/run/userdb(/.*)?" = "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
-
-          "/var/log/journal(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,mls_systemhigh)";
         };
       };
     };

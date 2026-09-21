@@ -85,6 +85,7 @@
         {
           default = pkgs.mkShell {
             packages = [
+              pkgs.python3
               rustToolchain
               treefmt
             ];

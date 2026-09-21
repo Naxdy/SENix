@@ -155,13 +155,6 @@ pkgs.testers.runNixOSTest {
       print("[senix] P1 ctx:", machine.succeed("cat /proc/1/attr/current; echo; readlink /proc/1/exe"))
       print("[senix] mountinfo:", machine.succeed("cat /proc/self/mountinfo"))
 
-      # The initrd `selinux-init` relabel must label the store unit files
-      # `systemd_unit_t` before switch_root (including the NixOS-generated
-      # `*-unit-*` packages), so systemd can manage them.
-      status, out = machine.execute(
-          "getfattr -n security.selinux --only-values $(readlink -f /etc/systemd/system/selinux-relabel.service)"
-      )
-
       machine.succeed(
           "getfattr -n security.selinux --only-values ${enforceLearnApp}/bin/enforce-learn | grep -q enforce_learn_exec_t"
       )
