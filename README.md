@@ -13,9 +13,9 @@ The following is a list of minimum requirements that _have_ to be in place befor
 - [x] Specify directories that need relabeling for the handoff to systemd, which handles the bulk of relabeling post-initd
 - [x] Have systemd transition into the correct domain (`init_t`) and relabel the host system
 - [x] Provide SELinux rules & modules to facilitate booting a NixOS VM in enforcement mode (see `tests/selinux-enforce`)
-- [ ] Allow multiple entries per path in `config.security.selinux.modules.*.fileContext.rules`
+- [x] Allow multiple entries per path in `config.security.selinux.modules.*.fileContext.rules`
 - [ ] Declaratively flag duplicate wildcards within the same layers for `.fc` rules
-- [ ] Add systemd service for `restorecond`
+- [x] Add systemd service for `restorecond`
 - [x] Replace the `tmpfs` metacopy overlay with a bespoke FUSE filesystem to allow returning `EROFS` on write attempts
       (see `./metafs`). The store stays strictly read-only: every mutation returns `EROFS`, while extended
       attributes are kept in an in-memory map so SELinux can still label store objects without touching

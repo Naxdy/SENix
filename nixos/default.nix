@@ -474,30 +474,6 @@ in
             fi
           '';
       };
-
-      # selinux-metafs = {
-      #   deps = [
-      #     "usrbinenv"
-      #   ];
-      #   text =
-      #     # bash
-      #     ''
-      #       if ! cat /proc/self/mountinfo | grep -q metafs; then
-      #         if [ ! -e /run/current-system ]; then
-      #           mkdir -p /run/current-system/sw/bin
-      #
-      #           ln -sf "${lib.getExe' pkgs.metafs "mount.fuse.metafs"}" /run/current-system/sw/bin/mount.fuse.metafs
-      #           echo "mounting metafs..."
-      #           mount -t fuse.metafs /nix/store /nix/store
-      #
-      #           rm -rf /run/current-system
-      #         else
-      #           echo "mounting metafs..."
-      #           mount -t fuse.metafs /nix/store /nix/store
-      #         fi
-      #       fi
-      #     '';
-      # };
     };
 
     boot.initrd.systemd = {
