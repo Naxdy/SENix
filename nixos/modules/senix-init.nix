@@ -76,11 +76,17 @@
       # type) instead of `nscd_runtime_t`.
       allow restorecond_t initrc_t:unix_stream_socket connectto;
 
-      # `systemd`'s generators resolve executables off `PATH`; those are store
-      # `bin/`/`sbin/` entries and now carry `bin_t` (see `corecommands.nix`),
-      # which `corecmd_search_bin()` already covers. The initrd journal's
-      # `journalctl` reads locale data from the store, which is `usr_t`.
-      files_read_usr_files(systemd_journal_init_t);
+      # `systemd`'s generators resolve executables off `PATH` and read locale
+      # data (both out of the store, which `libraries.nix` labels properly:
+      # `bin_t` for executables, `locale_t` for `share/locale`,
+      # `share/X11/locale` and `share/i18n`).
+      miscfiles_read_localization(systemd_generator_t);
+      miscfiles_read_localization(systemd_journal_init_t);
+
+      # Additionally both resolve the system profile, i.e. the
+      # `/run/current-system/sw` symlink in the system closure — which is
+      # `usr_t` (the store analogue of `/usr`), so reading the link itself is
+      # the standard "usr symlink" access.
       files_read_usr_symlinks(systemd_journal_init_t);
 
       # `systemd-user-sessions` and `systemd-update-done` follow symlinks in

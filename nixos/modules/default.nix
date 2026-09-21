@@ -11,6 +11,7 @@
     ./init.nix
     ./libraries.nix
     ./logging.nix
+    ./miscfiles.nix
     ./nscd.nix
     ./selinuxutil.nix
     ./senix-init.nix
