@@ -18,6 +18,7 @@ in
     ./build.nix
     ./modules
     ./refpolicy.nix
+    ./restorecond.nix
   ];
 
   options.security.selinux = {
@@ -65,6 +66,44 @@ in
 
         Passed to `semanage` via `policy-version` in `semanage.conf`. If `null`, the toolchain default is used.
       '';
+    };
+
+    exclusions = {
+      etc = lib.mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        example = [
+          "selinux/restorecond.conf"
+        ];
+        description = ''
+          Attribute names of `config.environment.etc` to not include in the automatic relabeling to `etc_t`.
+
+          You should only need to add entries to this if you encounter issues with infinite recursion.
+        '';
+        apply = lib.unique;
+      };
+      systemdUnits = lib.mkOption {
+        type = types.listOf types.str;
+        default = [ ];
+        example = [
+          "restorecond.service"
+        ];
+        description = ''
+          Attribute names of `config.systemd.units` to not include in the automatic relabeling to `systemd_unit_t`.
+
+          You should only need to add entries to this if you encounter issues with infinite recursion.
+        '';
+        apply = lib.unique;
+      };
+      systemdPackages = lib.mkOption {
+        type = types.listOf types.package;
+        default = [ ];
+        description = ''
+          Packages containing systemd units to not include in the automatic relabeling to `systemd_unit_t.`
+
+          You should only need to add entries to this if you encounter issues with infinite recursion.
+        '';
+      };
     };
 
     modules = mkOption {

@@ -24,11 +24,7 @@
 
         #
         # /etc
-        #
-        # The store path of the generated `/etc/selinux/config` (the catch-all
-        # `usr_t` glob would otherwise label it). Only the file itself, not the
-        # `/etc/selinux` tree (which is covered below).
-        "@selinux_config@" = "gen_context(system_u:object_r:selinux_config_t,s0)";
+        "@selinux_config@(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
         "/etc/selinux(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
         "/etc/selinux/([^/]*/)?contexts/files(/.*)?" = "gen_context(system_u:object_r:file_context_t,s0)";
         "/etc/selinux/([^/]*/)?policy(/.*)?" =
@@ -53,8 +49,6 @@
         #
         # /run
         #
-        "/run/restorecond\.pid" = "--	gen_context(system_u:object_r:restorecond_run_t,s0)";
-
         "/run/selinux(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
         "/run/selinux/([^/]*/)?contexts(/.*)?" = "gen_context(system_u:object_r:default_context_t,s0)";
         "/run/selinux/([^/]*/)?contexts/files(/.*)?" = "gen_context(system_u:object_r:file_context_t,s0)";
@@ -79,15 +73,11 @@
         "@selinux@/bin/load_policy" = "--	gen_context(system_u:object_r:load_policy_exec_t,s0)";
         "@selinux@/bin/newrole" = "--	gen_context(system_u:object_r:newrole_exec_t,s0)";
         "@selinux@/bin/restorecon" = "--	gen_context(system_u:object_r:setfiles_exec_t,s0)";
-        "@selinux@/bin/restorecond" = "--	gen_context(system_u:object_r:restorecond_exec_t,s0)";
         "@selinux@/bin/run_init" = "--	gen_context(system_u:object_r:run_init_exec_t,s0)";
         "@selinux@/bin/setfiles.*" = "--	gen_context(system_u:object_r:setfiles_exec_t,s0)";
         "@selinux@/bin/setsebool" = "--	gen_context(system_u:object_r:semanage_exec_t,s0)";
         "@selinux@/bin/semanage" = "--	gen_context(system_u:object_r:semanage_exec_t,s0)";
         "@selinux@/bin/semodule" = "--	gen_context(system_u:object_r:semanage_exec_t,s0)";
-
-        "@selinux@/lib/systemd/system/restorecond.*\.service" =
-          "--	gen_context(system_u:object_r:restorecond_unit_t,s0)";
 
         "@selinux@/share/system-config-selinux/selinux_server\.py" =
           "--	gen_context(system_u:object_r:selinux_dbus_exec_t,s0)";

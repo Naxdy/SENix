@@ -5,9 +5,11 @@
       layer = "system";
       fileContext = {
         storePaths = {
-          systemd = [
-            config.systemd.package
-          ];
+          systemd =
+            builtins.filter (e: !(lib.any (o: e == o) config.security.selinux.exclusions.systemdPackages))
+              [
+                config.systemd.package
+              ];
           # packages providing systemd units and hooks
           units = lib.unique (
             config.systemd.packages
