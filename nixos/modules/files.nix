@@ -155,6 +155,16 @@
           "/run/.*" = "<<none>>";
           "/run/machine-id" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
 
+          # NixOS's system profile pointers. Everything resolves them — units,
+          # generators, `mount`, `journalctl`, activation scripts, tooling — and
+          # they are created by the initrd's activation stage, i.e. before the
+          # policy is active, so without a rule they keep the tmpfs fallback
+          # label and are unreadable. Give them the generic `/run` content type,
+          # which is what a symlink created here later (`nixos-rebuild switch`)
+          # inherits from `/run` anyway.
+          "/run/booted-system" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
+          "/run/current-system" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
+
           #
           # /selinux
           #
