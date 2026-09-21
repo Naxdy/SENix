@@ -205,6 +205,13 @@
 
           "/usr/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
 
+          # NixOS keeps a real `/lib64` directory (holding the binary-compat
+          # `ld-linux-x86-64.so.2` link), unlike the FHS's symlink to
+          # `/usr/lib64`, so it needs its own rule — `systemd-tmpfiles` creates
+          # the loader link there and everything without a rule hits the
+          # reference policy's `/.* → default_t` catch-all.
+          "/lib64(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
+
           #
           # /nix/store
           #
@@ -212,6 +219,12 @@
           "/nix/store" = "-d	gen_context(system_u:object_r:usr_t,s0)";
           "/nix/store/.*" = "gen_context(system_u:object_r:usr_t,s0)";
 
+          # The Nix daemon's state (`/nix/var/nix/{db,profiles,gcroots,…}`) is
+          # program variable data — and the GC roots are symlinks into the
+          # store that `systemd-tmpfiles` (re)creates. Without a rule these
+          # paths hit the reference policy's `/.* → default_t` catch-all, which
+          # is neither a meaningful label nor one tmpfiles may manage.
+          "/nix/var(/.*)?" = "gen_context(system_u:object_r:var_lib_t,s0)";
           "/nix/store/[^/]+/doc(/.*)?/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
 
           "/nix/store/[^/]+/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";

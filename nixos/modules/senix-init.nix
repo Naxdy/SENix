@@ -13,6 +13,8 @@
         type init_t;
         type initrc_t;
         type restorecond_t;
+        type lib_t;
+        type var_lib_t;
         type system_dbusd_t;
         type systemd_generator_t;
         type systemd_journal_init_t;
@@ -58,13 +60,13 @@
       allow systemd_tmpfiles_t self:capability linux_immutable;
 
       # `systemd_tmpfiles_manage_all` (see `systemd.nix`) covers directories and
-      # regular files, but NixOS also has tmpfiles rules that create *symlinks*
-      # (`L` items) in paths it owns — `/lib64/ld-linux-x86-64.so.2`,
-      # `/nix/var/nix/gcroots/{current,booted}-system` — and the reference
-      # policy only grants symlink management per type
-      # (`files_manage_etc_symlinks()` and friends). Extend the tunable's
-      # attribute-wide grant to symlinks as well.
-      allow systemd_tmpfiles_t non_security_file_type:lnk_file { create read getattr };
+      # regular files, while the reference policy manages symlinks per type
+      # (`files_manage_etc_symlinks()` and friends) — there is no equivalent for
+      # the two directories whose symlinks NixOS's tmpfiles owns: the GC roots
+      # in `/nix/var/nix/gcroots` (`var_lib_t`) and the binary-compat loader
+      # link in `/lib64` (`lib_t`).
+      allow systemd_tmpfiles_t var_lib_t:lnk_file { create getattr read };
+      allow systemd_tmpfiles_t lib_t:lnk_file { create getattr };
 
       # `restorecond` does NSS lookups (`auth_use_nsswitch()` in
       # `selinuxutil.te`). The socket it has to talk to is
@@ -74,11 +76,10 @@
       # type) instead of `nscd_runtime_t`.
       allow restorecond_t initrc_t:unix_stream_socket connectto;
 
-      # `systemd`'s generators resolve executables from the store (e.g.
-      # `fsck.ext4` for the fstab generator), and the initrd journal's
-      # `journalctl` reads locale data from it; SENix labels store paths with
-      # the generic `usr_t` unless a more specific file context matches.
-      files_read_usr_symlinks(systemd_generator_t);
+      # `systemd`'s generators resolve executables off `PATH`; those are store
+      # `bin/`/`sbin/` entries and now carry `bin_t` (see `corecommands.nix`),
+      # which `corecmd_search_bin()` already covers. The initrd journal's
+      # `journalctl` reads locale data from the store, which is `usr_t`.
       files_read_usr_files(systemd_journal_init_t);
       files_read_usr_symlinks(systemd_journal_init_t);
 
