@@ -198,9 +198,24 @@ in
         message = ''
           With SELinux enabled, the Nix store must not be mounted readonly.
 
-          The metadata overlay already ensures that the underlying Nix store is not modified.
+          The Nix store is automatically remounted readonly at a later point in the boot process, when it is safe to do so.
 
           Please remove `ro` from the options declared in `config.boot.nixStoreMountOpts` or disable SELinux.
+        '';
+      }
+      {
+        assertion = !config.nix.settings.auto-optimise-store;
+        message = ''
+          `config.nix.settings.auto-optimise-store = true` conflicts with SELinux.
+
+          Since hardlinks share the same inode, and xattrs that carry SELinux labels are attached to specific inodes,
+          those two concepts are in direct opposition to one another.
+
+          Though the MetaFS overlay guarantees each store path appears as a unique inode, and forwards link calls to
+          the underlying filesystem, running optimisation after every Nix build is unnecessarily taxing.
+
+          It is recommended to use filesystem-level deduplication instead, e.g. something like`config.services.beesd`
+          for btrfs filesystems, or native ZFS deduplication.
         '';
       }
     ];
