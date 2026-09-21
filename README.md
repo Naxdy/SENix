@@ -32,6 +32,24 @@ NOT planned for now / out of scope:
 
 - Non-MCS / MLS-enabled policies
 
+## Caveats
+
+- Since SELinux labels are only ever stored in memory, the entirety of `/nix/store` needs to be relabeled from scratch at every boot.
+  This can take some time depending on your CPU, RAM, and number of files in the Nix store.
+
+  We may add some form of caching to this in the future, but as of right now there are no concrete plans.
+
+- Certain policy errors (e.g. importing nonexistent types) are only caught at runtime, meaning a `nixos-rebuild switch` with a policy that's broken in such a way could lead to a non-enforcing state.
+
+  The solution to this would be to fully compile the policy within the Nix derivation itself, but this can only be done with extensive workarounds.
+
+- SELinux directly conflicts with `config.nix.settings.auto-optimise-store`, since hardlinking files causes them to share the same inode.
+  Since SELinux labels use xattrs, and xattrs are attached to inodes, this would require all hardlinked files to share the same labels, which would be an inconvenience at best and be a security flaw at worst.
+
+  Although the MetaFS overlay makes each path appear as its own inode, even if the underlying filesystem has them hardlinked, and faithfully forwards `link` calls to the underlying filesystem, it is still recommended to disable auto store optimisation after every build, in order to reduce load.
+  If you require minimizing disk usage of your Nix store, we recommend using filesystem-level deduplication instead, such as [`config.services.beesd`](https://search.nixos.org/options?channel=unstable&query=beesd&type=options#show=option%253Aservices.beesd.filesystems) for btrfs, or native ZFS deduplication.
+  This also has the advantage of deduplicating your entire filesystem, instead of being focused solely on the Nix store.
+
 ---
 
 This project was / is being built with heavy assistance from AI agents, but the core design decisions are made by a human.
