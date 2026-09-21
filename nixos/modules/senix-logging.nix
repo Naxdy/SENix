@@ -13,6 +13,8 @@
         type kernel_t;
         type syslogd_t;
         type systemd_unit_t;
+        type var_t;
+        type var_log_t;
       ')
 
       # Systemd hands the listening sockets it opened for a unit (its socket
@@ -28,6 +30,27 @@
       # `getsockopt()`) and `setopt` (enabling `SO_PASSCRED`, `setsockopt()`)
       # — Fedora allows the same set for the very same reason.
       allow syslogd_t kernel_t:unix_dgram_socket { getopt setopt };
+
+      # The same handover happens for journald's *stream* socket (the
+      # `/run/systemd/journal/stdout` it reads clients from): upstream grants
+      # the full `rw_stream_socket_perms` for it — `init_rw_stream_sockets()`
+      # in `logging.te`, "receive initramfs journald sockets" — which includes
+      # the `listen`/`accept` pair, while the reference policy's
+      # `kernel_rw_stream_sockets()` (what our `kernel_t`-labelled sockets get)
+      # stops at `rw_socket_perms`. Without `accept` journald cannot pick up
+      # the clients of the socket it inherited.
+      allow syslogd_t kernel_t:unix_stream_socket { listen accept };
+
+      # When journald starts before whatever creates `/var/log` (on NixOS the
+      # tmpfiles rules for `/var` run later in the boot) it creates the
+      # directory itself and then its journal directory inside it. Fedora
+      # declares exactly the same transition so that the directory journald
+      # creates is a log directory rather than generic `/var` content
+      # (`files_var_filetrans(syslogd_t, var_log_t, dir, "log")` in their
+      # `logging.te`), which of course also needs the permission to create it
+      # in `/var`.
+      allow syslogd_t var_t:dir { add_name write };
+      files_var_filetrans(syslogd_t, var_log_t, dir, "log")
 
       # journald registers a PSI trigger on its own cgroup's `memory.pressure`
       # file, which it then `getattr`s, opens, and writes to. The reference

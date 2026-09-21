@@ -1,4 +1,16 @@
 { config, lib, ... }: {
+  # `systemd-tmpfiles` owns a good part of NixOS's writable tree: `/var`,
+  # `/nix/var` (the Nix daemon's state), `/root`, `/lib64`, `/srv` and friends
+  # are all created from tmpfiles rules, and on a fresh system they do not
+  # exist yet. The reference policy keeps the permissions for that behind this
+  # tunable — default off, `gen_tunable(systemd_tmpfiles_manage_all, false)`
+  # in `systemd.te` — under which `systemd_tmpfiles_t` may manage objects of
+  # every non-security file type. Without it tmpfiles is limited to the types
+  # it knows about, so every path outside those is denied: `/nix/var` in the
+  # `usr_t`-labelled `/nix`, `/root` in `root_t`, `/lib64` and `/srv` in
+  # `root_t`, the chown of the `/run/keys` ramfs root, …
+  config.security.selinux.booleans.systemd_tmpfiles_manage_all = lib.mkDefault true;
+
   # Based on the refpolicy's policy/modules/system/systemd.fc
   config.security.selinux.modules = {
     systemd = {

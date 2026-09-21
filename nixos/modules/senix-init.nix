@@ -12,6 +12,7 @@
         type init_t;
         type initrc_t;
         type system_dbusd_t;
+        type systemd_machine_id_setup_t;
         type nscd_t;
       ')
 
@@ -28,6 +29,14 @@
       # libsystemd.so currently is a kernel-owned fd when these services start
       # TODO: Figure out if there's a way to not need this.
       kernel_use_fds(system_dbusd_t);
+
+      # `systemd-machine-id-setup` checks whether the namespace it is looking at
+      # is really on nsfs (`fd_is_fs_type(fd, NSFS_MAGIC)` → `fstatfs()`), which
+      # is the filesystem-level `getattr` — the reference policy grants that
+      # only to the container engines (`fs_getattr_nsfs()` in
+      # `container.te`), while machine-id-setup only gets the file-level
+      # permissions (`fs_read_nsfs_files()` in `systemd.te`).
+      fs_getattr_nsfs(systemd_machine_id_setup_t)
     '';
     fileContext = {
       rules = {
