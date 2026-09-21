@@ -85,9 +85,10 @@
         # HOME_ROOT
         # expanded by genhomedircon
         #
-        "HOME_ROOT" = "-d	gen_context(system_u:object_r:home_root_t,s0-mls_systemhigh)";
-        # TODO: duplicates don't work yet
-        # "HOME_ROOT" = "-l	gen_context(system_u:object_r:home_root_t,s0)";
+        "HOME_ROOT" = [
+          "-d	gen_context(system_u:object_r:home_root_t,s0-mls_systemhigh)"
+          "-l	gen_context(system_u:object_r:home_root_t,s0)"
+        ];
         "HOME_ROOT/\.journal" = "<<none>>";
         "HOME_ROOT/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
         "HOME_ROOT/lost\+found/.*" = "<<none>>";
@@ -109,9 +110,10 @@
         #
         # Mount points; do not relabel subdirectories, since
         # we don't want to change any removable media by default.
-        # TODO: duplicates don't work yet
-        #"/media(/[^/]*)?" = "-l	gen_context(system_u:object_r:mnt_t,s0)";
-        "/media(/[^/]*)?" = "-d	gen_context(system_u:object_r:mnt_t,s0)";
+        "/media(/[^/]*)?" = [
+          "-l	gen_context(system_u:object_r:mnt_t,s0)"
+          "-d	gen_context(system_u:object_r:mnt_t,s0)"
+        ];
         "/media/[^/]*/.*" = "<<none>>";
         "/media/\.hal-.*" = "--	gen_context(system_u:object_r:mnt_t,s0)";
 
@@ -143,9 +145,10 @@
         #
         # /run
         #
-        "/run" = "-d	gen_context(system_u:object_r:var_run_t,s0-mls_systemhigh)";
-        # TODO: duplicates
-        #"/run" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
+        "/run" = [
+          "-d	gen_context(system_u:object_r:var_run_t,s0-mls_systemhigh)"
+          "-l	gen_context(system_u:object_r:var_run_t,s0)"
+        ];
         "/run/shm" = "-l	gen_context(system_u:object_r:var_run_t,s0)";
         "/run/.*" = "<<none>>";
         "/run/machine-id" = "--	gen_context(system_u:object_r:etc_runtime_t,s0)";
@@ -159,9 +162,10 @@
         #
         # /srv
         #
-        "/srv" = "-d	gen_context(system_u:object_r:var_t,s0)";
-        # TODO: duplicates
-        #"/srv" = "-l	gen_context(system_u:object_r:var_t,s0)";
+        "/srv" = [
+          "-d	gen_context(system_u:object_r:var_t,s0)"
+          "-l	gen_context(system_u:object_r:var_t,s0)"
+        ];
         "/srv/.*" = "gen_context(system_u:object_r:var_t,s0)";
 
         #
@@ -228,7 +232,7 @@
         "/usr/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
         "/usr/src/kernels/.+/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
 
-        # TODO: these are not yet evetted
+        # TODO: these are not yet vetted
         "/nix/store/[^/]+/include`'(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
 
         "/nix/store/[^/]+/lib/modules(/.*)?" = "gen_context(system_u:object_r:modules_object_t,s0)";
@@ -274,9 +278,10 @@
 
         "/var/lib/nfs/rpc_pipefs(/.*)?" = "<<none>>";
 
-        "/var/lock" = "-d	gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)";
-        # TODO: duplicates not supported yet
-        # "/var/lock" = "-l	gen_context(system_u:object_r:var_lock_t,s0)";
+        "/var/lock" = [
+          "-d	gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)"
+          "-l	gen_context(system_u:object_r:var_lock_t,s0)"
+        ];
         "/var/lock/subsys" = "-d	gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)";
         "/var/lock/.*" = "<<none>>";
 
@@ -294,9 +299,10 @@
         "/var/spool(/.*)?" = "gen_context(system_u:object_r:var_spool_t,s0)";
         "/var/spool/postfix/pid" = "-d	gen_context(system_u:object_r:var_run_t,s0)";
 
-        "/var/tmp" = "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        # TODO: Duplicates not supported yet
-        # "/var/tmp" = "-l	gen_context(system_u:object_r:tmp_t,s0)";
+        "/var/tmp" = [
+          "-d	gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)"
+          "-l	gen_context(system_u:object_r:tmp_t,s0)"
+        ];
         "/var/tmp/.*" = "<<none>>";
         "/var/tmp/lost\+found" = "-d	gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
         "/var/tmp/lost\+found/.*" = "<<none>>";

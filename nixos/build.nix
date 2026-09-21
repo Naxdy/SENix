@@ -38,16 +38,19 @@ let
       ) refpolicyLayers;
     in
     if found == [ ] then "senix" else builtins.head found;
+
   # Expand `@attr@` placeholders in file context rules using their store paths.
   expandRule =
     fileContext: key: value:
     let
+      expandValues =
+        key: value:
+        if builtins.typeOf value == "list" then (map (e: "${key}\t${e}") value) else [ "${key}\t${value}" ];
+
       m = builtins.match "@([^@]+)@(.*)" key;
     in
     if m == null then
-      [
-        "${key}\t${value}"
-      ]
+      expandValues key value
     else
       let
         attr = builtins.elemAt m 0;
@@ -59,13 +62,13 @@ let
           storepath = lib.removePrefix "/nix/store" sp;
           path = "/nix/store${lib.escapeRegex storepath}";
         in
-        "${path}${rest}\t${value}"
+        expandValues "${path}${rest}" value
       ) fileContext.storePaths.${attr};
 
   genFC =
     fileContext:
     lib.concatStringsSep "\n" (
-      lib.concatLists (lib.mapAttrsToList (expandRule fileContext) fileContext.rules)
+      lib.flatten (lib.mapAttrsToList (expandRule fileContext) fileContext.rules)
     );
 
   # Materialize a module source to a store path, passing paths through and

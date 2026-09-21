@@ -68,10 +68,10 @@
         "/run/auditd\.pid" = "--	gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
         "/run/auditd_sock" = "-s	gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
         "/run/klogd\.pid" = "--	gen_context(system_u:object_r:klogd_runtime_t,s0)";
-        "/run/log" = "-s	gen_context(system_u:object_r:devlog_t,s0)";
-
-        # TODO: multiple rules yadda yadda
-        # "/run/log" = "-d	gen_context(system_u:object_r:var_log_t,s0-mls_systemhigh)";
+        "/run/log" = [
+          "-s	gen_context(system_u:object_r:devlog_t,s0)"
+          "-d	gen_context(system_u:object_r:var_log_t,s0-mls_systemhigh)"
+        ];
 
         "/run/metalog\.pid" = "--	gen_context(system_u:object_r:syslogd_runtime_t,s0)";
         "/run/rsyslogd\.pid" = "--	gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";

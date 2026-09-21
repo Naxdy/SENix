@@ -148,11 +148,20 @@ in
                       apply = lib.mapAttrs (_: value: lib.unique value);
                     };
                     rules = mkOption {
-                      type = types.attrsOf types.str;
+                      type = types.attrsOf (
+                        types.oneOf [
+                          types.str
+                          (types.listOf types.str)
+                        ]
+                      );
                       default = { };
                       example = {
                         "@my_app@/bin/my_app" = "gen_context(system_u:object_r:my_app_exec_t,s0)";
                         "HOME_DIR/\.cache/my_app(/.*)?" = "gen_context(system_u:object_r:my_app_cache_t,s0)";
+                        "@my_app@/lib" = [
+                          "-d gen_context(system_u:object_r:my_app_lib_t,s0)"
+                          "-l gen_context(system_u:object_r:my_app_lib_t,s0)"
+                        ];
                       };
                       description = ''
                         An attribute set of paths with their corresponding context assignments.
@@ -493,11 +502,6 @@ in
 
       services = {
         # Prepares the necessary prerequisites for mounting the metacopy overlay.
-        #
-        # TODO: We'll need to use our own bespoke FUSE system here to prevent actual
-        # date writes to the upper, and only allow metadata. Even though the underlying
-        # nix store remains untouched, the current setup allows certain processes to pollute
-        # the runtime view of the store.
         selinux-init = {
           wantedBy = [ "initrd-fs.target" ];
           before = [ "initrd-fs.target" ];
