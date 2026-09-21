@@ -14,6 +14,7 @@
     ./nscd.nix
     ./selinuxutil.nix
     ./senix-init.nix
+    ./senix-logging.nix
     ./senix-store.nix
     ./systemd.nix
   ];

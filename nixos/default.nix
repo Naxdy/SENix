@@ -524,6 +524,7 @@ in
             pkgs.policycoreutils
             pkgs.attr
             pkgs.findutils
+            pkgs.libselinux.bin
             pkgs.coreutils
             pkgs.mount
             pkgs.gnugrep
@@ -590,6 +591,25 @@ in
             setfiles -F "$fc" /nix/store
             setfiles -r /sysroot -F "$fc" /sysroot${config.systemd.package}
             setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store
+
+            echo "seeding cgroup labels..."
+
+            # `setfiles`/`restorecon` (and systemd's `label_fix()`) only write a
+            # label when it differs from the one that is already there, and for
+            # the cgroup tree the file contexts assign exactly the context the
+            # kernel computes from `genfscon cgroup2` (`cgroup_t`), so nothing
+            # ever stores a label on a cgroup node. The kernel needs one to
+            # derive the labels of nodes it creates later
+            # (`security_kernfs_init_security()` gives up without it), which is
+            # what the policy's cgroup file transitions rely on — e.g.
+            # `memory.pressure` becoming `memory_pressure_t`. Write the labels
+            # unconditionally to seed the tree.
+            find /sys/fs/cgroup -xdev -print0 | while IFS= read -r -d "" path; do
+              raw=$(matchpathcon -n "$path" 2>/dev/null) || continue
+              label=''${raw##* }
+              [ -n "$label" ] || continue
+              setfattr -n security.selinux -v "$label" "$path" || true
+            done
           '';
         };
 
