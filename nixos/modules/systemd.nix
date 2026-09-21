@@ -199,6 +199,23 @@
           "/run/\.nologin[^/]*" = "--	gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
           "/run/nologin" = "--	gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
 
+          # Systemd's per-unit credential stores (`ImportCredential=`, `LoadCredential=`).
+          # PID1 creates the tree itself, via `mkdir_label()` and — after mounting each
+          # unit's credential tmpfs — `label_fix_full()` with the mount path as the
+          # file-contexts lookup key, i.e. it expects the policy to carry a label for
+          # it. Without one every directory in the tree keeps the generic `tmpfs_t`
+          # fallback: the top-level one because PID1 creates it in the initrd, before
+          # the policy is active, and the per-unit ones because they are `tmpfs`
+          # mount roots (`fs_use_trans tmpfs`). `tmpfs_t` directories may not be
+          # traversed by anything, so even the services importing their own
+          # credentials are denied `search` on them.
+          #
+          # Label the tree like the rest of the unlabelled `/run` content — which is
+          # what it inherits from `/run` itself on a boot where the policy is active
+          # when PID1 creates it — so that it is searchable by every domain, as
+          # systemd's credential design requires.
+          "/run/credentials(/.*)?" = "gen_context(system_u:object_r:var_run_t,s0)";
+
           "/run/user/%{USERID}/systemd" = "-d	gen_context(system_u:object_r:systemd_user_runtime_t,s0)";
           "/run/user/%{USERID}/systemd/generator(/.*)?" =
             "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
