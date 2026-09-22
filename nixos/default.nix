@@ -15,6 +15,19 @@ let
   setsebools = lib.escapeShellArgs (
     lib.mapAttrsToList (name: value: "${name}=${if value then "on" else "off"}") cfg.booleans
   );
+
+  # Recomputes the label of every store path from the active file contexts.
+  #
+  # The labels live in metafs' in-memory map, and the store is read-only for
+  # everyone but the Nix daemon, so the relabel is delegated to a transient
+  # systemd unit: `PrivateMounts=` gives it a private mount namespace in which
+  # the store can be remounted writable, leaving every other process with the
+  # read-only overlay.
+  storeRelabel = pkgs.writeShellScript "senix-store-relabel" ''
+    ${lib.getExe' pkgs.util-linux "mount"} -o remount,rw,bind /nix/store
+    exec ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
+      /etc/selinux/targeted/contexts/files/file_contexts /nix/store
+  '';
 in
 {
   imports = [
@@ -150,7 +163,7 @@ in
                 '';
               };
               interface = mkOption {
-                type = types.nullOr types.str;
+                type = types.nullOr types.lines;
                 default = null;
                 description = ''
                   Interface (`.if`) rules for this module.
@@ -496,6 +509,21 @@ in
 
               ${lib.getExe' pkgs.policycoreutils "setsebool"} -P ${setsebools}
 
+              # Booting already relabels the store from the initrd, so this is
+              # only needed while a running system changes its policy, i.e. on
+              # `switch-to-configuration` (which exports `NIXOS_ACTION`).
+              if [ -n "''${NIXOS_ACTION:-}" ]; then
+                ${lib.getExe' pkgs.systemd "systemd-run"} --quiet --collect --wait \
+                  --unit="senix-store-relabel-$$" \
+                  --property=PrivateMounts=yes \
+                  --property=Type=oneshot \
+                  ${storeRelabel}
+
+                fc=/etc/selinux/targeted/contexts/files/file_contexts
+                ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
+                  "$fc" /run/current-system
+              fi
+
               echo "$cmd" >/var/lib/selinux/activate-check
             fi
           '';
@@ -713,30 +741,6 @@ in
           RefuseManualStop = true;
         };
       };
-      # Runs on `nixos-rebuild switch` to relabel the nix store.
-      # Here, we skip the userspace directories, because we don't want to
-      # override any runtime changes a user may have made.
-      #
-      # TODO: Untested; need to confirm whether this works / gets called.
-      # selinux-relabel = {
-      #   wantedBy = [ "nixos-activation.service" ];
-      #   after = [ "nixos-activation.service" ];
-      #   serviceConfig = {
-      #     Type = "oneshot";
-      #     RemainAfterExit = true;
-      #   };
-      #   path = [
-      #     pkgs.policycoreutils
-      #   ];
-      #   script = ''
-      #     set -euo pipefail
-      #
-      #     fc=/etc/selinux/targeted/contexts/files/file_contexts
-      #
-      #     setfiles -F "$fc" /nix/store 2>&1
-      #     find /nix/store -type f -o -type d -o -type l | setfiles -F "$fc" -s
-      #   '';
-      # };
     };
   };
 }

@@ -147,12 +147,9 @@
             inherit (self.nixosModules) senix;
           };
 
-          # Deferred: integrate the metafs overlay into the SELinux boot path
-          # and re-enable this once switching between configurations is wired
-          # through the FUSE filesystem.
-          # selinux-switch = import ./tests/selinux-switch/test.nix {
-          #   inherit pkgs;
-          # };
+          selinux-switch = pkgs.callPackage ./tests/selinux-switch/test.nix {
+            inherit (self.nixosModules) senix;
+          };
         }
       );
     };

@@ -138,14 +138,6 @@ in
       allow systemd_tmpfiles_t var_lib_t:lnk_file { create getattr read };
       allow systemd_tmpfiles_t lib_t:lnk_file { create getattr };
 
-      # `restorecond` does NSS lookups (`auth_use_nsswitch()` in
-      # `selinuxutil.te`). The socket it has to talk to is
-      # `/run/nscd/socket`, which on NixOS belongs to `nsncd` — a binary the
-      # policy has no transition for, so it runs in `initrc_t` and its socket
-      # carries that domain (a socket's label defaults to the creating task's
-      # type) instead of `nscd_runtime_t`.
-      allow restorecond_t initrc_t:unix_stream_socket connectto;
-
       # `systemd`'s generators resolve executables off `PATH` and read locale
       # data (both out of the store, which `libraries.nix` labels properly:
       # `bin_t` for executables, `locale_t` for `share/locale`,

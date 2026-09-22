@@ -51,7 +51,7 @@
 - Module sources are materialized as store paths under `policy/modules/<layer>/` (`moduleSourceDrv`) so the build phase never has to copy huge inline strings (ARG_MAX).
 - Custom modules must carry a `<summary>` doc comment in their `.if`, otherwise the refpolicy's `sedoctool.py` silently omits them from `modules.conf`.
 - `senix_store` (`kernel` layer, marked `<required>`) is built into the **base** module, because `fs_use_xattr fuse` is only legal in the base — checkmodule rejects it in a loadable module. `senix_store` is the only place `fs_use` is declared.
-- Store relabeling on `nixos-rebuild switch` is driven by the `selinux-policy` activation script: `semodule -i` over the built `.pp` set, removal of stale modules absent from the new build (so their labels revert), and `setsebool`; guarded by `/var/lib/selinux/activate-check` so it only re-runs when the command set changed.
+- Policy handling on `nixos-rebuild switch` is driven by the `selinux-policy` activation script: `semodule -i` over the built `.pp` set, removal of stale modules absent from the new build, `setsebool`, then — on a switch only (`NIXOS_ACTION` is set; a boot relabels from the initrd anyway) — a store relabel that recomputes the labels those modules left behind, in a transient unit with `PrivateMounts=` so the rw store remount stays namespace-local; guarded by `/var/lib/selinux/activate-check` so it only re-runs when the command set changed.
 
 ## NixOS integration notes
 
@@ -63,7 +63,7 @@
 ## Runtime tests
 
 - `tests/selinux-enforce` — VM that boots permissive-mode and proves enforcement works: a confined domain can read its own data but is denied a secret file, and type transitions/relabels are verified.
-- `tests/selinux-switch` — performs a real `nixos-rebuild switch` to a config where a module was removed and asserts the label reverts.
+- `tests/selinux-switch` — switches a VM into an exact replica of its own configuration — built as a `specialisation`, so the only difference is the declared one — with the test's policy module removed, and asserts the store path's label is recomputed.
 - `tests/metafs` — mounts metafs in a VM; exercises passthrough reads/writes/mutations, in-memory xattrs (incl. `security.selinux`), self-mount over its own source, and the `mount(8)` helper.
 - `tests/screen` — reference for authoring a full custom module from `.te`/`.if`/`.fc` files (screen/tmux).
 

@@ -15,6 +15,7 @@
           };
           rules = {
             "@nscd@/bin/nscd" = "--	gen_context(system_u:object_r:nscd_exec_t,s0)";
+            "/run/nscd/socket" = "-s gen_context(system_u:object_r:nscd_runtime_t,s0)";
           };
         };
       };
