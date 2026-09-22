@@ -2,7 +2,7 @@
   # "Targeted" modules exist to focus the relabeling within
   # `/nix/store` to only target programs & services that are
   # referenced by the current configuration, as opposed
-  # to relying on regex catch-alls.
+  # to relying on catch-all patterns.
 
   imports = [
     ./services

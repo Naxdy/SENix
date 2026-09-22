@@ -33,13 +33,15 @@ in
         ];
       }
       (lib.mkIf cfg.selinuxSupport {
-        security.selinux.modules.bubblewrap.fileContext = {
+        security.selinux.modules.bubblewrap = {
           layer = "apps";
-          storePaths.bubblewrap = [
-            cfg.package
-          ];
-          rules = {
-            "@bubblewrap@/bin/bwrap" = "--	gen_context(system_u:object_r:bubblewrap_exec_t,s0)";
+          fileContext = {
+            storePaths.bubblewrap = [
+              cfg.package
+            ];
+            rules = {
+              "@bubblewrap@/bin/bwrap" = "--	gen_context(system_u:object_r:bubblewrap_exec_t,s0)";
+            };
           };
         };
       })
