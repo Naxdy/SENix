@@ -16,7 +16,20 @@ in
           config.systemd.package
           config.boot.initrd.systemd.package
         ];
-        packages = lib.unique (config.systemd.packages ++ config.boot.initrd.systemd.packages);
+        # `config.systemd.packages` entries are not always real packages: nixpkgs'
+        # `nix` is an `lndir` aggregate (`nix-everything`) that merges its
+        # components' trees into `$out` by symlink, so the unit files it
+        # contributes are symlinks into the `nix-cli` component, which is where
+        # the real files live. metafs labels per path, and systemd opens — and
+        # checks `{ status }` against (`tclass=service`) — that *resolved* file,
+        # so the component needs the label, not the aggregate.
+        packages = lib.unique (
+          let
+            unitsPackages = config.systemd.packages ++ config.boot.initrd.systemd.packages;
+          in
+          unitsPackages
+          ++ lib.concatMap (p: lib.optionals (p ? nix-cli) [ p.nix-cli ]) unitsPackages
+        );
         units = lib.unique (
           (lib.filter lib.isDerivation (
             lib.mapAttrsToList (_: value: value.unit) (
