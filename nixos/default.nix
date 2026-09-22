@@ -71,6 +71,17 @@ in
       '';
     };
 
+    postBuildRelabel = mkOption {
+      type = types.bool;
+      default = true;
+      example = false;
+      description = ''
+        Whether to add a post build hook that relabels store paths whenever a derivation is built.
+
+        For automatic relabling of other directories, see `config.services.restorecond`.
+      '';
+    };
+
     exclusions = {
       etc = lib.mkOption {
         type = types.listOf types.str;
@@ -253,6 +264,37 @@ in
     # We use this to remove `ro` as the store mount option, since our overlay
     # already ensures the underlying store cannot be written to.
     boot.nixStoreMountOpts = lib.mkForce [ ];
+
+    # `metafs` is a FUSE filesystem, and the kernel's FUSE implementation emits
+    # no `fsnotify` events, so an inotify-based daemon (`restorecond`) can never
+    # observe a store path Nix adds at runtime. Label the outputs of every build
+    # here instead.
+    #
+    # Nix runs the hook after `restoreProcessContext()`, i.e. back in the
+    # caller's mount namespace, where `/nix/store` is still read-only. So the
+    # relabel is delegated to a transient systemd unit: `PrivateMounts=` gives it
+    # a private mount namespace, in which the store can be remounted writable
+    # (`LocalStore::makeStoreWritable()` does the same for the daemon).
+    # `restorecon` then writes the contexts through the overlay, so they live in
+    # metafs' in-memory map like every other label.
+    nix.settings.post-build-hook =
+      let
+        relabelStorePath = pkgs.writeShellScript "senix-relabel-store-path" ''
+          ${lib.getExe' pkgs.util-linux "mount"} -o remount,rw,bind /nix/store
+          exec ${lib.getExe' pkgs.policycoreutils "restorecon"} -R "$1"
+        '';
+      in
+      lib.mkIf cfg.postBuildRelabel (
+        "${pkgs.writeShellScript "senix-post-build-hook" ''
+          for out in ''${OUT_PATHS:-}; do
+            ${lib.getExe' pkgs.systemd "systemd-run"} --quiet --collect --wait \
+              --unit="senix-store-relabel-$$-$RANDOM" \
+              --property=PrivateMounts=yes \
+              --property=Type=oneshot \
+              ${relabelStorePath} "$out"
+          done
+        ''}"
+      );
 
     nixpkgs.overlays =
       lib.optionals cfg.overlayPackages [

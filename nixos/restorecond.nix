@@ -11,7 +11,6 @@ let
 
   defaultPaths = [
     "/etc/resolv.conf"
-    "/nix/store"
     "/root/*"
     "/root/.ssh/*"
     "/run/utmp"
@@ -52,8 +51,8 @@ in
       description = ''
         Paths to have `restorecond` watch for automatic relabeling.
 
-        Note: It is recommended to always have this contain `/nix/store` to avoid unexpected behavior
-        involving unlabeled files.
+        Note that since `/nix/store` is a FUSE fs under SENix, and FUSE does not support `fsnotify`, which is why
+        the relabeling of store paths is handled by `config.security.selinux.postBuildRelabel` instead.
       '';
     };
 
@@ -87,12 +86,8 @@ in
       serviceConfig = {
         Type = "simple";
         PrivateMounts = true;
+        ExecStart = "${lib.getExe cfg.package} -F";
       };
-      script = ''
-        ${lib.getExe' pkgs.util-linux "mount"} -o remount,rw,bind /nix/store
-
-        exec ${lib.getExe cfg.package} -F
-      '';
     };
 
     systemd.user.services.restorecond = {

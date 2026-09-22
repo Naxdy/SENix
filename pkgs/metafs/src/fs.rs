@@ -338,6 +338,26 @@ impl MetaFs {
         Ok(attr)
     }
 
+    /// Give a freshly created directory entry the ownership of the FUSE caller.
+    ///
+    /// With `default_permissions` the kernel already checked the caller's access,
+    /// but the backing operation is performed by this daemon, which runs as root.
+    /// Without this, every created entry would be owned by root — un-writable by
+    /// any non-root creator such as the Nix build users creating store paths.
+    ///
+    /// `lchown` is used so that a symlink itself (not its target) is affected.
+    fn chown_to_request(req: &Request, path: &Path) -> io::Result<()> {
+        let c_path = std::ffi::CString::new(path.as_os_str().as_encoded_bytes())
+            .map_err(|_| io::Error::from(ErrorKind::InvalidData))?;
+        // SAFETY: `c_path` is a NUL-terminated C string owned by this scope.
+        let rc = unsafe { libc::lchown(c_path.as_ptr(), req.uid(), req.gid()) };
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(Self::errno(nix::errno::Errno::last()))
+        }
+    }
+
     /// Return the cached, name-sorted listing for a directory inode, building
     /// and caching it on first use.
     fn dir_listing(&self, ino: INodeNo) -> io::Result<Arc<Vec<ListingEntry>>> {
@@ -544,7 +564,7 @@ impl Filesystem for MetaFs {
 
     fn mknod(
         &self,
-        _req: &Request,
+        req: &Request,
         parent: INodeNo,
         name: &OsStr,
         mode: u32,
@@ -600,7 +620,10 @@ impl Filesystem for MetaFs {
             }
             _ => Err(ErrorKind::Unsupported.into()),
         };
-        match result.and_then(|()| self.attr_after_create(path, parent, name)) {
+        match result.and_then(|()| {
+            Self::chown_to_request(req, &path)?;
+            self.attr_after_create(path, parent, name)
+        }) {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => {
                 if kind == libc::S_IFREG {
@@ -613,7 +636,7 @@ impl Filesystem for MetaFs {
 
     fn mkdir(
         &self,
-        _req: &Request,
+        req: &Request,
         parent: INodeNo,
         name: &OsStr,
         mode: u32,
@@ -630,7 +653,10 @@ impl Filesystem for MetaFs {
             nix::sys::stat::Mode::from_bits_truncate(mode & !umask),
         )
         .map_err(Self::errno)
-        .and_then(|()| self.attr_after_create(path, parent, name));
+        .and_then(|()| {
+            Self::chown_to_request(req, &path)?;
+            self.attr_after_create(path, parent, name)
+        });
         match result {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => reply.error(e.into()),
@@ -681,7 +707,7 @@ impl Filesystem for MetaFs {
 
     fn symlink(
         &self,
-        _req: &Request,
+        req: &Request,
         parent: INodeNo,
         link_name: &OsStr,
         target: &Path,
@@ -692,8 +718,10 @@ impl Filesystem for MetaFs {
             return;
         };
         let path = parent_path.join(link_name);
-        let result =
-            symlink(target, &path).and_then(|()| self.attr_after_create(path, parent, link_name));
+        let result = symlink(target, &path).and_then(|()| {
+            Self::chown_to_request(req, &path)?;
+            self.attr_after_create(path, parent, link_name)
+        });
         match result {
             Ok(attr) => reply.entry(&TTL, &attr, Generation(0)),
             Err(e) => reply.error(e.into()),
@@ -1130,7 +1158,7 @@ impl Filesystem for MetaFs {
 
     fn create(
         &self,
-        _req: &Request,
+        req: &Request,
         parent: INodeNo,
         name: &OsStr,
         mode: u32,
@@ -1161,6 +1189,11 @@ impl Filesystem for MetaFs {
         let perms = fs::Permissions::from_mode(mode & 0o7777 & !umask);
         if let Err(e) = fs::set_permissions(&path, perms) {
             debug!("metafs: create chmod {}: {e}", path.display());
+        }
+        if let Err(e) = Self::chown_to_request(req, &path) {
+            error!("metafs: create chown {} failed: {e}", path.display());
+            reply.error(e.into());
+            return;
         }
         let md = match file.metadata() {
             Ok(md) => md,

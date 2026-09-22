@@ -39,6 +39,15 @@ let
     in
     if found == [ ] then "senix" else builtins.head found;
 
+  # Whether the generated `senix` layer will actually hold a module. `make conf`
+  # scans every `policy/modules/*` directory and `segenxml.py` errors out on a
+  # layer that contains no `.te` files, so the layer directory (and its
+  # `metadata.xml`) must only be materialized when there is at least one module
+  # whose sources land in it.
+  hasSenixModules = lib.any (
+    name: mods.${name}.layer == "senix" && mods.${name}.typeEnforcement != null
+  ) moduleNames;
+
   # Expand `@attr@` placeholders in file context rules using their store paths.
   expandRule =
     fileContext: key: value:
@@ -162,7 +171,7 @@ let
           te ++ if_ ++ fc
         ) moduleNames
       )
-      ++ [
+      ++ lib.optionals hasSenixModules [
         # The `senix` layer that hosts modules which aren't part of the Reference
         # Policy. It must exist (with a metadata.xml) so `make conf` can build
         # policy.xml over it.

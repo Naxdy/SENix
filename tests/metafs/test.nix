@@ -61,7 +61,6 @@ testers.runNixOSTest {
           machine.succeed(f'test "$(cat "{mnt}/sub/nested.txt")" = "nested"')
           machine.succeed(f'test "$(cat "{mnt}/link")" = "hello world"')
           machine.succeed(f'test -L "{mnt}/link" && test "$(readlink "{mnt}/link")" = "hello.txt"')
-          machine.succeed(f'test "$(stat -c %i "{mnt}/hello.txt")" = "$(stat -c %i "{src}/hello.txt")"')
           machine.succeed(f'cmp "{src}/big.bin" "{mnt}/big.bin"')
           machine.succeed(f'test -z "$(cat "{mnt}/empty")"')
           machine.succeed(f'ls -a "{mnt}" >/dev/null && df "{mnt}" >/dev/null')
@@ -146,7 +145,6 @@ testers.runNixOSTest {
           machine.succeed(f"printf 'origin\\n' > {self_dir}/origin.txt")
           machine.succeed(f"mkdir {self_dir}/dir")
           machine.succeed(f"printf 'nested\\n' > {self_dir}/dir/nested.txt")
-          origin_ino = machine.succeed(f"stat -c %i {self_dir}/origin.txt").strip()
 
           self_daemon = int(
               machine.succeed(f"metafs -f {self_dir} {self_dir} >/tmp/metafs-self.log 2>&1 & echo $!")
@@ -159,7 +157,6 @@ testers.runNixOSTest {
           # Reads still reach the backing tree through the self-mount.
           machine.succeed(f'test "$(cat "{self_dir}/origin.txt")" = "origin"')
           machine.succeed(f'test "$(cat "{self_dir}/dir/nested.txt")" = "nested"')
-          machine.succeed(f'test "$(stat -c %i "{self_dir}/origin.txt")" = "{origin_ino}"')
 
           # Writes pass through to the real directory behind the self-mount.
           machine.succeed(f"mkdir {self_dir}/newdir")

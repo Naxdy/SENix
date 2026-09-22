@@ -139,6 +139,10 @@
             inherit (self.nixosModules) senix;
           };
 
+          restorecond-store = pkgs.callPackage ./tests/restorecond-store/test.nix {
+            inherit (self.nixosModules) senix;
+          };
+
           metafs = pkgs.callPackage ./tests/metafs/test.nix {
             inherit (self.nixosModules) senix;
           };
