@@ -131,10 +131,6 @@
         // {
           treefmt = treefmtEval.config.build.check self;
 
-          selinux = pkgs.callPackage ./tests/screen/test.nix {
-            inherit (self.nixosModules) senix;
-          };
-
           selinux-enforce = pkgs.callPackage ./tests/selinux-enforce/test.nix {
             inherit (self.nixosModules) senix;
           };

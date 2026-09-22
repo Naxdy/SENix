@@ -518,10 +518,6 @@ in
                   --property=PrivateMounts=yes \
                   --property=Type=oneshot \
                   ${storeRelabel}
-
-                fc=/etc/selinux/targeted/contexts/files/file_contexts
-                ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
-                  "$fc" /run
               fi
 
               echo "$cmd" >/var/lib/selinux/activate-check
@@ -744,6 +740,24 @@ in
           SurviveFinalKillSignal = true;
           RefuseManualStop = true;
         };
+      };
+
+      senix-run-relabel = {
+        description = "Relabel current-system";
+
+        requiredBy = [ "sysinit-reactivation.target" ];
+        partOf = [ "sysinit-reactivation.target" ];
+        before = [ "systemd-tmpfiles-resetup.service" ];
+
+        unitConfig.DefaultDependencies = false;
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        path = [ pkgs.policycoreutils ];
+        script = ''
+          setfiles -F /etc/selinux/targeted/contexts/files/file_contexts /run/current-system
+        '';
       };
     };
   };

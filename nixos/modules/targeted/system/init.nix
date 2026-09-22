@@ -27,8 +27,7 @@ in
           let
             unitsPackages = config.systemd.packages ++ config.boot.initrd.systemd.packages;
           in
-          unitsPackages
-          ++ lib.concatMap (p: lib.optionals (p ? nix-cli) [ p.nix-cli ]) unitsPackages
+          unitsPackages ++ lib.concatMap (p: lib.optionals (p ? nix-cli) [ p.nix-cli ]) unitsPackages
         );
         units = lib.unique (
           (lib.filter lib.isDerivation (

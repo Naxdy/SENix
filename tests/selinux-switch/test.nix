@@ -102,7 +102,7 @@ testers.runNixOSTest (
 
         security.selinux = {
           enable = true;
-          mode = "permissive";
+          mode = "enforcing";
           overlayPackages = false;
         };
 
@@ -161,6 +161,17 @@ testers.runNixOSTest (
         machine.succeed("${target}/bin/switch-to-configuration test")
         machine.wait_until_succeeds(
             "test \"$(readlink -f /run/current-system)\" = ${target}"
+        )
+
+        # `/run/current-system` is re-created by the activation script's final
+        # `ln -sfn`, i.e. after every activation snippet has run, so a relabel
+        # performed by one of those snippets can never see it. The label must
+        # still be `var_run_t` (the file contexts' rule for the link), not the
+        # `initrc_runtime_t` the `initrc_t` file transition would give it, or
+        # `systemd-tmpfiles` (whose GC-root entry points at this symlink) is
+        # denied reading it.
+        machine.succeed(
+            "getfattr -h -n security.selinux --only-values /run/current-system | grep -q var_run_t"
         )
 
         # The switch must not have touched the store mount: /nix/store is still
