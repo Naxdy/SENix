@@ -1,7 +1,7 @@
 { rustToolchain }:
 { ... }:
 let
-  cargoToml = builtins.fromTOML (builtins.readFile ./metafs/Cargo.toml);
+  cargoToml = builtins.fromTOML (builtins.readFile ./pkgs/metafs/Cargo.toml);
 in
 {
   programs = {

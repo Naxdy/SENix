@@ -95,7 +95,7 @@
 
       packages = forEachSupportedSystem (
         { pkgs, ... }: {
-          metafs = pkgs.pkgsStatic.callPackage ./metafs { inherit crane; };
+          metafs = pkgs.pkgsStatic.callPackage ./pkgs/metafs { inherit crane; };
         }
       );
 
