@@ -16,5 +16,6 @@
     ./senix-logging.nix
     ./senix-store.nix
     ./systemd.nix
+    ./targeted
   ];
 }
