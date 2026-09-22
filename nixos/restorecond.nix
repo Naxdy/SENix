@@ -11,8 +11,7 @@ let
 
   defaultPaths = [
     "/etc/resolv.conf"
-    # TODO: need to amend restorecond to get a rw mount to the nix store
-    # "/nix/store"
+    "/nix/store"
     "/root/*"
     "/root/.ssh/*"
     "/run/utmp"
@@ -87,8 +86,13 @@ in
       };
       serviceConfig = {
         Type = "simple";
-        ExecStart = "${lib.getExe cfg.package} -F";
+        PrivateMounts = true;
       };
+      script = ''
+        ${lib.getExe' pkgs.util-linux "mount"} -o remount,rw,bind /nix/store
+
+        exec ${lib.getExe cfg.package} -F
+      '';
     };
 
     systemd.user.services.restorecond = {
