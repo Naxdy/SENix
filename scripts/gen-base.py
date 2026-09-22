@@ -65,8 +65,6 @@ REFPOLICY_SRC_ATTR = (
 
 #: Reference Policy layers we do not translate at all.
 IGNORED_LAYERS = {
-    # The apps layer is handled by a dedicated generator later on.
-    "apps",
 }
 
 #: Module name globs (``fnmatch``, not regex) that are skipped entirely.

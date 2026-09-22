@@ -3,6 +3,7 @@
 { ... }: {
   imports = [
     ./admin
+    ./apps
     ./kernel
     ./roles
     ./services

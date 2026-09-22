@@ -129,7 +129,6 @@ in
           ];
         };
         rules = {
-          "/run/restorecond\.pid" = "--	gen_context(system_u:object_r:restorecond_run_t,s0)";
           "@restorecond_unit@(/.*)?" = "gen_context(system_u:object_r:restorecond_unit_t,s0)";
           "@restorecond@/bin/restorecond" = "--	gen_context(system_u:object_r:restorecond_exec_t,s0)";
         };
