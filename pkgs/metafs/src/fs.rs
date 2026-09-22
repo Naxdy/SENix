@@ -180,6 +180,27 @@ impl MetaFs {
         }
     }
 
+    /// Forget the per-path mappings of `root` and everything beneath it.
+    ///
+    /// Used when a rename replaces (unlinks) an existing entry: its overlay
+    /// inode and those of its descendants no longer correspond to any path.
+    fn drop_subtree(&self, root: &Path) {
+        let victims: Vec<(u64, PathBuf, u64)> = self
+            .inodes
+            .iter()
+            .filter(|e| e.value().path.starts_with(root))
+            .map(|e| (*e.key(), e.value().path.clone(), e.value().parent))
+            .collect();
+        for (ino, path, parent) in victims {
+            if let Some(name) = path.file_name() {
+                if let Some(map) = self.path_inos.get(&parent) {
+                    map.remove(name);
+                }
+            }
+            self.inodes.remove(&ino);
+        }
+    }
+
     /// Stable synthetic overlay inode for the child `name` of overlay inode
     /// `parent`.
     ///
@@ -243,6 +264,7 @@ impl MetaFs {
             return Ok(attr);
         }
         let path = self.underlying_path(ino).ok_or_else(|| {
+            error!("metafs: no path for inode {ino}");
             io::Error::new(ErrorKind::NotFound, format!("no path for inode {ino}"))
         })?;
         let mut attr = Self::build_attr(&path)?;
@@ -455,6 +477,10 @@ impl Filesystem for MetaFs {
     fn lookup(&self, _req: &Request, parent: INodeNo, name: &OsStr, reply: ReplyEntry) {
         self.requests.fetch_add(1, Ordering::Relaxed);
         let Some(parent_path) = self.underlying_path(parent) else {
+            error!(
+                "metafs: lookup {:?}: no path for parent inode {}",
+                name, parent
+            );
             reply.error(Errno::ENOENT);
             return;
         };
@@ -753,13 +779,59 @@ impl Filesystem for MetaFs {
             .path_inos
             .get(&parent.0)
             .and_then(|m| m.get(name).map(|v| *v));
+        // An entry being replaced by the rename is unlinked; its mapping (and
+        // that of its subtree) must not survive.
+        let replaced_ino = self
+            .path_inos
+            .get(&newparent.0)
+            .and_then(|m| m.get(newname).map(|v| *v))
+            .filter(|ino| Some(*ino) != moved_ino);
         match fs::rename(&from, &to) {
             Ok(()) => {
                 if let Some(ino) = moved_ino {
                     if let Some(mut node) = self.inodes.get_mut(&ino) {
-                        node.path = to;
+                        node.path = to.clone();
                         node.parent = newparent.0;
                     }
+                    // The overlay inode is shared with every already-remembered
+                    // descendant, and each inode is resolved by its recorded
+                    // path. Their paths must move with the directory, or a
+                    // descendant keeps pointing at the old location — which may
+                    // be transient (e.g. Nix's sandbox chroot inside the store)
+                    // and become unresolvable once it is gone.
+                    //
+                    // Only a directory rename can move descendants; skip the
+                    // scan for the common case of a file being renamed.
+                    if fs::symlink_metadata(&to)
+                        .map(|m| m.is_dir())
+                        .unwrap_or(false)
+                    {
+                        for mut entry in self.inodes.iter_mut() {
+                            if *entry.key() == ino {
+                                continue;
+                            }
+                            let suffix = entry
+                                .value()
+                                .path
+                                .strip_prefix(&from)
+                                .map(Path::to_path_buf);
+                            if let Ok(suffix) = suffix {
+                                entry.value_mut().path = to.join(suffix);
+                            }
+                        }
+                    }
+                }
+                // The old name is now free; a new entry created there must get a
+                // fresh overlay inode rather than inheriting the moved one.
+                if let Some(map) = self.path_inos.get(&parent.0) {
+                    map.remove(name);
+                }
+                if let Some(ino) = replaced_ino {
+                    if let Some(path) = self.inodes.get(&ino).map(|n| n.path.clone()) {
+                        self.drop_subtree(&path);
+                    }
+                }
+                if let Some(ino) = moved_ino {
                     self.path_inos
                         .entry(newparent.0)
                         .or_default()

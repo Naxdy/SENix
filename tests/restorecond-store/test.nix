@@ -82,11 +82,6 @@ testers.runNixOSTest {
           machine.succeed(
               "NIX_PATH=nixpkgs=%s %s build --impure --no-link -f ${probeFile}" % (nixpkgs, nix)
           )
-          # metafs is FUSE, and a bare `test -e` can be served from a stale
-          # negative dentry for the freshly created path (created by the build in
-          # its own private mount namespace); a directory read forces the kernel
-          # to revalidate it.
-          machine.wait_until_succeeds("find %s > /dev/null" % store_path, timeout=30)
           machine.succeed("test -e %s/bin/probe" % store_path)
 
       with subtest("the freshly built store path is labeled"):
