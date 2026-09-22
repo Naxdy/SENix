@@ -99,11 +99,18 @@
         }
       );
 
-      overlays.default = final: prev: {
-        inherit (self.packages.${final.stdenv.hostPlatform.system}) metafs;
-      };
+      overlays.default =
+        final: prev:
+        {
+          inherit (self.packages.${final.stdenv.hostPlatform.system}) metafs;
+        }
+        // (import ./overlay.nix final prev);
 
       formatter = forEachSupportedSystem ({ treefmt, ... }: treefmt);
+
+      nixosModules.senix = import ./nixos {
+        overlay = self.overlays.default;
+      };
 
       checks = forEachSupportedSystem (
         {
@@ -124,17 +131,16 @@
         // {
           treefmt = treefmtEval.config.build.check self;
 
-          selinux = import ./tests/screen/test.nix {
-            inherit pkgs;
+          selinux = pkgs.callPackage ./tests/screen/test.nix {
+            inherit (self.nixosModules) senix;
           };
 
-          selinux-enforce = import ./tests/selinux-enforce/test.nix {
-            inherit pkgs;
+          selinux-enforce = pkgs.callPackage ./tests/selinux-enforce/test.nix {
+            inherit (self.nixosModules) senix;
           };
 
-          metafs = import ./tests/metafs/test.nix {
-            inherit pkgs;
-            metafs = self.packages.${system}.metafs;
+          metafs = pkgs.callPackage ./tests/metafs/test.nix {
+            inherit (self.nixosModules) senix;
           };
 
           # Deferred: integrate the metafs overlay into the SELinux boot path

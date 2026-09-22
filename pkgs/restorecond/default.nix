@@ -9,11 +9,11 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "restorecond";
-  version = "3.10";
+  version = "3.11";
 
   src = fetchurl {
     url = "https://github.com/SELinuxProject/selinux/releases/download/${finalAttrs.version}/restorecond-${finalAttrs.version}.tar.gz";
-    hash = "sha256-oa5kCE1KndVQZpMBzEVoc4efSf539x7i/Kn506FmRqA=";
+    hash = lib.fakeHash;
   };
 
   nativeBuildInputs = [

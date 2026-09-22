@@ -42,14 +42,7 @@ in
       '';
     };
 
-    package = lib.mkOption {
-      type = types.package;
-      default = pkgs.callPackage ./pkgs/restorecond { };
-      defaultText = "Vendored `restorecond` package";
-      description = ''
-        The package providing `restorecond`.
-      '';
-    };
+    package = lib.mkPackageOption pkgs "restorecond" { };
 
     paths = lib.mkOption {
       type = types.listOf types.path;

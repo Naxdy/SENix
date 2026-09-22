@@ -1,4 +1,7 @@
 {
+  overlay,
+}:
+{
   config,
   lib,
   pkgs,
@@ -272,7 +275,7 @@ in
     # already ensures the underlying store cannot be written to.
     boot.nixStoreMountOpts = lib.mkForce [ ];
 
-    nixpkgs.overlays = lib.mkForce (
+    nixpkgs.overlays =
       lib.optionals cfg.overlayPackages [
         (
           final: prev:
@@ -344,7 +347,9 @@ in
           )
         )
       ]
-    );
+      ++ [
+        overlay
+      ];
 
     systemd.package = lib.mkDefault (
       pkgs.systemd.override {

@@ -1,13 +1,16 @@
-{ pkgs, ... }:
-pkgs.testers.runNixOSTest {
+{ senix, testers, ... }:
+testers.runNixOSTest {
   name = "selinux-screen";
+
+  node.pkgsReadOnly = false;
 
   nodes.machine =
     { lib, pkgs, ... }:
     {
+
       imports = [
         ./module.nix
-        ../../nixos/default.nix
+        senix
       ];
 
       environment.systemPackages = [

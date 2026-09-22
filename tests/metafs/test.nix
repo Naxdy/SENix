@@ -1,6 +1,8 @@
-{ pkgs, metafs, ... }:
-pkgs.testers.runNixOSTest {
+{ testers, metafs, ... }:
+testers.runNixOSTest {
   name = "metafs";
+
+  node.pkgsReadOnly = false;
 
   nodes.machine =
     { pkgs, ... }:

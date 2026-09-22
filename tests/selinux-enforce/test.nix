@@ -1,13 +1,22 @@
-{ pkgs, ... }:
+{
+  senix,
+  runCommand,
+  gcc,
+  glibc,
+  testers,
+  ...
+}:
 let
   # A tiny static binary that tries to open the allowed data file and the secret
   # file. SELinux enforcement means the `enforce_learn_t` domain can open
   # `allowed` (enforce_learn_data_t) but `open` on `secret`
   # (enforce_learn_secret_t) is denied (no allow rule -> EACCES).
   enforceLearnApp =
-    pkgs.runCommand "enforce-learn"
+    runCommand "enforce-learn"
       {
-        nativeBuildInputs = [ pkgs.gcc ];
+        nativeBuildInputs = [
+          gcc
+        ];
       }
       ''
         mkdir -p "$out/bin"
@@ -29,17 +38,20 @@ let
             return (allowed >= 0 && secret < 0) ? 0 : 1;
         }
         EOF
-        gcc -static -L${pkgs.glibc.static}/lib -o "$out/bin/enforce-learn" main.c
+        gcc -static -L${glibc.static}/lib -o "$out/bin/enforce-learn" main.c
       '';
 in
-pkgs.testers.runNixOSTest {
+testers.runNixOSTest {
   name = "selinux-enforce";
+
+  node.pkgsReadOnly = false;
 
   nodes.machine =
     { lib, pkgs, ... }:
     {
+
       imports = [
-        ../../nixos/default.nix
+        senix
       ];
 
       security.selinux = {
