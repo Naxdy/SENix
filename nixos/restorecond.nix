@@ -119,18 +119,33 @@ in
         config.systemd.services.restorecond.name
       ];
 
-      modules.selinuxutil.fileContext = {
-        storePaths = {
-          restorecond = [
-            cfg.package
-          ];
-          restorecond_unit = [
-            config.systemd.units."${config.systemd.services.restorecond.name}".unit
-          ];
-        };
-        rules = {
-          "@restorecond_unit@(/.*)?" = "gen_context(system_u:object_r:restorecond_unit_t,s0)";
-          "@restorecond@/bin/restorecond" = "--	gen_context(system_u:object_r:restorecond_exec_t,s0)";
+      modules.selinuxutil = {
+        typeEnforcement = ''
+          # /etc/selinux/restorecond.conf is a symlink
+          allow restorecond_t selinux_config_t:lnk_file watch;
+
+          # `restorecond` relabels through `selinux_restorecon()`, whose libselinux
+          # implementation probes `/proc` with `statfs()` (`probe_proc()` in
+          # `selinux_restorecon.c`, deciding whether it may address files via
+          # `/proc/self/fd`) — i.e. the filesystem-level `getattr`. The reference
+          # policy grants exactly that to `run_init_t` in the same `selinuxutil.te`
+          # (`kernel_getattr_proc()`), but not to `restorecond_t`; Fedora instead
+          # gives `restorecond_t` the broad `fs_getattr_all_fs()`.
+          kernel_getattr_proc(restorecond_t);
+        '';
+        fileContext = {
+          storePaths = {
+            restorecond = [
+              cfg.package
+            ];
+            restorecond_unit = [
+              config.systemd.units."${config.systemd.services.restorecond.name}".unit
+            ];
+          };
+          rules = {
+            "@restorecond_unit@(/.*)?" = "gen_context(system_u:object_r:restorecond_unit_t,s0)";
+            "@restorecond@/bin/restorecond" = "--	gen_context(system_u:object_r:restorecond_exec_t,s0)";
+          };
         };
       };
     };

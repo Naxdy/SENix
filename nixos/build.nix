@@ -73,9 +73,7 @@ let
 
   # Materialize a module source to a store path, passing paths through and
   # writing raw declarations to a `writeText` file.
-  materializeSource =
-    content: filename:
-    if lib.hasPrefix "/nix/store" content then content else pkgs.writeText filename content;
+  materializeSource = content: filename: pkgs.writeText filename content;
 
   # A derivation that homes every module's sources laid out beneath
   # `policy/modules/<layer>/`. `build.policy` overlays this onto the Reference
@@ -139,15 +137,7 @@ let
                 # Overridden built-in module: keep the Reference Policy `.if`.
                 [ ];
             fc =
-              if m.fileContext.source != null then
-                [
-                  {
-                    inherit dir;
-                    name = "${dir}/${name}.fc";
-                    path = m.fileContext.source;
-                  }
-                ]
-              else if m.fileContext.rules != { } then
+              if m.fileContext.rules != { } then
                 [
                   {
                     inherit dir;

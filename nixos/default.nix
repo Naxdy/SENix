@@ -139,46 +139,25 @@ in
                 '';
               };
               interface = mkOption {
-                type = types.nullOr (
-                  types.oneOf [
-                    types.pathInStore
-                    types.str
-                  ]
-                );
+                type = types.nullOr types.str;
                 default = null;
                 description = ''
-                  Interface (`.if`) rules for this module, either as a Nix store path to a `.if` file
-                  (accepted by `types.pathInStore`), or a raw string of the interface content.
+                  Interface (`.if`) rules for this module.
 
                   Note that the rule must start with a `<summary>` doc comment, or else the module
                   won't be included in the final policy.
                 '';
               };
               typeEnforcement = mkOption {
-                type = types.nullOr (
-                  types.oneOf [
-                    types.pathInStore
-                    types.str
-                  ]
-                );
+                type = types.nullOr types.lines;
                 default = null;
                 description = ''
-                  Type enforcement (`.te`) rules for this module, either as a Nix store path to a `.te` file
-                  (accepted by `types.pathInStore`), or a raw string of the type enforcement content.
+                  Type enforcement (`.te`) rules for this module.
                 '';
               };
               fileContext = mkOption {
                 type = types.submodule {
                   options = {
-                    source = mkOption {
-                      type = types.nullOr types.pathInStore;
-                      default = null;
-                      description = ''
-                        A Nix store path to a file context (`.fc`) file to use for this module directly,
-                        instead of generating one from `rules`. Used when pulling a module verbatim from
-                        the Reference Policy sources.
-                      '';
-                    };
                     storePaths = mkOption {
                       type = types.attrsOf (types.listOf types.pathInStore);
                       default = { };
