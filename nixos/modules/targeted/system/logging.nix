@@ -1,10 +1,31 @@
-{ ... }: {
+{ config, ... }: {
+  security.selinux.modules.logging = {
+    fileContext = {
+      storePaths = {
+        systemd = [
+          config.systemd.package
+          config.boot.initrd.systemd.package
+        ];
+      };
+      rules = {
+        "@systemd@/lib/systemd/system/auditd.*" = "-- gen_context(system_u:object_r:auditd_unit_t,s0)";
+        "@systemd@/lib/systemd/system/[^/]*systemd-journal.*" =
+          "-- gen_context(system_u:object_r:syslogd_unit_t,s0)";
+        "@systemd@/lib/systemd/system/rsyslog.*\.service" =
+          "-- gen_context(system_u:object_r:syslogd_unit_t,s0)";
+        "@systemd@/lib/systemd/systemd-journald" = "-- gen_context(system_u:object_r:syslogd_exec_t,s0)";
+        "@systemd@/lib/systemd/systemd-kmsg-syslogd" =
+          "--	gen_context(system_u:object_r:syslogd_exec_t,s0)";
+      };
+    };
+  };
+
   # Journald (`syslogd_t`) access that the reference policy either does not
   # grant at all or that is expressed for a boot flow we do not have. Where a
   # reference policy statement only needs to be adapted to SENix, the
   # adaptation is noted inline; where another distribution already solved the
   # same problem, its solution is mirrored.
-  config.security.selinux.modules.senix_logging = {
+  security.selinux.modules.senix_logging = {
     layer = "system";
     typeEnforcement = ''
       policy_module(senix_logging)

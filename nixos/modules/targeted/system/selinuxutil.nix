@@ -5,7 +5,6 @@
 }:
 {
   config.security.selinux.modules.selinuxutil = {
-    layer = "system";
     fileContext = {
       storePaths = {
         selinux = [

@@ -3,19 +3,15 @@
   # the Nix store, while the `.te`/`.if` are left to the Reference Policy source.
 
   imports = [
+    # Modules from the refpolicy, transcribed to Nix so that
+    # they can be extended declaratively.
     ./base
-    ./bubblewrap.nix
-    ./chromium.nix
-    ./dbus.nix
-    ./files.nix
-    ./init.nix
-    ./logging.nix
-    ./nscd.nix
-    ./selinuxutil.nix
-    ./senix-init.nix
-    ./senix-logging.nix
-    ./senix-store.nix
-    ./systemd.nix
+
+    # Custom modules bespoke to SENix / NixOS.
+    ./custom
+
+    # Modifications (mostly `.fc` labeling relate) and additions to modules
+    # in the refpolicy.
     ./targeted
   ];
 }

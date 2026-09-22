@@ -7,7 +7,6 @@
   config = lib.mkIf config.services.nscd.enable {
     security.selinux.modules = {
       nscd = {
-        layer = "services";
         fileContext = {
           storePaths = {
             nscd = [

@@ -14,7 +14,6 @@
   # Based on the refpolicy's policy/modules/system/systemd.fc
   config.security.selinux.modules = {
     systemd = {
-      layer = "system";
       fileContext = {
         storePaths = {
           systemd =
