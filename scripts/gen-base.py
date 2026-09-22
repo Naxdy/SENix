@@ -64,8 +64,7 @@ REFPOLICY_SRC_ATTR = (
 )
 
 #: Reference Policy layers we do not translate at all.
-IGNORED_LAYERS = {
-}
+IGNORED_LAYERS = {}
 
 #: Module name globs (``fnmatch``, not regex) that are skipped entirely.
 IGNORED_MODULES = [
@@ -216,16 +215,26 @@ def expand_conditionals(text: str, resolve_all: bool) -> str:
                         truth = cond in ACTIVE_DEFINES
                         if name == "ifndef":
                             truth = not truth
-                        out.append(expand_conditionals(then_body if truth else else_body, resolve_all))
+                        out.append(
+                            expand_conditionals(
+                                then_body if truth else else_body, resolve_all
+                            )
+                        )
                     elif is_distro:
                         # `ifdef(distro_x)` is false and `ifndef(distro_x)` is
                         # true for DISTRO=nixos, so keep the corresponding body.
                         keep_then = name == "ifndef"
-                        out.append(expand_conditionals(then_body if keep_then else else_body, resolve_all))
+                        out.append(
+                            expand_conditionals(
+                                then_body if keep_then else else_body, resolve_all
+                            )
+                        )
                     else:
                         # Not ours: keep it verbatim, but still recurse into the
                         # arguments so nested distro blocks are handled.
-                        kept = ",".join(expand_conditionals(a, resolve_all) for a in args)
+                        kept = ",".join(
+                            expand_conditionals(a, resolve_all) for a in args
+                        )
                         out.append(f"{name}({kept})")
                     i = end
                     continue
@@ -447,7 +456,11 @@ def nix_dq(value: str) -> str:
     Nix silently drops the backslash of an unknown escape sequence, so the
     backslashes of the `.fc` regexes must be doubled to survive.
     """
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"').replace("${", "\\${") + '"'
+    return (
+        '"'
+        + value.replace("\\", "\\\\").replace('"', '\\"').replace("${", "\\${")
+        + '"'
+    )
 
 
 def nix_indented(value: str, indent: int = 6) -> str:
@@ -559,7 +572,9 @@ def main() -> int:
     parser.add_argument("--src", help="pre-materialised refpolicy source tree")
     parser.add_argument("--out", default=str(OUT_DIR), help="output directory")
     parser.add_argument(
-        "--dry-run", action="store_true", help="report what would be written, write nothing"
+        "--dry-run",
+        action="store_true",
+        help="report what would be written, write nothing",
     )
     args = parser.parse_args()
 
@@ -586,7 +601,9 @@ def main() -> int:
             interface = base.with_suffix(".if").read_text()
             te = base.with_suffix(".te").read_text()
             strip_usr = any(fnmatch.fnmatch(module, pattern) for pattern in STRIP_USR)
-            rules = render_rules(parse_fc(fc_path.read_text(), module, strip_usr), module)
+            rules = render_rules(
+                parse_fc(fc_path.read_text(), module, strip_usr), module
+            )
             content = render_module(
                 module,
                 layer,
@@ -624,9 +641,13 @@ def main() -> int:
     print(f"source: {src}")
     for layer, count in per_layer.items():
         print(f"  {layer}: {count} modules")
-    print(f"total: {len(generated)} modules, {len(indexes)} index modules -> {out_root}")
+    print(
+        f"total: {len(generated)} modules, {len(indexes)} index modules -> {out_root}"
+    )
     if dropped_components:
-        summary = ", ".join(f"/{k or '<root>'} ({v})" for k, v in sorted(dropped_components.items()))
+        summary = ", ".join(
+            f"/{k or '<root>'} ({v})" for k, v in sorted(dropped_components.items())
+        )
         print(f"dropped top-level paths: {summary}")
     if args.dry_run:
         print("dry run: nothing written")
