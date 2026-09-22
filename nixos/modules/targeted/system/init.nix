@@ -6,9 +6,7 @@ let
   # (e.g. `restorecond.nix`, which labels its unit `restorecond_unit_t`
   # instead). Two modules assigning different types to the same unit store path
   # is a conflicting file context rule, which `semodule` rejects outright.
-  claims =
-    name:
-    !(lib.hasInfix "selinux" name) && !(lib.elem name config.security.selinux.exclusions.systemdUnits);
+  claims = name: !(lib.elem name config.security.selinux.exclusions.systemdUnits);
 in
 {
   security.selinux.modules.init = {

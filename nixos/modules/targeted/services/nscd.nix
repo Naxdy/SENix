@@ -8,6 +8,14 @@
   config = lib.mkIf config.services.nscd.enable {
     security.selinux.modules = {
       nscd = {
+        typeEnforcement = ''
+          gen_require(`
+            type nscd_t;
+            class process { getsched };
+          ')
+
+          allow nscd_t self:process getsched;
+        '';
         fileContext = {
           storePaths = {
             nscd = lib.optional (!config.services.nscd.enableNsncd) [
@@ -21,20 +29,6 @@
             "/run/nscd/socket" = "-s gen_context(system_u:object_r:nscd_runtime_t,s0)";
           };
         };
-      };
-      nscd_extra = {
-        layer = "services";
-        typeEnforcement = ''
-          policy_module(nscd_extra)
-
-          gen_require(`
-            type nscd_t;
-            class process { getsched };
-          ')
-
-          allow nscd_t self:process getsched;
-          kernel_use_fds(nscd_t);
-        '';
       };
     };
   };

@@ -521,7 +521,7 @@ in
 
                 fc=/etc/selinux/targeted/contexts/files/file_contexts
                 ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
-                  "$fc" /run/current-system
+                  "$fc" /run
               fi
 
               echo "$cmd" >/var/lib/selinux/activate-check
@@ -529,6 +529,10 @@ in
           '';
       };
     };
+
+    security.selinux.exclusions.systemdUnits = [
+      config.boot.initrd.systemd.services.selinux-init.name
+    ];
 
     boot.initrd.systemd = {
       storePaths = [

@@ -26,7 +26,9 @@
             config.systemd.packages
             ++ (lib.filter lib.isDerivation (
               lib.mapAttrsToList (_: value: value.unit) (
-                lib.filterAttrs (name: _: lib.hasInfix "selinux" name) config.systemd.units
+                lib.filterAttrs (
+                  name: _: !(lib.elem name config.security.selinux.exclusions.systemdUnits)
+                ) config.systemd.units
               )
             ))
           );
