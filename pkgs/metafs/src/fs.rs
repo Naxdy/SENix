@@ -201,6 +201,23 @@ impl MetaFs {
         }
     }
 
+    /// Drop the per-path overlay-inode mapping for a removed directory entry.
+    ///
+    /// Overlay inode numbers are minted per path, so a name that is removed and
+    /// later created again must receive a *fresh* inode. Reusing the removed
+    /// one would carry its in-memory attributes — most importantly an SELinux
+    /// label — onto unrelated new content.
+    ///
+    /// Only the name -> inode mapping is dropped: the inode itself (and its
+    /// attributes) is kept, because the kernel may still hold references to it
+    /// (e.g. an unlinked-but-open file), and metafs deliberately never frees
+    /// inodes on `forget` so that labels are never lost to cache eviction.
+    fn forget_path(&self, parent: INodeNo, name: &OsStr) {
+        if let Some(children) = self.path_inos.get(&parent.0) {
+            children.remove(name);
+        }
+    }
+
     /// Stable synthetic overlay inode for the child `name` of overlay inode
     /// `parent`.
     ///
@@ -697,6 +714,7 @@ impl Filesystem for MetaFs {
         match fs::remove_file(parent_path.join(name)) {
             Ok(()) => {
                 self.listings.remove(&parent.0);
+                self.forget_path(parent, name);
                 reply.ok();
             }
             Err(e) => {
@@ -718,6 +736,7 @@ impl Filesystem for MetaFs {
         match fs::remove_dir(parent_path.join(name)) {
             Ok(()) => {
                 self.listings.remove(&parent.0);
+                self.forget_path(parent, name);
                 reply.ok();
             }
             Err(e) => {

@@ -128,6 +128,26 @@ testers.runNixOSTest {
               f' = "system_u:object_r:etc_t:s0"'
           )
 
+      with subtest("a recreated path does not inherit the removed inode's label"):
+          # Overlay inodes are minted per path. Removing a path and creating a
+          # new file of the same name must not hand the new file the old one's
+          # overlay inode — that would leak its in-memory label onto unrelated
+          # content.
+          recreated = f"{mnt}/recreated.txt"
+          machine.succeed(f"printf first > {recreated}")
+          machine.succeed(f"setfattr -n security.selinux -v system_u:object_r:etc_t:s0 {recreated}")
+          machine.succeed(
+              f'test "$(getfattr -n security.selinux --only-values "{recreated}")"'
+              f' = "system_u:object_r:etc_t:s0"'
+          )
+
+          machine.succeed(f"rm {recreated}")
+          machine.succeed(f"printf second > {recreated}")
+
+          # The recreated object is a different file: it must not carry the
+          # previous label.
+          machine.fail(f"getfattr -n security.selinux {recreated}")
+
       with subtest("cleanup: explicit unmount ends the overlay"):
           # Killing the daemon alone only aborts the FUSE connection and leaves
           # a stale (unreachable) mount in /proc/mounts; unmounting while the
