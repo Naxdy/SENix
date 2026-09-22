@@ -86,10 +86,8 @@ in
         ConditionPathExists = "/etc/selinux/restorecond.conf";
       };
       serviceConfig = {
-        Type = "forking";
-        # TODO: doesn't fork anymore starting with 3.11
-        ExecStart = "${lib.getExe cfg.package}";
-        PIDFile = "/run/restorecond.pid";
+        Type = "simple";
+        ExecStart = "${lib.getExe cfg.package} -F";
       };
     };
 

@@ -13,7 +13,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   src = fetchurl {
     url = "https://github.com/SELinuxProject/selinux/releases/download/${finalAttrs.version}/restorecond-${finalAttrs.version}.tar.gz";
-    hash = lib.fakeHash;
+    hash = "sha256-9AzlJG1CdGsi2+NjxDxuvSjQUbVo5MBtLewcS4qHpco=";
   };
 
   nativeBuildInputs = [
@@ -38,6 +38,16 @@ stdenv.mkDerivation (finalAttrs: {
     "SYSTEMDSYSTEMUNITDIR=$(out)/lib/systemd/system"
     "SYSTEMDUSERUNITDIR=$(out)/lib/systemd/user"
   ];
+
+  # Restorecond ships its own systemd services, but they don't work for
+  # us ootb, and due to the amount of modifications we need to make
+  # it's preferable to just use the Nix module system instead.
+  #
+  # To prevent users from accidentally enabling the upstream services,
+  # e.g. via `config.systemd.packages`, we get rid of them here.
+  postInstall = ''
+    rm -rf $out/lib
+  '';
 
   meta = {
     description = "SELinux automatic relabeling daemon";

@@ -17,8 +17,10 @@ in
 
           src = final.fetchurl {
             url = "https://github.com/SELinuxProject/selinux/releases/download/${version}/libselinux-${version}.tar.gz";
-            hash = lib.fakeHash;
+            hash = "sha256-c9QZxuIOh0rapAGTcsvQl+7PTSduE/J+xeZ9NcC9IDw=";
           };
+
+          patches = [ ];
         }
       ))
     else
