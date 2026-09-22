@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   ...
 }:
 {
@@ -9,12 +10,14 @@
       nscd = {
         fileContext = {
           storePaths = {
-            nscd = [
+            nscd = lib.optional (!config.services.nscd.enableNsncd) [
               config.services.nscd.package
             ];
+            nsncd = lib.optional config.services.nscd.enableNsncd pkgs.nsncd;
           };
           rules = {
             "@nscd@/bin/nscd" = "--	gen_context(system_u:object_r:nscd_exec_t,s0)";
+            "@nsncd@/bin/nsncd" = "--	gen_context(system_u:object_r:nscd_exec_t,s0)";
             "/run/nscd/socket" = "-s gen_context(system_u:object_r:nscd_runtime_t,s0)";
           };
         };
