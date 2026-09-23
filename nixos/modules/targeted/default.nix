@@ -5,6 +5,7 @@
   # to relying on catch-all patterns.
 
   imports = [
+    ./apps
     ./kernel
     ./services
     ./system

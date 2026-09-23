@@ -1,6 +1,8 @@
 ---
 name: transcribe-module
-description: Transcribe a reference-policy (refpolicy) SELinux module in the SENix repo from store-path catch-all patterns to exact, configuration-scoped store paths — add a `selinuxSupport` option gated on the program's own enable flag, write a hand-maintained module under `nixos/modules/targeted/<layer>/`, list the module in `STRIP_USR` in `scripts/gen-base.py`, and regenerate the base tree. Use when asked to transcribe/target a module (e.g. "transcribe logrotate"), to stop a module labelling every store path matching a `/usr` catch-all, or to make a module's labels depend on whether its program is enabled.
+description: Transcribe a reference-policy (refpolicy) SELinux module in the SENix repo from store-path catch-all patterns to exact, configuration-scoped store paths — add a `selinuxSupport` option gated on the program's own enable flag, write a hand-maintained module under `nixos/modules/targeted/<layer>/`, list the module in `STRIP_USR` in `scripts/gen-base.py`, and regenerate the base tree. Use when asked to transcribe/target a module (e.g. "transcribe logrotate"), to stop a module labelling every store path matching a `/usr` catch-all, or to make a module's labels depend on whether its program is enabled. For
+modules in the `apps` layer, generate them with the `mkSenixAppModule` helper
+from `nixos/modules/targeted/apps/default.nix`.
 ---
 
 # Transcribing a refpolicy module to targeted store paths
@@ -31,6 +33,7 @@ right type and stop labelling unrelated paths.
 | `nixos/modules/base/<layer>/<module>.nix` | **Generated** by `scripts/gen-base.py`. Never hand-edit. |
 | `nixos/modules/targeted/<layer>/<module>.nix` | Hand-written transcription. Mirrors the refpolicy layer tree. |
 | `nixos/modules/targeted/default.nix` | Imports `./<layer>`. |
+| `nixos/modules/targeted/apps/default.nix` | **Apps layer factory**: defines `helpers` (`mkSenixAppModule`, `mkServiceProgramModule`) and imports each apps module *as a function* (`(import ./<module>.nix { inherit helpers; })`) — no bare `./<module>.nix` entries. |
 | `nixos/modules/targeted/<layer>/default.nix` | Imports each transcribed module (`./<module>.nix`). |
 | `nixos/modules/default.nix` | Imports `./targeted` (already wired). |
 | `scripts/gen-base.py` | `STRIP_USR` (module names), `IGNORED_MODULES`, `IGNORED_LAYERS`. |
@@ -149,12 +152,77 @@ Notes:
   `-l`. Multiple flags for one path are a **list**:
   `"@foo@/lib" = [ "-d gen_context(…)" "-l gen_context(…)" ];`.
 
+#### Apps layer: don't write that by hand — use `mkSenixAppModule`
+
+Everything above (the `selinuxSupport` option, the module-level `layer`, the
+`storePaths`/`rules` wiring) is already implemented by the `apps` layer's
+factory, introduced in commit `f476f36`
+(`nixos/modules/targeted/apps/default.nix`). **A module under
+`targeted/apps/` is a call to the helper, not a copy of the fail2ban
+template.** The file takes the helpers as its argument and is registered in
+`apps/default.nix` with that argument applied (see step 4) — the helper is not
+a module-system argument, so `{ helpers }:` is required:
+
+```nix
+{ helpers }:
+helpers.mkSenixAppModule {
+  name = "thunderbird";     # nixpkgs option name; also `@thunderbird@` + storePaths key
+  category = "programs";    # `programs` or `services`
+  rules = {
+    "@thunderbird@/bin/thunderbird.*" = "-- gen_context(system_u:object_r:thunderbird_exec_t,s0)";
+  };
+}
+```
+
+Arguments (all documented at the definition in `apps/default.nix`):
+
+- `name` — the `${category}.${name}` gate, plus the `storePaths` key and the
+  `@${name}@` rule substitution.
+- `category` — `programs` or `services`.
+- `moduleName ? null` — SELinux module name when it differs from `name`
+  (second `chromium.nix` call: `google-chrome` → module `chromium`).
+- `rules` — becomes `fileContext.rules`, verbatim.
+- `extraPaths ? { }` — extra `fileContext.storePaths` entries, merged **under**
+  the default `{ ${name} = [ cfg.package ]; }` — merge order is
+  `extraPaths // { ${name} = [ cfg.package ]; }`, so the default key wins and
+  `extraPaths` cannot override `cfg.package`.
+- `addPackageOption ? null` — also declare
+  `${category}.${name}.package = mkPackageOption pkgs <attr> { }` for programs
+  nixpkgs gives no package option (chromium, bubblewrap).
+- `addEnableOption ? false` — also declare `${category}.${name}.enable`
+  (requires `addPackageOption`); for programs with **no** nixpkgs option at
+  all (`programs.bubblewrap`).
+
+What it wires for you:
+
+- `options.${category}.${name}.selinuxSupport`, defaulting to
+  `config.security.selinux.enable` — the manual template above, verbatim;
+- `security.selinux.modules.<m>.layer = lib.mkDefault "apps"` inside the gated
+  config (pitfall 1 already solved — but `mkDefault`, so another definition
+  still overrides it);
+- the gate: `canEnable && cfg.enable && cfg.selinuxSupport`, where `canEnable`
+  requires the **pre-existing** nixpkgs options `${category}.{enable,package}`.
+  With neither an nixpkgs `package` option nor `addPackageOption`, the module
+  can never fire;
+- `environment.systemPackages = [ cfg.package ]` when it added the package
+  option and the app is enabled.
+
+`mkServiceProgramModule name` wraps two `mkSenixAppModule` calls
+(`programs.<name>` + `services.<name>`) but forwards only `name` and
+`category` — `rules`/`addPackageOption` are not passed, and nothing uses it
+yet. Read its definition before relying on it; usually write two explicit
+calls (as `chromium.nix` does).
+
 ### 4. Include it in the module tree
 
 - New layer directory: add `nixos/modules/targeted/<layer>/default.nix` with
   `{ ... }: { imports = [ ./<module>.nix … ]; }`, and add `./<layer>` to the
   `imports` of `nixos/modules/targeted/default.nix`.
 - Existing layer: append `./<module>.nix` to that layer's `default.nix`.
+- **`apps` layer is special**: `apps/default.nix` binds `helpers` in its `let`,
+  so its `imports` entries *apply* it — mirror the neighbours:
+  `(import ./<module>.nix { inherit helpers; })`. A bare `./<module>.nix`
+  leaves `helpers` unset in the file's argument set and fails evaluation.
 
 Imports are ordinary Nix file names (hyphens allowed); only `.nix` files.
 
@@ -300,7 +368,9 @@ git add -N nixos/modules/targeted/<layer>/…  nixos/modules/targeted/<layer>/de
 
 8. **`apps`-layer modules have no base module** (`IGNORED_LAYERS`), so the
    targeted file is the *only* source of their `.fc` — it must set `layer`
-   explicitly and provide the full rule set.
+   explicitly and provide the full rule set. `mkSenixAppModule` does both
+   (`layer = lib.mkDefault "apps"`, `inherit rules`); hand-written files must
+   keep doing it themselves.
 
 9. **Do not hand-edit generated files.** `gen-base.py` overwrites every
    `nixos/modules/base/**` file and deletes stale ones; any manual change is
@@ -326,9 +396,14 @@ git add -N nixos/modules/targeted/<layer>/…  nixos/modules/targeted/<layer>/de
 - Generated base example with stripped rules:
   `nixos/modules/base/services/fail2ban.nix` (see the three commented
   `/usr/bin/fail2ban*` lines).
+- Apps-layer helper API + registration:
+  `targeted/apps/default.nix` (`mkSenixAppModule` argument docs, `helpers`
+  wiring); exemplars `thunderbird.nix` (minimal helper call),
+  `bubblewrap.nix` (`addPackageOption` + `addEnableOption` for a program
+  nixpkgs doesn't provide), `chromium.nix` (two calls into one SELinux module
+  via `moduleName`, plus `extraPaths` for wrapper/unwrapped packages).
 - Hand-written exemplars: `targeted/services/fail2ban.nix` (minimal),
-  `dbus.nix` (multi-package), `chromium.nix` (apps layer, wrapper package,
-  option-augmentation), `systemd.nix`/`init.nix`/`logging.nix`/`selinuxutil.nix`
+  `dbus.nix` (multi-package), `systemd.nix`/`init.nix`/`logging.nix`/`selinuxutil.nix`
   (store-path transcription of modules that also keep live `/etc`/`/run`/`/var`
   rules), `nscd.nix` (transcription + `*_extra` grants).
 - `tests/selinux-enforce/test.nix` — the VM test; `tests/screen` for authoring a
