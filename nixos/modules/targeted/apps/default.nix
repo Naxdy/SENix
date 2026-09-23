@@ -120,6 +120,7 @@ in
   imports = [
     (import ./bubblewrap.nix { inherit helpers; })
     (import ./chromium.nix { inherit helpers; })
+    (import ./pipewire.nix { inherit helpers; })
     (import ./thunderbird.nix { inherit helpers; })
   ];
 }

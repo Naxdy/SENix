@@ -85,6 +85,7 @@ STRIP_USR = [
     "init",
     "logging",
     "nscd",
+    "pipewire",
     "selinuxutil",
     "systemd",
 ]

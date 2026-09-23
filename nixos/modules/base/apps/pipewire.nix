@@ -405,7 +405,7 @@
     fileContext = {
       rules = {
         # PipeWire daemon executable.
-        "/nix/store/[^/]+/bin/pipewire" = "-- gen_context(system_u:object_r:pipewire_exec_t,s0)";
+        # "/usr/bin/pipewire" = "-- gen_context(system_u:object_r:pipewire_exec_t,s0)";
 
         # System-service runtime directory (/run/pipewire).
         "/run/pipewire(/.*)?" = "gen_context(system_u:object_r:pipewire_runtime_t,s0)";
