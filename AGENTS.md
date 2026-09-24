@@ -10,7 +10,7 @@
 - `nixos/build.nix` — builds the combined SELinux policy (refpolicy base + every declared module) into `.pp` packages.
 - `nixos/modules/` — per-component policy module definitions (files, systemd, init, corecommands, libraries, dbus, nscd, selinuxutil, chromium, bubblewrap, senix-store, senix-init).
 - `metafs/` — Rust FUSE daemon serving the read-only store overlay (`src/main.rs`, `src/fs.rs`, `src/xattrs.rs`).
-- `tests/` — NixOS VM tests: `selinux-enforce`, `selinux-switch`, `metafs`, `screen`.
+- `tests/` — NixOS VM tests: `selinux-enforce`, `selinux-switch`, `restorecond-store`, `metafs`, `plasma-login`.
 
 ## Boot flow
 
@@ -65,7 +65,7 @@
 - `tests/selinux-enforce` — VM that boots permissive-mode and proves enforcement works: a confined domain can read its own data but is denied a secret file, and type transitions/relabels are verified.
 - `tests/selinux-switch` — switches a VM into an exact replica of its own configuration — built as a `specialisation`, so the only difference is the declared one — with the test's policy module removed, and asserts the store path's label is recomputed.
 - `tests/metafs` — mounts metafs in a VM; exercises passthrough reads/writes/mutations, in-memory xattrs (incl. `security.selinux`), self-mount over its own source, and the `mount(8)` helper.
-- `tests/screen` — reference for authoring a full custom module from `.te`/`.if`/`.fc` files (screen/tmux).
+- `tests/plasma-login` — boots KDE Plasma 6 (SDDM greeter, manual login, Wayland session, Dolphin) in permissive mode to prove the graphical login flow end to end. Because `poweroff` never completes after a live KDE session (systemd blocks on stopping the user session), the test ends with `machine.crash()` instead of relying on graceful shutdown.
 
 ## Useful resources
 

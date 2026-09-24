@@ -146,6 +146,10 @@
           selinux-switch = pkgs.callPackage ./tests/selinux-switch/test.nix {
             inherit (self.nixosModules) senix;
           };
+
+          plasma-login = pkgs.callPackage ./tests/plasma-login/test.nix {
+            inherit (self.nixosModules) senix;
+          };
         }
       );
     };
