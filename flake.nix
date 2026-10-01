@@ -150,6 +150,10 @@
           plasma-login = pkgs.callPackage ./tests/plasma-login/test.nix {
             inherit (self.nixosModules) senix;
           };
+
+          fixed-output = pkgs.callPackage ./tests/fixed-output/test.nix {
+            inherit (self.nixosModules) senix;
+          };
         }
       );
     };
