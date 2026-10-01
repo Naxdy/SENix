@@ -531,36 +531,44 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/public_git(/.*)?" = "gen_context(system_u:object_r:git_user_content_t,s0)";
-        "HOME_DIR/\\.config/git(/.*)?" = "gen_context(system_u:object_r:git_xdg_config_t,s0)";
-        "HOME_DIR/\\.gitconfig" = "-- gen_context(system_u:object_r:git_xdg_config_t,s0)";
-        "HOME_DIR/\\.git-credentials" = "-- gen_context(system_u:object_r:git_xdg_config_t,s0)";
+        "HOME_DIR/public_git(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:git_user_content_t,s0)";
+        "HOME_DIR/\\.config/git(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:git_xdg_config_t,s0)";
+        "HOME_DIR/\\.gitconfig" = lib.mkDefault "-- gen_context(system_u:object_r:git_xdg_config_t,s0)";
+        "HOME_DIR/\\.git-credentials" =
+          lib.mkDefault "-- gen_context(system_u:object_r:git_xdg_config_t,s0)";
 
-        "/nix/store/[^/]+/bin/git" = "-- gen_context(system_u:object_r:git_exec_t,s0)";
-        "/nix/store/[^/]+/bin/git-[^/]+" = "-- gen_context(system_u:object_r:git_exec_t,s0)";
-        "/nix/store/[^/]+/bin/git2_cli" = "-- gen_context(system_u:object_r:git_exec_t,s0)";
+        "/nix/store/[^/]+/bin/git" = lib.mkDefault "-- gen_context(system_u:object_r:git_exec_t,s0)";
+        "/nix/store/[^/]+/bin/git-[^/]+" = lib.mkDefault "-- gen_context(system_u:object_r:git_exec_t,s0)";
+        "/nix/store/[^/]+/bin/git2_cli" = lib.mkDefault "-- gen_context(system_u:object_r:git_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/git-core/git-daemon" = "-- gen_context(system_u:object_r:gitd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/git-core/git-daemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gitd_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/git-core/git" = "-- gen_context(system_u:object_r:git_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/git-core/git-[^/]+" = "-- gen_context(system_u:object_r:git_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/git-core/git-daemon" = "-- gen_context(system_u:object_r:gitd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/git-core/git" =
+          lib.mkDefault "-- gen_context(system_u:object_r:git_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/git-core/git-[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:git_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/git-core/git-daemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gitd_exec_t,s0)";
 
         "/nix/store/[^/]+/share/gitweb/gitweb\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
         "/nix/store/[^/]+/share/gitweb/static(/.*)?" =
-          "gen_context(system_u:object_r:httpd_git_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_git_content_t,s0)";
 
-        "/var/cache/cgit(/.*)?" = "gen_context(system_u:object_r:httpd_git_rw_content_t,s0)";
-        "/var/cache/gitweb-caching(/.*)?" = "gen_context(system_u:object_r:httpd_git_rw_content_t,s0)";
+        "/var/cache/cgit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_git_rw_content_t,s0)";
+        "/var/cache/gitweb-caching(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_git_rw_content_t,s0)";
 
-        "/var/lib/git(/.*)?" = "gen_context(system_u:object_r:git_sys_content_t,s0)";
+        "/var/lib/git(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:git_sys_content_t,s0)";
 
-        "/var/www/cgi-bin/cgit" = "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
-        "/var/www/git(/.*)?" = "gen_context(system_u:object_r:httpd_git_content_t,s0)";
-        "/var/www/git/gitweb\\.cgi" = "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
+        "/var/www/cgi-bin/cgit" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
+        "/var/www/git(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_git_content_t,s0)";
+        "/var/www/git/gitweb\\.cgi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
         "/var/www/gitweb-caching/gitweb\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_git_script_exec_t,s0)";
       };
     };
   };

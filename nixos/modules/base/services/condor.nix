@@ -344,31 +344,38 @@
     '';
     fileContext = {
       rules = {
-        "/etc/condor(/.*)?" = "gen_context(system_u:object_r:condor_conf_t,s0)";
+        "/etc/condor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/condor" = "-- gen_context(system_u:object_r:condor_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/condor" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/bin/condor_collector" =
-          "-- gen_context(system_u:object_r:condor_collector_exec_t,s0)";
-        "/nix/store/[^/]+/bin/condor_master" = "-- gen_context(system_u:object_r:condor_master_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_collector_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_master" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_master_exec_t,s0)";
         "/nix/store/[^/]+/bin/condor_negotiator" =
-          "-- gen_context(system_u:object_r:condor_negotiator_exec_t,s0)";
-        "/nix/store/[^/]+/bin/condor_procd" = "-- gen_context(system_u:object_r:condor_procd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/condor_schedd" = "-- gen_context(system_u:object_r:condor_schedd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/condor_startd" = "-- gen_context(system_u:object_r:condor_startd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/condor_starter" = "-- gen_context(system_u:object_r:condor_startd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_negotiator_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_procd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_procd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_schedd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_schedd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_startd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_startd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_starter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:condor_startd_exec_t,s0)";
 
-        "/var/lib/condor(/.*)?" = "gen_context(system_u:object_r:condor_var_lib_t,s0)";
+        "/var/lib/condor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_var_lib_t,s0)";
 
-        "/var/lib/condor/execute(/.*)?" = "gen_context(system_u:object_r:condor_var_lib_t,s0)";
+        "/var/lib/condor/execute(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:condor_var_lib_t,s0)";
 
-        "/var/lib/condor/spool(/.*)?" = "gen_context(system_u:object_r:condor_var_lib_t,s0)";
+        "/var/lib/condor/spool(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_var_lib_t,s0)";
 
-        "/var/lock/condor(/.*)?" = "gen_context(system_u:object_r:condor_var_lock_t,s0)";
+        "/var/lock/condor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_var_lock_t,s0)";
 
-        "/var/log/condor(/.*)?" = "gen_context(system_u:object_r:condor_log_t,s0)";
+        "/var/log/condor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_log_t,s0)";
 
-        "/run/condor(/.*)?" = "gen_context(system_u:object_r:condor_runtime_t,s0)";
+        "/run/condor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:condor_runtime_t,s0)";
       };
     };
   };

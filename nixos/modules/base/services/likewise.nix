@@ -383,113 +383,168 @@
     '';
     fileContext = {
       rules = {
-        "/etc/likewise-open(/.*)?" = "gen_context(system_u:object_r:likewise_etc_t,s0)";
+        "/etc/likewise-open(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:likewise_etc_t,s0)";
         "/etc/likewise-open/\\.pstore\\.lock" =
-          "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
         "/etc/likewise-open/likewise-krb5-ad\\.conf" =
-          "-- gen_context(system_u:object_r:likewise_krb5_ad_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_krb5_ad_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/dcerpcd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/eventlogd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/likewise" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/lsassd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/lwiod" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/lwregd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/lwsmd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/netlogond" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/srvsvcd" = "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dcerpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/eventlogd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/likewise" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lsassd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lwiod" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lwregd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lwsmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/netlogond" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/srvsvcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dcerpcd" = "-- gen_context(system_u:object_r:dcerpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/eventlogd" = "-- gen_context(system_u:object_r:eventlogd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lsassd" = "-- gen_context(system_u:object_r:lsassd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lwiod" = "-- gen_context(system_u:object_r:lwiod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lwregd" = "-- gen_context(system_u:object_r:lwregd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lwsmd" = "-- gen_context(system_u:object_r:lwsmd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/netlogond" = "-- gen_context(system_u:object_r:netlogond_exec_t,s0)";
-        "/nix/store/[^/]+/bin/srvsvcd" = "-- gen_context(system_u:object_r:srvsvcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dcerpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dcerpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/eventlogd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:eventlogd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lsassd" = lib.mkDefault "-- gen_context(system_u:object_r:lsassd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lwiod" = lib.mkDefault "-- gen_context(system_u:object_r:lwiod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lwregd" = lib.mkDefault "-- gen_context(system_u:object_r:lwregd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lwsmd" = lib.mkDefault "-- gen_context(system_u:object_r:lwsmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/netlogond" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netlogond_exec_t,s0)";
+        "/nix/store/[^/]+/bin/srvsvcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:srvsvcd_exec_t,s0)";
 
-        "/var/lib/likewise(/.*)?" = "gen_context(system_u:object_r:likewise_var_lib_t,s0)";
-        "/var/lib/likewise/\\.eventlog" = "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
-        "/var/lib/likewise/\\.lsassd" = "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
-        "/var/lib/likewise/\\.lwiod" = "-s gen_context(system_u:object_r:lwiod_var_socket_t,s0)";
-        "/var/lib/likewise/\\.regsd" = "-s gen_context(system_u:object_r:lwregd_var_socket_t,s0)";
-        "/var/lib/likewise/\\.lwsm" = "-s gen_context(system_u:object_r:lwsmd_var_socket_t,s0)";
-        "/var/lib/likewise/\\.lwsmd-lock" = "-- gen_context(system_u:object_r:lwsmd_var_lib_t,s0)";
-        "/var/lib/likewise/\\.netlogond" = "-s gen_context(system_u:object_r:netlogond_var_socket_t,s0)";
-        "/var/lib/likewise/\\.ntlmd" = "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
+        "/var/lib/likewise(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise/\\.eventlog" =
+          lib.mkDefault "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
+        "/var/lib/likewise/\\.lsassd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
+        "/var/lib/likewise/\\.lwiod" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwiod_var_socket_t,s0)";
+        "/var/lib/likewise/\\.regsd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwregd_var_socket_t,s0)";
+        "/var/lib/likewise/\\.lwsm" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwsmd_var_socket_t,s0)";
+        "/var/lib/likewise/\\.lwsmd-lock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwsmd_var_lib_t,s0)";
+        "/var/lib/likewise/\\.netlogond" =
+          lib.mkDefault "-s gen_context(system_u:object_r:netlogond_var_socket_t,s0)";
+        "/var/lib/likewise/\\.ntlmd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
         "/var/lib/likewise/\\.pstore\\.lock" =
-          "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
         "/var/lib/likewise/krb5-affinity\\.conf" =
-          "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
-        "/var/lib/likewise/krb5cc.*" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise/krb5ccr_lsass" = "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
-        "/var/lib/likewise/krb5ccr_lsass\\..*" = "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
-        "/var/lib/likewise/LWNetsd\\.err" = "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
-        "/var/lib/likewise/lsasd\\.err" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise/regsd\\.err" = "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
-        "/var/lib/likewise/db" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
-        "/var/lib/likewise/db/lwi_events\\.db" = "-- gen_context(system_u:object_r:eventlogd_var_lib_t,s0)";
-        "/var/lib/likewise/db/sam\\.db" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
+        "/var/lib/likewise/krb5cc.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise/krb5ccr_lsass" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
+        "/var/lib/likewise/krb5ccr_lsass\\..*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
+        "/var/lib/likewise/LWNetsd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
+        "/var/lib/likewise/lsasd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise/regsd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
+        "/var/lib/likewise/db" = lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise/db/lwi_events\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:eventlogd_var_lib_t,s0)";
+        "/var/lib/likewise/db/sam\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
         "/var/lib/likewise/db/lsass-adcache\\.filedb\\..*" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise/db/lsass-adcache\\.db" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise/db/lsass-adcache\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
         "/var/lib/likewise/db/lsass-adstate\\.filedb" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise/db/registry\\.db" = "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
-        "/var/lib/likewise/rpc" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
-        "/var/lib/likewise/rpc/epmapper" = "-s gen_context(system_u:object_r:dcerpcd_var_socket_t, s0)";
-        "/var/lib/likewise/rpc/lsass" = "-s gen_context(system_u:object_r:lsassd_var_socket_t, s0)";
-        "/var/lib/likewise/rpc/socket" = "-s gen_context(system_u:object_r:eventlogd_var_socket_t, s0)";
-        "/var/lib/likewise/run" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
-        "/var/lib/likewise/run/rpcdep\\.dat" = "-- gen_context(system_u:object_r:dcerpcd_var_lib_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise/db/registry\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
+        "/var/lib/likewise/rpc" = lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise/rpc/epmapper" =
+          lib.mkDefault "-s gen_context(system_u:object_r:dcerpcd_var_socket_t, s0)";
+        "/var/lib/likewise/rpc/lsass" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t, s0)";
+        "/var/lib/likewise/rpc/socket" =
+          lib.mkDefault "-s gen_context(system_u:object_r:eventlogd_var_socket_t, s0)";
+        "/var/lib/likewise/run" = lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise/run/rpcdep\\.dat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dcerpcd_var_lib_t, s0)";
 
-        "/var/lib/likewise-open(/.*)?" = "gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise-open(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:likewise_var_lib_t,s0)";
         "/var/lib/likewise-open/\\.eventlog" =
-          "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.lsassd" = "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.lwiod" = "-s gen_context(system_u:object_r:lwiod_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.regsd" = "-s gen_context(system_u:object_r:lwregd_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.lwsm" = "-s gen_context(system_u:object_r:lwsmd_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.lwsmd-lock" = "-- gen_context(system_u:object_r:lwsmd_var_lib_t,s0)";
+          lib.mkDefault "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.lsassd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.lwiod" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwiod_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.regsd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwregd_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.lwsm" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lwsmd_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.lwsmd-lock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwsmd_var_lib_t,s0)";
         "/var/lib/likewise-open/\\.netlogond" =
-          "-s gen_context(system_u:object_r:netlogond_var_socket_t,s0)";
-        "/var/lib/likewise-open/\\.ntlmd" = "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
+          lib.mkDefault "-s gen_context(system_u:object_r:netlogond_var_socket_t,s0)";
+        "/var/lib/likewise-open/\\.ntlmd" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t,s0)";
         "/var/lib/likewise-open/\\.pstore\\.lock" =
-          "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:likewise_pstore_lock_t,s0)";
         "/var/lib/likewise-open/krb5-affinity\\.conf" =
-          "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
-        "/var/lib/likewise-open/krb5cc.*" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise-open/krb5ccr_lsass" = "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
+        "/var/lib/likewise-open/krb5cc.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise-open/krb5ccr_lsass" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
         "/var/lib/likewise-open/krb5ccr_lsass\\..*" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
-        "/var/lib/likewise-open/LWNetsd\\.err" = "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
-        "/var/lib/likewise-open/lsasd\\.err" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise-open/regsd\\.err" = "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
-        "/var/lib/likewise-open/db" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t, s0)";
+        "/var/lib/likewise-open/LWNetsd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netlogond_var_lib_t,s0)";
+        "/var/lib/likewise-open/lsasd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise-open/regsd\\.err" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
+        "/var/lib/likewise-open/db" =
+          lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
         "/var/lib/likewise-open/db/lwi_events\\.db" =
-          "-- gen_context(system_u:object_r:eventlogd_var_lib_t,s0)";
-        "/var/lib/likewise-open/db/sam\\.db" = "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:eventlogd_var_lib_t,s0)";
+        "/var/lib/likewise-open/db/sam\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
         "/var/lib/likewise-open/db/lsass-adcache\\.filedb\\..*" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
         "/var/lib/likewise-open/db/lsass-adcache\\.db" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
         "/var/lib/likewise-open/db/lsass-adstate\\.filedb" =
-          "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
-        "/var/lib/likewise-open/db/registry\\.db" = "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
-        "/var/lib/likewise-open/rpc" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
-        "/var/lib/likewise-open/rpc/epmapper" = "-s gen_context(system_u:object_r:dcerpcd_var_socket_t,s0)";
-        "/var/lib/likewise-open/rpc/lsass" = "-s gen_context(system_u:object_r:lsassd_var_socket_t, s0)";
-        "/var/lib/likewise-open/rpc/socket" = "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
-        "/var/lib/likewise-open/run" = "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lsassd_var_lib_t,s0)";
+        "/var/lib/likewise-open/db/registry\\.db" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lwregd_var_lib_t,s0)";
+        "/var/lib/likewise-open/rpc" =
+          lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
+        "/var/lib/likewise-open/rpc/epmapper" =
+          lib.mkDefault "-s gen_context(system_u:object_r:dcerpcd_var_socket_t,s0)";
+        "/var/lib/likewise-open/rpc/lsass" =
+          lib.mkDefault "-s gen_context(system_u:object_r:lsassd_var_socket_t, s0)";
+        "/var/lib/likewise-open/rpc/socket" =
+          lib.mkDefault "-s gen_context(system_u:object_r:eventlogd_var_socket_t,s0)";
+        "/var/lib/likewise-open/run" =
+          lib.mkDefault "-d gen_context(system_u:object_r:likewise_var_lib_t,s0)";
         "/var/lib/likewise-open/run/rpcdep\\.dat" =
-          "-- gen_context(system_u:object_r:dcerpcd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dcerpcd_var_lib_t,s0)";
 
-        "/run/eventlogd\\.pid" = "-- gen_context(system_u:object_r:eventlogd_runtime_t,s0)";
-        "/run/lsassd\\.pid" = "-- gen_context(system_u:object_r:lsassd_runtime_t,s0)";
-        "/run/lwiod\\.pid" = "-- gen_context(system_u:object_r:lwiod_runtime_t,s0)";
-        "/run/lwregd\\.pid" = "-- gen_context(system_u:object_r:lwregd_runtime_t,s0)";
-        "/run/netlogond\\.pid" = "-- gen_context(system_u:object_r:netlogond_runtime_t,s0)";
-        "/run/srvsvcd\\.pid" = "-- gen_context(system_u:object_r:srvsvcd_runtime_t,s0)";
+        "/run/eventlogd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:eventlogd_runtime_t,s0)";
+        "/run/lsassd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:lsassd_runtime_t,s0)";
+        "/run/lwiod\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:lwiod_runtime_t,s0)";
+        "/run/lwregd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:lwregd_runtime_t,s0)";
+        "/run/netlogond\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:netlogond_runtime_t,s0)";
+        "/run/srvsvcd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:srvsvcd_runtime_t,s0)";
       };
     };
   };

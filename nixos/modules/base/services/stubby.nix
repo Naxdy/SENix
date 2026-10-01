@@ -61,12 +61,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/stubby(/.*)?" = "-- gen_context(system_u:object_r:stubby_etc_t,s0)";
+        "/etc/stubby(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:stubby_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/stubby" = "-- gen_context(system_u:object_r:stubby_exec_t,s0)";
+        "/nix/store/[^/]+/bin/stubby" = lib.mkDefault "-- gen_context(system_u:object_r:stubby_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/stubby.*\\.service" =
-          "-- gen_context(system_u:object_r:stubby_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:stubby_unit_t,s0)";
       };
     };
   };

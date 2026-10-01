@@ -351,23 +351,27 @@
     '';
     fileContext = {
       rules = {
-        "/etc/fapolicyd(/.*)?" = "gen_context(system_u:object_r:fapolicyd_config_t,s0)";
+        "/etc/fapolicyd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fapolicyd_config_t,s0)";
         "/etc/fapolicyd/compiled\\.rules" =
-          "-- gen_context(system_u:object_r:fapolicyd_compiled_rules_t,mls_systemhigh)";
+          lib.mkDefault "-- gen_context(system_u:object_r:fapolicyd_compiled_rules_t,mls_systemhigh)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*fapolicyd.*" =
-          "-- gen_context(system_u:object_r:fapolicyd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:fapolicyd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/fapolicyd" = "-- gen_context(system_u:object_r:fapolicyd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fapolicyd-cli" = "-- gen_context(system_u:object_r:fapolicyc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fagenrules" = "-- gen_context(system_u:object_r:fagenrules_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fapolicyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fapolicyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fapolicyd-cli" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fapolicyc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fagenrules" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fagenrules_exec_t,s0)";
 
-        "/var/lib/fapolicyd(/.*)?" = "gen_context(system_u:object_r:fapolicyd_var_lib_t,s0)";
+        "/var/lib/fapolicyd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fapolicyd_var_lib_t,s0)";
 
-        "/var/log/fapolicyd-access\\.log" = "-- gen_context(system_u:object_r:fapolicyd_log_t,s0)";
+        "/var/log/fapolicyd-access\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fapolicyd_log_t,s0)";
 
-        "/run/fapolicyd(/.*)?" = "gen_context(system_u:object_r:fapolicyd_runtime_t,s0)";
-        "/run/fapolicyd\\.pid" = "-- gen_context(system_u:object_r:fapolicyd_runtime_t,s0)";
+        "/run/fapolicyd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fapolicyd_runtime_t,s0)";
+        "/run/fapolicyd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:fapolicyd_runtime_t,s0)";
       };
     };
   };

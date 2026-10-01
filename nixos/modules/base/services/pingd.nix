@@ -155,13 +155,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/pingd\\.conf" = "-- gen_context(system_u:object_r:pingd_etc_t,s0)";
+        "/etc/pingd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:pingd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/whatsup-pingd" = "-- gen_context(system_u:object_r:pingd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/whatsup-pingd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pingd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pingd" = "-- gen_context(system_u:object_r:pingd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pingd" = lib.mkDefault "-- gen_context(system_u:object_r:pingd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/pingd(/.*)?" = "gen_context(system_u:object_r:pingd_modules_t,s0)";
+        "/nix/store/[^/]+/lib/pingd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pingd_modules_t,s0)";
       };
     };
   };

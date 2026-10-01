@@ -512,46 +512,57 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/apt" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/etc/cron\\.daily/apt" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/apt" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apt-get" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apt-shell" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apt-show-versions" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/aptitude" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unattended-upgrade" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apt" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apt-get" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apt-shell" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apt-show-versions" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/aptitude" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unattended-upgrade" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/apt/apt\\.systemd\\.daily" =
-          "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/lib/apt/apt-helper" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/lib/apt/apt-helper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/update-apt-xapian-index" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/update-apt-xapian-index" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
 
         "/nix/store/[^/]+/share/unattended-upgrades/unattended-upgrade-shutdown" =
-          "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/synaptic" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/lib/packagekit/packagekitd" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/packagekitd" = "-- gen_context(system_u:object_r:apt_exec_t,s0)";
-        "/var/cache/apt-show-versions(/.*)?" = "gen_context(system_u:object_r:apt_var_cache_t,s0)";
-        "/var/cache/PackageKit(/.*)?" = "gen_context(system_u:object_r:apt_var_cache_t,s0)";
-        "/var/lib/PackageKit(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/nix/store/[^/]+/bin/synaptic" = lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/lib/packagekit/packagekitd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/packagekitd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apt_exec_t,s0)";
+        "/var/cache/apt-show-versions(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:apt_var_cache_t,s0)";
+        "/var/cache/PackageKit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_cache_t,s0)";
+        "/var/lib/PackageKit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
 
-        "/var/cache/apt(/.*)?" = "gen_context(system_u:object_r:apt_var_cache_t,s0)";
-        "/var/cache/apt-xapian-index`'(/.*)?" = "gen_context(system_u:object_r:apt_var_cache_t,s0)";
+        "/var/cache/apt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_cache_t,s0)";
+        "/var/cache/apt-xapian-index`'(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:apt_var_cache_t,s0)";
 
-        "/var/lib/apt(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
-        "/var/lib/aptitude(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
-        "/var/lib/apt-xapian-inde(x)(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
-        "/var/lib/app-info(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
-        "/var/lib/swcatalog(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
-        "/var/lib/unattended-upgrades(/.*)?" = "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/apt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/aptitude(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/apt-xapian-inde(x)(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/app-info(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/swcatalog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
+        "/var/lib/unattended-upgrades(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:apt_var_lib_t,s0)";
 
-        "/var/lock/aptitude" = "gen_context(system_u:object_r:apt_lock_t,s0)";
+        "/var/lock/aptitude" = lib.mkDefault "gen_context(system_u:object_r:apt_lock_t,s0)";
 
-        "/var/log/aptitude.*" = "gen_context(system_u:object_r:apt_var_log_t,s0)";
-        "/var/log/apt(/.*)?" = "gen_context(system_u:object_r:apt_var_log_t,s0)";
-        "/var/log/unattended-upgrades(/.*)" = "gen_context(system_u:object_r:apt_var_log_t,s0)";
+        "/var/log/aptitude.*" = lib.mkDefault "gen_context(system_u:object_r:apt_var_log_t,s0)";
+        "/var/log/apt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:apt_var_log_t,s0)";
+        "/var/log/unattended-upgrades(/.*)" =
+          lib.mkDefault "gen_context(system_u:object_r:apt_var_log_t,s0)";
       };
     };
   };

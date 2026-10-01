@@ -37,13 +37,14 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/man2html/cgi-bin/man/man2html" =
-          "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/man2html/cgi-bin/man/mansec" =
-          "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/man2html/cgi-bin/man/manwhatis" =
-          "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_man2html_script_exec_t,s0)";
 
-        "/var/cache/man2html(/.*)?" = "gen_context(system_u:object_r:httpd_man2html_script_cache_t,s0)";
+        "/var/cache/man2html(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_man2html_script_cache_t,s0)";
       };
     };
   };

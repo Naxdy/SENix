@@ -409,16 +409,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.(daily|weekly)/logrotate" = "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
-        "/etc/cron\\.(daily|weekly)/sysklogd" = "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
+        "/etc/cron\\.(daily|weekly)/logrotate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
+        "/etc/cron\\.(daily|weekly)/sysklogd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/logrotate" = "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
+        "/nix/store/[^/]+/bin/logrotate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logrotate_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*logrotate.*" =
-          "-- gen_context(system_u:object_r:logrotate_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:logrotate_unit_t,s0)";
 
-        "/var/lib/logrotate(/.*)?" = "gen_context(system_u:object_r:logrotate_var_lib_t,s0)";
-        "/var/lib/(misc/)?logrotate\\.status" = "-- gen_context(system_u:object_r:logrotate_var_lib_t,s0)";
+        "/var/lib/logrotate(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:logrotate_var_lib_t,s0)";
+        "/var/lib/(misc/)?logrotate\\.status" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logrotate_var_lib_t,s0)";
       };
     };
   };

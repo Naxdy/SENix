@@ -215,9 +215,10 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.wireshark(/.*)?" = "gen_context(system_u:object_r:wireshark_home_t,s0)";
+        "HOME_DIR/\\.wireshark(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wireshark_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/wireshark" = "-- gen_context(system_u:object_r:wireshark_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wireshark" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wireshark_exec_t,s0)";
       };
     };
   };

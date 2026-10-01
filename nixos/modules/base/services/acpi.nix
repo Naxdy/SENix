@@ -436,29 +436,32 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/acpid" = "-- gen_context(system_u:object_r:acpid_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/acpid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:acpid_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/acpid" = "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apm" = "-- gen_context(system_u:object_r:acpi_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apmd" = "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
-        "/nix/store/[^/]+/bin/powersaved" = "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/acpid" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apm" = lib.mkDefault "-- gen_context(system_u:object_r:acpi_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apmd" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/powersaved" =
+          lib.mkDefault "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/apmd.*\\.service" =
-          "-- gen_context(system_u:object_r:acpid_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:acpid_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/acpi_fakekeyd" = "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/acpi_fakekeyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:acpid_exec_t,s0)";
 
-        "/var/lock/subsys/acpid" = "-- gen_context(system_u:object_r:acpid_lock_t,s0)";
+        "/var/lock/subsys/acpid" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_lock_t,s0)";
 
-        "/var/log/acpid.*" = "-- gen_context(system_u:object_r:acpid_log_t,s0)";
+        "/var/log/acpid.*" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_log_t,s0)";
 
-        "/run/\\.?acpid\\.socket" = "-s gen_context(system_u:object_r:acpid_runtime_t,s0)";
-        "/run/acpid\\.pid" = "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
-        "/run/apmd\\.pid" = "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
-        "/run/powersaved\\.pid" = "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
-        "/run/powersave_socket" = "-s gen_context(system_u:object_r:acpid_runtime_t,s0)";
+        "/run/\\.?acpid\\.socket" = lib.mkDefault "-s gen_context(system_u:object_r:acpid_runtime_t,s0)";
+        "/run/acpid\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
+        "/run/apmd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
+        "/run/powersaved\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:acpid_runtime_t,s0)";
+        "/run/powersave_socket" = lib.mkDefault "-s gen_context(system_u:object_r:acpid_runtime_t,s0)";
 
-        "/var/lib/acpi(/.*)?" = "gen_context(system_u:object_r:acpid_var_lib_t,s0)";
+        "/var/lib/acpi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:acpid_var_lib_t,s0)";
       };
     };
   };

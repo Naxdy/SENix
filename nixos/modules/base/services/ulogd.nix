@@ -236,18 +236,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/ulogd\\.conf" = "-- gen_context(system_u:object_r:ulogd_etc_t,s0)";
+        "/etc/ulogd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ulogd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/ulogd" = "-- gen_context(system_u:object_r:ulogd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ulogd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ulogd_initrc_exec_t,s0)";
 
-        "/run/ulog(/.*)?" = "gen_context(system_u:object_r:ulogd_runtime_t,s0)";
+        "/run/ulog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ulogd_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/ulogd" = "-- gen_context(system_u:object_r:ulogd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ulogd" = lib.mkDefault "-- gen_context(system_u:object_r:ulogd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/ulogd(/.*)?" = "gen_context(system_u:object_r:ulogd_modules_t,s0)";
+        "/nix/store/[^/]+/lib/ulogd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:ulogd_modules_t,s0)";
 
-        "/var/log/ulog(/.*)?" = "gen_context(system_u:object_r:ulogd_var_log_t,s0)";
-        "/var/log/ulogd(/.*)?" = "gen_context(system_u:object_r:ulogd_var_log_t,s0)";
+        "/var/log/ulog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ulogd_var_log_t,s0)";
+        "/var/log/ulogd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ulogd_var_log_t,s0)";
       };
     };
   };

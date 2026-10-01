@@ -1071,36 +1071,46 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.cache/dconf(/.*)?" = "gen_context(system_u:object_r:gnome_xdg_cache_t,s0)";
-        "HOME_DIR/\\.cache/keyring-.*" = "gen_context(system_u:object_r:gnome_xdg_cache_t,s0)";
-        "HOME_DIR/\\.config/dconf(/.*)?" = "gen_context(system_u:object_r:gnome_xdg_config_t,s0)";
-        "HOME_DIR/\\.config/gtk-.*" = "gen_context(system_u:object_r:gnome_xdg_config_t,s0)";
-        "HOME_DIR/\\.gconf(/.*)?" = "gen_context(system_u:object_r:gconf_home_t,s0)";
-        "HOME_DIR/\\.gconfd(/.*)?" = "gen_context(system_u:object_r:gconf_home_t,s0)";
-        "HOME_DIR/\\.gnome(/.*)?" = "gen_context(system_u:object_r:gnome_home_t,s0)";
-        "HOME_DIR/\\.gnome2(/.*)?" = "gen_context(system_u:object_r:gnome_home_t,s0)";
-        "HOME_DIR/\\.gnome2/keyrings(/.*)?" = "gen_context(system_u:object_r:gnome_keyring_home_t,s0)";
-        "HOME_DIR/\\.gnome2_private(/.*)?" = "gen_context(system_u:object_r:gnome_home_t,s0)";
-        "HOME_DIR/\\.local/share/keyrings(/.*)?" = "gen_context(system_u:object_r:gnome_xdg_data_t,s0)";
+        "HOME_DIR/\\.cache/dconf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_xdg_cache_t,s0)";
+        "HOME_DIR/\\.cache/keyring-.*" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_xdg_cache_t,s0)";
+        "HOME_DIR/\\.config/dconf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_xdg_config_t,s0)";
+        "HOME_DIR/\\.config/gtk-.*" = lib.mkDefault "gen_context(system_u:object_r:gnome_xdg_config_t,s0)";
+        "HOME_DIR/\\.gconf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gconf_home_t,s0)";
+        "HOME_DIR/\\.gconfd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gconf_home_t,s0)";
+        "HOME_DIR/\\.gnome(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gnome_home_t,s0)";
+        "HOME_DIR/\\.gnome2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gnome_home_t,s0)";
+        "HOME_DIR/\\.gnome2/keyrings(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_keyring_home_t,s0)";
+        "HOME_DIR/\\.gnome2_private(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gnome_home_t,s0)";
+        "HOME_DIR/\\.local/share/keyrings(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_xdg_data_t,s0)";
 
-        "HOME_DIR/orcexec\\..*" = "gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
+        "HOME_DIR/orcexec\\..*" = lib.mkDefault "gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
 
-        "/etc/gconf(/.*)?" = "gen_context(system_u:object_r:gconf_etc_t,s0)";
+        "/etc/gconf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gconf_etc_t,s0)";
 
-        "/tmp/gconfd-%{USERNAME}/.*" = "-- gen_context(system_u:object_r:gconf_tmp_t,s0)";
+        "/tmp/gconfd-%{USERNAME}/.*" = lib.mkDefault "-- gen_context(system_u:object_r:gconf_tmp_t,s0)";
 
         "/nix/store/[^/]+/bin/gnome-keyring-daemon" =
-          "-- gen_context(system_u:object_r:gkeyringd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gkeyringd_exec_t,s0)";
         "/nix/store/[^/]+/bin/mate-keyring-daemon" =
-          "-- gen_context(system_u:object_r:gkeyringd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gkeyringd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/[^/]*/gconf/gconfd-2" = "-- gen_context(system_u:object_r:gconfd_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/gconfd-2" = "-- gen_context(system_u:object_r:gconfd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/[^/]*/gconf/gconfd-2" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gconfd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/gconfd-2" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gconfd_exec_t,s0)";
 
-        "/run/user/%{USERID}/keyring(/.*)?" = "gen_context(system_u:object_r:gnome_keyring_tmp_t,s0)";
-        "/run/user/[^/]*/orcexec\\..*" = "-- gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
-        "/run/user/%{USERID}/orcexec\\..*" = "-- gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
-        "/run/user/%{USERID}/dconf(/.*)?" = "gen_context(system_u:object_r:gconf_tmp_t,s0)";
+        "/run/user/%{USERID}/keyring(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:gnome_keyring_tmp_t,s0)";
+        "/run/user/[^/]*/orcexec\\..*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
+        "/run/user/%{USERID}/orcexec\\..*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gstreamer_orcexec_t,s0)";
+        "/run/user/%{USERID}/dconf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gconf_tmp_t,s0)";
       };
     };
   };

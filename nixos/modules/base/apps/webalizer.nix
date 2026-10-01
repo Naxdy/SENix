@@ -171,15 +171,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/webalizer\\.conf" = "-- gen_context(system_u:object_r:webalizer_etc_t,s0)";
+        "/etc/webalizer\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:webalizer_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/awffull" = "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
-        "/nix/store/[^/]+/bin/webalizer" = "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
-        "/nix/store/[^/]+/bin/webazolver" = "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/awffull" =
+          lib.mkDefault "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/webalizer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/webazolver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:webalizer_exec_t,s0)";
 
-        "/var/lib/webalizer(/.*)?" = "gen_context(system_u:object_r:webalizer_var_lib_t,s0)";
+        "/var/lib/webalizer(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:webalizer_var_lib_t,s0)";
 
-        "/var/www/usage(/.*)?" = "gen_context(system_u:object_r:httpd_webalizer_content_t,s0)";
+        "/var/www/usage(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_webalizer_content_t,s0)";
       };
     };
   };

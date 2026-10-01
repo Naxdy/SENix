@@ -151,16 +151,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/openca(/.*)?" = "gen_context(system_u:object_r:openca_etc_t,s0)";
-        "/etc/openca/.*\\.in(/.*)?" = "gen_context(system_u:object_r:openca_etc_in_t,s0)";
-        "/etc/openca/rbac(/.*)?" = "gen_context(system_u:object_r:openca_etc_writeable_t,s0)";
+        "/etc/openca(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openca_etc_t,s0)";
+        "/etc/openca/.*\\.in(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openca_etc_in_t,s0)";
+        "/etc/openca/rbac(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openca_etc_writeable_t,s0)";
 
-        "/nix/store/[^/]+/share/openca(/.*)?" = "gen_context(system_u:object_r:openca_usr_share_t,s0)";
+        "/nix/store/[^/]+/share/openca(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:openca_usr_share_t,s0)";
         "/nix/store/[^/]+/share/openca/cgi-bin/ca/.+" =
-          "-- gen_context(system_u:object_r:openca_ca_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openca_ca_exec_t,s0)";
 
-        "/var/lib/openca(/.*)?" = "gen_context(system_u:object_r:openca_var_lib_t,s0)";
-        "/var/lib/openca/crypto/keys(/.*)?" = "gen_context(system_u:object_r:openca_var_lib_keys_t,s0)";
+        "/var/lib/openca(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openca_var_lib_t,s0)";
+        "/var/lib/openca/crypto/keys(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:openca_var_lib_keys_t,s0)";
       };
     };
   };

@@ -771,51 +771,54 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.(daily|monthly)/mailman" = "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
+        "/etc/cron\\.(daily|monthly)/mailman" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
 
-        "/etc/mailman.*" = "gen_context(system_u:object_r:mailman_data_t,s0)";
-        "/etc/mailman/postfix-to-mailman\\.py" = "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+        "/etc/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_data_t,s0)";
+        "/etc/mailman/postfix-to-mailman\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/mailman/bin/mailmanctl" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/bin/mm-handler.*" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/cron/.*" =
-          "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
-        "/var/lib/mailman.*" = "gen_context(system_u:object_r:mailman_data_t,s0)";
-        "/var/lib/mailman/archives(/.*)?" = "gen_context(system_u:object_r:mailman_archive_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
+        "/var/lib/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_data_t,s0)";
+        "/var/lib/mailman/archives(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mailman_archive_t,s0)";
 
-        "/var/lock/mailman.*" = "gen_context(system_u:object_r:mailman_lock_t,s0)";
-        "/var/lock/subsys/mailman.*" = "-- gen_context(system_u:object_r:mailman_lock_t,s0)";
+        "/var/lock/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_lock_t,s0)";
+        "/var/lock/subsys/mailman.*" = lib.mkDefault "-- gen_context(system_u:object_r:mailman_lock_t,s0)";
 
-        "/var/log/mailman.*" = "gen_context(system_u:object_r:mailman_log_t,s0)";
+        "/var/log/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_log_t,s0)";
 
-        "/run/mailman.*" = "gen_context(system_u:object_r:mailman_runtime_t,s0)";
+        "/run/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_runtime_t,s0)";
 
-        "/var/spool/mailman.*" = "gen_context(system_u:object_r:mailman_data_t,s0)";
+        "/var/spool/mailman.*" = lib.mkDefault "gen_context(system_u:object_r:mailman_data_t,s0)";
 
         "/nix/store/[^/]+/lib/cgi-bin/mailman/.*" =
-          "-- gen_context(system_u:object_r:mailman_cgi_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_cgi_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/bin/qrunner" =
-          "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman3/bin/.*" =
-          "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/cgi-bin/.*" =
-          "-- gen_context(system_u:object_r:mailman_cgi_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_cgi_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/mail/mailman" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/mail/wrapper" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
         "/nix/store/[^/]+/lib/mailman/scripts/mailman" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
 
         "/nix/store/[^/]+/mailman/mail/wrapper" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
 
         "/nix/store/[^/]+/share/doc/mailman/mm-handler.*" =
-          "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_mail_exec_t,s0)";
         "/nix/store/[^/]+/share/mailman3-web/manage\\.py" =
-          "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mailman_queue_exec_t,s0)";
       };
     };
   };

@@ -106,10 +106,12 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/kerberos/sbin/kshd" = "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/kshd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/in\\.rexecd" = "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/in\\.rshd" = "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.rexecd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.rshd" = lib.mkDefault "-- gen_context(system_u:object_r:rshd_exec_t,s0)";
       };
     };
   };

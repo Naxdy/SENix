@@ -1818,58 +1818,70 @@
     fileContext = {
       rules = {
         #/var/spool/cron/root	--	gen_context(system_u:object_r:sysadm_cron_spool_t,s0)
-        "/etc/rc\\.d/init\\.d/(anacron|atd)" = "-- gen_context(system_u:object_r:crond_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/(anacron|atd)" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crond_initrc_exec_t,s0)";
 
-        "/etc/cron\\.d(/.*)?" = "gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/etc/crontab" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/etc/cron\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/etc/crontab" = lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
 
-        "/nix/store/[^/]+/bin/anacron" = "-- gen_context(system_u:object_r:anacron_exec_t,s0)";
-        "/nix/store/[^/]+/bin/at" = "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
-        "/nix/store/[^/]+/bin/atd" = "-- gen_context(system_u:object_r:crond_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cron(d)?" = "-- gen_context(system_u:object_r:crond_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fcron" = "-- gen_context(system_u:object_r:crond_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fcronsighup" = "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
-        "/nix/store/[^/]+/bin/(f)?crontab" = "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
+        "/nix/store/[^/]+/bin/anacron" =
+          lib.mkDefault "-- gen_context(system_u:object_r:anacron_exec_t,s0)";
+        "/nix/store/[^/]+/bin/at" = lib.mkDefault "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
+        "/nix/store/[^/]+/bin/atd" = lib.mkDefault "-- gen_context(system_u:object_r:crond_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cron(d)?" = lib.mkDefault "-- gen_context(system_u:object_r:crond_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fcron" = lib.mkDefault "-- gen_context(system_u:object_r:crond_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fcronsighup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
+        "/nix/store/[^/]+/bin/(f)?crontab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/atd.*\\.service" =
-          "-- gen_context(system_u:object_r:crond_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:crond_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/crond.*\\.service" =
-          "-- gen_context(system_u:object_r:crond_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:crond_unit_t,s0)";
 
-        "/nix/store/[^/]+/libexec/fcron" = "-- gen_context(system_u:object_r:crond_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/fcronsighup" = "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/fcron" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crond_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/fcronsighup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crontab_exec_t,s0)";
 
-        "/var/lib/glpi/files(/.*)?" = "gen_context(system_u:object_r:cron_var_lib_t,s0)";
+        "/var/lib/glpi/files(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cron_var_lib_t,s0)";
 
-        "/var/log/cron.*" = "gen_context(system_u:object_r:cron_log_t,s0)";
-        "/var/log/popularity-contest.*" = "gen_context(system_u:object_r:cron_log_t,s0)";
-        "/var/log/rpmpkgs.*" = "-- gen_context(system_u:object_r:cron_log_t,s0)";
+        "/var/log/cron.*" = lib.mkDefault "gen_context(system_u:object_r:cron_log_t,s0)";
+        "/var/log/popularity-contest.*" = lib.mkDefault "gen_context(system_u:object_r:cron_log_t,s0)";
+        "/var/log/rpmpkgs.*" = lib.mkDefault "-- gen_context(system_u:object_r:cron_log_t,s0)";
 
-        "/run/anacron\\.pid" = "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
-        "/run/atd\\.pid" = "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
-        "/run/cron(d)?\\.pid" = "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
-        "/run/cron(d)?\\.reboot" = "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
-        "/run/fcron\\.fifo" = "-s gen_context(system_u:object_r:crond_runtime_t,s0)";
-        "/run/fcron\\.pid" = "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/anacron\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/atd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/cron(d)?\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/cron(d)?\\.reboot" = lib.mkDefault "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/fcron\\.fifo" = lib.mkDefault "-s gen_context(system_u:object_r:crond_runtime_t,s0)";
+        "/run/fcron\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:crond_runtime_t,s0)";
 
-        "/var/spool/anacron(/.*)?" = "gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/var/spool/at(/.*)?" = "gen_context(system_u:object_r:user_cron_spool_t,s0)";
-        "/var/spool/at/atspool(/.*)?" = "gen_context(system_u:object_r:user_cron_spool_log_t,s0)";
+        "/var/spool/anacron(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/at(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:user_cron_spool_t,s0)";
+        "/var/spool/at/atspool(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:user_cron_spool_log_t,s0)";
 
-        "/var/spool/cron" = "-d gen_context(system_u:object_r:cron_spool_t,s0)";
-        "/var/spool/cron/[^/]*" = "-- <<none>>";
+        "/var/spool/cron" = lib.mkDefault "-d gen_context(system_u:object_r:cron_spool_t,s0)";
+        "/var/spool/cron/[^/]*" = lib.mkDefault "-- <<none>>";
 
-        "/var/spool/cron/crontabs" = "-d gen_context(system_u:object_r:cron_spool_t,s0)";
-        "/var/spool/cron/crontabs/.*" = "-- <<none>>";
+        "/var/spool/cron/crontabs" = lib.mkDefault "-d gen_context(system_u:object_r:cron_spool_t,s0)";
+        "/var/spool/cron/crontabs/.*" = lib.mkDefault "-- <<none>>";
 
         #/var/spool/cron/crontabs/root	--	gen_context(system_u:object_r:sysadm_cron_spool_t,s0)
-        "/var/spool/fcron" = "-d gen_context(system_u:object_r:cron_spool_t,s0)";
-        "/var/spool/fcron/.*" = "<<none>>";
-        "/var/spool/fcron/systab\\.orig" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/var/spool/fcron/systab" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/var/spool/fcron/systab\\.tmp" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/var/spool/fcron/new\\.systab" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
-        "/var/spool/fcron/rm\\.systab" = "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/fcron" = lib.mkDefault "-d gen_context(system_u:object_r:cron_spool_t,s0)";
+        "/var/spool/fcron/.*" = lib.mkDefault "<<none>>";
+        "/var/spool/fcron/systab\\.orig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/fcron/systab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/fcron/systab\\.tmp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/fcron/new\\.systab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
+        "/var/spool/fcron/rm\\.systab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_cron_spool_t,s0)";
       };
     };
   };

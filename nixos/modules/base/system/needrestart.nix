@@ -179,7 +179,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/needrestart" = "-- gen_context(system_u:object_r:needrestart_exec_t,s0)";
+        "/nix/store/[^/]+/bin/needrestart" =
+          lib.mkDefault "-- gen_context(system_u:object_r:needrestart_exec_t,s0)";
       };
     };
   };

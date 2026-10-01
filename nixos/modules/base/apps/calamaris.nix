@@ -183,11 +183,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/calamaris" = "-- gen_context(system_u:object_r:calamaris_exec_t,s0)";
+        "/etc/cron\\.daily/calamaris" =
+          lib.mkDefault "-- gen_context(system_u:object_r:calamaris_exec_t,s0)";
 
-        "/var/log/calamaris(/.*)?" = "gen_context(system_u:object_r:calamaris_log_t,s0)";
+        "/var/log/calamaris(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:calamaris_log_t,s0)";
 
-        "/var/www/calamaris(/.*)?" = "gen_context(system_u:object_r:calamaris_www_t,s0)";
+        "/var/www/calamaris(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:calamaris_www_t,s0)";
       };
     };
   };

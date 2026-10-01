@@ -2591,85 +2591,101 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.libvirt(/.*)?" = "gen_context(system_u:object_r:virt_home_t,s0)";
-        "HOME_DIR/\\.libvirt/qemu(/.*)?" = "gen_context(system_u:object_r:svirt_home_t,s0)";
-        "HOME_DIR/\\.virtinst(/.*)?" = "gen_context(system_u:object_r:virt_home_t,s0)";
-        "HOME_DIR/VirtualMachines(/.*)?" = "gen_context(system_u:object_r:virt_home_t,s0)";
-        "HOME_DIR/VirtualMachines/isos(/.*)?" = "gen_context(system_u:object_r:virt_content_t,s0)";
+        "HOME_DIR/\\.libvirt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_home_t,s0)";
+        "HOME_DIR/\\.libvirt/qemu(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:svirt_home_t,s0)";
+        "HOME_DIR/\\.virtinst(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_home_t,s0)";
+        "HOME_DIR/VirtualMachines(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_home_t,s0)";
+        "HOME_DIR/VirtualMachines/isos(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:virt_content_t,s0)";
 
-        "/etc/libvirt" = "-d gen_context(system_u:object_r:virt_etc_t,s0)";
-        "/etc/libvirt/[^/]*" = [
+        "/etc/libvirt" = lib.mkDefault "-d gen_context(system_u:object_r:virt_etc_t,s0)";
+        "/etc/libvirt/[^/]*" = lib.mkDefault [
           "-- gen_context(system_u:object_r:virt_etc_t,s0)"
           "-d gen_context(system_u:object_r:virt_etc_rw_t,s0)"
         ];
-        "/etc/libvirt/.*/.*" = "gen_context(system_u:object_r:virt_etc_rw_t,s0)";
-        "/etc/libvirt/hooks(/.*)?" = "-- gen_context(system_u:object_r:virt_script_exec_t,s0)";
+        "/etc/libvirt/.*/.*" = lib.mkDefault "gen_context(system_u:object_r:virt_etc_rw_t,s0)";
+        "/etc/libvirt/hooks(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_script_exec_t,s0)";
 
-        "/etc/qemu(/.*)?" = "gen_context(system_u:object_r:virt_etc_t,s0)";
+        "/etc/qemu(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_etc_t,s0)";
 
-        "/etc/qemu" = "-d gen_context(system_u:object_r:virt_etc_t,s0)";
-        "/etc/qemu/[^/]*" = "-- gen_context(system_u:object_r:virt_etc_t,s0)";
+        "/etc/qemu" = lib.mkDefault "-d gen_context(system_u:object_r:virt_etc_t,s0)";
+        "/etc/qemu/[^/]*" = lib.mkDefault "-- gen_context(system_u:object_r:virt_etc_t,s0)";
 
         "/etc/rc\\.d/init\\.d/(libvirt-bin|libvirtd)" =
-          "-- gen_context(system_u:object_r:virtd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virtd_initrc_exec_t,s0)";
 
-        "/etc/xen" = "-d gen_context(system_u:object_r:virt_etc_t,s0)";
-        "/etc/xen/[^/]*" = [
+        "/etc/xen" = lib.mkDefault "-d gen_context(system_u:object_r:virt_etc_t,s0)";
+        "/etc/xen/[^/]*" = lib.mkDefault [
           "-- gen_context(system_u:object_r:virt_etc_t,s0)"
           "-d gen_context(system_u:object_r:virt_etc_rw_t,s0)"
         ];
-        "/etc/xen/.*/.*" = "gen_context(system_u:object_r:virt_etc_rw_t,s0)";
+        "/etc/xen/.*/.*" = lib.mkDefault "gen_context(system_u:object_r:virt_etc_rw_t,s0)";
 
         "/nix/store/[^/]+/lib/libvirt/libvirt_lxc" =
-          "-- gen_context(system_u:object_r:virtd_lxc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virtd_lxc_exec_t,s0)";
         "/nix/store/[^/]+/lib/libvirt/libvirt_leaseshelper" =
-          "-- gen_context(system_u:object_r:virt_leaseshelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_leaseshelper_exec_t,s0)";
         "/nix/store/[^/]+/lib/qemu/qemu-bridge-helper" =
-          "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/libvirt_lxc" = "-- gen_context(system_u:object_r:virtd_lxc_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/libvirt_lxc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virtd_lxc_exec_t,s0)";
         "/nix/store/[^/]+/libexec/qemu-bridge-helper" =
-          "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
         "/nix/store/[^/]+/libexec/qemu/qemu-bridge-helper" =
-          "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_bridgehelper_exec_t,s0)";
         "/nix/store/[^/]+/libexec/libvirt_leaseshelper" =
-          "-- gen_context(system_u:object_r:virt_leaseshelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_leaseshelper_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/condor_vm-gahp" = "-- gen_context(system_u:object_r:virtd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fence_virtd" = "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
-        "/nix/store/[^/]+/bin/libvirt-qmf" = "-- gen_context(system_u:object_r:virt_qmf_exec_t,s0)";
-        "/nix/store/[^/]+/bin/libvirtd" = "-- gen_context(system_u:object_r:virtd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/virsh" = "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
-        "/nix/store/[^/]+/bin/virtlockd" = "-- gen_context(system_u:object_r:virtlockd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/virtlogd" = "-- gen_context(system_u:object_r:virtlogd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/virt-sandbox-service.*" = "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
+        "/nix/store/[^/]+/bin/condor_vm-gahp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virtd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fence_virtd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
+        "/nix/store/[^/]+/bin/libvirt-qmf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virt_qmf_exec_t,s0)";
+        "/nix/store/[^/]+/bin/libvirtd" = lib.mkDefault "-- gen_context(system_u:object_r:virtd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/virsh" = lib.mkDefault "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
+        "/nix/store/[^/]+/bin/virtlockd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virtlockd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/virtlogd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virtlogd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/virt-sandbox-service.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:virsh_exec_t,s0)";
 
-        "/var/cache/libvirt(/.*)?" = "gen_context(system_u:object_r:virt_cache_t,s0-mls_systemhigh)";
+        "/var/cache/libvirt(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:virt_cache_t,s0-mls_systemhigh)";
 
-        "/var/lib/libvirt(/.*)?" = "gen_context(system_u:object_r:virt_var_lib_t,s0)";
-        "/var/lib/libvirt/boot(/.*)?" = "gen_context(system_u:object_r:virt_content_t,s0)";
-        "/var/lib/libvirt/images(/.*)?" = "gen_context(system_u:object_r:virt_image_t,s0)";
-        "/var/lib/libvirt/isos(/.*)?" = "gen_context(system_u:object_r:virt_content_t,s0)";
-        "/var/lib/libvirt/qemu(/.*)?" = "gen_context(system_u:object_r:svirt_runtime_t,s0-mls_systemhigh)";
-        "/var/lib/libvirt/lockd(/.*)?" = "gen_context(system_u:object_r:virtlockd_var_lib_t,s0)";
+        "/var/lib/libvirt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_var_lib_t,s0)";
+        "/var/lib/libvirt/boot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_content_t,s0)";
+        "/var/lib/libvirt/images(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_image_t,s0)";
+        "/var/lib/libvirt/isos(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_content_t,s0)";
+        "/var/lib/libvirt/qemu(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:svirt_runtime_t,s0-mls_systemhigh)";
+        "/var/lib/libvirt/lockd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:virtlockd_var_lib_t,s0)";
 
-        "/var/log/log(/.*)?" = "gen_context(system_u:object_r:virt_log_t,s0)";
-        "/var/log/libvirt(/.*)?" = "gen_context(system_u:object_r:virt_log_t,s0)";
-        "/var/log/vdsm(/.*)?" = "gen_context(system_u:object_r:virt_log_t,s0)";
+        "/var/log/log(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_log_t,s0)";
+        "/var/log/libvirt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_log_t,s0)";
+        "/var/log/vdsm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_log_t,s0)";
 
-        "/var/vdsm(/.*)?" = "gen_context(system_u:object_r:virt_runtime_t,s0)";
+        "/var/vdsm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_runtime_t,s0)";
 
-        "/run/libguestfs(/.*)?" = "gen_context(system_u:object_r:virt_runtime_t,s0)";
-        "/run/libvirtd\\.pid" = "-- gen_context(system_u:object_r:virt_runtime_t,s0)";
-        "/run/libvirt(/.*)?" = "gen_context(system_u:object_r:virt_runtime_t,s0)";
-        "/run/libvirt/common(/.*)?" = "gen_context(system_u:object_r:virt_common_runtime_t,s0)";
-        "/run/libvirt/lxc(/.*)?" = "gen_context(system_u:object_r:virtd_lxc_runtime_t,s0)";
-        "/run/libvirt-sandbox(/.*)?" = "gen_context(system_u:object_r:virtd_lxc_runtime_t,s0)";
-        "/run/libvirt/qemu(/.*)?" = "gen_context(system_u:object_r:svirt_runtime_t,s0-mls_systemhigh)";
-        "/run/libvirt/virtlockd-sock" = "-s gen_context(system_u:object_r:virtlockd_run_t,s0)";
-        "/run/user/[^/]*/libguestfs(/.*)?" = "gen_context(system_u:object_r:virt_home_t,s0)";
-        "/run/vdsm(/.*)?" = "gen_context(system_u:object_r:virt_runtime_t,s0)";
-        "/run/virtlockd\\.pid" = "-- gen_context(system_u:object_r:virtlockd_run_t,s0)";
+        "/run/libguestfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_runtime_t,s0)";
+        "/run/libvirtd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:virt_runtime_t,s0)";
+        "/run/libvirt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_runtime_t,s0)";
+        "/run/libvirt/common(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:virt_common_runtime_t,s0)";
+        "/run/libvirt/lxc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virtd_lxc_runtime_t,s0)";
+        "/run/libvirt-sandbox(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:virtd_lxc_runtime_t,s0)";
+        "/run/libvirt/qemu(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:svirt_runtime_t,s0-mls_systemhigh)";
+        "/run/libvirt/virtlockd-sock" =
+          lib.mkDefault "-s gen_context(system_u:object_r:virtlockd_run_t,s0)";
+        "/run/user/[^/]*/libguestfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_home_t,s0)";
+        "/run/vdsm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:virt_runtime_t,s0)";
+        "/run/virtlockd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:virtlockd_run_t,s0)";
       };
     };
   };

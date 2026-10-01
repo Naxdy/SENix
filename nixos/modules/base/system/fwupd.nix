@@ -333,15 +333,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/fwupd(/.*)?" = "gen_context(system_u:object_r:fwupd_conf_t,s0)";
+        "/etc/fwupd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fwupd_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/fwupdmgr" = "-- gen_context(system_u:object_r:fwupdmgr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fwupdmgr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fwupdmgr_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/fwupd/fwupd" = "-- gen_context(system_u:object_r:fwupd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/fwupd/fwupd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fwupd_exec_t,s0)";
 
-        "/var/lib/fwupd(/.*)?" = "gen_context(system_u:object_r:fwupd_var_lib_t,s0)";
+        "/var/lib/fwupd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fwupd_var_lib_t,s0)";
 
-        "/var/cache/fwupd(/.*)?" = "gen_context(system_u:object_r:fwupd_cache_t,s0)";
+        "/var/cache/fwupd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fwupd_cache_t,s0)";
       };
     };
   };

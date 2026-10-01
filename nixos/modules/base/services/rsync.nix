@@ -485,13 +485,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rsyncd\\.conf" = "-- gen_context(system_u:object_r:rsync_etc_t, s0)";
+        "/etc/rsyncd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:rsync_etc_t, s0)";
 
-        "/nix/store/[^/]+/bin/rsync" = "-- gen_context(system_u:object_r:rsync_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rsync" = lib.mkDefault "-- gen_context(system_u:object_r:rsync_exec_t,s0)";
 
-        "/var/log/rsync\\.log.*" = "-- gen_context(system_u:object_r:rsync_log_t,s0)";
+        "/var/log/rsync\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:rsync_log_t,s0)";
 
-        "/run/rsyncd\\.lock" = "-- gen_context(system_u:object_r:rsync_runtime_t,s0)";
+        "/run/rsyncd\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:rsync_runtime_t,s0)";
       };
     };
   };

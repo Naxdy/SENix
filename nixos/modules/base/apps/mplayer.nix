@@ -480,18 +480,23 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.cache/vlc(/.*)?" = "gen_context(system_u:object_r:mplayer_xdg_cache_t,s0)";
-        "HOME_DIR/\\.config/vlc(/.*)?" = "gen_context(system_u:object_r:mplayer_xdg_config_t,s0)";
-        "HOME_DIR/\\.local/share/vlc(/.*)?" = "gen_context(system_u:object_r:mplayer_xdg_data_t,s0)";
+        "HOME_DIR/\\.cache/vlc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mplayer_xdg_cache_t,s0)";
+        "HOME_DIR/\\.config/vlc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mplayer_xdg_config_t,s0)";
+        "HOME_DIR/\\.local/share/vlc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mplayer_xdg_data_t,s0)";
 
-        "HOME_DIR/\\.mplayer(/.*)?" = "gen_context(system_u:object_r:mplayer_home_t,s0)";
+        "HOME_DIR/\\.mplayer(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mplayer_home_t,s0)";
 
-        "/etc/mplayer(/.*)?" = "gen_context(system_u:object_r:mplayer_etc_t,s0)";
+        "/etc/mplayer(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mplayer_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/mplayer" = "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mencoder" = "-- gen_context(system_u:object_r:mencoder_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vlc" = "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xine" = "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mplayer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mencoder" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mencoder_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vlc" = lib.mkDefault "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xine" = lib.mkDefault "-- gen_context(system_u:object_r:mplayer_exec_t,s0)";
       };
     };
   };

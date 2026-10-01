@@ -432,26 +432,33 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/kanidmd" = "-- gen_context(system_u:object_r:kanidmd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kanidm_unixd" = "-- gen_context(system_u:object_r:kanidm_unixd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kanidmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kanidmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kanidm_unixd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kanidm_unixd_exec_t,s0)";
         "/nix/store/[^/]+/bin/kanidm_unixd_tasks" =
-          "-- gen_context(system_u:object_r:kanidm_unixd_tasks_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kanidm_unixd_tasks_exec_t,s0)";
 
-        "/etc/kanidm(/.*)?" = "gen_context(system_u:object_r:kanidm_config_t,s0)";
+        "/etc/kanidm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kanidm_config_t,s0)";
 
-        "/run/kanidmd(/.*)?" = "gen_context(system_u:object_r:kanidmd_runtime_t,s0)";
-        "/run/kanidm-unixd(/.*)?" = "gen_context(system_u:object_r:kanidm_unixd_runtime_t,s0)";
+        "/run/kanidmd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kanidmd_runtime_t,s0)";
+        "/run/kanidm-unixd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:kanidm_unixd_runtime_t,s0)";
 
-        "/var/cache/kanidm-unixd(/.*)?" = "gen_context(system_u:object_r:kanidm_unixd_cache_t,s0)";
+        "/var/cache/kanidm-unixd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:kanidm_unixd_cache_t,s0)";
 
-        "/var/lib/kanidm(/.*)?" = "gen_context(system_u:object_r:kanidm_var_lib_t,s0)";
-        "/var/lib/kanidm-unixd(/.*)?" = "gen_context(system_u:object_r:kanidm_unixd_var_lib_t,s0)";
+        "/var/lib/kanidm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kanidm_var_lib_t,s0)";
+        "/var/lib/kanidm-unixd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:kanidm_unixd_var_lib_t,s0)";
 
-        "/var/log/kanidm(/.*)?" = "gen_context(system_u:object_r:kanidmd_log_t,s0)";
-        "/var/log/kanidm-unixd(/.*)?" = "gen_context(system_u:object_r:kanidmd_log_t,s0)";
-        "/var/log/kanidmd\\.log" = "-- gen_context(system_u:object_r:kanidmd_log_t,s0)";
-        "/var/log/kanidm-unixd\\.log" = "-- gen_context(system_u:object_r:kanidm_unixd_log_t,s0)";
-        "/var/log/kanidm-unixd-tasks\\.log" = "-- gen_context(system_u:object_r:kanidm_unixd_log_t,s0)";
+        "/var/log/kanidm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kanidmd_log_t,s0)";
+        "/var/log/kanidm-unixd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kanidmd_log_t,s0)";
+        "/var/log/kanidmd\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:kanidmd_log_t,s0)";
+        "/var/log/kanidm-unixd\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kanidm_unixd_log_t,s0)";
+        "/var/log/kanidm-unixd-tasks\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kanidm_unixd_log_t,s0)";
       };
     };
   };

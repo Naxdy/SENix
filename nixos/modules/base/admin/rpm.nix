@@ -1073,64 +1073,76 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/etc/rc\\.d/init\\.d/bcfg2" = "-- gen_context(system_u:object_r:rpm_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bcfg2" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/bcfg2" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/debuginfo-install" = "-- gen_context(system_u:object_r:debuginfo_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dnf" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dnf-[0-9]+" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dnf-automatic" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dnf-automatic-[0-9]+" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fedora-rmdevelrpms" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/online_update" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/packagekitd" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pirut" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pup" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rhn_check" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpmdev-rmdevelrpms" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpm" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smart" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/system-install-packages" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tdnf" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/up2date" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yast2" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yum" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yum-complete-transaction" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yum-updatesd" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zif" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bcfg2" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/debuginfo-install" =
+          lib.mkDefault "-- gen_context(system_u:object_r:debuginfo_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dnf" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dnf-[0-9]+" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dnf-automatic" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dnf-automatic-[0-9]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fedora-rmdevelrpms" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/online_update" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/packagekitd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pirut" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pup" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rhn_check" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpmdev-rmdevelrpms" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpm" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smart" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/system-install-packages" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tdnf" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/up2date" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yast2" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yum" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yum-complete-transaction" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yum-updatesd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zif" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*dnf-makecache.*" =
-          "-- gen_context(system_u:object_r:rpm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*yum-makecache.*" =
-          "-- gen_context(system_u:object_r:rpm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_unit_t,s0)";
 
-        "/nix/store/[^/]+/libexec/yumDBUSBackend\\.py" = "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/yumDBUSBackend\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
 
         "/nix/store/[^/]+/share/yumex/yumex-yum-backend" =
-          "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
         "/nix/store/[^/]+/share/yumex/yum_childtask\\.py" =
-          "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rpm_exec_t,s0)";
 
-        "/var/cache/bcfg2(/.*)?" = "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
-        "/var/cache/t?dnf(/.*)?" = "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
-        "/var/cache/yum(/.*)?" = "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
+        "/var/cache/bcfg2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
+        "/var/cache/t?dnf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
+        "/var/cache/yum(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
 
-        "/var/lib/alternatives(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
-        "/var/lib/dnf(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
-        "/var/lib/rpm(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
-        "/var/lib/t?dnf(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
-        "/var/lib/YaST2(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
-        "/var/lib/yum(/.*)?" = "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/alternatives(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/dnf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/rpm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/t?dnf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/YaST2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
+        "/var/lib/yum(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_lib_t,s0)";
 
-        "/var/lock/bcfg2\\.run" = "-- gen_context(system_u:object_r:rpm_lock_t,s0)";
+        "/var/lock/bcfg2\\.run" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_lock_t,s0)";
 
-        "/var/log/YaST2(/.*)?" = "gen_context(system_u:object_r:rpm_log_t,s0)";
-        "/var/log/yum\\.log.*" = "-- gen_context(system_u:object_r:rpm_log_t,s0)";
+        "/var/log/YaST2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_log_t,s0)";
+        "/var/log/yum\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_log_t,s0)";
 
-        "/var/spool/up2date(/.*)?" = "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
+        "/var/spool/up2date(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_var_cache_t,s0)";
 
-        "/run/yum.*" = "-- gen_context(system_u:object_r:rpm_runtime_t,s0)";
-        "/run/PackageKit(/.*)?" = "gen_context(system_u:object_r:rpm_runtime_t,s0)";
+        "/run/yum.*" = lib.mkDefault "-- gen_context(system_u:object_r:rpm_runtime_t,s0)";
+        "/run/PackageKit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpm_runtime_t,s0)";
       };
     };
   };

@@ -94,7 +94,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/tzdata-update" = "-- gen_context(system_u:object_r:tzdata_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tzdata-update" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tzdata_exec_t,s0)";
       };
     };
   };

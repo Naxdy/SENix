@@ -414,17 +414,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/prelink" = "-- gen_context(system_u:object_r:prelink_cron_system_exec_t,s0)";
+        "/etc/cron\\.daily/prelink" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelink_cron_system_exec_t,s0)";
 
-        "/etc/prelink\\.cache" = "-- gen_context(system_u:object_r:prelink_cache_t,s0)";
+        "/etc/prelink\\.cache" = lib.mkDefault "-- gen_context(system_u:object_r:prelink_cache_t,s0)";
 
-        "/nix/store/[^/]+/bin/prelink(\\.bin)?" = "-- gen_context(system_u:object_r:prelink_exec_t,s0)";
+        "/nix/store/[^/]+/bin/prelink(\\.bin)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelink_exec_t,s0)";
 
-        "/var/log/prelink\\.log.*" = "-- gen_context(system_u:object_r:prelink_log_t,s0)";
-        "/var/log/prelink(/.*)?" = "gen_context(system_u:object_r:prelink_log_t,s0)";
+        "/var/log/prelink\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:prelink_log_t,s0)";
+        "/var/log/prelink(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:prelink_log_t,s0)";
 
-        "/var/lib/misc/prelink.*" = "-- gen_context(system_u:object_r:prelink_var_lib_t,s0)";
-        "/var/lib/prelink(/.*)?" = "gen_context(system_u:object_r:prelink_var_lib_t,s0)";
+        "/var/lib/misc/prelink.*" = lib.mkDefault "-- gen_context(system_u:object_r:prelink_var_lib_t,s0)";
+        "/var/lib/prelink(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:prelink_var_lib_t,s0)";
       };
     };
   };

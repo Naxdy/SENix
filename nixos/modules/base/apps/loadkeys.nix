@@ -140,8 +140,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/loadkeys" = "-- gen_context(system_u:object_r:loadkeys_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unikeys" = "-- gen_context(system_u:object_r:loadkeys_exec_t,s0)";
+        "/nix/store/[^/]+/bin/loadkeys" =
+          lib.mkDefault "-- gen_context(system_u:object_r:loadkeys_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unikeys" =
+          lib.mkDefault "-- gen_context(system_u:object_r:loadkeys_exec_t,s0)";
       };
     };
   };

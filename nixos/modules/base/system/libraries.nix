@@ -705,144 +705,157 @@
         #
         # /etc
         #
-        "/etc/ld\\.so\\.cache" = "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
-        "/etc/ld\\.so\\.preload" = "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
-        "/etc/ld-musl-[^/]*\\.path" = "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
+        "/etc/ld\\.so\\.cache" = lib.mkDefault "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
+        "/etc/ld\\.so\\.preload" = lib.mkDefault "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
+        "/etc/ld-musl-[^/]*\\.path" = lib.mkDefault "-- gen_context(system_u:object_r:ld_so_cache_t,s0)";
 
-        "/etc/ppp/plugins/rp-pppoe\\.so" = "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/etc/ppp/plugins/rp-pppoe\\.so" = lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/bin/ldconfig" = "-- gen_context(system_u:object_r:ldconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ldconfig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ldconfig_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib" = "gen_context(system_u:object_r:lib_t,s0)";
-        "/nix/store/[^/]+/lib/.*" = "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/lib" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/lib/.*" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
 
         "/nix/store/[^/]+/(.*/)?/HelixPlayer/.+\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/(.*/)?/RealPlayer/.+\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         "/nix/store/[^/]+/(.*/)?java/.+\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/(.*/)?java/.+\\.jar" = "-- gen_context(system_u:object_r:lib_t,s0)";
-        "/nix/store/[^/]+/(.*/)?java/.+\\.jsa" = "-- gen_context(system_u:object_r:lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/(.*/)?java/.+\\.jar" = lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/(.*/)?java/.+\\.jsa" = lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
 
-        "/nix/store/[^/]+/(.*/)?lib(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
-        "/nix/store/[^/]+/(.*/)?lib64(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/(.*/)?lib(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/(.*/)?lib64(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
 
-        "/nix/store/[^/]+/lib/ld-[^/]*\\.so(\\.[^/]*)*" = "-- gen_context(system_u:object_r:ld_so_t,s0)";
+        "/nix/store/[^/]+/lib/ld-[^/]*\\.so(\\.[^/]*)*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ld_so_t,s0)";
         "/nix/store/[^/]+/lib/(.*/)?ld-[^/]*\\.so(\\.[^/]*)?" =
-          "-- gen_context(system_u:object_r:ld_so_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ld_so_t,s0)";
 
         "/nix/store/[^/]+/(.*/)?nvidia/.+\\.so(\\..*)?" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
-        "/nix/store/[^/]+/lib/postfix/lib.*so.*" = "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/lib/postfix/lib.*so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
         "/nix/store/[^/]+/lib/altivec/libavcodec\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/cedega/.+\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/lib/dovecot/(.*/)?lib.*\\.so.*" = "-- gen_context(system_u:object_r:lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/(.*/)?lib.*\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
         "/nix/store/[^/]+/lib/vlc/video_chroma/libi420_rgb_mmx_plugin\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/vlc/codec/librealvideo_plugin\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/vlc/codec/libdmo_plugin\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/vlc/codec/librealaudio_plugin\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/libtfmessbsp\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/xorg/libGL\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/X11R6/lib/libGL\\.so.*" = "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/X11R6/lib/libGL\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/libGL\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/catalyst/libGL\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/libADM5.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/libatiadlxx\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/win32/.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         "/nix/store/[^/]+/lib/ADM_plugins/videoFilter/.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         "/nix/store/[^/]+/(.*/)?lib(64)?(/.*)?/nvidia/.+\\.so(\\..*)?" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib(/.*)?/nvidia/.+\\.so(\\..*)?" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/libsipphoneapi\\.so.*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/ati-fglrx/.+\\.so(\\..*)?" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/fglrx/.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/lib/libjs\\.so.*" = "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/lib/libjs\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/sse2/libx264\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/systemd/libsystemd-shared-[0-9]+\\.so.*" =
-          "-- gen_context(system_u:object_r:lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
         "/nix/store/[^/]+/lib(/.*)?/libnvidia.+\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib(/.*)?/nvidia_drv.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/nero/plug-ins/libMP3\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/nvidia-graphics(-[^/]*/)?libGL(core)?\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/nvidia-graphics(-[^/]*/)?libnvidia.*\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/nvidia-graphics(-[^/]*/)?libXvMCNVIDIA\\.so.*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/nvidia/libGL(core)?\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/xorg/modules/glesx\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/security/pam_poldi\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
-        "/nix/store/[^/]+/(local/)?.*\\.so(\\.[^/]*)*" = "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/nix/store/[^/]+/(local/)?.*\\.so(\\.[^/]*)*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
         "/nix/store/[^/]+/(local/)?lib(64)?/wine/.+\\.so" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/(local/)?lib(64)?/(sse2/)?libfame-.*\\.so.*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/NX/lib/libXcomp\\.so.*" = "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
-        "/nix/store/[^/]+/NX/lib/libjpeg\\.so.*" = "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/NX/lib/libXcomp\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+        "/nix/store/[^/]+/NX/lib/libjpeg\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         "/nix/store/[^/]+/X11R6/lib/libXvMCNVIDIA\\.so.*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         "/nix/store/[^/]+/lib/xorg/modules/drivers/fglrx_drv\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/xorg/modules/drivers/nvidia_drv\\.o" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/xorg/modules/extensions/nvidia(-[^/]*)?/libglx\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/lib/xorg/modules/extensions/libglx\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
         "/nix/store/[^/]+/x11R6/lib/modules/extensions/libglx\\.so(\\.[^/]*)*" =
-          "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:textrel_shlib_t,s0)";
 
         #
         # /var
         #
-        "/var/cache/ldconfig(/.*)?" = "gen_context(system_u:object_r:ldconfig_cache_t,s0)";
+        "/var/cache/ldconfig(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ldconfig_cache_t,s0)";
 
-        "/var/ftp/lib(64)?(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
-        "/var/ftp/lib(64)?/ld[^/]*\\.so(\\.[^/]*)*" = "-- gen_context(system_u:object_r:ld_so_t,s0)";
+        "/var/ftp/lib(64)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
+        "/var/ftp/lib(64)?/ld[^/]*\\.so(\\.[^/]*)*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ld_so_t,s0)";
 
-        "/var/lib/spamassassin/compiled/.*\\.so.*" = "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/var/lib/spamassassin/compiled/.*\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
 
-        "/var/mailman/pythonlib(/.*)?/.+\\.so(\\..*)?" = "-- gen_context(system_u:object_r:lib_t,s0)";
+        "/var/mailman/pythonlib(/.*)?/.+\\.so(\\..*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lib_t,s0)";
 
-        "/var/spool/postfix/lib(64)?(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
-        "/var/spool/postfix/usr(/.*)?" = "gen_context(system_u:object_r:lib_t,s0)";
-        "/var/spool/postfix/lib(64)?/ld.*\\.so.*" = "-- gen_context(system_u:object_r:ld_so_t,s0)";
+        "/var/spool/postfix/lib(64)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
+        "/var/spool/postfix/usr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lib_t,s0)";
+        "/var/spool/postfix/lib(64)?/ld.*\\.so.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ld_so_t,s0)";
       };
     };
   };

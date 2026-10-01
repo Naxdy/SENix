@@ -672,37 +672,42 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/udev/udisks-part-id" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
         "/nix/store/[^/]+/lib/udisks2/udisksd" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
         "/nix/store/[^/]+/lib/udisks/udisks-daemon" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
         "/nix/store/[^/]+/lib/upower/upowerd" =
-          "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/devkit-daemon" = "-- gen_context(system_u:object_r:devicekit_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/devkit-daemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_exec_t,s0)";
         "/nix/store/[^/]+/libexec/devkit-disks-daemon" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
         "/nix/store/[^/]+/libexec/devkit-power-daemon" =
-          "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
         "/nix/store/[^/]+/libexec/udisks-daemon" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
         "/nix/store/[^/]+/libexec/udisks2/udisksd" =
-          "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/upowerd" = "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_disk_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/upowerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_power_exec_t,s0)";
 
-        "/var/lib/DeviceKit-.*" = "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
-        "/var/lib/upower(/.*)?" = "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
-        "/var/lib/udisks.*" = "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
+        "/var/lib/DeviceKit-.*" = lib.mkDefault "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
+        "/var/lib/upower(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
+        "/var/lib/udisks.*" = lib.mkDefault "gen_context(system_u:object_r:devicekit_var_lib_t,s0)";
 
-        "/var/log/pm-powersave\\.log.*" = "-- gen_context(system_u:object_r:devicekit_var_log_t,s0)";
-        "/var/log/pm-suspend\\.log.*" = "-- gen_context(system_u:object_r:devicekit_var_log_t,s0)";
+        "/var/log/pm-powersave\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_var_log_t,s0)";
+        "/var/log/pm-suspend\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:devicekit_var_log_t,s0)";
 
-        "/run/devkit(/.*)?" = "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
-        "/run/DeviceKit-disks(/.*)?" = "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
-        "/run/pm-utils(/.*)?" = "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
-        "/run/udisks.*" = "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
-        "/run/upower(/.*)?" = "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
+        "/run/devkit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
+        "/run/DeviceKit-disks(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
+        "/run/pm-utils(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
+        "/run/udisks.*" = lib.mkDefault "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
+        "/run/upower(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:devicekit_runtime_t,s0)";
       };
     };
   };

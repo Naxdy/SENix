@@ -239,22 +239,23 @@
     '';
     fileContext = {
       rules = {
-        "/etc/mrtg.*" = "gen_context(system_u:object_r:mrtg_etc_t,s0)";
-        "/etc/mrtg/mrtg\\.ok" = "-- gen_context(system_u:object_r:mrtg_lock_t,s0)";
+        "/etc/mrtg.*" = lib.mkDefault "gen_context(system_u:object_r:mrtg_etc_t,s0)";
+        "/etc/mrtg/mrtg\\.ok" = lib.mkDefault "-- gen_context(system_u:object_r:mrtg_lock_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/mrtg" = "-- gen_context(system_u:object_r:mrtg_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mrtg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mrtg_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mrtg" = "-- gen_context(system_u:object_r:mrtg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mrtg" = lib.mkDefault "-- gen_context(system_u:object_r:mrtg_exec_t,s0)";
 
-        "/var/lib/mrtg(/.*)?" = "gen_context(system_u:object_r:mrtg_var_lib_t,s0)";
+        "/var/lib/mrtg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mrtg_var_lib_t,s0)";
 
-        "/var/lock/mrtg(/.*)?" = "gen_context(system_u:object_r:mrtg_lock_t,s0)";
-        "/var/lock/mrtg-rrd(/.*)?" = "gen_context(system_u:object_r:mrtg_lock_t,s0)";
-        "/var/lock/subsys/mrtg" = "-- gen_context(system_u:object_r:mrtg_lock_t,s0)";
+        "/var/lock/mrtg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mrtg_lock_t,s0)";
+        "/var/lock/mrtg-rrd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mrtg_lock_t,s0)";
+        "/var/lock/subsys/mrtg" = lib.mkDefault "-- gen_context(system_u:object_r:mrtg_lock_t,s0)";
 
-        "/var/log/mrtg.*" = "gen_context(system_u:object_r:mrtg_log_t,s0)";
+        "/var/log/mrtg.*" = lib.mkDefault "gen_context(system_u:object_r:mrtg_log_t,s0)";
 
-        "/run/mrtg\\.pid" = "-- gen_context(system_u:object_r:mrtg_runtime_t,s0)";
+        "/run/mrtg\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:mrtg_runtime_t,s0)";
       };
     };
   };

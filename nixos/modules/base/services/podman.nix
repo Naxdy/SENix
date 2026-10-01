@@ -665,10 +665,11 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/podman" = "-- gen_context(system_u:object_r:podman_exec_t,s0)";
-        "/nix/store/[^/]+/bin/conmon" = "-- gen_context(system_u:object_r:conmon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/podman" = lib.mkDefault "-- gen_context(system_u:object_r:podman_exec_t,s0)";
+        "/nix/store/[^/]+/bin/conmon" = lib.mkDefault "-- gen_context(system_u:object_r:conmon_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/podman/conmon" = "-- gen_context(system_u:object_r:conmon_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/podman/conmon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:conmon_exec_t,s0)";
       };
     };
   };

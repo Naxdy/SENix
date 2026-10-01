@@ -424,19 +424,22 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.kismet(/.*)?" = "gen_context(system_u:object_r:kismet_home_t,s0)";
+        "HOME_DIR/\\.kismet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kismet_home_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/kismet.*" = "-- gen_context(system_u:object_r:kismet_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/kismet.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kismet_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/kismet" = "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kismet_server" = "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kismet_drone" = "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kismet" = lib.mkDefault "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kismet_server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kismet_drone" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kismet_exec_t,s0)";
 
-        "/var/lib/kismet(/.*)?" = "gen_context(system_u:object_r:kismet_var_lib_t,s0)";
+        "/var/lib/kismet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kismet_var_lib_t,s0)";
 
-        "/var/log/kismet(/.*)?" = "gen_context(system_u:object_r:kismet_log_t,s0)";
+        "/var/log/kismet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kismet_log_t,s0)";
 
-        "/run/kismet_server\\.pid" = "-- gen_context(system_u:object_r:kismet_runtime_t,s0)";
+        "/run/kismet_server\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:kismet_runtime_t,s0)";
       };
     };
   };

@@ -544,21 +544,28 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/arping" = "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fping" = "-- gen_context(system_u:object_r:ping_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hping2" = "-- gen_context(system_u:object_r:ping_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iptstate" = "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lft" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mtr" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mtr-packet" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nmap" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ping.*" = "-- gen_context(system_u:object_r:ping_exec_t,s0)";
-        "/nix/store/[^/]+/bin/send_arp" = "-- gen_context(system_u:object_r:ping_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcpdump" = "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tracepath.*" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
-        "/nix/store/[^/]+/bin/traceroute.*" = "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/arping" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fping" = lib.mkDefault "-- gen_context(system_u:object_r:ping_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hping2" = lib.mkDefault "-- gen_context(system_u:object_r:ping_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iptstate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lft" = lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mtr" = lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mtr-packet" =
+          lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nmap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ping.*" = lib.mkDefault "-- gen_context(system_u:object_r:ping_exec_t,s0)";
+        "/nix/store/[^/]+/bin/send_arp" = lib.mkDefault "-- gen_context(system_u:object_r:ping_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcpdump" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tracepath.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
+        "/nix/store/[^/]+/bin/traceroute.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:traceroute_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/iftop" = "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iftop" = lib.mkDefault "-- gen_context(system_u:object_r:netutils_exec_t,s0)";
       };
     };
   };

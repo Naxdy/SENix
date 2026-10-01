@@ -195,14 +195,16 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.oidentd\\.conf" = "-- gen_context(system_u:object_r:oidentd_home_t,s0)";
+        "HOME_DIR/\\.oidentd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:oidentd_home_t,s0)";
 
-        "/etc/oidentd\\.conf" = "-- gen_context(system_u:object_r:oidentd_config_t,s0)";
-        "/etc/oidentd_masq\\.conf" = "-- gen_context(system_u:object_r:oidentd_config_t,s0)";
+        "/etc/oidentd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:oidentd_config_t,s0)";
+        "/etc/oidentd_masq\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:oidentd_config_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/oidentd" = "-- gen_context(system_u:object_r:oidentd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/oidentd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:oidentd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/oidentd" = "-- gen_context(system_u:object_r:oidentd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/oidentd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:oidentd_exec_t,s0)";
       };
     };
   };

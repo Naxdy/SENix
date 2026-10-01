@@ -134,26 +134,27 @@
     '';
     fileContext = {
       rules = {
-        "/etc/dancer-ircd(/.*)?" = "gen_context(system_u:object_r:ircd_etc_t,s0)";
-        "/etc/ircd(/.*)?" = "gen_context(system_u:object_r:ircd_etc_t,s0)";
-        "/etc/ngircd\\.conf" = "-- gen_context(system_u:object_r:ircd_etc_t,s0)";
-        "/etc/ngircd\\.motd" = "-- gen_context(system_u:object_r:ircd_etc_t,s0)";
+        "/etc/dancer-ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_etc_t,s0)";
+        "/etc/ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_etc_t,s0)";
+        "/etc/ngircd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ircd_etc_t,s0)";
+        "/etc/ngircd\\.motd" = lib.mkDefault "-- gen_context(system_u:object_r:ircd_etc_t,s0)";
 
         "/etc/rc\\.d/init\\.d/((ircd)|(ngircd)|(dancer-ircd))" =
-          "-- gen_context(system_u:object_r:ircd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ircd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dancer-ircd" = "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ircd" = "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ngircd" = "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dancer-ircd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ircd" = lib.mkDefault "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ngircd" = lib.mkDefault "-- gen_context(system_u:object_r:ircd_exec_t,s0)";
 
-        "/var/lib/dancer-ircd(/.*)?" = "gen_context(system_u:object_r:ircd_var_lib_t,s0)";
+        "/var/lib/dancer-ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_var_lib_t,s0)";
 
-        "/var/log/dancer-ircd(/.*)?" = "gen_context(system_u:object_r:ircd_log_t,s0)";
-        "/var/log/ircd(/.*)?" = "gen_context(system_u:object_r:ircd_log_t,s0)";
-        "/var/log/ngircd\\.log.*" = "-- gen_context(system_u:object_r:ircd_log_t,s0)";
+        "/var/log/dancer-ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_log_t,s0)";
+        "/var/log/ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_log_t,s0)";
+        "/var/log/ngircd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:ircd_log_t,s0)";
 
-        "/run/dancer-ircd(/.*)?" = "gen_context(system_u:object_r:ircd_runtime_t,s0)";
-        "/run/ngircd(/.*)?" = "gen_context(system_u:object_r:ircd_runtime_t,s0)";
+        "/run/dancer-ircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_runtime_t,s0)";
+        "/run/ngircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ircd_runtime_t,s0)";
       };
     };
   };

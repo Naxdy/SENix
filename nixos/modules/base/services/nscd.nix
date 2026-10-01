@@ -456,19 +456,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/nscd" = "-- gen_context(system_u:object_r:nscd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nscd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nscd_initrc_exec_t,s0)";
 
         # "/usr/bin/nscd" = "-- gen_context(system_u:object_r:nscd_exec_t,s0)";
 
-        "/var/cache/nscd(/.*)?" = "gen_context(system_u:object_r:nscd_runtime_t,s0)";
+        "/var/cache/nscd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nscd_runtime_t,s0)";
 
-        "/var/db/nscd(/.*)?" = "gen_context(system_u:object_r:nscd_runtime_t,s0)";
+        "/var/db/nscd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nscd_runtime_t,s0)";
 
-        "/var/log/nscd\\.log.*" = "-- gen_context(system_u:object_r:nscd_log_t,s0)";
+        "/var/log/nscd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:nscd_log_t,s0)";
 
-        "/run/nscd(/.*)?" = "gen_context(system_u:object_r:nscd_runtime_t,s0)";
-        "/run/nscd\\.pid" = "-- gen_context(system_u:object_r:nscd_runtime_t,s0)";
-        "/run/\\.nscd_socket" = "-s gen_context(system_u:object_r:nscd_runtime_t,s0)";
+        "/run/nscd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nscd_runtime_t,s0)";
+        "/run/nscd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:nscd_runtime_t,s0)";
+        "/run/\\.nscd_socket" = lib.mkDefault "-s gen_context(system_u:object_r:nscd_runtime_t,s0)";
       };
     };
   };

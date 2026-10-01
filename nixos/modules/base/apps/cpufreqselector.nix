@@ -81,7 +81,7 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/bin/cpufreq-selector" =
-          "-- gen_context(system_u:object_r:cpufreqselector_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cpufreqselector_exec_t,s0)";
       };
     };
   };

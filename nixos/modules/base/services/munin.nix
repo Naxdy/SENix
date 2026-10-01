@@ -633,133 +633,138 @@
     '';
     fileContext = {
       rules = {
-        "/etc/munin(/.*)?" = "gen_context(system_u:object_r:munin_etc_t,s0)";
+        "/etc/munin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:munin_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/munin-node" = "-- gen_context(system_u:object_r:munin_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/munin-node" =
+          lib.mkDefault "-- gen_context(system_u:object_r:munin_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/munin-.*" = "-- gen_context(system_u:object_r:munin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/munin-.*" = lib.mkDefault "-- gen_context(system_u:object_r:munin_exec_t,s0)";
 
-        "/nix/store/[^/]+/share/munin/munin-.*" = "-- gen_context(system_u:object_r:munin_exec_t,s0)";
+        "/nix/store/[^/]+/share/munin/munin-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:munin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/.*" =
-          "-- gen_context(system_u:object_r:unconfined_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_munin_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/diskstat.*" =
-          "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/df.*" =
-          "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/hddtemp.*" =
-          "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/smart_.*" =
-          "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:disk_munin_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/courier_mta_.*" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/exim_mail.*" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/mailman" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/mailscanner" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/postfix_mail.*" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/sendmail_.*" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/qmail.*" =
-          "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mail_munin_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/apache_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/asterisk_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/http_loadtime" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/fail2ban" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/lpstat" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/mysql_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/named" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/ntp_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/nut.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/openvpn" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/ping_" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/postgres_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/samba" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/slapd_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/snmp_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/squid_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/tomcat_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/varnish_.*" =
-          "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:services_munin_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/selinux_avcstat" =
-          "-- gen_context(system_u:object_r:selinux_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:selinux_munin_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/share/munin/plugins/acpi" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/cpu.*" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/forks" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/if_.*" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/iostat.*" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/interrupts" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/irqstats" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/load" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/memory" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/munin_.*" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/netstat" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/nfs.*" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/open_files" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/proc_pri" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/processes" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/swap" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/threads" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/unbound" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/uptime" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/users" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
         "/nix/store/[^/]+/share/munin/plugins/yum" =
-          "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:system_munin_plugin_exec_t,s0)";
 
-        "/var/lib/munin(/.*)?" = "gen_context(system_u:object_r:munin_var_lib_t,s0)";
-        "/var/lib/munin/plugin-state(/.*)?" = "gen_context(system_u:object_r:munin_plugin_state_t,s0)";
+        "/var/lib/munin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:munin_var_lib_t,s0)";
+        "/var/lib/munin/plugin-state(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:munin_plugin_state_t,s0)";
 
-        "/var/log/munin.*" = "gen_context(system_u:object_r:munin_log_t,s0)";
+        "/var/log/munin.*" = lib.mkDefault "gen_context(system_u:object_r:munin_log_t,s0)";
 
-        "/run/munin.*" = "gen_context(system_u:object_r:munin_runtime_t,s0)";
+        "/run/munin.*" = lib.mkDefault "gen_context(system_u:object_r:munin_runtime_t,s0)";
 
-        "/var/www/html/munin(/.*)?" = "gen_context(system_u:object_r:httpd_munin_content_t,s0)";
-        "/var/www/html/munin/cgi(/.*)?" = "gen_context(system_u:object_r:httpd_munin_script_exec_t,s0)";
+        "/var/www/html/munin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_munin_content_t,s0)";
+        "/var/www/html/munin/cgi(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_munin_script_exec_t,s0)";
       };
     };
   };

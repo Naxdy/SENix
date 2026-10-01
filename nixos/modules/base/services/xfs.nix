@@ -202,17 +202,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/xfs" = "-- gen_context(system_u:object_r:xfs_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/xfs" = lib.mkDefault "-- gen_context(system_u:object_r:xfs_initrc_exec_t,s0)";
 
-        "/tmp/\\.font-unix(/.*)?" = "gen_context(system_u:object_r:xfs_tmp_t,s0)";
+        "/tmp/\\.font-unix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xfs_tmp_t,s0)";
 
-        "/nix/store/[^/]+/bin/xfs" = "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xfstt" = "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xfs" = lib.mkDefault "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xfstt" = lib.mkDefault "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
 
-        "/nix/store/[^/]+/X11R6/bin/xfs" = "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/xfs-xtt" = "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/xfs" = lib.mkDefault "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/xfs-xtt" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xfs_exec_t,s0)";
 
-        "/run/xfs.*" = "-- gen_context(system_u:object_r:xfs_runtime_t,s0)";
+        "/run/xfs.*" = lib.mkDefault "-- gen_context(system_u:object_r:xfs_runtime_t,s0)";
       };
     };
   };

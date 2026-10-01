@@ -145,7 +145,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/hostname" = "-- gen_context(system_u:object_r:hostname_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hostname" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hostname_exec_t,s0)";
       };
     };
   };

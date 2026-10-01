@@ -106,11 +106,11 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/bin/qtee_supplicant" =
-          "-- gen_context(system_u:object_r:tee_supplicant_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tee_supplicant_exec_t,s0)";
         "/nix/store/[^/]+/bin/tee-supplicant" =
-          "-- gen_context(system_u:object_r:tee_supplicant_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tee_supplicant_exec_t,s0)";
 
-        "/var/lib/tee(/.*)?" = "gen_context(system_u:object_r:tee_supplicant_var_lib_t,s0)";
+        "/var/lib/tee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tee_supplicant_var_lib_t,s0)";
       };
     };
   };

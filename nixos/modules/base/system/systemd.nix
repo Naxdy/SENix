@@ -5754,13 +5754,14 @@
     fileContext = {
       rules = {
         # Systemd generators
-        "/etc/\\.updated" = "-- gen_context(system_u:object_r:systemd_update_run_t,s0)";
+        "/etc/\\.updated" = lib.mkDefault "-- gen_context(system_u:object_r:systemd_update_run_t,s0)";
 
-        "/etc/systemd/dont-synthesize-nobody" = "-- gen_context(system_u:object_r:systemd_conf_t,s0)";
-        "/etc/udev/hwdb\\.bin" = "-- gen_context(system_u:object_r:systemd_hwdb_t,s0)";
+        "/etc/systemd/dont-synthesize-nobody" =
+          lib.mkDefault "-- gen_context(system_u:object_r:systemd_conf_t,s0)";
+        "/etc/udev/hwdb\\.bin" = lib.mkDefault "-- gen_context(system_u:object_r:systemd_hwdb_t,s0)";
 
-        "/run/log/journal(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,s0)";
-        "/run/log/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_log_t,s0)";
+        "/run/log/journal(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_journal_t,s0)";
+        "/run/log/systemd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_log_t,s0)";
 
         # "/usr/bin/journalctl" = "-- gen_context(system_u:object_r:systemd_journalctl_exec_t,s0)";
         # "/usr/bin/systemd-analyze" = "-- gen_context(system_u:object_r:systemd_analyze_exec_t,s0)";
@@ -5841,14 +5842,19 @@
 
         # Systemd unit files
         "HOME_DIR/\\.config/containers/systemd(/.*)?" =
-          "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
-        "HOME_DIR/\\.config/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
-        "HOME_DIR/\\.local/share/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_data_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
+        "HOME_DIR/\\.config/systemd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_conf_home_t,s0)";
+        "HOME_DIR/\\.local/share/systemd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_data_home_t,s0)";
 
         # homed files
-        "HOME_DIR/\\.identity" = "-- gen_context(system_u:object_r:systemd_homed_record_t,s0)";
-        "HOME_DIR/\\.identity-blob(/.*)?" = "gen_context(system_u:object_r:systemd_homed_record_t,s0)";
-        "HOME_ROOT/.+\\.home" = "-- gen_context(system_u:object_r:systemd_homed_storage_t,s0)";
+        "HOME_DIR/\\.identity" =
+          lib.mkDefault "-- gen_context(system_u:object_r:systemd_homed_record_t,s0)";
+        "HOME_DIR/\\.identity-blob(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_homed_record_t,s0)";
+        "HOME_ROOT/.+\\.home" =
+          lib.mkDefault "-- gen_context(system_u:object_r:systemd_homed_storage_t,s0)";
 
         # "/usr/lib/systemd/user(/.*)?" = "gen_context(system_u:object_r:systemd_user_unit_t,s0)";
 
@@ -5878,62 +5884,87 @@
 
         # "/usr/share/factory(/.*)?" = "gen_context(system_u:object_r:systemd_factory_conf_t,s0)";
 
-        "/var/\\.updated" = "-- gen_context(system_u:object_r:systemd_update_run_t,s0)";
+        "/var/\\.updated" = lib.mkDefault "-- gen_context(system_u:object_r:systemd_update_run_t,s0)";
 
-        "/var/lib/systemd/catalog(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,s0)";
+        "/var/lib/systemd/catalog(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_journal_t,s0)";
 
         "/var/lib/systemd/backlight(/.*)?" =
-          "gen_context(system_u:object_r:systemd_backlight_var_lib_t,s0)";
-        "/var/lib/systemd/coredump(/.*)?" = "gen_context(system_u:object_r:systemd_coredump_var_lib_t,s0)";
-        "/var/lib/systemd/home(/.*)?" = "gen_context(system_u:object_r:systemd_homed_var_lib_t,s0)";
-        "/var/lib/systemd/linger(/.*)?" = "gen_context(system_u:object_r:systemd_logind_var_lib_t,s0)";
-        "/var/lib/systemd/network(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_var_lib_t,s0)";
-        "/var/lib/systemd/pstore(/.*)?" = "gen_context(system_u:object_r:systemd_pstore_var_lib_t,s0)";
-        "/var/lib/systemd/rfkill(/.*)?" = "gen_context(system_u:object_r:systemd_rfkill_var_lib_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_backlight_var_lib_t,s0)";
+        "/var/lib/systemd/coredump(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_coredump_var_lib_t,s0)";
+        "/var/lib/systemd/home(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_homed_var_lib_t,s0)";
+        "/var/lib/systemd/linger(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_logind_var_lib_t,s0)";
+        "/var/lib/systemd/network(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_networkd_var_lib_t,s0)";
+        "/var/lib/systemd/pstore(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_pstore_var_lib_t,s0)";
+        "/var/lib/systemd/rfkill(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_rfkill_var_lib_t,s0)";
 
-        "/run/\\.nologin[^/]*" = "-- gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-        "/run/nologin" = "-- gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
+        "/run/\\.nologin[^/]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
+        "/run/nologin" = lib.mkDefault "-- gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
 
-        "/run/user/%{USERID}/systemd" = "-d gen_context(system_u:object_r:systemd_user_runtime_t,s0)";
+        "/run/user/%{USERID}/systemd" =
+          lib.mkDefault "-d gen_context(system_u:object_r:systemd_user_runtime_t,s0)";
         "/run/user/%{USERID}/systemd/generator(/.*)?" =
-          "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
         "/run/user/%{USERID}/systemd/generator\\.early(/.*)?" =
-          "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
         "/run/user/%{USERID}/systemd/generator\\.late(/.*)?" =
-          "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
         "/run/user/%{USERID}/systemd/transient(/.*)?" =
-          "gen_context(system_u:object_r:systemd_user_transient_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_user_transient_unit_t,s0)";
         "/run/user/%{USERID}/systemd/user(/.*)?" =
-          "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_user_runtime_unit_t,s0)";
 
-        "/run/systemd/ask-password(/.*)?" = "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
+        "/run/systemd/ask-password(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
         "/run/systemd/ask-password-block(/.*)?" =
-          "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
-        "/run/systemd/home(/.*)?" = "gen_context(system_u:object_r:systemd_homed_runtime_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:systemd_passwd_runtime_t,s0)";
+        "/run/systemd/home(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_homed_runtime_t,s0)";
         "/run/systemd/user-home-mount" =
-          "-d gen_context(system_u:object_r:systemd_homed_runtime_work_dir_t,s0)";
-        "/run/systemd/network(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
-        "/run/systemd/notify" = "-s gen_context(system_u:object_r:systemd_runtime_notify_t,s0)";
-        "/run/systemd/resolve(/.*)?" = "gen_context(system_u:object_r:systemd_resolved_runtime_t,s0)";
-        "/run/systemd/seats(/.*)?" = "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-        "/run/systemd/sessions(/.*)?" = "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
-        "/run/systemd/shutdown(/.*)?" = "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
-        "/run/systemd/users(/.*)?" = "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
-        "/run/systemd/userdb(/.*)?" = "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
-        "/run/systemd/inhibit(/.*)?" = "gen_context(system_u:object_r:systemd_logind_inhibit_runtime_t,s0)";
-        "/run/systemd/nspawn(/.*)?" = "gen_context(system_u:object_r:systemd_nspawn_runtime_t,s0)";
-        "/run/systemd/machines(/.*)?" = "gen_context(system_u:object_r:systemd_machined_runtime_t,s0)";
-        "/run/systemd/netif(/.*)?" = "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
-        "/run/systemd/nsresource(/.*)?" = "gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
+          lib.mkDefault "-d gen_context(system_u:object_r:systemd_homed_runtime_work_dir_t,s0)";
+        "/run/systemd/network(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
+        "/run/systemd/notify" =
+          lib.mkDefault "-s gen_context(system_u:object_r:systemd_runtime_notify_t,s0)";
+        "/run/systemd/resolve(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_resolved_runtime_t,s0)";
+        "/run/systemd/seats(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
+        "/run/systemd/sessions(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_sessions_runtime_t,s0)";
+        "/run/systemd/shutdown(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
+        "/run/systemd/users(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_logind_runtime_t,s0)";
+        "/run/systemd/userdb(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
+        "/run/systemd/inhibit(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_logind_inhibit_runtime_t,s0)";
+        "/run/systemd/nspawn(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_nspawn_runtime_t,s0)";
+        "/run/systemd/machines(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_machined_runtime_t,s0)";
+        "/run/systemd/netif(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_networkd_runtime_t,s0)";
+        "/run/systemd/nsresource(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
         "/run/systemd/io\\.systemd\\.NamespaceResource" =
-          "-s gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
+          lib.mkDefault "-s gen_context(system_u:object_r:systemd_nsresourced_runtime_t,s0)";
 
-        "/run/tmpfiles\\.d" = "-d gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
-        "/run/tmpfiles\\.d/.*" = "<<none>>";
+        "/run/tmpfiles\\.d" = lib.mkDefault "-d gen_context(system_u:object_r:systemd_tmpfiles_conf_t,s0)";
+        "/run/tmpfiles\\.d/.*" = lib.mkDefault "<<none>>";
 
-        "/run/userdb(/.*)?" = "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
+        "/run/userdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_userdbd_runtime_t,s0)";
 
-        "/var/log/journal(/.*)?" = "gen_context(system_u:object_r:systemd_journal_t,mls_systemhigh)";
+        "/var/log/journal(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_journal_t,mls_systemhigh)";
       };
     };
   };

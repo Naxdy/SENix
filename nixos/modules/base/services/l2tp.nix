@@ -200,17 +200,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/.*l2tp(/.*)?" = "gen_context(system_u:object_r:l2tp_conf_t,s0)";
+        "/etc/.*l2tp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:l2tp_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/.*l2tpd" = "-- gen_context(system_u:object_r:l2tpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/.*l2tpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:l2tpd_initrc_exec_t,s0)";
 
-        "/etc/sysconfig/.*l2tpd" = "-- gen_context(system_u:object_r:l2tp_conf_t,s0)";
+        "/etc/sysconfig/.*l2tpd" = lib.mkDefault "-- gen_context(system_u:object_r:l2tp_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/.*l2tpd" = "-- gen_context(system_u:object_r:l2tpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/.*l2tpd" = lib.mkDefault "-- gen_context(system_u:object_r:l2tpd_exec_t,s0)";
 
-        "/run/.*l2tpd(/.*)?" = "gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
-        "/run/prol2tpd\\.ctl" = "-s gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
-        "/run/.*l2tpd\\.pid" = "-- gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
+        "/run/.*l2tpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
+        "/run/prol2tpd\\.ctl" = lib.mkDefault "-s gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
+        "/run/.*l2tpd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:l2tpd_runtime_t,s0)";
       };
     };
   };

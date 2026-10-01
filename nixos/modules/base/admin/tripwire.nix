@@ -349,15 +349,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/tripwire(/.*)?" = "gen_context(system_u:object_r:tripwire_etc_t,s0)";
+        "/etc/tripwire(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tripwire_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/siggen" = "-- gen_context(system_u:object_r:siggen_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tripwire" = "-- gen_context(system_u:object_r:tripwire_exec_t,s0)";
-        "/nix/store/[^/]+/bin/twadmin" = "-- gen_context(system_u:object_r:twadmin_exec_t,s0)";
-        "/nix/store/[^/]+/bin/twprint" = "-- gen_context(system_u:object_r:twprint_exec_t,s0)";
+        "/nix/store/[^/]+/bin/siggen" = lib.mkDefault "-- gen_context(system_u:object_r:siggen_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tripwire" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tripwire_exec_t,s0)";
+        "/nix/store/[^/]+/bin/twadmin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:twadmin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/twprint" =
+          lib.mkDefault "-- gen_context(system_u:object_r:twprint_exec_t,s0)";
 
-        "/var/lib/tripwire(/.*)?" = "gen_context(system_u:object_r:tripwire_var_lib_t,s0)";
-        "/var/lib/tripwire/report(/.*)?" = "gen_context(system_u:object_r:tripwire_report_t,s0)";
+        "/var/lib/tripwire(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tripwire_var_lib_t,s0)";
+        "/var/lib/tripwire/report(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:tripwire_report_t,s0)";
       };
     };
   };

@@ -286,21 +286,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/shorewall.*" = "-- gen_context(system_u:object_r:shorewall_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/shorewall.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shorewall_initrc_exec_t,s0)";
 
-        "/etc/shorewall(/.*)?" = "gen_context(system_u:object_r:shorewall_etc_t,s0)";
-        "/etc/shorewall-lite(/.*)?" = "gen_context(system_u:object_r:shorewall_etc_t,s0)";
+        "/etc/shorewall(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shorewall_etc_t,s0)";
+        "/etc/shorewall-lite(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shorewall_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/shorewall6?" = "-- gen_context(system_u:object_r:shorewall_exec_t,s0)";
-        "/nix/store/[^/]+/bin/shorewall-lite" = "-- gen_context(system_u:object_r:shorewall_exec_t,s0)";
+        "/nix/store/[^/]+/bin/shorewall6?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shorewall_exec_t,s0)";
+        "/nix/store/[^/]+/bin/shorewall-lite" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shorewall_exec_t,s0)";
 
-        "/var/lib/shorewall(/.*)?" = "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
-        "/var/lib/shorewall6(/.*)?" = "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
-        "/var/lib/shorewall-lite(/.*)?" = "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
+        "/var/lib/shorewall(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
+        "/var/lib/shorewall6(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
+        "/var/lib/shorewall-lite(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:shorewall_var_lib_t,s0)";
 
-        "/var/lock/subsys/shorewall" = "-- gen_context(system_u:object_r:shorewall_lock_t,s0)";
+        "/var/lock/subsys/shorewall" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shorewall_lock_t,s0)";
 
-        "/var/log/shorewall.*" = "gen_context(system_u:object_r:shorewall_log_t,s0)";
+        "/var/log/shorewall.*" = lib.mkDefault "gen_context(system_u:object_r:shorewall_log_t,s0)";
       };
     };
   };

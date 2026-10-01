@@ -94,7 +94,7 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/power-profiles-daemon" =
-          "-- gen_context(system_u:object_r:power_profilesd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:power_profilesd_exec_t,s0)";
       };
     };
   };

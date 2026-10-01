@@ -589,23 +589,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/puppet(/.*)?" = "gen_context(system_u:object_r:puppet_etc_t,s0)";
+        "/etc/puppet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:puppet_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/puppet" = "-- gen_context(system_u:object_r:puppet_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/puppet" =
+          lib.mkDefault "-- gen_context(system_u:object_r:puppet_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/puppetmaster" =
-          "-- gen_context(system_u:object_r:puppetmaster_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:puppetmaster_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/puppetca" = "-- gen_context(system_u:object_r:puppetca_exec_t,s0)";
-        "/nix/store/[^/]+/bin/puppetd" = "-- gen_context(system_u:object_r:puppet_exec_t,s0)";
-        "/nix/store/[^/]+/bin/puppetmasterd" = "-- gen_context(system_u:object_r:puppetmaster_exec_t,s0)";
+        "/nix/store/[^/]+/bin/puppetca" =
+          lib.mkDefault "-- gen_context(system_u:object_r:puppetca_exec_t,s0)";
+        "/nix/store/[^/]+/bin/puppetd" = lib.mkDefault "-- gen_context(system_u:object_r:puppet_exec_t,s0)";
+        "/nix/store/[^/]+/bin/puppetmasterd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:puppetmaster_exec_t,s0)";
 
-        "/var/cache/puppet(/.*)?" = "gen_context(system_u:object_r:puppet_cache_t,s0)";
+        "/var/cache/puppet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:puppet_cache_t,s0)";
 
-        "/var/lib/puppet(/.*)?" = "gen_context(system_u:object_r:puppet_var_lib_t,s0)";
+        "/var/lib/puppet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:puppet_var_lib_t,s0)";
 
-        "/var/log/puppet(/.*)?" = "gen_context(system_u:object_r:puppet_log_t,s0)";
+        "/var/log/puppet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:puppet_log_t,s0)";
 
-        "/run/puppet(/.*)?" = "gen_context(system_u:object_r:puppet_runtime_t,s0)";
+        "/run/puppet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:puppet_runtime_t,s0)";
       };
     };
   };

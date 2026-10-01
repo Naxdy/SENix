@@ -1374,39 +1374,51 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.ssh(/.*)?" = "gen_context(system_u:object_r:ssh_home_t,s0)";
+        "HOME_DIR/\\.ssh(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ssh_home_t,s0)";
 
-        "/etc/ssh/primes" = "-- gen_context(system_u:object_r:sshd_key_t,s0)";
-        "/etc/ssh/ssh_host.*_key(\\.pub)?" = "-- gen_context(system_u:object_r:sshd_key_t,s0)";
+        "/etc/ssh/primes" = lib.mkDefault "-- gen_context(system_u:object_r:sshd_key_t,s0)";
+        "/etc/ssh/ssh_host.*_key(\\.pub)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_key_t,s0)";
 
-        "/nix/store/[^/]+/bin/ssh" = "-- gen_context(system_u:object_r:ssh_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ssh-agent" = "-- gen_context(system_u:object_r:ssh_agent_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ssh-keygen" = "-- gen_context(system_u:object_r:ssh_keygen_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sshd" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ssh" = lib.mkDefault "-- gen_context(system_u:object_r:ssh_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ssh-agent" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_agent_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ssh-keygen" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_keygen_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sshd" = lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/ssh-keysign" = "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/sshd-auth" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/sshd-session" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/misc/sshd-auth" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/misc/sshd-session" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ssh-keysign" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/sshd-auth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/sshd-session" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/misc/sshd-auth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/misc/sshd-session" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
         "/nix/store/[^/]+/lib/openssh/ssh-keysign" =
-          "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
-        "/nix/store/[^/]+/lib/openssh/sshd-auth" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/openssh/sshd-session" = "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ssh/ssh-keysign" = "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
+        "/nix/store/[^/]+/lib/openssh/sshd-auth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/openssh/sshd-session" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ssh/ssh-keysign" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/systemd/system/ssh.*" = "-- gen_context(system_u:object_r:sshd_unit_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system/ssh.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/sshdgenkeys.*" =
-          "-- gen_context(system_u:object_r:sshd_keygen_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_keygen_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/sshd-keygen.*" =
-          "-- gen_context(system_u:object_r:sshd_keygen_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:sshd_keygen_unit_t,s0)";
 
         "/nix/store/[^/]+/libexec/openssh/ssh-keysign" =
-          "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ssh_keysign_exec_t,s0)";
 
-        "/run/sshd(/.*)?" = "gen_context(system_u:object_r:sshd_runtime_t,s0)";
-        "/run/sshd\\.init\\.pid" = "-- gen_context(system_u:object_r:sshd_runtime_t,s0)";
-        "/run/sshd\\.pid" = "-- gen_context(system_u:object_r:sshd_runtime_t,s0)";
+        "/run/sshd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sshd_runtime_t,s0)";
+        "/run/sshd\\.init\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sshd_runtime_t,s0)";
+        "/run/sshd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sshd_runtime_t,s0)";
       };
     };
   };

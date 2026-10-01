@@ -196,13 +196,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/ifplugd(/.*)?" = "gen_context(system_u:object_r:ifplugd_etc_t,s0)";
+        "/etc/ifplugd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ifplugd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/ifplugd" = "-- gen_context(system_u:object_r:ifplugd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ifplugd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifplugd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/ifplugd" = "-- gen_context(system_u:object_r:ifplugd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ifplugd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifplugd_exec_t,s0)";
 
-        "/run/ifplugd.*" = "gen_context(system_u:object_r:ifplugd_runtime_t,s0)";
+        "/run/ifplugd.*" = lib.mkDefault "gen_context(system_u:object_r:ifplugd_runtime_t,s0)";
       };
     };
   };

@@ -254,16 +254,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/firewalld" = "-- gen_context(system_u:object_r:firewalld_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/firewalld" =
+          lib.mkDefault "-- gen_context(system_u:object_r:firewalld_initrc_exec_t,s0)";
 
-        "/etc/firewalld(/.*)?" = "gen_context(system_u:object_r:firewalld_etc_rw_t,s0)";
+        "/etc/firewalld(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:firewalld_etc_rw_t,s0)";
 
-        "/nix/store/[^/]+/bin/firewalld" = "-- gen_context(system_u:object_r:firewalld_exec_t,s0)";
+        "/nix/store/[^/]+/bin/firewalld" =
+          lib.mkDefault "-- gen_context(system_u:object_r:firewalld_exec_t,s0)";
 
-        "/var/log/firewalld.*" = "-- gen_context(system_u:object_r:firewalld_var_log_t,s0)";
+        "/var/log/firewalld.*" = lib.mkDefault "-- gen_context(system_u:object_r:firewalld_var_log_t,s0)";
 
-        "/run/firewalld(/.*)?" = "gen_context(system_u:object_r:firewalld_runtime_t,s0)";
-        "/run/firewalld\\.pid" = "-- gen_context(system_u:object_r:firewalld_runtime_t,s0)";
+        "/run/firewalld(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:firewalld_runtime_t,s0)";
+        "/run/firewalld\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:firewalld_runtime_t,s0)";
       };
     };
   };

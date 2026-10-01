@@ -483,8 +483,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/sulogin" = "-- gen_context(system_u:object_r:sulogin_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sushell" = "-- gen_context(system_u:object_r:sulogin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sulogin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sulogin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sushell" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sulogin_exec_t,s0)";
       };
     };
   };

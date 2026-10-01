@@ -69,7 +69,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/in\\.comsat" = "-- gen_context(system_u:object_r:comsat_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.comsat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:comsat_exec_t,s0)";
       };
     };
   };

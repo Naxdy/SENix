@@ -108,15 +108,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/mongod" = "-- gen_context(system_u:object_r:mongod_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mongod" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mongod_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mongod" = "-- gen_context(system_u:object_r:mongod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mongod" = lib.mkDefault "-- gen_context(system_u:object_r:mongod_exec_t,s0)";
 
-        "/var/lib/mongo.*" = "gen_context(system_u:object_r:mongod_var_lib_t,s0)";
+        "/var/lib/mongo.*" = lib.mkDefault "gen_context(system_u:object_r:mongod_var_lib_t,s0)";
 
-        "/var/log/mongo.*" = "gen_context(system_u:object_r:mongod_log_t,s0)";
+        "/var/log/mongo.*" = lib.mkDefault "gen_context(system_u:object_r:mongod_log_t,s0)";
 
-        "/run/mongo.*" = "gen_context(system_u:object_r:mongod_runtime_t,s0)";
+        "/run/mongo.*" = lib.mkDefault "gen_context(system_u:object_r:mongod_runtime_t,s0)";
       };
     };
   };

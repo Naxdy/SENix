@@ -142,18 +142,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/quantum.*" = "-- gen_context(system_u:object_r:quantum_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/quantum.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:quantum_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/quantum-server" = "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
+        "/nix/store/[^/]+/bin/quantum-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
         "/nix/store/[^/]+/bin/quantum-openvswitch-agent" =
-          "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
         "/nix/store/[^/]+/bin/quantum-linuxbridge-agent" =
-          "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
-        "/nix/store/[^/]+/bin/quantum-ryu-agent" = "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
+        "/nix/store/[^/]+/bin/quantum-ryu-agent" =
+          lib.mkDefault "-- gen_context(system_u:object_r:quantum_exec_t,s0)";
 
-        "/var/lib/quantum(/.*)?" = "gen_context(system_u:object_r:quantum_var_lib_t,s0)";
+        "/var/lib/quantum(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:quantum_var_lib_t,s0)";
 
-        "/var/log/quantum(/.*)?" = "gen_context(system_u:object_r:quantum_log_t,s0)";
+        "/var/log/quantum(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:quantum_log_t,s0)";
       };
     };
   };

@@ -82,15 +82,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/fake-hwclock\\.data" = "-- gen_context(system_u:object_r:fakehwclock_backup_t,s0)";
+        "/etc/fake-hwclock\\.data" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fakehwclock_backup_t,s0)";
 
         "/etc/rc\\.d/init\\.d/fake-hwclock" =
-          "-- gen_context(system_u:object_r:fakehwclock_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:fakehwclock_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/fake-hwclock" = "-- gen_context(system_u:object_r:fakehwclock_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fake-hwclock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fakehwclock_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/fake-hwclock\\.service" =
-          "-- gen_context(system_u:object_r:fakehwclock_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:fakehwclock_unit_t,s0)";
       };
     };
   };

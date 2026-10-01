@@ -803,63 +803,79 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.k5login" = "-- gen_context(system_u:object_r:krb5_home_t,s0)";
-        "/root/\\.k5login" = "-- gen_context(system_u:object_r:krb5_home_t,s0)";
+        "HOME_DIR/\\.k5login" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_home_t,s0)";
+        "/root/\\.k5login" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_home_t,s0)";
 
-        "/etc/krb5\\.conf" = "-- gen_context(system_u:object_r:krb5_conf_t,s0)";
-        "/etc/krb5\\.keytab" = "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
+        "/etc/krb5\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_conf_t,s0)";
+        "/etc/krb5\\.keytab" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
 
-        "/etc/krb5kdc(/.*)?" = "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
-        "/etc/krb5kdc/kadm5\\.keytab" = "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
-        "/etc/krb5kdc/principal.*" = "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
+        "/etc/krb5kdc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
+        "/etc/krb5kdc/kadm5\\.keytab" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
+        "/etc/krb5kdc/principal.*" = lib.mkDefault "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/kadmind" = "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/kprop" = "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/krb524d" = "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/krb5kdc" = "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/kadmind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/kprop" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/krb524d" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/krb5kdc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kerberos_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/krb5kdc" = "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kadmind" = "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
+        "/nix/store/[^/]+/bin/krb5kdc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kadmind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
 
-        "/nix/store/[^/]+/kerberos/sbin/krb5kdc" = "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
-        "/nix/store/[^/]+/kerberos/sbin/kadmind" = "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/krb5kdc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/kadmind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
         "/nix/store/[^/]+/kerberos/sbin/kadmin\\.local" =
-          "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
-        "/nix/store/[^/]+/kerberos/sbin/kpropd" = "-- gen_context(system_u:object_r:kpropd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/kpropd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kpropd_exec_t,s0)";
 
         "/nix/store/[^/]+/local/kerberos/sbin/krb5kdc" =
-          "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:krb5kdc_exec_t,s0)";
         "/nix/store/[^/]+/local/kerberos/sbin/kadmind" =
-          "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kadmind_exec_t,s0)";
 
-        "/nix/store/[^/]+/local/var/krb5kdc(/.*)?" = "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
+        "/nix/store/[^/]+/local/var/krb5kdc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
         "/nix/store/[^/]+/local/var/krb5kdc/principal.*" =
-          "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
 
-        "/nix/store/[^/]+/var/krb5kdc(/.*)?" = "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
+        "/nix/store/[^/]+/var/krb5kdc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
         "/nix/store/[^/]+/var/krb5kdc/principal.*" =
-          "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
 
-        "/var/cache/krb5rcache(/.*)?" = "gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/cache/krb5rcache(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
 
-        "/var/kerberos/krb5kdc(/.*)?" = "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
-        "/var/kerberos/krb5kdc/from_master.*" = "gen_context(system_u:object_r:krb5kdc_lock_t,s0)";
-        "/var/kerberos/krb5kdc/kadm5\\.keytab" = "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
-        "/var/kerberos/krb5kdc/principal.*" = "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
-        "/var/kerberos/krb5kdc/principal.*\\.ok" = "-- gen_context(system_u:object_r:krb5kdc_lock_t,s0)";
+        "/var/kerberos/krb5kdc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:krb5kdc_conf_t,s0)";
+        "/var/kerberos/krb5kdc/from_master.*" =
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_lock_t,s0)";
+        "/var/kerberos/krb5kdc/kadm5\\.keytab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:krb5_keytab_t,s0)";
+        "/var/kerberos/krb5kdc/principal.*" =
+          lib.mkDefault "gen_context(system_u:object_r:krb5kdc_principal_t,s0)";
+        "/var/kerberos/krb5kdc/principal.*\\.ok" =
+          lib.mkDefault "-- gen_context(system_u:object_r:krb5kdc_lock_t,s0)";
 
-        "/var/log/krb5kdc\\.log.*" = "-- gen_context(system_u:object_r:krb5kdc_log_t,s0)";
-        "/var/log/kadmin\\.log.*" = "-- gen_context(system_u:object_r:kadmind_log_t,s0)";
-        "/var/log/kadmind\\.log.*" = "-- gen_context(system_u:object_r:kadmind_log_t,s0)";
+        "/var/log/krb5kdc\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:krb5kdc_log_t,s0)";
+        "/var/log/kadmin\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:kadmind_log_t,s0)";
+        "/var/log/kadmind\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:kadmind_log_t,s0)";
 
-        "/var/tmp/host_0" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/HTTP_23" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/HTTP_48" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/imap_0" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/nfs_0" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/ldapmap1_0" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/ldap_487" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
-        "/var/tmp/ldap_55" = "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/host_0" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/HTTP_23" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/HTTP_48" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/imap_0" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/nfs_0" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/ldapmap1_0" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/ldap_487" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
+        "/var/tmp/ldap_55" = lib.mkDefault "-- gen_context(system_u:object_r:krb5_host_rcache_t,s0)";
       };
     };
   };

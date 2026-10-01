@@ -209,17 +209,17 @@
     '';
     fileContext = {
       rules = {
-        "/dev/gpmctl" = "-s gen_context(system_u:object_r:gpmctl_t,s0)";
-        "/dev/gpmdata" = "-p gen_context(system_u:object_r:gpmctl_t,s0)";
+        "/dev/gpmctl" = lib.mkDefault "-s gen_context(system_u:object_r:gpmctl_t,s0)";
+        "/dev/gpmdata" = lib.mkDefault "-p gen_context(system_u:object_r:gpmctl_t,s0)";
 
-        "/etc/gpm(/.*)?" = "gen_context(system_u:object_r:gpm_conf_t,s0)";
-        "/etc/gpm-.*\\.conf" = "-- gen_context(system_u:object_r:gpm_conf_t,s0)";
+        "/etc/gpm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gpm_conf_t,s0)";
+        "/etc/gpm-.*\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:gpm_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/gpm" = "-- gen_context(system_u:object_r:gpm_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gpm" = lib.mkDefault "-- gen_context(system_u:object_r:gpm_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/gpm" = "-- gen_context(system_u:object_r:gpm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpm" = lib.mkDefault "-- gen_context(system_u:object_r:gpm_exec_t,s0)";
 
-        "/run/gpm\\.pid" = "-- gen_context(system_u:object_r:gpm_runtime_t,s0)";
+        "/run/gpm\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:gpm_runtime_t,s0)";
       };
     };
   };

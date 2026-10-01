@@ -1832,60 +1832,73 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/nmb" = "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/smb" = "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/winbind" = "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nmb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/smb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/winbind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_initrc_exec_t,s0)";
 
-        "/etc/samba/MACHINE\\.SID" = "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
-        "/etc/samba/passdb\\.tdb" = "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
-        "/etc/samba/secrets\\.tdb" = "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
-        "/etc/samba/smbpasswd" = "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
-        "/etc/samba(/.*)?" = "gen_context(system_u:object_r:samba_etc_t,s0)";
+        "/etc/samba/MACHINE\\.SID" = lib.mkDefault "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
+        "/etc/samba/passdb\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
+        "/etc/samba/secrets\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
+        "/etc/samba/smbpasswd" = lib.mkDefault "-- gen_context(system_u:object_r:samba_secrets_t,s0)";
+        "/etc/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/net" = "-- gen_context(system_u:object_r:samba_net_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nmbd" = "-- gen_context(system_u:object_r:nmbd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ntlm_auth" = "-- gen_context(system_u:object_r:winbind_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smbcontrol" = "-- gen_context(system_u:object_r:smbcontrol_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smbd" = "-- gen_context(system_u:object_r:smbd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smbmount" = "-- gen_context(system_u:object_r:smbmount_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smbmnt" = "-- gen_context(system_u:object_r:smbmount_exec_t,s0)";
-        "/nix/store/[^/]+/bin/swat" = "-- gen_context(system_u:object_r:swat_exec_t,s0)";
-        "/nix/store/[^/]+/bin/winbindd" = "-- gen_context(system_u:object_r:winbind_exec_t,s0)";
+        "/nix/store/[^/]+/bin/net" = lib.mkDefault "-- gen_context(system_u:object_r:samba_net_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nmbd" = lib.mkDefault "-- gen_context(system_u:object_r:nmbd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ntlm_auth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:winbind_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smbcontrol" =
+          lib.mkDefault "-- gen_context(system_u:object_r:smbcontrol_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smbd" = lib.mkDefault "-- gen_context(system_u:object_r:smbd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smbmount" =
+          lib.mkDefault "-- gen_context(system_u:object_r:smbmount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smbmnt" =
+          lib.mkDefault "-- gen_context(system_u:object_r:smbmount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/swat" = lib.mkDefault "-- gen_context(system_u:object_r:swat_exec_t,s0)";
+        "/nix/store/[^/]+/bin/winbindd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:winbind_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/smb.*\\.service" =
-          "-- gen_context(system_u:object_r:samba_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_unit_t,s0)";
 
-        "/var/cache/samba(/.*)?" = "gen_context(system_u:object_r:samba_var_t,s0)";
+        "/var/cache/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_var_t,s0)";
         "/var/cache/samba/winbindd_privileged(/.*)?" =
-          "gen_context(system_u:object_r:winbind_runtime_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:winbind_runtime_t,s0)";
 
-        "/var/lib/samba(/.*)?" = "gen_context(system_u:object_r:samba_var_t,s0)";
-        "/var/lib/samba/winbindd_privileged(/.*)?" = "gen_context(system_u:object_r:winbind_runtime_t,s0)";
+        "/var/lib/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_var_t,s0)";
+        "/var/lib/samba/winbindd_privileged(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:winbind_runtime_t,s0)";
 
-        "/var/log/samba(/.*)?" = "gen_context(system_u:object_r:samba_log_t,s0)";
+        "/var/log/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_log_t,s0)";
 
-        "/var/nmbd(/.*)?" = "gen_context(system_u:object_r:samba_var_t,s0)";
+        "/var/nmbd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_var_t,s0)";
 
-        "/run/nmbd(/.*)?" = "gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/nmbd(/.*)?" = "gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/nmbd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/nmbd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_runtime_t,s0)";
 
-        "/run/samba(/.*)?" = "gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/brlock\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/connections\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/gencache\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/locking\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/messages\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/namelist\\.debug" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/nmbd\\.pid" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/sessionid\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/share_info\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/smbd\\.pid" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
-        "/run/samba/unexpected\\.tdb" = "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/brlock\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/connections\\.tdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/gencache\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/locking\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/messages\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/namelist\\.debug" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/nmbd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/sessionid\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/share_info\\.tdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/smbd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
+        "/run/samba/unexpected\\.tdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samba_runtime_t,s0)";
 
-        "/run/winbindd(/.*)?" = "gen_context(system_u:object_r:winbind_runtime_t,s0)";
-        "/run/samba/winbindd(/.*)?" = "gen_context(system_u:object_r:winbind_runtime_t,s0)";
+        "/run/winbindd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:winbind_runtime_t,s0)";
+        "/run/samba/winbindd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:winbind_runtime_t,s0)";
 
-        "/var/spool/samba(/.*)?" = "gen_context(system_u:object_r:samba_var_t,s0)";
+        "/var/spool/samba(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:samba_var_t,s0)";
       };
     };
   };

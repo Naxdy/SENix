@@ -179,12 +179,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/memcached" = "-- gen_context(system_u:object_r:memcached_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/memcached" =
+          lib.mkDefault "-- gen_context(system_u:object_r:memcached_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/memcached" = "-- gen_context(system_u:object_r:memcached_exec_t,s0)";
+        "/nix/store/[^/]+/bin/memcached" =
+          lib.mkDefault "-- gen_context(system_u:object_r:memcached_exec_t,s0)";
 
-        "/run/ipa_memcached(/.*)?" = "gen_context(system_u:object_r:memcached_runtime_t,s0)";
-        "/run/memcached(/.*)?" = "gen_context(system_u:object_r:memcached_runtime_t,s0)";
+        "/run/ipa_memcached(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:memcached_runtime_t,s0)";
+        "/run/memcached(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:memcached_runtime_t,s0)";
       };
     };
   };

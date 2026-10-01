@@ -303,31 +303,43 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/spamass-milter" =
-          "-- gen_context(system_u:object_r:spamass_milter_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:spamass_milter_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/bin/milter-greylist" =
-          "-- gen_context(system_u:object_r:greylist_milter_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sqlgrey" = "-- gen_context(system_u:object_r:greylist_milter_exec_t,s0)";
-        "/nix/store/[^/]+/bin/milter-regex" = "-- gen_context(system_u:object_r:regex_milter_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:greylist_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sqlgrey" =
+          lib.mkDefault "-- gen_context(system_u:object_r:greylist_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/milter-regex" =
+          lib.mkDefault "-- gen_context(system_u:object_r:regex_milter_exec_t,s0)";
         "/nix/store/[^/]+/bin/spamass-milter" =
-          "-- gen_context(system_u:object_r:spamass_milter_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:spamass_milter_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/postfwd.*" = "-- gen_context(system_u:object_r:postfwd_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postfwd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfwd_milter_exec_t,s0)";
 
-        "/var/lib/milter-greylist(/.*)?" = "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
-        "/var/lib/sqlgrey(/.*)?" = "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
-        "/var/lib/spamass-milter(/.*)?" = "gen_context(system_u:object_r:spamass_milter_state_t,s0)";
+        "/var/lib/milter-greylist(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
+        "/var/lib/sqlgrey(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
+        "/var/lib/spamass-milter(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamass_milter_state_t,s0)";
 
-        "/run/milter-greylist(/.*)?" = "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
-        "/run/milter-greylist\\.pid" = "-- gen_context(system_u:object_r:greylist_milter_data_t,s0)";
-        "/run/postfwd\\.pid" = "-- gen_context(system_u:object_r:postfwd_milter_runtime_t,s0)";
-        "/run/spamass(/.*)?" = "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
-        "/run/sqlgrey\\.pid" = "-- gen_context(system_u:object_r:greylist_milter_data_t,s0)";
-        "/run/spamass-milter(/.*)?" = "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
-        "/run/spamass-milter\\.pid" = "-- gen_context(system_u:object_r:spamass_milter_data_t,s0)";
+        "/run/milter-greylist(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:greylist_milter_data_t,s0)";
+        "/run/milter-greylist\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:greylist_milter_data_t,s0)";
+        "/run/postfwd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfwd_milter_runtime_t,s0)";
+        "/run/spamass(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
+        "/run/sqlgrey\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:greylist_milter_data_t,s0)";
+        "/run/spamass-milter(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
+        "/run/spamass-milter\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamass_milter_data_t,s0)";
 
-        "/var/spool/milter-regex(/.*)?" = "gen_context(system_u:object_r:regex_milter_data_t,s0)";
-        "/var/spool/postfix/spamass(/.*)?" = "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
+        "/var/spool/milter-regex(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:regex_milter_data_t,s0)";
+        "/var/spool/postfix/spamass(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamass_milter_data_t,s0)";
       };
     };
   };

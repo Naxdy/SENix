@@ -166,21 +166,28 @@
     fileContext = {
       rules = {
         "/etc/init\\.d/((iiimf-htt-server)|(iiimf-server)|(iiim))" =
-          "-- gen_context(system_u:object_r:i18n_input_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/iiimd" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iiimd\\.bin" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/htt" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/htt_server" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/httx" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/htt_xbe" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iiimx" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iiimd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iiimd\\.bin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/htt" = lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/htt_server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/httx" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/htt_xbe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iiimx" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/iiim/iiim-xbe" = "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
+        "/nix/store/[^/]+/lib/iiim/iiim-xbe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:i18n_input_exec_t,s0)";
 
-        "/var/log/iiim(/.*)?" = "gen_context(system_u:object_r:i18n_input_log_t,s0)";
+        "/var/log/iiim(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:i18n_input_log_t,s0)";
 
-        "/run/iiim(/.*)?" = "gen_context(system_u:object_r:i18n_input_runtime_t,s0)";
+        "/run/iiim(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:i18n_input_runtime_t,s0)";
       };
     };
   };

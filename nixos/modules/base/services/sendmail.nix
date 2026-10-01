@@ -588,13 +588,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sendmail" = "-- gen_context(system_u:object_r:sendmail_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sendmail" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_initrc_exec_t,s0)";
 
-        "/var/log/sendmail\\.st.*" = "-- gen_context(system_u:object_r:sendmail_log_t,s0)";
-        "/var/log/mail(/.*)?" = "gen_context(system_u:object_r:sendmail_log_t,s0)";
+        "/var/log/sendmail\\.st.*" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_log_t,s0)";
+        "/var/log/mail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sendmail_log_t,s0)";
 
-        "/run/sendmail\\.pid" = "-- gen_context(system_u:object_r:sendmail_runtime_t,s0)";
-        "/run/sm-client\\.pid" = "-- gen_context(system_u:object_r:sendmail_runtime_t,s0)";
+        "/run/sendmail\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_runtime_t,s0)";
+        "/run/sm-client\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_runtime_t,s0)";
       };
     };
   };

@@ -241,12 +241,13 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/accounts-daemon" =
-          "-- gen_context(system_u:object_r:accountsd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:accountsd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/accountsservice/accounts-daemon" =
-          "-- gen_context(system_u:object_r:accountsd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:accountsd_exec_t,s0)";
 
-        "/var/lib/AccountsService(/.*)?" = "gen_context(system_u:object_r:accountsd_var_lib_t,s0)";
+        "/var/lib/AccountsService(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:accountsd_var_lib_t,s0)";
       };
     };
   };

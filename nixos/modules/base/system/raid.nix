@@ -242,27 +242,31 @@
     fileContext = {
       rules = {
         # Systemd unit files
-        "/dev/\\.mdadm\\.map" = "-- gen_context(system_u:object_r:mdadm_runtime_t,s0)";
-        "/dev/md/.*" = "-- gen_context(system_u:object_r:mdadm_runtime_t,s0)";
+        "/dev/\\.mdadm\\.map" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_runtime_t,s0)";
+        "/dev/md/.*" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_runtime_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/mdmonitor" = "-- gen_context(system_u:object_r:mdadm_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mdmonitor" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/iprdump" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iprinit" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iprupdate" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mdadm" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mdmon" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mdmpd" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/raid-check" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iprdump" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iprinit" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iprupdate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mdadm" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mdmon" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mdmpd" = lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/raid-check" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
 
-        "/nix/store/[^/]+/share/mdadm/checkarray" = "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
+        "/nix/store/[^/]+/share/mdadm/checkarray" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*mdadm-.*" =
-          "-- gen_context(system_u:object_r:mdadm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*mdmon.*" =
-          "-- gen_context(system_u:object_r:mdadm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mdadm_unit_t,s0)";
 
-        "/run/mdadm(/.*)?" = "gen_context(system_u:object_r:mdadm_runtime_t,s0)";
+        "/run/mdadm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mdadm_runtime_t,s0)";
       };
     };
   };

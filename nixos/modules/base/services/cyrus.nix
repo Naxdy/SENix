@@ -231,17 +231,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/cyrus.*" = "-- gen_context(system_u:object_r:cyrus_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cyrus.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cyrus_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/cyrus/master" = "-- gen_context(system_u:object_r:cyrus_exec_t,s0)";
+        "/nix/store/[^/]+/lib/cyrus/master" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cyrus_exec_t,s0)";
         "/nix/store/[^/]+/lib/cyrus-imapd/cyrus-master" =
-          "-- gen_context(system_u:object_r:cyrus_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cyrus_exec_t,s0)";
 
-        "/var/imap(/.*)?" = "gen_context(system_u:object_r:cyrus_var_lib_t,s0)";
+        "/var/imap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cyrus_var_lib_t,s0)";
 
-        "/var/lib/imap(/.*)?" = "gen_context(system_u:object_r:cyrus_var_lib_t,s0)";
+        "/var/lib/imap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cyrus_var_lib_t,s0)";
 
-        "/run/cyrus.*" = "gen_context(system_u:object_r:cyrus_runtime_t,s0)";
+        "/run/cyrus.*" = lib.mkDefault "gen_context(system_u:object_r:cyrus_runtime_t,s0)";
       };
     };
   };

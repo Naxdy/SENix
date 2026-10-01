@@ -126,7 +126,7 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/dmesg" = "-- gen_context(system_u:object_r:dmesg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmesg" = lib.mkDefault "-- gen_context(system_u:object_r:dmesg_exec_t,s0)";
       };
     };
   };

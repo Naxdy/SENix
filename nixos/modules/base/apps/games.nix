@@ -331,66 +331,86 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/atlantik" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/blackjack" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/civclient.*" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/civserver.*" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gataxx" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/glines" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnect" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnibbles" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnobots2" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnome-stones" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnomine" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnotravex" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnotski" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gtali" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iagno" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kasteroids" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/katomic" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kbackgammon" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kbattleship" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kblackbox" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kbounce" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kenolaba" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kfouleggs" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kgoldrunner" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kjumpingcube" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/klickety" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/klines" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kmahjongg" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kmines" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kolf" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/konquest" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kpat" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kpoker" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kreversi" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ksame" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kshisen" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ksirtet" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ksmiletris" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ksnake" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ksokoban" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kspaceduel" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ktron" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ktuberling" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kwin4" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kwin4proc" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lskat" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lskatproc" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/Maelstrom" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mahjongg" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/micq" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/same-gnome" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sol" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/atlantik" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blackjack" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/civclient.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/civserver.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gataxx" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/glines" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnect" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnibbles" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnobots2" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnome-stones" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnomine" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnotravex" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnotski" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gtali" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iagno" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kasteroids" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/katomic" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kbackgammon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kbattleship" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kblackbox" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kbounce" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kenolaba" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kfouleggs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kgoldrunner" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kjumpingcube" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/klickety" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/klines" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kmahjongg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kmines" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kolf" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/konquest" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kpat" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kpoker" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kreversi" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksame" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kshisen" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksirtet" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksmiletris" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksnake" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksokoban" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kspaceduel" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ktron" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ktuberling" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kwin4" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kwin4proc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lskat" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lskatproc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/Maelstrom" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mahjongg" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/micq" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/same-gnome" =
+          lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sol" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
 
-        "/nix/store/[^/]+/games/.*" = "-- gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/games/.*" = lib.mkDefault "-- gen_context(system_u:object_r:games_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/games(/.*)?" = "gen_context(system_u:object_r:games_exec_t,s0)";
+        "/nix/store/[^/]+/lib/games(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:games_exec_t,s0)";
 
-        "/var/games(/.*)?" = "gen_context(system_u:object_r:games_data_t,s0)";
+        "/var/games(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:games_data_t,s0)";
 
-        "/var/lib/games(/.*)?" = "gen_context(system_u:object_r:games_data_t,s0)";
+        "/var/lib/games(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:games_data_t,s0)";
       };
     };
   };

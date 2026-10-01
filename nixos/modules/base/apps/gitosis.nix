@@ -159,11 +159,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/gitosis-serve" = "-- gen_context(system_u:object_r:gitosis_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gl-auth-command" = "-- gen_context(system_u:object_r:gitosis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gitosis-serve" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gitosis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gl-auth-command" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gitosis_exec_t,s0)";
 
-        "/var/lib/gitosis(/.*)?" = "gen_context(system_u:object_r:gitosis_var_lib_t,s0)";
-        "/var/lib/gitolite(3)?(/.*)?" = "gen_context(system_u:object_r:gitosis_var_lib_t,s0)";
+        "/var/lib/gitosis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gitosis_var_lib_t,s0)";
+        "/var/lib/gitolite(3)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gitosis_var_lib_t,s0)";
       };
     };
   };

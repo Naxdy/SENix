@@ -306,18 +306,19 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.pyzor(/.*)?" = "gen_context(system_u:object_r:pyzor_home_t,s0)";
+        "HOME_DIR/\\.pyzor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pyzor_home_t,s0)";
 
-        "/etc/pyzor(/.*)?" = "gen_context(system_u:object_r:pyzor_etc_t, s0)";
+        "/etc/pyzor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pyzor_etc_t, s0)";
 
-        "/etc/rc\\.d/init\\.d/pyzord" = "-- gen_context(system_u:object_r:pyzord_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pyzord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pyzord_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pyzor" = "-- gen_context(system_u:object_r:pyzor_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pyzord" = "-- gen_context(system_u:object_r:pyzord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pyzor" = lib.mkDefault "-- gen_context(system_u:object_r:pyzor_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pyzord" = lib.mkDefault "-- gen_context(system_u:object_r:pyzord_exec_t,s0)";
 
-        "/var/lib/pyzord(/.*)?" = "gen_context(system_u:object_r:pyzor_var_lib_t,s0)";
+        "/var/lib/pyzord(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pyzor_var_lib_t,s0)";
 
-        "/var/log/pyzord\\.log.*" = "-- gen_context(system_u:object_r:pyzord_log_t,s0)";
+        "/var/log/pyzord\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:pyzord_log_t,s0)";
       };
     };
   };

@@ -120,11 +120,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/lib/fprintd/fprintd" = "-- gen_context(system_u:object_r:fprintd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/fprintd/fprintd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fprintd_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/fprintd" = "-- gen_context(system_u:object_r:fprintd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/fprintd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fprintd_exec_t,s0)";
 
-        "/var/lib/fprint(/.*)?" = "gen_context(system_u:object_r:fprintd_var_lib_t,s0)";
+        "/var/lib/fprint(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fprintd_var_lib_t,s0)";
       };
     };
   };

@@ -106,15 +106,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/dphys-swapfile" = "-- gen_context(system_u:object_r:dphysswapfile_conf_t,s0)";
+        "/etc/dphys-swapfile" = lib.mkDefault "-- gen_context(system_u:object_r:dphysswapfile_conf_t,s0)";
 
         "/etc/rc\\.d/init\\.d/dphys-swapfile" =
-          "-- gen_context(system_u:object_r:dphysswapfile_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dphysswapfile_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dphys-swapfile" = "-- gen_context(system_u:object_r:dphysswapfile_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dphys-swapfile" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dphysswapfile_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/dphys-swapfile\\.service" =
-          "-- gen_context(system_u:object_r:dphysswapfile_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dphysswapfile_unit_t,s0)";
       };
     };
   };

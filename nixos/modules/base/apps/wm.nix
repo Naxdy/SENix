@@ -540,16 +540,17 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/gnome-shell" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/openbox" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnome-shell" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openbox" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
         "/nix/store/[^/]+/bin/kwin_((wayland)|(x11))(_wrapper)?" =
-          "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/maliit-keyboard" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/metacity" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mutter" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/phoc" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/Xwayland" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/twm" = "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/maliit-keyboard" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/metacity" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mutter" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/phoc" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/Xwayland" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/twm" = lib.mkDefault "-- gen_context(system_u:object_r:wm_exec_t,s0)";
       };
     };
   };

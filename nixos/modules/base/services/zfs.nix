@@ -378,16 +378,17 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/zed" = "-- gen_context(system_u:object_r:zed_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zfs" = "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zfs-auto-snapshot" = "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zpool" = "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zed" = lib.mkDefault "-- gen_context(system_u:object_r:zed_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zfs" = lib.mkDefault "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zfs-auto-snapshot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zpool" = lib.mkDefault "-- gen_context(system_u:object_r:zfs_exec_t,s0)";
 
-        "/etc/zfs(/.*)?" = "gen_context(system_u:object_r:zfs_config_t,s0)";
-        "/etc/zfs/zpool\\.cache" = "-- gen_context(system_u:object_r:zfs_zpool_cache_t,s0)";
+        "/etc/zfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zfs_config_t,s0)";
+        "/etc/zfs/zpool\\.cache" = lib.mkDefault "-- gen_context(system_u:object_r:zfs_zpool_cache_t,s0)";
 
-        "/run/zed\\.pid" = "-- gen_context(system_u:object_r:zfs_runtime_t,s0)";
-        "/run/zed\\.state" = "-- gen_context(system_u:object_r:zfs_runtime_t,s0)";
+        "/run/zed\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:zfs_runtime_t,s0)";
+        "/run/zed\\.state" = lib.mkDefault "-- gen_context(system_u:object_r:zfs_runtime_t,s0)";
       };
     };
   };

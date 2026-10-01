@@ -4875,11 +4875,11 @@
     '';
     fileContext = {
       rules = {
-        "/proc" = "-d gen_context(system_u:object_r:proc_t,s0)";
-        "/proc/.*" = "<<none>>";
+        "/proc" = lib.mkDefault "-d gen_context(system_u:object_r:proc_t,s0)";
+        "/proc/.*" = lib.mkDefault "<<none>>";
 
-        "/sys/kernel/debug" = "-d gen_context(system_u:object_r:debugfs_t,s0)";
-        "/sys/kernel/debug/.*" = "<<none>>";
+        "/sys/kernel/debug" = lib.mkDefault "-d gen_context(system_u:object_r:debugfs_t,s0)";
+        "/sys/kernel/debug/.*" = lib.mkDefault "<<none>>";
       };
     };
   };

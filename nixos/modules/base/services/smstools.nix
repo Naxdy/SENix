@@ -129,19 +129,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/smsd\\.conf" = "-- gen_context(system_u:object_r:smsd_conf_t,s0)";
+        "/etc/smsd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:smsd_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/(smsd|smstools)" = "-- gen_context(system_u:object_r:smsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/(smsd|smstools)" =
+          lib.mkDefault "-- gen_context(system_u:object_r:smsd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/smsd" = "-- gen_context(system_u:object_r:smsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smsd" = lib.mkDefault "-- gen_context(system_u:object_r:smsd_exec_t,s0)";
 
-        "/var/lib/smstools(/.*)?" = "gen_context(system_u:object_r:smsd_var_lib_t,s0)";
+        "/var/lib/smstools(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:smsd_var_lib_t,s0)";
 
-        "/var/log/smsd(/.*)?" = "gen_context(system_u:object_r:smsd_log_t,s0)";
+        "/var/log/smsd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:smsd_log_t,s0)";
 
-        "/run/smsd(/.*)?" = "gen_context(system_u:object_r:smsd_runtime_t,s0)";
+        "/run/smsd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:smsd_runtime_t,s0)";
 
-        "/var/spool/sms(/.*)?" = "gen_context(system_u:object_r:smsd_spool_t,s0)";
+        "/var/spool/sms(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:smsd_spool_t,s0)";
       };
     };
   };

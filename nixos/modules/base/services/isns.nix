@@ -99,14 +99,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/isnsd" = "-- gen_context(system_u:object_r:isnsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/isnsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:isnsd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/isnsd" = "-- gen_context(system_u:object_r:isnsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/isnsd" = lib.mkDefault "-- gen_context(system_u:object_r:isnsd_exec_t,s0)";
 
-        "/var/lib/isns(/.*)?" = "gen_context(system_u:object_r:isnsd_var_lib_t,s0)";
+        "/var/lib/isns(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:isnsd_var_lib_t,s0)";
 
-        "/run/isnsd\\.pid" = "-- gen_context(system_u:object_r:isnsd_runtime_t,s0)";
-        "/run/isnsctl" = "-s gen_context(system_u:object_r:isnsd_runtime_t,s0)";
+        "/run/isnsd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:isnsd_runtime_t,s0)";
+        "/run/isnsctl" = lib.mkDefault "-s gen_context(system_u:object_r:isnsd_runtime_t,s0)";
       };
     };
   };

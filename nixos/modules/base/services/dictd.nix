@@ -132,15 +132,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/dictd" = "-- gen_context(system_u:object_r:dictd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dictd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dictd_initrc_exec_t,s0)";
 
-        "/etc/dictd\\.conf" = "-- gen_context(system_u:object_r:dictd_etc_t,s0)";
+        "/etc/dictd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:dictd_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/dictd" = "-- gen_context(system_u:object_r:dictd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dictd" = lib.mkDefault "-- gen_context(system_u:object_r:dictd_exec_t,s0)";
 
-        "/var/lib/dictd(/.*)?" = "gen_context(system_u:object_r:dictd_var_lib_t,s0)";
+        "/var/lib/dictd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dictd_var_lib_t,s0)";
 
-        "/run/dictd\\.pid" = "-- gen_context(system_u:object_r:dictd_runtime_t,s0)";
+        "/run/dictd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dictd_runtime_t,s0)";
       };
     };
   };

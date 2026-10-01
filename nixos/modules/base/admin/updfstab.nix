@@ -133,8 +133,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/fstab-sync" = "-- gen_context(system_u:object_r:updfstab_exec_t,s0)";
-        "/nix/store/[^/]+/bin/updfstab" = "-- gen_context(system_u:object_r:updfstab_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fstab-sync" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updfstab_exec_t,s0)";
+        "/nix/store/[^/]+/bin/updfstab" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updfstab_exec_t,s0)";
       };
     };
   };

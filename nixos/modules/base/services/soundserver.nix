@@ -158,19 +158,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/nas(/.*)?" = "gen_context(system_u:object_r:soundd_etc_t,s0)";
-        "/etc/yiff(/.*)?" = "gen_context(system_u:object_r:soundd_etc_t,s0)";
+        "/etc/nas(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:soundd_etc_t,s0)";
+        "/etc/yiff(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:soundd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/nasd" = "-- gen_context(system_u:object_r:soundd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nasd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:soundd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/nasd" = "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gpe-soundserver" = "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yiff" = "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nasd" = lib.mkDefault "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpe-soundserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yiff" = lib.mkDefault "-- gen_context(system_u:object_r:soundd_exec_t,s0)";
 
-        "/run/nasd(/.*)?" = "gen_context(system_u:object_r:soundd_runtime_t,s0)";
-        "/run/yiff-[0-9]+\\.pid" = "-- gen_context(system_u:object_r:soundd_runtime_t,s0)";
+        "/run/nasd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:soundd_runtime_t,s0)";
+        "/run/yiff-[0-9]+\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:soundd_runtime_t,s0)";
 
-        "/var/state/yiff(/.*)?" = "gen_context(system_u:object_r:soundd_state_t,s0)";
+        "/var/state/yiff(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:soundd_state_t,s0)";
       };
     };
   };

@@ -83,7 +83,7 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/ofonod" = "-- gen_context(system_u:object_r:ofono_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ofonod" = lib.mkDefault "-- gen_context(system_u:object_r:ofono_exec_t,s0)";
       };
     };
   };

@@ -116,16 +116,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/pkcsslotd" = "-- gen_context(system_u:object_r:pkcs_slotd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pkcsslotd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pkcs_slotd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pkcsslotd" = "-- gen_context(system_u:object_r:pkcs_slotd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pkcsslotd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pkcs_slotd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/pkcsslotd\\.service" =
-          "gen_context(system_u:object_r:pkcs_slotd_unit_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:pkcs_slotd_unit_t,s0)";
 
-        "/var/lib/opencryptoki(/.*)?" = "gen_context(system_u:object_r:pkcs_slotd_var_lib_t,s0)";
+        "/var/lib/opencryptoki(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pkcs_slotd_var_lib_t,s0)";
 
-        "/run/pkcsslotd.*" = "gen_context(system_u:object_r:pkcs_slotd_runtime_t,s0)";
+        "/run/pkcsslotd.*" = lib.mkDefault "gen_context(system_u:object_r:pkcs_slotd_runtime_t,s0)";
       };
     };
   };

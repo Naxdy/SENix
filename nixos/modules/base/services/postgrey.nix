@@ -196,18 +196,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/postgrey(/.*)?" = "gen_context(system_u:object_r:postgrey_etc_t,s0)";
+        "/etc/postgrey(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgrey_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/postgrey" = "-- gen_context(system_u:object_r:postgrey_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/postgrey" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postgrey_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/postgrey" = "-- gen_context(system_u:object_r:postgrey_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postgrey" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postgrey_exec_t,s0)";
 
-        "/var/lib/postgrey(/.*)?" = "gen_context(system_u:object_r:postgrey_var_lib_t,s0)";
+        "/var/lib/postgrey(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgrey_var_lib_t,s0)";
 
-        "/run/postgrey(/.*)?" = "gen_context(system_u:object_r:postgrey_runtime_t,s0)";
-        "/run/postgrey\\.pid" = "-- gen_context(system_u:object_r:postgrey_runtime_t,s0)";
+        "/run/postgrey(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgrey_runtime_t,s0)";
+        "/run/postgrey\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:postgrey_runtime_t,s0)";
 
-        "/var/spool/postfix/postgrey(/.*)?" = "gen_context(system_u:object_r:postgrey_spool_t,s0)";
+        "/var/spool/postfix/postgrey(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postgrey_spool_t,s0)";
       };
     };
   };

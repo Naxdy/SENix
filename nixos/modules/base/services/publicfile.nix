@@ -45,8 +45,10 @@
     fileContext = {
       rules = {
         # this is the place where online content located
-        "/nix/store/[^/]+/bin/ftpd" = "-- gen_context(system_u:object_r:publicfile_exec_t,s0)";
-        "/nix/store/[^/]+/bin/httpd" = "-- gen_context(system_u:object_r:publicfile_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:publicfile_exec_t,s0)";
+        "/nix/store/[^/]+/bin/httpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:publicfile_exec_t,s0)";
       };
     };
   };

@@ -123,13 +123,14 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/openstack-keystone" =
-          "-- gen_context(system_u:object_r:keystone_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:keystone_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/keystone-all" = "-- gen_context(system_u:object_r:keystone_exec_t,s0)";
+        "/nix/store/[^/]+/bin/keystone-all" =
+          lib.mkDefault "-- gen_context(system_u:object_r:keystone_exec_t,s0)";
 
-        "/var/lib/keystone(/.*)?" = "gen_context(system_u:object_r:keystone_var_lib_t,s0)";
+        "/var/lib/keystone(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:keystone_var_lib_t,s0)";
 
-        "/var/log/keystone(/.*)?" = "gen_context(system_u:object_r:keystone_log_t,s0)";
+        "/var/log/keystone(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:keystone_log_t,s0)";
       };
     };
   };

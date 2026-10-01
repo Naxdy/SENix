@@ -341,21 +341,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/corosync" = "-- gen_context(system_u:object_r:corosync_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/corosync" =
+          lib.mkDefault "-- gen_context(system_u:object_r:corosync_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/corosync" = "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
-        "/nix/store/[^/]+/bin/corosync-notifyd" = "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
-        "/nix/store/[^/]+/bin/corosync-cmapctl" = "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
+        "/nix/store/[^/]+/bin/corosync" =
+          lib.mkDefault "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
+        "/nix/store/[^/]+/bin/corosync-notifyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
+        "/nix/store/[^/]+/bin/corosync-cmapctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:corosync_exec_t,s0)";
 
-        "/var/lib/corosync(/.*)?" = "gen_context(system_u:object_r:corosync_var_lib_t,s0)";
+        "/var/lib/corosync(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:corosync_var_lib_t,s0)";
 
-        "/var/lock/subsys/corosync" = "-- gen_context(system_u:object_r:corosync_lock_t,s0)";
+        "/var/lock/subsys/corosync" = lib.mkDefault "-- gen_context(system_u:object_r:corosync_lock_t,s0)";
 
-        "/var/log/cluster/corosync\\.log.*" = "-- gen_context(system_u:object_r:corosync_var_log_t,s0)";
+        "/var/log/cluster/corosync\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:corosync_var_log_t,s0)";
 
-        "/run/cman_.*" = "-s gen_context(system_u:object_r:corosync_runtime_t,s0)";
-        "/run/corosync\\.pid" = "-- gen_context(system_u:object_r:corosync_runtime_t,s0)";
-        "/run/rsctmp(/.*)?" = "gen_context(system_u:object_r:corosync_runtime_t,s0)";
+        "/run/cman_.*" = lib.mkDefault "-s gen_context(system_u:object_r:corosync_runtime_t,s0)";
+        "/run/corosync\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:corosync_runtime_t,s0)";
+        "/run/rsctmp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:corosync_runtime_t,s0)";
       };
     };
   };

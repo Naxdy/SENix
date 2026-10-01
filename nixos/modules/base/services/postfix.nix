@@ -1619,91 +1619,112 @@
     '';
     fileContext = {
       rules = {
-        "/etc/postfix(/.*)?" = "gen_context(system_u:object_r:postfix_etc_t,s0)";
-        "/etc/postfix/postfix-script.*" = "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
-        "/etc/postfix/prng_exch" = "-- gen_context(system_u:object_r:postfix_prng_t,s0)";
+        "/etc/postfix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postfix_etc_t,s0)";
+        "/etc/postfix/postfix-script.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
+        "/etc/postfix/prng_exch" = lib.mkDefault "-- gen_context(system_u:object_r:postfix_prng_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/postfix" = "-- gen_context(system_u:object_r:postfix_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/postfix" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/postalias" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postcat" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postdrop" = "-- gen_context(system_u:object_r:postfix_postdrop_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postfix" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postkick" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postlock" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postlog" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postmap" = "-- gen_context(system_u:object_r:postfix_map_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postqueue" = "-- gen_context(system_u:object_r:postfix_postqueue_exec_t,s0)";
-        "/nix/store/[^/]+/bin/postsuper" = "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postalias" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postcat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postdrop" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_postdrop_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postfix" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postkick" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postlock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postlog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postmap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_map_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postqueue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_postqueue_exec_t,s0)";
+        "/nix/store/[^/]+/bin/postsuper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/postfix/(sbin/)?.*" = "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
+        "/nix/store/[^/]+/lib/postfix/(sbin/)?.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?cleanup" =
-          "-- gen_context(system_u:object_r:postfix_cleanup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_cleanup_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?local" =
-          "-- gen_context(system_u:object_r:postfix_local_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_local_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?master" =
-          "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?pickup" =
-          "-- gen_context(system_u:object_r:postfix_pickup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_pickup_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?(n)?qmgr" =
-          "-- gen_context(system_u:object_r:postfix_qmgr_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_qmgr_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?showq" =
-          "-- gen_context(system_u:object_r:postfix_showq_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_showq_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?smtp" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?lmtp" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?scache" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?smtpd" =
-          "-- gen_context(system_u:object_r:postfix_smtpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtpd_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?bounce" =
-          "-- gen_context(system_u:object_r:postfix_bounce_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_bounce_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?pipe" =
-          "-- gen_context(system_u:object_r:postfix_pipe_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_pipe_exec_t,s0)";
         "/nix/store/[^/]+/lib/postfix/(sbin/)?virtual" =
-          "-- gen_context(system_u:object_r:postfix_virtual_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_virtual_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/postfix/.*" = "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/postfix/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/cleanup" =
-          "-- gen_context(system_u:object_r:postfix_cleanup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_cleanup_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/lmtp" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/local" =
-          "-- gen_context(system_u:object_r:postfix_local_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_local_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/master" =
-          "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_master_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/pickup" =
-          "-- gen_context(system_u:object_r:postfix_pickup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_pickup_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/(n)?qmgr" =
-          "-- gen_context(system_u:object_r:postfix_qmgr_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_qmgr_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/showq" =
-          "-- gen_context(system_u:object_r:postfix_showq_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_showq_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/smtp" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/scache" =
-          "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtp_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/smtpd" =
-          "-- gen_context(system_u:object_r:postfix_smtpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_smtpd_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/bounce" =
-          "-- gen_context(system_u:object_r:postfix_bounce_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_bounce_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/pipe" =
-          "-- gen_context(system_u:object_r:postfix_pipe_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_pipe_exec_t,s0)";
         "/nix/store/[^/]+/libexec/postfix/virtual" =
-          "-- gen_context(system_u:object_r:postfix_virtual_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_virtual_exec_t,s0)";
 
-        "/var/lib/postfix.*" = "gen_context(system_u:object_r:postfix_data_t,s0)";
+        "/var/lib/postfix.*" = lib.mkDefault "gen_context(system_u:object_r:postfix_data_t,s0)";
 
-        "/var/spool/postfix.*" = "gen_context(system_u:object_r:postfix_spool_t,s0)";
+        "/var/spool/postfix.*" = lib.mkDefault "gen_context(system_u:object_r:postfix_spool_t,s0)";
         "/var/spool/postfix/deferred(/.*)?" =
-          "-d gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
-        "/var/spool/postfix/defer(/.*)?" = "gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
-        "/var/spool/postfix/maildrop(/.*)?" = "gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
-        "/var/spool/postfix/pid(/.*)?" = "gen_context(system_u:object_r:postfix_runtime_t,s0)";
-        "/var/spool/postfix/private(/.*)?" = "gen_context(system_u:object_r:postfix_private_t,s0)";
-        "/var/spool/postfix/public(/.*)?" = "gen_context(system_u:object_r:postfix_public_t,s0)";
-        "/var/spool/postfix/bounce(/.*)?" = "gen_context(system_u:object_r:postfix_spool_bounce_t,s0)";
-        "/var/spool/postfix/flush(/.*)?" = "gen_context(system_u:object_r:postfix_spool_flush_t,s0)";
+          lib.mkDefault "-d gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
+        "/var/spool/postfix/defer(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
+        "/var/spool/postfix/maildrop(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_spool_maildrop_t,s0)";
+        "/var/spool/postfix/pid(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_runtime_t,s0)";
+        "/var/spool/postfix/private(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_private_t,s0)";
+        "/var/spool/postfix/public(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_public_t,s0)";
+        "/var/spool/postfix/bounce(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_spool_bounce_t,s0)";
+        "/var/spool/postfix/flush(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:postfix_spool_flush_t,s0)";
       };
     };
   };

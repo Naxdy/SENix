@@ -601,55 +601,61 @@
     '';
     fileContext = {
       rules = {
-        "/etc/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_etc_t,s0)";
-        "/etc/dovecot/passwd.*" = "gen_context(system_u:object_r:dovecot_passwd_t,s0)";
+        "/etc/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_etc_t,s0)";
+        "/etc/dovecot/passwd.*" = lib.mkDefault "gen_context(system_u:object_r:dovecot_passwd_t,s0)";
 
-        "/etc/dovecot\\.conf.*" = "gen_context(system_u:object_r:dovecot_etc_t,s0)";
-        "/etc/dovecot\\.passwd.*" = "gen_context(system_u:object_r:dovecot_passwd_t,s0)";
+        "/etc/dovecot\\.conf.*" = lib.mkDefault "gen_context(system_u:object_r:dovecot_etc_t,s0)";
+        "/etc/dovecot\\.passwd.*" = lib.mkDefault "gen_context(system_u:object_r:dovecot_passwd_t,s0)";
 
-        "/etc/pki/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_cert_t,s0)";
+        "/etc/pki/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_cert_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/dovecot" = "-- gen_context(system_u:object_r:dovecot_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dovecot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dovecot" = "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dovecot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
 
         "/nix/store/[^/]+/share/ssl/certs/dovecot\\.pem" =
-          "-- gen_context(system_u:object_r:dovecot_cert_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_cert_t,s0)";
         "/nix/store/[^/]+/share/ssl/private/dovecot\\.pem" =
-          "-- gen_context(system_u:object_r:dovecot_cert_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_cert_t,s0)";
 
-        "/etc/ssl/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_cert_t,s0)";
+        "/etc/ssl/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_cert_t,s0)";
 
-        "/nix/store/[^/]+/lib/dovecot/anvil" = "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
-        "/nix/store/[^/]+/lib/dovecot/auth" = "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/anvil" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/auth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
         "/nix/store/[^/]+/lib/dovecot/deliver" =
-          "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
         "/nix/store/[^/]+/lib/dovecot/dovecot-auth" =
-          "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
         "/nix/store/[^/]+/lib/dovecot/dovecot-lda" =
-          "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
-        "/nix/store/[^/]+/lib/dovecot/log" = "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
-        "/nix/store/[^/]+/lib/dovecot/ssl-params" = "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/ssl-params" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/dovecot/auth" =
-          "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
         "/nix/store/[^/]+/libexec/dovecot/deliver" =
-          "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/dovecot/deliver-lda" =
-          "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_deliver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/dovecot/dovecot-auth" =
-          "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_auth_exec_t,s0)";
 
-        "/run/dovecot(-login)?(/.*)?" = "gen_context(system_u:object_r:dovecot_runtime_t,s0)";
+        "/run/dovecot(-login)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_runtime_t,s0)";
         "/run/dovecot/login/ssl-parameters\\.dat" =
-          "-- gen_context(system_u:object_r:dovecot_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dovecot_var_lib_t,s0)";
 
-        "/var/lib/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_var_lib_t,s0)";
+        "/var/lib/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_var_lib_t,s0)";
 
-        "/var/log/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_var_log_t,s0)";
-        "/var/log/dovecot\\.log.*" = "gen_context(system_u:object_r:dovecot_var_log_t,s0)";
+        "/var/log/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_var_log_t,s0)";
+        "/var/log/dovecot\\.log.*" = lib.mkDefault "gen_context(system_u:object_r:dovecot_var_log_t,s0)";
 
-        "/var/spool/dovecot(/.*)?" = "gen_context(system_u:object_r:dovecot_spool_t,s0)";
+        "/var/spool/dovecot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dovecot_spool_t,s0)";
       };
     };
   };

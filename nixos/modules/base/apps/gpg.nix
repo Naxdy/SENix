@@ -954,23 +954,30 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.gnupg(/.+)?" = "gen_context(system_u:object_r:gpg_secret_t,s0)";
-        "HOME_DIR/\\.gnupg/log-socket" = "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
-        "HOME_DIR/\\.gnupg/S\\.gpg-agent.*" = "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
-        "HOME_DIR/\\.gnupg/S\\.scdaemon" = "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
+        "HOME_DIR/\\.gnupg(/.+)?" = lib.mkDefault "gen_context(system_u:object_r:gpg_secret_t,s0)";
+        "HOME_DIR/\\.gnupg/log-socket" =
+          lib.mkDefault "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
+        "HOME_DIR/\\.gnupg/S\\.gpg-agent.*" =
+          lib.mkDefault "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
+        "HOME_DIR/\\.gnupg/S\\.scdaemon" =
+          lib.mkDefault "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
 
-        "/nix/store/[^/]+/bin/gpg(2)?" = "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gpgsm" = "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gpg-agent" = "-- gen_context(system_u:object_r:gpg_agent_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pinentry.*" = "-- gen_context(system_u:object_r:gpg_pinentry_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpg(2)?" = lib.mkDefault "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpgsm" = lib.mkDefault "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpg-agent" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gpg_agent_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pinentry.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gpg_pinentry_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/gnupg/.*" = "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
-        "/nix/store/[^/]+/lib/gnupg/gpgkeys.*" = "-- gen_context(system_u:object_r:gpg_helper_exec_t,s0)";
+        "/nix/store/[^/]+/lib/gnupg/.*" = lib.mkDefault "-- gen_context(system_u:object_r:gpg_exec_t,s0)";
+        "/nix/store/[^/]+/lib/gnupg/gpgkeys.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gpg_helper_exec_t,s0)";
 
-        "/run/user/%{USERID}/gnupg(/.*)?" = "gen_context(system_u:object_r:gpg_runtime_t,s0)";
+        "/run/user/%{USERID}/gnupg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gpg_runtime_t,s0)";
         "/run/user/%{USERID}/gnupg/S\\.gpg-agent.*" =
-          "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
-        "/run/user/%{USERID}/gnupg/S\\.scdaemon" = "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
+          lib.mkDefault "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
+        "/run/user/%{USERID}/gnupg/S\\.scdaemon" =
+          lib.mkDefault "-s gen_context(system_u:object_r:gpg_agent_tmp_t,s0)";
       };
     };
   };

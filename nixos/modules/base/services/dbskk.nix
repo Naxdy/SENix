@@ -65,7 +65,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/dbskkd-cdb" = "-- gen_context(system_u:object_r:dbskkd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dbskkd-cdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dbskkd_exec_t,s0)";
       };
     };
   };

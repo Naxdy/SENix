@@ -100,14 +100,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/irqbalance" = "-- gen_context(system_u:object_r:irqbalance_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/irqbalance" =
+          lib.mkDefault "-- gen_context(system_u:object_r:irqbalance_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/irqbalance\\.service" =
-          "-- gen_context(system_u:object_r:irqbalance_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:irqbalance_unit_t,s0)";
 
-        "/run/irqbalance\\.pid" = "-- gen_context(system_u:object_r:irqbalance_pid_t,s0)";
+        "/run/irqbalance\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:irqbalance_pid_t,s0)";
 
-        "/nix/store/[^/]+/bin/irqbalance" = "-- gen_context(system_u:object_r:irqbalance_exec_t,s0)";
+        "/nix/store/[^/]+/bin/irqbalance" =
+          lib.mkDefault "-- gen_context(system_u:object_r:irqbalance_exec_t,s0)";
       };
     };
   };

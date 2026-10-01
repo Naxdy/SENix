@@ -92,9 +92,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/usbmuxd" = "-- gen_context(system_u:object_r:usbmuxd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/usbmuxd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:usbmuxd_exec_t,s0)";
 
-        "/run/usbmuxd.*" = "gen_context(system_u:object_r:usbmuxd_runtime_t,s0)";
+        "/run/usbmuxd.*" = lib.mkDefault "gen_context(system_u:object_r:usbmuxd_runtime_t,s0)";
       };
     };
   };

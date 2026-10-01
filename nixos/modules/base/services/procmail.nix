@@ -323,13 +323,15 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.procmailrc" = "-- gen_context(system_u:object_r:procmail_home_t,s0)";
+        "HOME_DIR/\\.procmailrc" = lib.mkDefault "-- gen_context(system_u:object_r:procmail_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/maildrop" = "-- gen_context(system_u:object_r:procmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/procmail" = "-- gen_context(system_u:object_r:procmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/maildrop" =
+          lib.mkDefault "-- gen_context(system_u:object_r:procmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/procmail" =
+          lib.mkDefault "-- gen_context(system_u:object_r:procmail_exec_t,s0)";
 
-        "/var/log/procmail\\.log.*" = "-- gen_context(system_u:object_r:procmail_log_t,s0)";
-        "/var/log/procmail(/.*)?" = "gen_context(system_u:object_r:procmail_log_t,s0)";
+        "/var/log/procmail\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:procmail_log_t,s0)";
+        "/var/log/procmail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:procmail_log_t,s0)";
       };
     };
   };

@@ -131,9 +131,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/chkrootkit" = "-- gen_context(system_u:object_r:chkrootkit_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chkrootkit" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chkrootkit_exec_t,s0)";
 
-        "/var/log/chkrootkit(/.*)?" = "gen_context(system_u:object_r:chkrootkit_log_t,s0)";
+        "/var/log/chkrootkit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:chkrootkit_log_t,s0)";
       };
     };
   };

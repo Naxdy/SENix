@@ -100,13 +100,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/openhpid" = "-- gen_context(system_u:object_r:openhpid_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openhpid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openhpid_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/openhpid" = "-- gen_context(system_u:object_r:openhpid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openhpid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openhpid_exec_t,s0)";
 
-        "/var/lib/openhpi(/.*)?" = "gen_context(system_u:object_r:openhpid_var_lib_t,s0)";
+        "/var/lib/openhpi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openhpid_var_lib_t,s0)";
 
-        "/run/openhpid\\.pid" = "-- gen_context(system_u:object_r:openhpid_runtime_t,s0)";
+        "/run/openhpid\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:openhpid_runtime_t,s0)";
       };
     };
   };

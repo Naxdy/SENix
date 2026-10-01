@@ -223,17 +223,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/haproxy.*" = "-- gen_context(system_u:object_r:haproxy_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/haproxy.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:haproxy_initrc_exec_t,s0)";
 
-        "/etc/haproxy(/.*)?" = "gen_context(system_u:object_r:haproxy_conf_t,s0)";
+        "/etc/haproxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:haproxy_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/haproxy" = "-- gen_context(system_u:object_r:haproxy_exec_t,s0)";
+        "/nix/store/[^/]+/bin/haproxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:haproxy_exec_t,s0)";
 
-        "/run/haproxy(/.*)?" = "gen_context(system_u:object_r:haproxy_runtime_t,s0)";
-        "/run/haproxy\\.pid" = "-- gen_context(system_u:object_r:haproxy_runtime_t,s0)";
-        "/run/haproxy-master\\.sock" = "-s gen_context(system_u:object_r:haproxy_runtime_t,s0)";
+        "/run/haproxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:haproxy_runtime_t,s0)";
+        "/run/haproxy\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:haproxy_runtime_t,s0)";
+        "/run/haproxy-master\\.sock" =
+          lib.mkDefault "-s gen_context(system_u:object_r:haproxy_runtime_t,s0)";
 
-        "/var/log/haproxy(/.*)?" = "gen_context(system_u:object_r:haproxy_log_t,s0)";
+        "/var/log/haproxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:haproxy_log_t,s0)";
       };
     };
   };

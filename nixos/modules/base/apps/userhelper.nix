@@ -417,10 +417,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/security/console\\.apps(/.*)?" = "gen_context(system_u:object_r:userhelper_conf_t,s0)";
+        "/etc/security/console\\.apps(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:userhelper_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/consolehelper" = "-- gen_context(system_u:object_r:consolehelper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/userhelper" = "-- gen_context(system_u:object_r:userhelper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/consolehelper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:consolehelper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/userhelper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:userhelper_exec_t,s0)";
       };
     };
   };

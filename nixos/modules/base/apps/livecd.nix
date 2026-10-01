@@ -156,7 +156,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/livecd-creator" = "-- gen_context(system_u:object_r:livecd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/livecd-creator" =
+          lib.mkDefault "-- gen_context(system_u:object_r:livecd_exec_t,s0)";
       };
     };
   };

@@ -529,65 +529,93 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.vmware(/.*)?" = "gen_context(system_u:object_r:vmware_file_t,s0)";
-        "HOME_DIR/\\.vmware[^/]*/.*\\.cfg" = "-- gen_context(system_u:object_r:vmware_conf_t,s0)";
-        "HOME_DIR/vmware(/.*)?" = "gen_context(system_u:object_r:vmware_file_t,s0)";
+        "HOME_DIR/\\.vmware(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:vmware_file_t,s0)";
+        "HOME_DIR/\\.vmware[^/]*/.*\\.cfg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_conf_t,s0)";
+        "HOME_DIR/vmware(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:vmware_file_t,s0)";
 
-        "/etc/vmware.*(/.*)?" = "gen_context(system_u:object_r:vmware_sys_conf_t,s0)";
+        "/etc/vmware.*(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:vmware_sys_conf_t,s0)";
 
         "/nix/store/[^/]+/bin/VGAuthService" =
-          "-- gen_context(system_u:object_r:vmware_vgauth_service_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmtoolsd" = "-- gen_context(system_u:object_r:vmware_tools_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_vgauth_service_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmtoolsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_tools_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/vmnet-bridge" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmnet-dhcpd" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmnet-natd" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmnet-netifup" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmnet-sniffer" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-alias-import" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-checkvm" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-guest.*" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-hgfsclient" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-namespace-cmd" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-network" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-nmbd" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-ping" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-rpctool" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-serverd" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-smbd" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-smbpasswd" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmnet-bridge" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmnet-dhcpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmnet-natd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmnet-netifup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmnet-sniffer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-alias-import" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-checkvm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-guest.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-hgfsclient" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-namespace-cmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-network" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-nmbd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-ping" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-rpctool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-serverd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-smbd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-smbpasswd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
         "/nix/store/[^/]+/bin/vmware-smbpasswd\\.bin" =
-          "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-toolbox-cmd" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-vgauth-cmd" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-vmx" = "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-wizard" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware-xferlogs" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vmware" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-toolbox-cmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-vgauth-cmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-vmx" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-wizard" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware-xferlogs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vmware" = lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/vgauthd\\.service" =
-          "-- gen_context(system_u:object_r:vmware_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/vmtoolsd\\.service" =
-          "-- gen_context(system_u:object_r:vmware_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_unit_t,s0)";
 
-        "/nix/store/[^/]+/lib/vmware/config" = "-- gen_context(system_u:object_r:vmware_sys_conf_t,s0)";
-        "/nix/store/[^/]+/lib/vmware/bin/vmplayer" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/lib/vmware/bin/vmware-mks" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
-        "/nix/store/[^/]+/lib/vmware/bin/vmware-ui" = "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/lib/vmware/config" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_sys_conf_t,s0)";
+        "/nix/store/[^/]+/lib/vmware/bin/vmplayer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/lib/vmware/bin/vmware-mks" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
+        "/nix/store/[^/]+/lib/vmware/bin/vmware-ui" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_exec_t,s0)";
         "/nix/store/[^/]+/lib/vmware/bin/vmware-vmx" =
-          "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/vmware-tools/sbin32/vmware.*" =
-          "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
         "/nix/store/[^/]+/lib/vmware-tools/sbin64/vmware.*" =
-          "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vmware_host_exec_t,s0)";
 
-        "/var/log/vmware.*" = "-- gen_context(system_u:object_r:vmware_log_t,s0)";
-        "/var/log/vnetlib.*" = "-- gen_context(system_u:object_r:vmware_log_t,s0)";
+        "/var/log/vmware.*" = lib.mkDefault "-- gen_context(system_u:object_r:vmware_log_t,s0)";
+        "/var/log/vnetlib.*" = lib.mkDefault "-- gen_context(system_u:object_r:vmware_log_t,s0)";
 
-        "/run/vmnat.*" = "-s gen_context(system_u:object_r:vmware_var_run_t,s0)";
-        "/run/vmnet.*" = "gen_context(system_u:object_r:vmware_var_run_t,s0)";
-        "/run/vmware.*" = "gen_context(system_u:object_r:vmware_var_run_t,s0)";
+        "/run/vmnat.*" = lib.mkDefault "-s gen_context(system_u:object_r:vmware_var_run_t,s0)";
+        "/run/vmnet.*" = lib.mkDefault "gen_context(system_u:object_r:vmware_var_run_t,s0)";
+        "/run/vmware.*" = lib.mkDefault "gen_context(system_u:object_r:vmware_var_run_t,s0)";
       };
     };
   };

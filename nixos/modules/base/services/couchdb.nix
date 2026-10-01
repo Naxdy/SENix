@@ -242,16 +242,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/couchdb(/.*)?" = "gen_context(system_u:object_r:couchdb_conf_t,s0)";
-        "/etc/rc\\.d/init\\.d/couchdb" = "-- gen_context(system_u:object_r:couchdb_initrc_exec_t,s0)";
+        "/etc/couchdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:couchdb_conf_t,s0)";
+        "/etc/rc\\.d/init\\.d/couchdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:couchdb_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/couchdb" = "-- gen_context(system_u:object_r:couchdb_exec_t,s0)";
+        "/nix/store/[^/]+/bin/couchdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:couchdb_exec_t,s0)";
         "/nix/store/[^/]+/lib/couchdb/bin/couchjs" =
-          "-- gen_context(system_u:object_r:couchdb_js_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:couchdb_js_exec_t,s0)";
 
-        "/var/lib/couchdb(/.*)?" = "gen_context(system_u:object_r:couchdb_var_lib_t,s0)";
-        "/var/log/couchdb(/.*)?" = "gen_context(system_u:object_r:couchdb_log_t,s0)";
-        "/run/couchdb(/.*)?" = "gen_context(system_u:object_r:couchdb_runtime_t,s0)";
+        "/var/lib/couchdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:couchdb_var_lib_t,s0)";
+        "/var/log/couchdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:couchdb_log_t,s0)";
+        "/run/couchdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:couchdb_runtime_t,s0)";
       };
     };
   };

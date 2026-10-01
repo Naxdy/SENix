@@ -341,11 +341,12 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/sosreport" = "-- gen_context(system_u:object_r:sosreport_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sosreport" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sosreport_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/sos" = "-- gen_context(system_u:object_r:sosreport_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sos" = lib.mkDefault "-- gen_context(system_u:object_r:sosreport_exec_t,s0)";
 
-        "/\\.ismount-test-file" = "-- gen_context(system_u:object_r:sosreport_tmp_t,s0)";
+        "/\\.ismount-test-file" = lib.mkDefault "-- gen_context(system_u:object_r:sosreport_tmp_t,s0)";
       };
     };
   };

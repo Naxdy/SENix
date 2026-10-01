@@ -326,15 +326,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/(x)?inetd\\.d/tftp" = "-- gen_context(system_u:object_r:tftpd_conf_t,s0)";
+        "/etc/(x)?inetd\\.d/tftp" = lib.mkDefault "-- gen_context(system_u:object_r:tftpd_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/atftpd" = "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/in\\.tftpd" = "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tftpd" = "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/atftpd" = lib.mkDefault "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.tftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tftpd" = lib.mkDefault "-- gen_context(system_u:object_r:tftpd_exec_t,s0)";
 
-        "/tftpboot" = "-d gen_context(system_u:object_r:tftpdir_t,s0)";
+        "/tftpboot" = lib.mkDefault "-d gen_context(system_u:object_r:tftpdir_t,s0)";
 
-        "/var/lib/tftpboot(/.*)?" = "gen_context(system_u:object_r:tftpdir_rw_t,s0)";
+        "/var/lib/tftpboot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tftpdir_rw_t,s0)";
       };
     };
   };

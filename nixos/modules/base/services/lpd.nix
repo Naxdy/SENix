@@ -564,34 +564,47 @@
     '';
     fileContext = {
       rules = {
-        "/dev/printer" = "-s gen_context(system_u:object_r:printer_t,s0)";
+        "/dev/printer" = lib.mkDefault "-s gen_context(system_u:object_r:printer_t,s0)";
 
-        "/nix/store/[^/]+/bin/accept" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cancel(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/checkpc" = "-- gen_context(system_u:object_r:checkpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lp(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpadmin" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpc(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpd" = "-- gen_context(system_u:object_r:lpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpinfo" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpmove" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpoptions" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpq(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpr(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lprm(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lpstat(\\.cups)?" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/accept" = lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cancel(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/checkpc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:checkpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lp(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpadmin" = lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpc(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpd" = lib.mkDefault "-- gen_context(system_u:object_r:lpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpinfo" = lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpmove" = lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpoptions" = lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpq(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpr(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lprm(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lpstat(\\.cups)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
 
-        "/nix/store/[^/]+/local/linuxprinter/bin/l?lpr" = "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
+        "/nix/store/[^/]+/local/linuxprinter/bin/l?lpr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lpr_exec_t,s0)";
 
-        "/nix/store/[^/]+/share/printconf/.*" = "-- gen_context(system_u:object_r:printconf_t,s0)";
+        "/nix/store/[^/]+/share/printconf/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:printconf_t,s0)";
 
-        "/var/spool/cups(/.*)?" = "gen_context(system_u:object_r:print_spool_t,mls_systemhigh)";
-        "/var/spool/cups-pdf(/.*)?" = "gen_context(system_u:object_r:print_spool_t,mls_systemhigh)";
-        "/var/spool/lpd(/.*)?" = "gen_context(system_u:object_r:print_spool_t,s0)";
+        "/var/spool/cups(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:print_spool_t,mls_systemhigh)";
+        "/var/spool/cups-pdf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:print_spool_t,mls_systemhigh)";
+        "/var/spool/lpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:print_spool_t,s0)";
 
-        "/run/lprng(/.*)?" = "gen_context(system_u:object_r:lpd_runtime_t,s0)";
+        "/run/lprng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lpd_runtime_t,s0)";
 
-        "/var/spool/turboprint(/.*)?" = "gen_context(system_u:object_r:lpd_runtime_t,mls_systemhigh)";
+        "/var/spool/turboprint(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:lpd_runtime_t,mls_systemhigh)";
       };
     };
   };

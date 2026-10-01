@@ -256,14 +256,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/nologin" = "-- gen_context(system_u:object_r:shutdown_etc_t,s0)";
+        "/etc/nologin" = lib.mkDefault "-- gen_context(system_u:object_r:shutdown_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/halt" = "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
-        "/nix/store/[^/]+/bin/shutdown" = "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
+        "/nix/store/[^/]+/bin/halt" = lib.mkDefault "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
+        "/nix/store/[^/]+/bin/shutdown" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/upstart/shutdown" = "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
+        "/nix/store/[^/]+/lib/upstart/shutdown" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shutdown_exec_t,s0)";
 
-        "/run/shutdown\\.pid" = "-- gen_context(system_u:object_r:shutdown_runtime_t,s0)";
+        "/run/shutdown\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:shutdown_runtime_t,s0)";
       };
     };
   };

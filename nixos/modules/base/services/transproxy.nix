@@ -104,11 +104,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/transproxy" = "-- gen_context(system_u:object_r:transproxy_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/transproxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:transproxy_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/tproxy" = "-- gen_context(system_u:object_r:transproxy_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tproxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:transproxy_exec_t,s0)";
 
-        "/run/tproxy\\.pid" = "-- gen_context(system_u:object_r:transproxy_runtime_t,s0)";
+        "/run/tproxy\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:transproxy_runtime_t,s0)";
       };
     };
   };

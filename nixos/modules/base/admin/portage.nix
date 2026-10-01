@@ -793,67 +793,78 @@
     '';
     fileContext = {
       rules = {
-        "/etc/make\\.conf" = "-- gen_context(system_u:object_r:portage_conf_t,s0)";
-        "/etc/make\\.globals" = "-- gen_context(system_u:object_r:portage_conf_t,s0)";
-        "/etc/make\\.profile" = "-l gen_context(system_u:object_r:portage_conf_t,s0)";
-        "/etc/portage(/.*)?" = "gen_context(system_u:object_r:portage_conf_t,s0)";
-        "/etc/portage/gpg(/.*)?" = "gen_context(system_u:object_r:portage_gpg_t,s0)";
-        "/etc/portage/gnupg(/.*)?" = "gen_context(system_u:object_r:portage_gpg_t,s0)";
+        "/etc/make\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:portage_conf_t,s0)";
+        "/etc/make\\.globals" = lib.mkDefault "-- gen_context(system_u:object_r:portage_conf_t,s0)";
+        "/etc/make\\.profile" = lib.mkDefault "-l gen_context(system_u:object_r:portage_conf_t,s0)";
+        "/etc/portage(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_conf_t,s0)";
+        "/etc/portage/gpg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_gpg_t,s0)";
+        "/etc/portage/gnupg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_gpg_t,s0)";
 
-        "/nix/store/[^/]+/bin/emerge" = "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+        "/nix/store/[^/]+/bin/emerge" = lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
         "/nix/store/[^/]+/bin/emerge-webrsync" =
-          "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gcc-config" = "-- gen_context(system_u:object_r:gcc_config_exec_t,s0)";
-        "/nix/store/[^/]+/bin/glsa-check" = "-- gen_context(system_u:object_r:portage_exec_t,s0)";
-        "/nix/store/[^/]+/bin/layman" = "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sandbox" = "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gcc-config" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gcc_config_exec_t,s0)";
+        "/nix/store/[^/]+/bin/glsa-check" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+        "/nix/store/[^/]+/bin/layman" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sandbox" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/python-exec/python[0-9]\\.[0-9]*/glsa-check" =
-          "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
         "/nix/store/[^/]+/lib/python-exec/python[0-9]\\.[0-9]*/layman" =
-          "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_fetch_exec_t,s0)";
         "/nix/store/[^/]+/lib/python-exec/python[0-9]\\.[0-9]*/emaint" =
-          "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
         "/nix/store/[^/]+/lib/python-exec/python[0-9]\\.[0-9]*/emerge" =
-          "-- gen_context(system_u:object_r:portage_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portage_exec_t,s0)";
 
-        "/nix/store/[^/]+/portage(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/nix/store/[^/]+/portage(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/cvs-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/egit-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/git[0-9]-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/go-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/hg-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
         "/nix/store/[^/]+/portage/distfiles/svn-src(/.*)?" =
-          "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
 
-        "/var/db/pkg(/.*)?" = "gen_context(system_u:object_r:portage_db_t,s0)";
-        "/var/db/repos(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
-        "/var/cache/binhost(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
-        "/var/cache/binpkgs(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
-        "/var/cache/distfiles(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
-        "/var/cache/distfiles/cvs-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/distfiles/egit-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/distfiles/git[0-9]-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/distfiles/go-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/distfiles/hg-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/distfiles/svn-src(/.*)?" = "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
-        "/var/cache/edb(/.*)?" = "gen_context(system_u:object_r:portage_cache_t,s0)";
-        "/var/cache/eix(/.*)?" = "gen_context(system_u:object_r:portage_cache_t,s0)";
-        "/var/log/emerge\\.log.*" = "-- gen_context(system_u:object_r:portage_log_t,s0)";
-        "/var/log/emerge-fetch\\.log" = "-- gen_context(system_u:object_r:portage_log_t,s0)";
-        "/var/log/portage(/.*)?" = "gen_context(system_u:object_r:portage_log_t,s0)";
-        "/var/log/sandbox(/.*)?" = "gen_context(system_u:object_r:portage_log_t,s0)";
-        "/var/lib/layman(/.*)?" = "gen_context(system_u:object_r:portage_ebuild_t,s0)";
-        "/var/lib/portage(/.*)?" = "gen_context(system_u:object_r:portage_cache_t,s0)";
-        "/var/tmp/binpkgs(/.*)?" = "gen_context(system_u:object_r:portage_tmp_t,s0)";
-        "/var/tmp/emerge-webrsync(/.*)?" = "gen_context(system_u:object_r:portage_tmp_t,s0)";
-        "/var/tmp/portage(/.*)?" = "gen_context(system_u:object_r:portage_tmp_t,s0)";
-        "/var/tmp/portage-pkg(/.*)?" = "gen_context(system_u:object_r:portage_tmp_t,s0)";
+        "/var/db/pkg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_db_t,s0)";
+        "/var/db/repos(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/var/cache/binhost(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/var/cache/binpkgs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/var/cache/distfiles(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/var/cache/distfiles/cvs-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/distfiles/egit-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/distfiles/git[0-9]-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/distfiles/go-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/distfiles/hg-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/distfiles/svn-src(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:portage_srcrepo_t,s0)";
+        "/var/cache/edb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_cache_t,s0)";
+        "/var/cache/eix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_cache_t,s0)";
+        "/var/log/emerge\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:portage_log_t,s0)";
+        "/var/log/emerge-fetch\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:portage_log_t,s0)";
+        "/var/log/portage(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_log_t,s0)";
+        "/var/log/sandbox(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_log_t,s0)";
+        "/var/lib/layman(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_ebuild_t,s0)";
+        "/var/lib/portage(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_cache_t,s0)";
+        "/var/tmp/binpkgs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_tmp_t,s0)";
+        "/var/tmp/emerge-webrsync(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_tmp_t,s0)";
+        "/var/tmp/portage(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_tmp_t,s0)";
+        "/var/tmp/portage-pkg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portage_tmp_t,s0)";
       };
     };
   };

@@ -179,15 +179,19 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/libexec/nx/nxserver" = "-- gen_context(system_u:object_r:nx_server_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/nx/nxserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nx_server_exec_t,s0)";
 
-        "/nix/store/[^/]+/NX/bin/nxserver" = "-- gen_context(system_u:object_r:nx_server_exec_t,s0)";
-        "/nix/store/[^/]+/NX/home(/.*)?" = "gen_context(system_u:object_r:nx_server_var_lib_t,s0)";
+        "/nix/store/[^/]+/NX/bin/nxserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nx_server_exec_t,s0)";
+        "/nix/store/[^/]+/NX/home(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:nx_server_var_lib_t,s0)";
         "/nix/store/[^/]+/NX/home/nx/\\.ssh(/.*)?" =
-          "gen_context(system_u:object_r:nx_server_ssh_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:nx_server_ssh_home_t,s0)";
 
-        "/var/lib/nxserver(/.*)?" = "gen_context(system_u:object_r:nx_server_var_lib_t,s0)";
-        "/var/lib/nxserver/home/\\.ssh(/.*)?" = "gen_context(system_u:object_r:nx_server_ssh_home_t,s0)";
+        "/var/lib/nxserver(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nx_server_var_lib_t,s0)";
+        "/var/lib/nxserver/home/\\.ssh(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:nx_server_ssh_home_t,s0)";
       };
     };
   };

@@ -530,42 +530,59 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/ip6?tables" = "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ebtables" = "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/nftables" = "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
-        "/etc/sysconfig/ip6?tables.*" = "-- gen_context(system_u:object_r:iptables_conf_t,s0)";
-        "/etc/sysconfig/system-config-firewall.*" = "-- gen_context(system_u:object_r:iptables_conf_t,s0)";
+        "/etc/rc\\.d/init\\.d/ip6?tables" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ebtables" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nftables" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_initrc_exec_t,s0)";
+        "/etc/sysconfig/ip6?tables.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_conf_t,s0)";
+        "/etc/sysconfig/system-config-firewall.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_conf_t,s0)";
 
-        "/run/ebtables\\.lock" = "-- gen_context(system_u:object_r:iptables_runtime_t,s0)";
-        "/run/xtables.*" = "-- gen_context(system_u:object_r:iptables_runtime_t,s0)";
+        "/run/ebtables\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:iptables_runtime_t,s0)";
+        "/run/xtables.*" = lib.mkDefault "-- gen_context(system_u:object_r:iptables_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/conntrack" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ebtables" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ebtables-restore" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipchains.*" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipset" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ip6?tables" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ip6?tables-multi" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ip6?tables-restore" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipvsadm" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipvsadm-restore" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipvsadm-save" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nft" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/conntrack" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ebtables" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ebtables-restore" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipchains.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipset" = lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ip6?tables" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ip6?tables-multi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ip6?tables-restore" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipvsadm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipvsadm-restore" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipvsadm-save" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nft" = lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
         "/nix/store/[^/]+/bin/xtables-compat-multi" =
-          "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
         "/nix/store/[^/]+/bin/xtables-legacy-multi" =
-          "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xtables-multi" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xtables-nft-multi" = "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xtables-multi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xtables-nft-multi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*arptables.*" =
-          "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*ebtables.*" =
-          "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*ip6tables.*" =
-          "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*iptables.*" =
-          "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iptables_unit_t,s0)";
       };
     };
   };

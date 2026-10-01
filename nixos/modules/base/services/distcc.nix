@@ -130,13 +130,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/distccd" = "-- gen_context(system_u:object_r:distccd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/distccd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:distccd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/distccd" = "-- gen_context(system_u:object_r:distccd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/distccd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:distccd_exec_t,s0)";
 
-        "/var/log/distccd.*" = "-- gen_context(system_u:object_r:distccd_log_t,s0)";
+        "/var/log/distccd.*" = lib.mkDefault "-- gen_context(system_u:object_r:distccd_log_t,s0)";
 
-        "/run/distccd\\.pid" = "-- gen_context(system_u:object_r:distccd_runtime_t,s0)";
+        "/run/distccd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:distccd_runtime_t,s0)";
       };
     };
   };

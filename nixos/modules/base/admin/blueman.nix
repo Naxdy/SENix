@@ -185,9 +185,9 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/blueman-mechanism" =
-          "-- gen_context(system_u:object_r:blueman_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:blueman_exec_t,s0)";
 
-        "/var/lib/blueman(/.*)?" = "gen_context(system_u:object_r:blueman_var_lib_t,s0)";
+        "/var/lib/blueman(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:blueman_var_lib_t,s0)";
       };
     };
   };

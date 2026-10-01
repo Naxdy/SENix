@@ -193,13 +193,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/tgtd" = "-- gen_context(system_u:object_r:tgtd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/tgtd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tgtd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/tgtd" = "-- gen_context(system_u:object_r:tgtd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tgtd" = lib.mkDefault "-- gen_context(system_u:object_r:tgtd_exec_t,s0)";
 
-        "/var/lib/tgtd(/.*)?" = "gen_context(system_u:object_r:tgtd_var_lib_t,s0)";
+        "/var/lib/tgtd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tgtd_var_lib_t,s0)";
 
-        "/run/tgtd.*" = "-s gen_context(system_u:object_r:tgtd_runtime_t,s0)";
+        "/run/tgtd.*" = lib.mkDefault "-s gen_context(system_u:object_r:tgtd_runtime_t,s0)";
       };
     };
   };

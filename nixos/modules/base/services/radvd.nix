@@ -118,14 +118,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/radvd\\.conf" = "-- gen_context(system_u:object_r:radvd_etc_t,s0)";
+        "/etc/radvd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:radvd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/radvd" = "-- gen_context(system_u:object_r:radvd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/radvd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:radvd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/radvd" = "-- gen_context(system_u:object_r:radvd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/radvd" = lib.mkDefault "-- gen_context(system_u:object_r:radvd_exec_t,s0)";
 
-        "/run/radvd(/.*)?" = "gen_context(system_u:object_r:radvd_runtime_t,s0)";
-        "/run/radvd\\.pid" = "-- gen_context(system_u:object_r:radvd_runtime_t,s0)";
+        "/run/radvd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radvd_runtime_t,s0)";
+        "/run/radvd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:radvd_runtime_t,s0)";
       };
     };
   };

@@ -190,16 +190,18 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/((cf-serverd)|(cf-monitord)|(cf-execd))" =
-          "-- gen_context(system_u:object_r:cfengine_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cfengine_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cf-serverd" = "-- gen_context(system_u:object_r:cfengine_serverd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cf-execd" = "-- gen_context(system_u:object_r:cfengine_execd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cf-serverd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cfengine_serverd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cf-execd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cfengine_execd_exec_t,s0)";
         "/nix/store/[^/]+/bin/cf-monitord" =
-          "-- gen_context(system_u:object_r:cfengine_monitord_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cfengine_monitord_exec_t,s0)";
 
-        "/var/cfengine(/.*)?" = "gen_context(system_u:object_r:cfengine_var_lib_t,s0)";
+        "/var/cfengine(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cfengine_var_lib_t,s0)";
 
-        "/var/cfengine/outputs(/.*)?" = "gen_context(system_u:object_r:cfengine_log_t,s0)";
+        "/var/cfengine/outputs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cfengine_log_t,s0)";
       };
     };
   };

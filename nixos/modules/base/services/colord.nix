@@ -250,18 +250,23 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/lib/colord/colord" = "-- gen_context(system_u:object_r:colord_exec_t,s0)";
-        "/nix/store/[^/]+/lib/colord/colord-sane" = "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+        "/nix/store/[^/]+/lib/colord/colord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+        "/nix/store/[^/]+/lib/colord/colord-sane" =
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/[^/]*/colord/colord" = "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+        "/nix/store/[^/]+/lib/[^/]*/colord/colord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*/colord/colord-sane" =
-          "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/colord" = "-- gen_context(system_u:object_r:colord_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/colord-sane" = "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/colord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/colord-sane" =
+          lib.mkDefault "-- gen_context(system_u:object_r:colord_exec_t,s0)";
 
-        "/var/lib/color(/.*)?" = "gen_context(system_u:object_r:colord_var_lib_t,s0)";
-        "/var/lib/colord(/.*)?" = "gen_context(system_u:object_r:colord_var_lib_t,s0)";
+        "/var/lib/color(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:colord_var_lib_t,s0)";
+        "/var/lib/colord(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:colord_var_lib_t,s0)";
       };
     };
   };

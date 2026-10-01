@@ -232,15 +232,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sasl" = "-- gen_context(system_u:object_r:saslauthd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sasl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:saslauthd_initrc_exec_t,s0)";
 
-        "/etc/sasl2(/.*)?" = "gen_context(system_u:object_r:saslauthd_keytab_t,s0)";
+        "/etc/sasl2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:saslauthd_keytab_t,s0)";
 
-        "/nix/store/[^/]+/bin/saslauthd" = "-- gen_context(system_u:object_r:saslauthd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/saslauthd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:saslauthd_exec_t,s0)";
 
-        "/var/lib/sasl2(/.*)?" = "gen_context(system_u:object_r:saslauthd_runtime_t,s0)";
+        "/var/lib/sasl2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:saslauthd_runtime_t,s0)";
 
-        "/run/saslauthd(/.*)?" = "gen_context(system_u:object_r:saslauthd_runtime_t,s0)";
+        "/run/saslauthd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:saslauthd_runtime_t,s0)";
       };
     };
   };

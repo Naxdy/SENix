@@ -37,12 +37,13 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/bin/mojomojo_fastcgi\\.pl" =
-          "-- gen_context(system_u:object_r:httpd_mojomojo_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_mojomojo_script_exec_t,s0)";
 
         "/nix/store/[^/]+/share/mojomojo/root(/.*)?" =
-          "gen_context(system_u:object_r:httpd_mojomojo_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_mojomojo_content_t,s0)";
 
-        "/var/lib/mojomojo(/.*)?" = "gen_context(system_u:object_r:httpd_mojomojo_rw_content_t,s0)";
+        "/var/lib/mojomojo(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_mojomojo_rw_content_t,s0)";
       };
     };
   };

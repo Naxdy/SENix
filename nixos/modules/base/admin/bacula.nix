@@ -255,21 +255,25 @@
     '';
     fileContext = {
       rules = {
-        "/etc/bacula.*" = "gen_context(system_u:object_r:bacula_etc_t,s0)";
+        "/etc/bacula.*" = lib.mkDefault "gen_context(system_u:object_r:bacula_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/bacula.*" = "-- gen_context(system_u:object_r:bacula_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bacula.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bacula_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/bacula.*" = "-- gen_context(system_u:object_r:bacula_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bat" = "-- gen_context(system_u:object_r:bacula_admin_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bconsole" = "-- gen_context(system_u:object_r:bacula_admin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bacula.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bacula_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bacula_admin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bconsole" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bacula_admin_exec_t,s0)";
 
-        "/var/lib/bacula.*" = "gen_context(system_u:object_r:bacula_var_lib_t,s0)";
+        "/var/lib/bacula.*" = lib.mkDefault "gen_context(system_u:object_r:bacula_var_lib_t,s0)";
 
-        "/var/log/bacula.*" = "gen_context(system_u:object_r:bacula_log_t,s0)";
+        "/var/log/bacula.*" = lib.mkDefault "gen_context(system_u:object_r:bacula_log_t,s0)";
 
-        "/run/bacula.*" = "-- gen_context(system_u:object_r:bacula_runtime_t,s0)";
+        "/run/bacula.*" = lib.mkDefault "-- gen_context(system_u:object_r:bacula_runtime_t,s0)";
 
-        "/var/spool/bacula.*" = "gen_context(system_u:object_r:bacula_spool_t,s0)";
+        "/var/spool/bacula.*" = lib.mkDefault "gen_context(system_u:object_r:bacula_spool_t,s0)";
       };
     };
   };

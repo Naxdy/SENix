@@ -633,29 +633,33 @@
     fileContext = {
       rules = {
         # cockpit stuff
-        "/etc/cockpit/ws-certs\\.d(/.*)?" = "gen_context(system_u:object_r:cockpit_cert_t,s0)";
+        "/etc/cockpit/ws-certs\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cockpit_cert_t,s0)";
 
-        "/run/cockpit(/.*)?" = "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
-        "/run/cockpit/certificate-helper(/.*)" = "gen_context(system_u:object_r:cockpit_cert_t,s0)";
+        "/run/cockpit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
+        "/run/cockpit/certificate-helper(/.*)" =
+          lib.mkDefault "gen_context(system_u:object_r:cockpit_cert_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/cockpit.*" =
-          "-- gen_context(system_u:object_r:cockpit_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_unit_t,s0)";
 
         "/nix/store/[^/]+/libexec/cockpit-certificate-ensure" =
-          "-- gen_context(system_u:object_r:cockpit_cert_manage_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/cockpit-ws" = "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/cockpit-tls" = "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_cert_manage_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/cockpit-ws" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/cockpit-tls" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
         "/nix/store/[^/]+/libexec/cockpit-wsinstance-factory" =
-          "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_ws_exec_t,s0)";
         "/nix/store/[^/]+/libexec/cockpit-session" =
-          "-- gen_context(system_u:object_r:cockpit_session_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_session_exec_t,s0)";
         "/nix/store/[^/]+/libexec/cockpit-ssh" =
-          "-- gen_context(system_u:object_r:cockpit_session_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cockpit_session_exec_t,s0)";
 
-        "/var/lib/cockpit(/.*)?" = "gen_context(system_u:object_r:cockpit_state_t,s0)";
+        "/var/lib/cockpit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cockpit_state_t,s0)";
 
-        "/var/run/cockpit(/.*)?" = "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
-        "/var/run/cockpit-ws(/.*)?" = "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
+        "/var/run/cockpit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
+        "/var/run/cockpit-ws(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cockpit_runtime_t,s0)";
       };
     };
   };

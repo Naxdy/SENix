@@ -74,7 +74,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/sigrok-cli" = "-- gen_context(system_u:object_r:sigrok_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sigrok-cli" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sigrok_exec_t,s0)";
       };
     };
   };

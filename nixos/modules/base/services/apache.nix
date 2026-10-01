@@ -2939,232 +2939,286 @@
     fileContext = {
       rules = {
         "HOME_DIR/((www)|(web)|(public_html))(/.+)?" =
-          "gen_context(system_u:object_r:httpd_user_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_user_content_t,s0)";
         "HOME_DIR/((www)|(web)|(public_html))/cgi-bin(/.+)?" =
-          "gen_context(system_u:object_r:httpd_user_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_user_script_exec_t,s0)";
         "HOME_DIR/((www)|(web)|(public_html))(/.*)?/\\.htaccess" =
-          "-- gen_context(system_u:object_r:httpd_user_htaccess_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_user_htaccess_t,s0)";
         "HOME_DIR/((www)|(web)|(public_html))(/.*)?/logs(/.*)?" =
-          "gen_context(system_u:object_r:httpd_user_ra_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_user_ra_content_t,s0)";
 
-        "/etc/apache(2)?(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/apache-ssl(2)?(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/cherokee(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/drupal.*" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/etc/nginx(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/glpi(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/etc/hiawatha(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/horde(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/etc/htdig(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/etc/httpd(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/httpd/conf/keytab" = "-- gen_context(system_u:object_r:httpd_keytab_t,s0)";
-        "/etc/httpd/logs" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/etc/httpd/modules" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
-        "/etc/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/mock/koji(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/etc/postfixadmin(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/z-push(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/apache(2)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/apache-ssl(2)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/cherokee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/drupal.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/nginx(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/glpi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/hiawatha(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/horde(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/htdig(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/etc/httpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/httpd/conf/keytab" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_keytab_t,s0)";
+        "/etc/httpd/logs" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/etc/httpd/modules" = lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
+        "/etc/lighttpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/mock/koji(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/postfixadmin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/z-push(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/cherokee" = "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/hiawatha" = "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/httpd" = "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/lighttpd" = "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cherokee" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/hiawatha" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/httpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lighttpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_initrc_exec_t,s0)";
 
-        "/etc/vhosts" = "-- gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/etc/WebCalendar(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/etc/zabbix/web(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/vhosts" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/etc/WebCalendar(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/etc/zabbix/web(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
 
-        "/nix/store/[^/]+/.*\\.cgi" = "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/nix/store/[^/]+/.*\\.cgi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/apache(2)?" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apache(2)?ctl" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/apache-ssl(2)?" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cgi-wrapper" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cherokee" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hiawatha" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/htsslpass" = "-- gen_context(system_u:object_r:httpd_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/httpd\\.event" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/httpd(\\.worker)?" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lighttpd" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mongrel_rails" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nginx" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/php.*-fpm" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/php-fpm[^/]+" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rotatelogs" = "-- gen_context(system_u:object_r:httpd_rotatelogs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ssi-cgi" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/suexec" = "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wigwam" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apache(2)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apache(2)?ctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apache-ssl(2)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgi-wrapper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cherokee" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hiawatha" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/htsslpass" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/httpd\\.event" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/httpd(\\.worker)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lighttpd" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mongrel_rails" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nginx" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/php.*-fpm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/php-fpm[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rotatelogs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_rotatelogs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ssi-cgi" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/suexec" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wigwam" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/apache-ssl/.+" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/apache(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
-        "/nix/store/[^/]+/lib/apache2/modules(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
+        "/nix/store/[^/]+/lib/apache-ssl/.+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/apache(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
+        "/nix/store/[^/]+/lib/apache2/modules(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
         "/nix/store/[^/]+/lib/apache(2)?/suexec(2)?" =
-          "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
-        "/nix/store/[^/]+/lib/cgi-bin(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/cgi-bin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/cgi-bin/(nph-)?cgiwrap(d)?" =
-          "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
-        "/nix/store/[^/]+/lib/cherokee(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_suexec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/cherokee(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
         "/nix/store/[^/]+/lib/dirsrv/cgi-bin(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
-        "/nix/store/[^/]+/lib/httpd(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
-        "/nix/store/[^/]+/lib/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/nix/store/[^/]+/lib/httpd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
+        "/nix/store/[^/]+/lib/lighttpd(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/apache[^/]*\\.service" =
-          "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/httpd.*\\.service" =
-          "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/jetty.*\\.service" =
-          "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/w3m/cgi-bin(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/httpd-ssl-pass-dialog" =
-          "-- gen_context(system_u:object_r:httpd_passwd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_passwd_exec_t,s0)";
 
-        "/nix/store/[^/]+/share/dirsrv(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/dirsrv(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
         "/nix/store/[^/]+/share/doc/ghc/html(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/drupal.*" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/glpi(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/htdig(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/icecast(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/jetty/bin/jetty\\.sh" = "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
-        "/nix/store/[^/]+/share/mythweb(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/drupal.*" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/glpi(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/htdig(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/icecast(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/jetty/bin/jetty\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_exec_t,s0)";
+        "/nix/store/[^/]+/share/mythweb(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
         "/nix/store/[^/]+/share/mythweb/mythweb\\.pl" =
-          "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/nix/store/[^/]+/share/mythtv/mythweather/scripts(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/nix/store/[^/]+/share/mythtv/data(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/nginx/html(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/nix/store/[^/]+/share/nginx/modules(/.*)?" = "gen_context(system_u:object_r:httpd_modules_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/nginx/html(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/nix/store/[^/]+/share/nginx/modules(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
         "/nix/store/[^/]+/share/nginx/modules-available(/.*)?" =
-          "gen_context(system_u:object_r:httpd_modules_t,s0)";
-        "/nix/store/[^/]+/share/ntop/html(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_modules_t,s0)";
+        "/nix/store/[^/]+/share/ntop/html(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
         "/nix/store/[^/]+/share/openca/htdocs(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
         "/nix/store/[^/]+/share/postfixadmin/templates_c(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/nix/store/[^/]+/share/selinux-policy[^/]*/html(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
         "/nix/store/[^/]+/share/wordpress/.*\\.php" =
-          "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/nix/store/[^/]+/share/wordpress-mu/wp-config\\.php" =
-          "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/nix/store/[^/]+/share/wordpress-mu/wp-content(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/nix/store/[^/]+/share/wordpress/wp-content/uploads(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/nix/store/[^/]+/share/wordpress/wp-content/upgrade(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/nix/store/[^/]+/share/wordpress/wp-includes/.*\\.php" =
-          "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
 
-        "/var/cache/apache2(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/httpd(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/nginx(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mason(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mediawiki(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mod_.*" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mod_gnutls(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mod_proxy(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/mod_ssl(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/php-.*" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/php-eaccelerator(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/php-mmcache(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/rt3(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/cache/ssl.*\\.sem" = "-- gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/apache2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/httpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/lighttpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/nginx(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mason(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mediawiki(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mod_.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mod_gnutls(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mod_proxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/mod_ssl(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/php-.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/php-eaccelerator(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/php-mmcache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/rt3(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/cache/ssl.*\\.sem" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_cache_t,s0)";
 
-        "/var/lib/cacti/rra(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/lib/cherokee(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/dav(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/php(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/php5(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/dokuwiki(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/lib/drupal.*" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/lib/glpi(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/hiawatha(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/htdig(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/lib/httpd(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/nginx(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/php/session(/.*)?" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/var/lib/pootle/po(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/lib/rt3/data/RT-Shredder(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/squirrelmail(/.*)?" = "gen_context(system_u:object_r:httpd_squirrelmail_t,s0)";
-        "/var/lib/stickshift/\\.httpd\\.d(/.*)?" = "gen_context(system_u:object_r:httpd_config_t,s0)";
-        "/var/lib/svn(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/lib/trac(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/lib/wordpress(/.*)?" = "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
-        "/var/lib/z-push(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/lib/cacti/rra(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/lib/cherokee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/dav(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/php(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/php5(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/dokuwiki(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/lib/drupal.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/lib/glpi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/hiawatha(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/htdig(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/lib/httpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/lighttpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/nginx(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/php/session(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/var/lib/pootle/po(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/lib/rt3/data/RT-Shredder(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/squirrelmail(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_squirrelmail_t,s0)";
+        "/var/lib/stickshift/\\.httpd\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_config_t,s0)";
+        "/var/lib/svn(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/lib/trac(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/lib/wordpress(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_var_lib_t,s0)";
+        "/var/lib/z-push(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
 
-        "/var/lock/apache2(/.*)?" = "gen_context(system_u:object_r:httpd_lock_t,s0)";
+        "/var/lock/apache2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_lock_t,s0)";
 
-        "/var/log/apache(2)?(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/apache-ssl(2)?(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/cacti(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/cgiwrap\\.log.*" = "-- gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/cherokee(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/dirsrv/admin-serv(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/glpi(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/hiawatha(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/mlogc(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/log/pagespeed(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/log/httpd(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/horde2(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/nginx(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/piranha(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/roundcubemail(/.*)?" = "gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/suphp\\.log.*" = "-- gen_context(system_u:object_r:httpd_log_t,s0)";
-        "/var/log/z-push(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/log/php[^/]+-fpm\\.log.*" = "-- gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/apache(2)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/apache-ssl(2)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/cacti(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/cgiwrap\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/cherokee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/dirsrv/admin-serv(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/glpi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/hiawatha(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/mlogc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/log/pagespeed(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/log/httpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/horde2(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/lighttpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/nginx(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/piranha(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/roundcubemail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/suphp\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_log_t,s0)";
+        "/var/log/z-push(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/log/php[^/]+-fpm\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_log_t,s0)";
 
-        "/run/apache.*" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/cherokee\\.pid" = "-- gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/dirsrv/admin-serv.*" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/gcache_port" = "-s gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/httpd.*" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/lighttpd(/.*)?" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/mod_.*" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/php(/.*)?" = "gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/wsgi.*" = "-s gen_context(system_u:object_r:httpd_runtime_t,s0)";
-        "/run/user/apache(/.*)?" = "gen_context(system_u:object_r:httpd_tmp_t,s0)";
+        "/run/apache.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/cherokee\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/dirsrv/admin-serv.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/gcache_port" = lib.mkDefault "-s gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/httpd.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/lighttpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/mod_.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/php(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/wsgi.*" = lib.mkDefault "-s gen_context(system_u:object_r:httpd_runtime_t,s0)";
+        "/run/user/apache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_tmp_t,s0)";
 
-        "/var/spool/gosa(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/spool/squirrelmail(/.*)?" = "gen_context(system_u:object_r:squirrelmail_spool_t,s0)";
-        "/var/spool/viewvc(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
+        "/var/spool/gosa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/spool/squirrelmail(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:squirrelmail_spool_t,s0)";
+        "/var/spool/viewvc(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
 
-        "/var/www(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/www(/.*)?/logs" = "-d gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
-        "/var/www(/.*)?/logs/.*" = "gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
+        "/var/www(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/www(/.*)?/logs" = lib.mkDefault "-d gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
+        "/var/www(/.*)?/logs/.*" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
         "/var/www(/.*)?/roundcubemail/logs(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/var/www(/.*)?/roundcubemail/temp(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/[^/]*/cgi-bin(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
-        "/var/www/cgi-bin(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
-        "/var/www/gallery/albums(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/html/[^/]*/cgi-bin(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/[^/]*/cgi-bin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/var/www/cgi-bin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/var/www/gallery/albums(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/html/[^/]*/cgi-bin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
         "/var/www/html/[^/]*/sites/default/settings\\.php" =
-          "-- gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
         "/var/www/html/[^/]*/sites/default/files(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
-        "/var/www/html/configuration\\.php" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/html/wp-content(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/icons(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/www/miq/vmdb/log(/.*)?" = "gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
-        "/var/www/moodledata(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t, s0)";
+        "/var/www/html/configuration\\.php" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/html/wp-content(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/icons(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/www/miq/vmdb/log(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_ra_content_t,s0)";
+        "/var/www/moodledata(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
         "/var/www(/.*)?/nextcloud/config(/.*)?" =
-          "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www(/.*)?/nextcloud/data(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www(/.*)?/nextcloud/apps(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/perl(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
-        "/var/www/sessions(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
-        "/var/www/svn(/.*)?" = "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
-        "/var/www/svn/conf(/.*)?" = "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
-        "/var/www/svn/hooks(/.*)?" = "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
-        "/var/www/uploads(/.*)?" = "gen_context(system_u:object_r:httpd_cache_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www(/.*)?/nextcloud/data(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www(/.*)?/nextcloud/apps(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/perl(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/var/www/sessions(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
+        "/var/www/svn(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_rw_content_t,s0)";
+        "/var/www/svn/conf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_sys_content_t,s0)";
+        "/var/www/svn/hooks(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_sys_script_exec_t,s0)";
+        "/var/www/uploads(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:httpd_cache_t,s0)";
       };
     };
   };

@@ -289,15 +289,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/mail/sympa(/.*)?" = "gen_context(system_u:object_r:sympa_etc_t,s0)";
-        "/etc/sympa(/.*)?" = "gen_context(system_u:object_r:sympa_etc_t,s0)";
+        "/etc/mail/sympa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sympa_etc_t,s0)";
+        "/etc/sympa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sympa_etc_t,s0)";
 
-        "/run/sympa(/.*)?" = "gen_context(system_u:object_r:sympa_runtime_t,s0)";
+        "/run/sympa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sympa_runtime_t,s0)";
 
-        "/nix/store/[^/]+/lib/sympa/bin/.*" = "-- gen_context(system_u:object_r:sympa_exec_t,s0)";
+        "/nix/store/[^/]+/lib/sympa/bin/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sympa_exec_t,s0)";
 
-        "/var/lib/sympa(/.*)?" = "gen_context(system_u:object_r:sympa_var_t,s0)";
-        "/var/spool/sympa(/.*)?" = "gen_context(system_u:object_r:sympa_var_t,s0)";
+        "/var/lib/sympa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sympa_var_t,s0)";
+        "/var/spool/sympa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sympa_var_t,s0)";
       };
     };
   };

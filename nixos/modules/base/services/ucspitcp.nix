@@ -125,8 +125,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/rblsmtpd" = "-- gen_context(system_u:object_r:rblsmtpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcpserver" = "-- gen_context(system_u:object_r:ucspitcp_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rblsmtpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rblsmtpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcpserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ucspitcp_exec_t,s0)";
       };
     };
   };

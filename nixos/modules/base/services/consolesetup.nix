@@ -169,17 +169,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/console-setup(/.*)?" = "gen_context(system_u:object_r:consolesetup_conf_t,s0)";
+        "/etc/console-setup(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:consolesetup_conf_t,s0)";
 
-        "/etc/default/console-setup.*" = "-- gen_context(system_u:object_r:consolesetup_conf_t,s0)";
-        "/etc/default/keyboard.*" = "-- gen_context(system_u:object_r:consolesetup_conf_t,s0)";
+        "/etc/default/console-setup.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:consolesetup_conf_t,s0)";
+        "/etc/default/keyboard.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:consolesetup_conf_t,s0)";
 
-        "/run/console-setup(/.*)?" = "gen_context(system_u:object_r:consolesetup_runtime_t,s0)";
+        "/run/console-setup(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:consolesetup_runtime_t,s0)";
 
         "/nix/store/[^/]+/lib/console-setup/console-setup\\.sh" =
-          "-- gen_context(system_u:object_r:consolesetup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:consolesetup_exec_t,s0)";
         "/nix/store/[^/]+/lib/console-setup/keyboard-setup\\.sh" =
-          "-- gen_context(system_u:object_r:consolesetup_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:consolesetup_exec_t,s0)";
       };
     };
   };

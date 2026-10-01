@@ -211,18 +211,18 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.ircmotd" = "-- gen_context(system_u:object_r:irc_home_t,s0)";
-        "HOME_DIR/\\.irssi(/.*)?" = "gen_context(system_u:object_r:irc_home_t,s0)";
-        "HOME_DIR/\\.weechat(/.*)?" = "gen_context(system_u:object_r:irc_home_t,s0)";
-        "HOME_DIR/irclogs(/.*)?" = "gen_context(system_u:object_r:irc_log_home_t,s0)";
+        "HOME_DIR/\\.ircmotd" = lib.mkDefault "-- gen_context(system_u:object_r:irc_home_t,s0)";
+        "HOME_DIR/\\.irssi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:irc_home_t,s0)";
+        "HOME_DIR/\\.weechat(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:irc_home_t,s0)";
+        "HOME_DIR/irclogs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:irc_log_home_t,s0)";
 
-        "/etc/irssi\\.conf" = "-- gen_context(system_u:object_r:irc_conf_t,s0)";
+        "/etc/irssi\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:irc_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/[st]irc" = "-- gen_context(system_u:object_r:irc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ircII" = "-- gen_context(system_u:object_r:irc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/irssi" = "-- gen_context(system_u:object_r:irc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tinyirc" = "-- gen_context(system_u:object_r:irc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/weechat" = "-- gen_context(system_u:object_r:irc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/[st]irc" = lib.mkDefault "-- gen_context(system_u:object_r:irc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ircII" = lib.mkDefault "-- gen_context(system_u:object_r:irc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/irssi" = lib.mkDefault "-- gen_context(system_u:object_r:irc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tinyirc" = lib.mkDefault "-- gen_context(system_u:object_r:irc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/weechat" = lib.mkDefault "-- gen_context(system_u:object_r:irc_exec_t,s0)";
       };
     };
   };

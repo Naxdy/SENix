@@ -134,15 +134,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sysstat" = "-- gen_context(system_u:object_r:sysstat_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sysstat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sysstat_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/atsar/atsa.*" = "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
-        "/nix/store/[^/]+/lib/sa/sa.*" = "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
-        "/nix/store/[^/]+/lib/sysstat/sa.*" = "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
+        "/nix/store/[^/]+/lib/atsar/atsa.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
+        "/nix/store/[^/]+/lib/sa/sa.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
+        "/nix/store/[^/]+/lib/sysstat/sa.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sysstat_exec_t,s0)";
 
-        "/var/log/atsar(/.*)?" = "gen_context(system_u:object_r:sysstat_log_t,s0)";
-        "/var/log/sa(/.*)?" = "gen_context(system_u:object_r:sysstat_log_t,s0)";
-        "/var/log/sysstat(/.*)?" = "gen_context(system_u:object_r:sysstat_log_t,s0)";
+        "/var/log/atsar(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sysstat_log_t,s0)";
+        "/var/log/sa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sysstat_log_t,s0)";
+        "/var/log/sysstat(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sysstat_log_t,s0)";
       };
     };
   };

@@ -211,14 +211,15 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/etc/rc\\.d/init\\.d/(tcsd|trousers)" = "-- gen_context(system_u:object_r:tcsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/(tcsd|trousers)" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tcsd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/tcsd" = "-- gen_context(system_u:object_r:tcsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcsd" = lib.mkDefault "-- gen_context(system_u:object_r:tcsd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*tcsd.*" =
-          "-- gen_context(system_u:object_r:tcsd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tcsd_unit_t,s0)";
 
-        "/var/lib/tpm(/.*)?" = "gen_context(system_u:object_r:tcsd_var_lib_t,s0)";
+        "/var/lib/tpm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tcsd_var_lib_t,s0)";
       };
     };
   };

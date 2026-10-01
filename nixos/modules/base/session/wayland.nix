@@ -248,8 +248,9 @@
     '';
     fileContext = {
       rules = {
-        "/run/user/%{USERID}/wayland-.*" = "-s gen_context(system_u:object_r:wayland_runtime_t,s0)";
-        "/run/wayland-.*" = "-s gen_context(system_u:object_r:wayland_runtime_t,s0)";
+        "/run/user/%{USERID}/wayland-.*" =
+          lib.mkDefault "-s gen_context(system_u:object_r:wayland_runtime_t,s0)";
+        "/run/wayland-.*" = lib.mkDefault "-s gen_context(system_u:object_r:wayland_runtime_t,s0)";
       };
     };
   };

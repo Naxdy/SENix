@@ -623,12 +623,16 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/fusermount" = "-- gen_context(system_u:object_r:mount_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fusermount3" = "-- gen_context(system_u:object_r:mount_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mount(\\.[^/]+)?" = "-- gen_context(system_u:object_r:mount_exec_t,s0)";
-        "/nix/store/[^/]+/bin/umount(\\.[^/]+)?" = "-- gen_context(system_u:object_r:mount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fusermount" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fusermount3" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mount(\\.[^/]+)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/umount(\\.[^/]+)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mount_exec_t,s0)";
 
-        "/run/mount(/.*)?" = "gen_context(system_u:object_r:mount_runtime_t,s0)";
+        "/run/mount(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mount_runtime_t,s0)";
       };
     };
   };

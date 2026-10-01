@@ -94,11 +94,12 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/((iodined)|(iodine-server))" =
-          "-- gen_context(system_u:object_r:iodined_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iodined_initrc_exec_t,s0)";
 
-        "/run/iodine(/.*)?" = "gen_context(system_u:object_r:iodined_runtime_t,s0)";
+        "/run/iodine(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:iodined_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/iodined" = "-- gen_context(system_u:object_r:iodined_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iodined" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iodined_exec_t,s0)";
       };
     };
   };

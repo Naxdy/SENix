@@ -68,9 +68,9 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/lsmd" = "-- gen_context(system_u:object_r:lsmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lsmd" = lib.mkDefault "-- gen_context(system_u:object_r:lsmd_exec_t,s0)";
 
-        "/run/lsm(/.*)?" = "gen_context(system_u:object_r:lsmd_runtime_t,s0)";
+        "/run/lsm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lsmd_runtime_t,s0)";
       };
     };
   };

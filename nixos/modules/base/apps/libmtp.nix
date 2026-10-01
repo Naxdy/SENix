@@ -114,9 +114,9 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.mtpz-data" = "-- gen_context(system_u:object_r:libmtp_home_t,s0)";
+        "HOME_DIR/\\.mtpz-data" = lib.mkDefault "-- gen_context(system_u:object_r:libmtp_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/mtp-.*" = "-- gen_context(system_u:object_r:libmtp_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mtp-.*" = lib.mkDefault "-- gen_context(system_u:object_r:libmtp_exec_t,s0)";
       };
     };
   };

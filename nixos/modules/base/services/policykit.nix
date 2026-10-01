@@ -613,43 +613,48 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/nix/store/[^/]+/lib/polkit-1/polkitd" = "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
+        "/nix/store/[^/]+/lib/polkit-1/polkitd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
         "/nix/store/[^/]+/lib/polkit-1/polkit-agent-helper-1" =
-          "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/policykit/polkit-read-auth-helper" =
-          "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
         "/nix/store/[^/]+/lib/policykit/polkit-grant-helper.*" =
-          "-- gen_context(system_u:object_r:policykit_grant_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_grant_exec_t,s0)";
         "/nix/store/[^/]+/lib/policykit/polkit-resolve-exe-helper.*" =
-          "-- gen_context(system_u:object_r:policykit_resolve_exec_t,s0)";
-        "/nix/store/[^/]+/lib/policykit/polkitd" = "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_resolve_exec_t,s0)";
+        "/nix/store/[^/]+/lib/policykit/polkitd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
         "/nix/store/[^/]+/lib/policykit-1/polkit-agent-helper-1" =
-          "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
         "/nix/store/[^/]+/lib/policykit-1/polkitd" =
-          "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*polkit.*" =
-          "-- gen_context(system_u:object_r:policykit_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_unit_t,s0)";
 
         "/nix/store/[^/]+/libexec/polkit-read-auth-helper" =
-          "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
         "/nix/store/[^/]+/libexec/polkit-grant-helper.*" =
-          "-- gen_context(system_u:object_r:policykit_grant_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_grant_exec_t,s0)";
         "/nix/store/[^/]+/libexec/polkit-resolve-exe-helper.*" =
-          "-- gen_context(system_u:object_r:policykit_resolve_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/polkitd.*" = "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_resolve_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/polkitd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
         "/nix/store/[^/]+/libexec/polkit-1/polkit-agent-helper-1" =
-          "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_auth_exec_t,s0)";
         "/nix/store/[^/]+/libexec/polkit-1/polkitd.*" =
-          "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:policykit_exec_t,s0)";
 
-        "/var/lib/misc/PolicyKit\\.reload" = "gen_context(system_u:object_r:policykit_reload_t,s0)";
-        "/var/lib/PolicyKit(/.*)?" = "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
-        "/var/lib/polkit-1(/.*)?" = "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
-        "/var/lib/PolicyKit-public(/.*)?" = "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
+        "/var/lib/misc/PolicyKit\\.reload" =
+          lib.mkDefault "gen_context(system_u:object_r:policykit_reload_t,s0)";
+        "/var/lib/PolicyKit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
+        "/var/lib/polkit-1(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
+        "/var/lib/PolicyKit-public(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:policykit_var_lib_t,s0)";
 
-        "/run/PolicyKit(/.*)?" = "gen_context(system_u:object_r:policykit_runtime_t,s0)";
+        "/run/PolicyKit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:policykit_runtime_t,s0)";
       };
     };
   };

@@ -1528,61 +1528,69 @@
         #
         # /etc
         #
-        "/etc/dhclient.*conf" = "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/dhclient-script" = "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/dhcpc.*" = "gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/dhcpd\\.conf" = "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/dhcp/dhcpd6?\\.conf" = "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/ethers" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/hosts" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/hosts\\.allow.*" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/hosts\\.deny.*" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/hostname" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/kea(/.*)?" = "gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/denyhosts.*" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/machine-info" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/resolv\\.conf.*" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/yp\\.conf.*" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/dhclient.*conf" = lib.mkDefault "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhclient-script" = lib.mkDefault "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhcpc.*" = lib.mkDefault "gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhcpd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhcp/dhcpd6?\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/ethers" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/hosts" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/hosts\\.allow.*" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/hosts\\.deny.*" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/hostname" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/kea(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/denyhosts.*" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/machine-info" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/resolv\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/yp\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
 
-        "/etc/dhcp3(/.*)?" = "gen_context(system_u:object_r:dhcp_etc_t,s0)";
-        "/etc/dhcp3?/dhclient.*" = "gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhcp3(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcp_etc_t,s0)";
+        "/etc/dhcp3?/dhclient.*" = lib.mkDefault "gen_context(system_u:object_r:dhcp_etc_t,s0)";
 
-        "/etc/systemd/network(/.*)?" = "gen_context(system_u:object_r:net_conf_t,s0)";
-        "/etc/tor/torsocks\\.conf" = "-- gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/systemd/network(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:net_conf_t,s0)";
+        "/etc/tor/torsocks\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:net_conf_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/bin/dhclient.*" = "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dhcdbd" = "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dhcp6c" = "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dhcpcd" = "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ethtool" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ifconfig" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ip" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipx_configure" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipx_interface" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ipx_internal_net" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iw" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iwconfig" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mii-tool" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pump" = "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tc" = "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dhclient.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dhcdbd" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dhcp6c" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dhcpcd" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ethtool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ifconfig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ip" = lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipx_configure" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipx_interface" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipx_internal_net" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iw" = lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iwconfig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mii-tool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pump" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tc" = lib.mkDefault "-- gen_context(system_u:object_r:ifconfig_exec_t,s0)";
 
         #
         # /var
         #
-        "/var/lib/dhcp3?" = "-d gen_context(system_u:object_r:dhcp_state_t,s0)";
-        "/var/lib/dhcp3?/dhclient.*" = "gen_context(system_u:object_r:dhcpc_state_t,s0)";
-        "/var/lib/dhcpcd(/.*)?" = "gen_context(system_u:object_r:dhcpc_state_t,s0)";
-        "/var/lib/dhcpv6(/.*)?" = "gen_context(system_u:object_r:dhcpc_state_t,s0)";
-        "/var/lib/dhclient(/.*)?" = "gen_context(system_u:object_r:dhcpc_state_t,s0)";
-        "/var/lib/wifiroamd(/.*)?" = "gen_context(system_u:object_r:dhcpc_state_t,s0)";
+        "/var/lib/dhcp3?" = lib.mkDefault "-d gen_context(system_u:object_r:dhcp_state_t,s0)";
+        "/var/lib/dhcp3?/dhclient.*" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_state_t,s0)";
+        "/var/lib/dhcpcd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_state_t,s0)";
+        "/var/lib/dhcpv6(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_state_t,s0)";
+        "/var/lib/dhclient(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_state_t,s0)";
+        "/var/lib/wifiroamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_state_t,s0)";
 
-        "/run/dhclient.*" = "-- gen_context(system_u:object_r:dhcpc_runtime_t,s0)";
-        "/run/dhcpcd(/.*)?" = "gen_context(system_u:object_r:dhcpc_runtime_t,s0)";
-        "/run/netns" = "-d gen_context(system_u:object_r:ifconfig_runtime_t,s0)";
-        "/run/netns/[^/]+" = "-- <<none>>";
+        "/run/dhclient.*" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpc_runtime_t,s0)";
+        "/run/dhcpcd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpc_runtime_t,s0)";
+        "/run/netns" = lib.mkDefault "-d gen_context(system_u:object_r:ifconfig_runtime_t,s0)";
+        "/run/netns/[^/]+" = lib.mkDefault "-- <<none>>";
       };
     };
   };

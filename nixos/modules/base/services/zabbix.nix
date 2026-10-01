@@ -340,19 +340,24 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/(zabbix|zabbix-server)" =
-          "-- gen_context(system_u:object_r:zabbix_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/zabbix-agentd" =
-          "-- gen_context(system_u:object_r:zabbix_agent_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_agent_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/zabbix_agentd" = "-- gen_context(system_u:object_r:zabbix_agent_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zabbix_server" = "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zabbix_server_mysql" = "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zabbix_server_pgsql" = "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zabbix_server_sqlite3" = "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zabbix_agentd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_agent_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zabbix_server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zabbix_server_mysql" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zabbix_server_pgsql" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zabbix_server_sqlite3" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zabbix_exec_t,s0)";
 
-        "/var/log/zabbix(/.*)?" = "gen_context(system_u:object_r:zabbix_log_t,s0)";
+        "/var/log/zabbix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zabbix_log_t,s0)";
 
-        "/run/zabbix(/.*)?" = "gen_context(system_u:object_r:zabbix_runtime_t,s0)";
+        "/run/zabbix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zabbix_runtime_t,s0)";
       };
     };
   };

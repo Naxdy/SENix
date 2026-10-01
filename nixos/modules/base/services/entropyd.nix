@@ -130,20 +130,24 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/((audio-entropyd)|(haveged)|(jitterentropy-rngd))" =
-          "-- gen_context(system_u:object_r:entropyd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/haveged.*\\.service" =
-          "-- gen_context(system_u:object_r:entropyd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/jitterentropy.*\\.service" =
-          "-- gen_context(system_u:object_r:entropyd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/audio-entropyd" = "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/haveged" = "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/audio-entropyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/haveged" =
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/jitterentropy-rngd" = "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/jitterentropy-rngd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_exec_t,s0)";
 
-        "/run/audio-entropyd\\.pid" = "-- gen_context(system_u:object_r:entropyd_runtime_t,s0)";
-        "/run/haveged\\.pid" = "-- gen_context(system_u:object_r:entropyd_runtime_t,s0)";
+        "/run/audio-entropyd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:entropyd_runtime_t,s0)";
+        "/run/haveged\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:entropyd_runtime_t,s0)";
       };
     };
   };

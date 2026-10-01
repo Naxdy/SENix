@@ -877,37 +877,47 @@
     '';
     fileContext = {
       rules = {
-        "/etc/exports" = "-- gen_context(system_u:object_r:exports_t,s0)";
-        "/etc/exports\\.d(/.*)?" = "gen_context(system_u:object_r:exports_t,s0)";
+        "/etc/exports" = lib.mkDefault "-- gen_context(system_u:object_r:exports_t,s0)";
+        "/etc/exports\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:exports_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/nfs" = "-- gen_context(system_u:object_r:nfsd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/nfslock" = "-- gen_context(system_u:object_r:rpcd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/rpcidmapd" = "-- gen_context(system_u:object_r:rpcd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nfs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nfsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nfslock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/rpcidmapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/blkmapd" = "-- gen_context(system_u:object_r:blkmapd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nfsdcld" = "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\..*" = "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.idmapd" = "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.gssd" = "-- gen_context(system_u:object_r:gssd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.mountd" = "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.nfsd" = "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.rquotad" = "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.svcgssd" = "-- gen_context(system_u:object_r:gssd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sm-notify" = "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blkmapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:blkmapd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nfsdcld" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.idmapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.gssd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gssd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.mountd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.nfsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.rquotad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.svcgssd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gssd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sm-notify" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/nfs.*\\.service" =
-          "-- gen_context(system_u:object_r:nfsd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:nfsd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/rpc.*\\.service" =
-          "-- gen_context(system_u:object_r:rpcd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/fsidd" = "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fsidd" = lib.mkDefault "-- gen_context(system_u:object_r:nfsd_exec_t,s0)";
 
-        "/var/lib/nfs(/.*)?" = "gen_context(system_u:object_r:var_lib_nfs_t,s0)";
+        "/var/lib/nfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_lib_nfs_t,s0)";
 
-        "/run/blkmapd\\.pid" = "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
-        "/run/rpc\\.statd(/.*)?" = "gen_context(system_u:object_r:rpcd_runtime_t,s0)";
-        "/run/rpc\\.statd\\.pid" = "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
-        "/run/sm-notify\\.pid" = "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
+        "/run/blkmapd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
+        "/run/rpc\\.statd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpcd_runtime_t,s0)";
+        "/run/rpc\\.statd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
+        "/run/sm-notify\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:rpcd_runtime_t,s0)";
       };
     };
   };

@@ -813,18 +813,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/dpkg" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/etc/cron\\.daily/dpkg" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/debsums" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dpkg" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dpkg-preconfigure" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dpkg-reconfigure" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dselect" = "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/debsums" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dpkg" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dpkg-preconfigure" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dpkg-reconfigure" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dselect" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_exec_t,s0)";
 
-        "/var/lib/debtags(/.*)?" = "gen_context(system_u:object_r:dpkg_var_lib_t,s0)";
-        "/var/lib/dpkg(/.*)?" = "gen_context(system_u:object_r:dpkg_var_lib_t,s0)";
-        "/var/lib/dpkg/(meth)?lock" = "-- gen_context(system_u:object_r:dpkg_lock_t,s0)";
-        "/var/lib/dpkg/lock-frontend" = "-- gen_context(system_u:object_r:dpkg_lock_t,s0)";
+        "/var/lib/debtags(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dpkg_var_lib_t,s0)";
+        "/var/lib/dpkg(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dpkg_var_lib_t,s0)";
+        "/var/lib/dpkg/(meth)?lock" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_lock_t,s0)";
+        "/var/lib/dpkg/lock-frontend" = lib.mkDefault "-- gen_context(system_u:object_r:dpkg_lock_t,s0)";
       };
     };
   };

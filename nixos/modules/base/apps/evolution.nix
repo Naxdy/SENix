@@ -792,33 +792,37 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.camel_certs(/.*)?" = "gen_context(system_u:object_r:evolution_home_t,s0)";
-        "HOME_DIR/\\.config/evolution(/.*)?" = "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
-        "HOME_DIR/\\.evolution(/.*)?" = "gen_context(system_u:object_r:evolution_home_t,s0)";
+        "HOME_DIR/\\.camel_certs(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:evolution_home_t,s0)";
+        "HOME_DIR/\\.config/evolution(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
+        "HOME_DIR/\\.evolution(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:evolution_home_t,s0)";
         "HOME_DIR/\\.local/share/evolution(/.*)?" =
-          "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
         "HOME_DIR/\\.local/share/camel_certs(/.*)?" =
-          "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:evolution_xdg_config_t,s0)";
 
-        "/tmp/\\.exchange-%{USERNAME}(/.*)?" = "gen_context(system_u:object_r:evolution_exchange_tmp_t,s0)";
+        "/tmp/\\.exchange-%{USERNAME}(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:evolution_exchange_tmp_t,s0)";
 
-        "/nix/store/[^/]+/bin/evolution.*" = "-- gen_context(system_u:object_r:evolution_exec_t,s0)";
+        "/nix/store/[^/]+/bin/evolution.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/evolution/[^/]*/evolution-alarm-notify" =
-          "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
         "/nix/store/[^/]+/lib/evolution-webcal/evolution-webcal" =
-          "-- gen_context(system_u:object_r:evolution_webcal_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_webcal_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/evolution/.*evolution-alarm-notify.*" =
-          "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
         "/nix/store/[^/]+/libexec/evolution/.*evolution-exchange-storage.*" =
-          "-- gen_context(system_u:object_r:evolution_exchange_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_exchange_exec_t,s0)";
         "/nix/store/[^/]+/libexec/evolution-data-server.*" =
-          "-- gen_context(system_u:object_r:evolution_server_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_server_exec_t,s0)";
         "/nix/store/[^/]+/libexec/evolution-data-server/evolution-alarm-notify" =
-          "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_alarm_exec_t,s0)";
         "/nix/store/[^/]+/libexec/evolution-webcal.*" =
-          "-- gen_context(system_u:object_r:evolution_webcal_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:evolution_webcal_exec_t,s0)";
       };
     };
   };

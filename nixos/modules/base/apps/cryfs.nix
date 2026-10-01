@@ -127,9 +127,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/cryfs" = "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/encfs" = "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gocryptfs" = "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cryfs" = lib.mkDefault "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/encfs" = lib.mkDefault "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gocryptfs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cryfs_exec_t,s0)";
       };
     };
   };

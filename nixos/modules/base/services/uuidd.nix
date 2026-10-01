@@ -228,13 +228,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/uuidd" = "-- gen_context(system_u:object_r:uuidd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/uuidd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:uuidd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/uuidd" = "-- gen_context(system_u:object_r:uuidd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uuidd" = lib.mkDefault "-- gen_context(system_u:object_r:uuidd_exec_t,s0)";
 
-        "/var/lib/libuuid(/.*)?" = "gen_context(system_u:object_r:uuidd_var_lib_t,s0)";
+        "/var/lib/libuuid(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uuidd_var_lib_t,s0)";
 
-        "/run/uuidd(/.*)?" = "gen_context(system_u:object_r:uuidd_runtime_t,s0)";
+        "/run/uuidd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uuidd_runtime_t,s0)";
       };
     };
   };

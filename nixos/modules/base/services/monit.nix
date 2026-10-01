@@ -314,20 +314,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/monit" = "-- gen_context(system_u:object_r:monit_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/monit" =
+          lib.mkDefault "-- gen_context(system_u:object_r:monit_initrc_exec_t,s0)";
 
-        "/etc/monit(/.*)?" = "gen_context(system_u:object_r:monit_conf_t,s0)";
+        "/etc/monit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:monit_conf_t,s0)";
 
-        "/run/monit\\.pid" = "-- gen_context(system_u:object_r:monit_runtime_t,s0)";
-        "/run/monit\\.socket" = "-s gen_context(system_u:object_r:monit_runtime_t,s0)";
+        "/run/monit\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:monit_runtime_t,s0)";
+        "/run/monit\\.socket" = lib.mkDefault "-s gen_context(system_u:object_r:monit_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/monit" = "-- gen_context(system_u:object_r:monit_exec_t,s0)";
+        "/nix/store/[^/]+/bin/monit" = lib.mkDefault "-- gen_context(system_u:object_r:monit_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/systemd/system/monit.*" = "-- gen_context(system_u:object_r:monit_unit_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system/monit.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:monit_unit_t,s0)";
 
-        "/var/lib/monit(/.*)?" = "gen_context(system_u:object_r:monit_var_lib_t,s0)";
+        "/var/lib/monit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:monit_var_lib_t,s0)";
 
-        "/var/log/monit\\.log.*" = "-- gen_context(system_u:object_r:monit_log_t,s0)";
+        "/var/log/monit\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:monit_log_t,s0)";
       };
     };
   };

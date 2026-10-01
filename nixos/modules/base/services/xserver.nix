@@ -2938,154 +2938,181 @@
         # HOME_DIR
         #
         "HOME_DIR/\\.cache/mesa_shader_cache(/.*)?" =
-          "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
         "HOME_DIR/\\.cache/mesa_shader_cache_db(/.*)?" =
-          "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
         "HOME_DIR/\\.cache/mesa_shader_cache_sf(/.*)?" =
-          "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
         "HOME_DIR/\\.cache/radv_builtin_shaders(/.*)?" =
-          "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
-        "HOME_DIR/\\.cache/fontconfig(/.*)?" = "gen_context(system_u:object_r:user_fonts_cache_t,s0)";
-        "HOME_DIR/\\.dmrc" = "-- gen_context(system_u:object_r:dmrc_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:mesa_shader_cache_t,s0)";
+        "HOME_DIR/\\.cache/fontconfig(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:user_fonts_cache_t,s0)";
+        "HOME_DIR/\\.dmrc" = lib.mkDefault "-- gen_context(system_u:object_r:dmrc_home_t,s0)";
         "HOME_DIR/\\.config/fontconfig/conf\\.d(/.*)?" =
-          "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
         "HOME_DIR/\\.config/fontconfig/fonts\\.conf" =
-          "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
-        "HOME_DIR/\\.fonts(/.*)?" = "gen_context(system_u:object_r:user_fonts_t,s0)";
-        "HOME_DIR/\\.fonts/auto(/.*)?" = "gen_context(system_u:object_r:user_fonts_cache_t,s0)";
-        "HOME_DIR/\\.fonts\\.cache-.*" = "-- gen_context(system_u:object_r:user_fonts_cache_t,s0)";
-        "HOME_DIR/\\.fonts\\.conf\\.d(/.*)?" = "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
-        "HOME_DIR/\\.fonts\\.conf" = "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
-        "HOME_DIR/\\.ICEauthority.*" = "-- gen_context(system_u:object_r:iceauth_home_t,s0)";
-        "HOME_DIR/\\.serverauth.*" = "-- gen_context(system_u:object_r:xauth_home_t,s0)";
-        "HOME_DIR/\\.xauth.*" = "-- gen_context(system_u:object_r:xauth_home_t,s0)";
-        "HOME_DIR/\\.xsession-errors" = "-- gen_context(system_u:object_r:xsession_log_t,s0)";
-        "HOME_DIR/\\.Xauthority.*" = "-- gen_context(system_u:object_r:xauth_home_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
+        "HOME_DIR/\\.fonts(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:user_fonts_t,s0)";
+        "HOME_DIR/\\.fonts/auto(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:user_fonts_cache_t,s0)";
+        "HOME_DIR/\\.fonts\\.cache-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:user_fonts_cache_t,s0)";
+        "HOME_DIR/\\.fonts\\.conf\\.d(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
+        "HOME_DIR/\\.fonts\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:user_fonts_config_t,s0)";
+        "HOME_DIR/\\.ICEauthority.*" = lib.mkDefault "-- gen_context(system_u:object_r:iceauth_home_t,s0)";
+        "HOME_DIR/\\.serverauth.*" = lib.mkDefault "-- gen_context(system_u:object_r:xauth_home_t,s0)";
+        "HOME_DIR/\\.xauth.*" = lib.mkDefault "-- gen_context(system_u:object_r:xauth_home_t,s0)";
+        "HOME_DIR/\\.xsession-errors" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_log_t,s0)";
+        "HOME_DIR/\\.Xauthority.*" = lib.mkDefault "-- gen_context(system_u:object_r:xauth_home_t,s0)";
 
         #
         # /dev
         #
-        "/dev/xconsole" = "-p gen_context(system_u:object_r:xconsole_device_t,s0)";
+        "/dev/xconsole" = lib.mkDefault "-p gen_context(system_u:object_r:xconsole_device_t,s0)";
 
         #
         # /etc
         #
-        "/etc/gdm(3)?/PostSession/.*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/gdm(3)?/PreSession/.*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/gdm(3)?/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/gdm(3)?/PostSession/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/gdm(3)?/PreSession/.*" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/gdm(3)?/Xsession" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
 
-        "/etc/lightdm/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/lightdm/Xsession" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
 
-        "/etc/kde[34]?/kdm/Xstartup" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/kde[34]?/kdm/Xreset" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/kde[34]?/kdm/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/kde[34]?/kdm/backgroundrc" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/etc/kde[34]?/kdm/Xstartup" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/kde[34]?/kdm/Xreset" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/kde[34]?/kdm/Xsession" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/kde[34]?/kdm/backgroundrc" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/x11-common" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/etc/sddm/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/x11-common" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/etc/sddm/Xsession" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
 
-        "/etc/X11/[wx]dm/Xreset.*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/X11/[wxg]dm/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/X11/wdm(/.*)?" = "gen_context(system_u:object_r:xdm_rw_etc_t,s0)";
-        "/etc/X11/wdm/Xsetup.*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/X11/wdm/Xstartup.*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
-        "/etc/X11/Xsession[^/]*" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/X11/[wx]dm/Xreset.*" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/X11/[wxg]dm/Xsession" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/X11/wdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_rw_etc_t,s0)";
+        "/etc/X11/wdm/Xsetup.*" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/X11/wdm/Xstartup.*" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+        "/etc/X11/Xsession[^/]*" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
 
         #
         # /tmp
         #
-        "/tmp/\\.ICE-unix" = "-d gen_context(system_u:object_r:xdm_tmp_t,s0)";
-        "/tmp/\\.ICE-unix/.*" = "-s <<none>>";
-        "/tmp/\\.X0-lock" = "-- gen_context(system_u:object_r:xserver_tmp_t,s0)";
-        "/tmp/\\.X11-unix" = "-d gen_context(system_u:object_r:xdm_tmp_t,s0)";
-        "/tmp/\\.X11-unix/.*" = "-s <<none>>";
-        "/tmp/xses-%{USERNAME}" = "-- gen_context(system_u:object_r:xsession_log_t,s0)";
+        "/tmp/\\.ICE-unix" = lib.mkDefault "-d gen_context(system_u:object_r:xdm_tmp_t,s0)";
+        "/tmp/\\.ICE-unix/.*" = lib.mkDefault "-s <<none>>";
+        "/tmp/\\.X0-lock" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_tmp_t,s0)";
+        "/tmp/\\.X11-unix" = lib.mkDefault "-d gen_context(system_u:object_r:xdm_tmp_t,s0)";
+        "/tmp/\\.X11-unix/.*" = lib.mkDefault "-s <<none>>";
+        "/tmp/xses-%{USERNAME}" = lib.mkDefault "-- gen_context(system_u:object_r:xsession_log_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/bin/gdm(3)?" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gdm-binary" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lxdm(-binary)?" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/[xkw]dm" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sddm" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sddm-greeter(-qt6)?" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gpe-dm" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iceauth" = "-- gen_context(system_u:object_r:iceauth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lightdm" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/slim" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/Xair" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xauth" = "-- gen_context(system_u:object_r:xauth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/Xorg" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gdm(3)?" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gdm-binary" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lxdm(-binary)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/[xkw]dm" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sddm" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sddm-greeter(-qt6)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpe-dm" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iceauth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iceauth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lightdm" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/slim" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/Xair" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xauth" = lib.mkDefault "-- gen_context(system_u:object_r:xauth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/Xorg" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/qt-.*/etc/settings(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/nix/store/[^/]+/lib/xorg/Xorg" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/lib/xorg/Xorg\\.wrap" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/lib/xorg-server/Xorg" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/lib/qt-.*/etc/settings(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/nix/store/[^/]+/lib/xorg/Xorg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/lib/xorg/Xorg\\.wrap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/lib/xorg-server/Xorg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
         "/nix/store/[^/]+/lib/xorg-server/Xorg\\.wrap" =
-          "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/lib/X11/xdm/Xsession" = "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/lib/X11/xdm/Xsession" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xsession_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/gdm-runtime-config" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/gdm-runtime-config" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
         "/nix/store/[^/]+/libexec/gnome-remote-desktop-daemon" =
-          "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/greetd" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/greetd" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
 
         # xserver default configure bug: not FHS-compliant because not read-only !
-        "/nix/store/[^/]+/share/X11/xkb(/.*)?" = "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
+        "/nix/store/[^/]+/share/X11/xkb(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
 
-        "/nix/store/[^/]+/X11R6/bin/[xgkw]dm" = "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/iceauth" = "-- gen_context(system_u:object_r:iceauth_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/X" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/xauth" = "-- gen_context(system_u:object_r:xauth_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/XFree86" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/Xipaq" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/Xorg" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/bin/Xwrapper" = "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
-        "/nix/store/[^/]+/X11R6/lib/X11/xkb(/.*)?" = "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/[xgkw]dm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xdm_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/iceauth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iceauth_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/X" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/xauth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xauth_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/XFree86" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/Xipaq" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/Xorg" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/bin/Xwrapper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xserver_exec_t,s0)";
+        "/nix/store/[^/]+/X11R6/lib/X11/xkb(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
 
-        "/nix/store/[^/]+/var/[xgkw]dm(/.*)?" = "gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/nix/store/[^/]+/var/[xgkw]dm(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:xserver_log_t,s0)";
 
         #
         # /var
         #
-        "/var/[xgkw]dm(/.*)?" = "gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/[xgkw]dm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xserver_log_t,s0)";
 
-        "/var/cache/lightdm(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/cache/lightdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
 
-        "/var/lib/gdm(3)?(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/lightdm(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/lightdm-data(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/lxdm(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/phog(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/[xkw]dm(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
-        "/var/lib/xdm/authdir(/.*)?" = "gen_context(system_u:object_r:xdm_auth_t,s0)";
-        "/var/lib/xkb(/.*)?" = "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
-        "/var/lib/sddm(/.*)?" = "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/gdm(3)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/lightdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/lightdm-data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/lxdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/phog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/[xkw]dm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
+        "/var/lib/xdm/authdir(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_auth_t,s0)";
+        "/var/lib/xkb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xkb_var_lib_t,s0)";
+        "/var/lib/sddm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_lib_t,s0)";
 
-        "/var/log/[kwx]dm\\.log.*" = "-- gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/lightdm(/.*)?" = "gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/lxdm\\.log" = "-- gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/gdm(3)?(/.*)?" = "gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/slim\\.log" = "-- gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/XFree86.*" = "-- gen_context(system_u:object_r:xserver_log_t,s0)";
-        "/var/log/Xorg.*" = "-- gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/[kwx]dm\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/lightdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/lxdm\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/gdm(3)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/slim\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/XFree86.*" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_log_t,s0)";
+        "/var/log/Xorg.*" = lib.mkDefault "-- gen_context(system_u:object_r:xserver_log_t,s0)";
 
-        "/run/sddm(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/gdm(3)?(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/gdm(3)?\\.pid" = "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/xdm\\.pid" = "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/lightdm(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/lxdm\\.auth" = "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/lxdm\\.pid" = "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/lxdm(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/slim.*" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/xauth(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
-        "/run/xdmctl(/.*)?" = "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/sddm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/gdm(3)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/gdm(3)?\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/xdm\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/lightdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/lxdm\\.auth" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/lxdm\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/lxdm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/slim.*" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/xauth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
+        "/run/xdmctl(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xdm_var_run_t,s0)";
 
-        "/run/user/%{USERID}/ICEauthority.*" = "-- gen_context(system_u:object_r:iceauth_home_t,s0)";
-        "/run/user/%{USERID}/xauth_.*" = "-- gen_context(system_u:object_r:xauth_home_t,s0)";
+        "/run/user/%{USERID}/ICEauthority.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iceauth_home_t,s0)";
+        "/run/user/%{USERID}/xauth_.*" = lib.mkDefault "-- gen_context(system_u:object_r:xauth_home_t,s0)";
       };
     };
   };

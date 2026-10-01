@@ -139,17 +139,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/collectd" = "-- gen_context(system_u:object_r:collectd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/collectd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:collectd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/collectd" = "-- gen_context(system_u:object_r:collectd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/collectd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:collectd_exec_t,s0)";
 
-        "/var/lib/collectd(/.*)?" = "gen_context(system_u:object_r:collectd_var_lib_t,s0)";
+        "/var/lib/collectd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:collectd_var_lib_t,s0)";
 
-        "/run/collectd\\.pid" = "-- gen_context(system_u:object_r:collectd_runtime_t,s0)";
-        "/run/collectd(/.*)?" = "gen_context(system_u:object_r:collectd_runtime_t,s0)";
+        "/run/collectd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:collectd_runtime_t,s0)";
+        "/run/collectd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:collectd_runtime_t,s0)";
 
         "/nix/store/[^/]+/share/collectd/collection3/bin/.*\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_collectd_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_collectd_script_exec_t,s0)";
       };
     };
   };

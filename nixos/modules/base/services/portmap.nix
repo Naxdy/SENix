@@ -223,14 +223,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/portmap" = "-- gen_context(system_u:object_r:portmap_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/portmap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portmap_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pmap_dump" = "-- gen_context(system_u:object_r:portmap_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pmap_set" = "-- gen_context(system_u:object_r:portmap_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/portmap" = "-- gen_context(system_u:object_r:portmap_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pmap_dump" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portmap_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pmap_set" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portmap_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/portmap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portmap_exec_t,s0)";
 
-        "/run/portmap\\.upgrade-state" = "-- gen_context(system_u:object_r:portmap_runtime_t,s0)";
-        "/run/portmap_mapping" = "-- gen_context(system_u:object_r:portmap_runtime_t,s0)";
+        "/run/portmap\\.upgrade-state" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portmap_runtime_t,s0)";
+        "/run/portmap_mapping" = lib.mkDefault "-- gen_context(system_u:object_r:portmap_runtime_t,s0)";
       };
     };
   };

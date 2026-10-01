@@ -175,17 +175,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/snortd" = "-- gen_context(system_u:object_r:snort_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/snortd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:snort_initrc_exec_t,s0)";
 
-        "/etc/snort(/.*)?" = "gen_context(system_u:object_r:snort_etc_t,s0)";
+        "/etc/snort(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snort_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/snort" = "-- gen_context(system_u:object_r:snort_exec_t,s0)";
-        "/nix/store/[^/]+/bin/snort-plain" = "-- gen_context(system_u:object_r:snort_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snort" = lib.mkDefault "-- gen_context(system_u:object_r:snort_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snort-plain" =
+          lib.mkDefault "-- gen_context(system_u:object_r:snort_exec_t,s0)";
 
-        "/var/log/snort(/.*)?" = "gen_context(system_u:object_r:snort_log_t,s0)";
+        "/var/log/snort(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snort_log_t,s0)";
 
-        "/run/snort.*" = "-- gen_context(system_u:object_r:snort_runtime_t,s0)";
-        "/run/snort(/.*)?" = "gen_context(system_u:object_r:snort_runtime_t,s0)";
+        "/run/snort.*" = lib.mkDefault "-- gen_context(system_u:object_r:snort_runtime_t,s0)";
+        "/run/snort(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snort_runtime_t,s0)";
       };
     };
   };

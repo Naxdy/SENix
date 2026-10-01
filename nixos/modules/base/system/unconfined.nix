@@ -992,21 +992,26 @@
         # e.g.:
         # /usr/local/bin/appsrv		--	gen_context(system_u:object_r:unconfined_exec_t,s0)
         # For the time being until someone writes a sane policy, we need initrc to transition to unconfined_t
-        "/nix/store/[^/]+/bin/gnatbind" = "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnatls" = "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnatmake" = "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnatbind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnatls" =
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnatmake" =
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/valgrind" = "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vncserver" = "-- gen_context(system_u:object_r:unconfined_exec_t,s0)";
+        "/nix/store/[^/]+/bin/valgrind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vncserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/ia32el/ia32x_loader" =
-          "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/gcc(/.*)?/gnat1" =
-          "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
 
         "/nix/store/[^/]+/local/RealPlayer/realplay\\.bin" =
-          "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:unconfined_execmem_exec_t,s0)";
       };
     };
   };

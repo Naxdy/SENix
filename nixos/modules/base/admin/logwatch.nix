@@ -243,21 +243,24 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/epylog" = "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
-        "/nix/store/[^/]+/bin/logcheck" = "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
-        "/nix/store/[^/]+/bin/logwatch\\.pl" = "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/epylog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/logcheck" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/logwatch\\.pl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:logwatch_exec_t,s0)";
 
         "/nix/store/[^/]+/share/logwatch/scripts/logwatch\\.pl" =
-          "-- gen_context(system_u:object_r:logwatch_exec_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:logwatch_exec_t, s0)";
 
-        "/var/cache/logwatch(/.*)?" = "gen_context(system_u:object_r:logwatch_cache_t, s0)";
+        "/var/cache/logwatch(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:logwatch_cache_t, s0)";
 
-        "/var/lib/logcheck(/.*)?" = "gen_context(system_u:object_r:logwatch_cache_t,s0)";
-        "/var/lib/epylog(/.*)?" = "gen_context(system_u:object_r:logwatch_cache_t,s0)";
+        "/var/lib/logcheck(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:logwatch_cache_t,s0)";
+        "/var/lib/epylog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:logwatch_cache_t,s0)";
 
-        "/var/lock/logcheck.*" = "gen_context(system_u:object_r:logwatch_lock_t,s0)";
+        "/var/lock/logcheck.*" = lib.mkDefault "gen_context(system_u:object_r:logwatch_lock_t,s0)";
 
-        "/run/epylog\\.pid" = "-- gen_context(system_u:object_r:logwatch_runtime_t,s0)";
+        "/run/epylog\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:logwatch_runtime_t,s0)";
       };
     };
   };

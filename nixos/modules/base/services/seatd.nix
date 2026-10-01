@@ -70,11 +70,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/seatd" = "-- gen_context(system_u:object_r:seatd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/seatd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:seatd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/seatd" = "-- gen_context(system_u:object_r:seatd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/seatd" = lib.mkDefault "-- gen_context(system_u:object_r:seatd_exec_t,s0)";
 
-        "/run/seatd\\.sock" = "-s gen_context(system_u:object_r:seatd_runtime_t,s0)";
+        "/run/seatd\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:seatd_runtime_t,s0)";
       };
     };
   };

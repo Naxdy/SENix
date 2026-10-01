@@ -202,13 +202,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/psacct" = "-- gen_context(system_u:object_r:acct_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/psacct" =
+          lib.mkDefault "-- gen_context(system_u:object_r:acct_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/accton" = "-- gen_context(system_u:object_r:acct_exec_t,s0)";
+        "/nix/store/[^/]+/bin/accton" = lib.mkDefault "-- gen_context(system_u:object_r:acct_exec_t,s0)";
 
-        "/var/account(/.*)?" = "gen_context(system_u:object_r:acct_data_t,s0)";
+        "/var/account(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:acct_data_t,s0)";
 
-        "/var/log/account(/.*)?" = "gen_context(system_u:object_r:acct_data_t,s0)";
+        "/var/log/account(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:acct_data_t,s0)";
       };
     };
   };

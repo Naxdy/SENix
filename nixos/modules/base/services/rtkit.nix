@@ -201,16 +201,16 @@
       rules = {
         # Systemd unit file
         "/etc/rc\\.d/init\\.d/rtkit-daemon" =
-          "-- gen_context(system_u:object_r:rtkit_daemon_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rtkit_daemon_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/rtkit-daemon" =
-          "-- gen_context(system_u:object_r:rtkit_daemon_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rtkit_daemon_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/rtkit/rtkit-daemon" =
-          "-- gen_context(system_u:object_r:rtkit_daemon_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rtkit_daemon_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*rtkit-daemon.*" =
-          "-- gen_context(system_u:object_r:rtkit_daemon_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rtkit_daemon_unit_t,s0)";
       };
     };
   };

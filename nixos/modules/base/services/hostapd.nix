@@ -66,13 +66,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/hostapd" = "-- gen_context(system_u:object_r:hostapd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hostapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hostapd_exec_t,s0)";
 
-        "/var/run/hostapd(/.*)?" = "gen_context(system_u:object_r:hostapd_runtime_t,s0)";
+        "/var/run/hostapd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hostapd_runtime_t,s0)";
 
-        "/etc/hostapd(/.*)?" = "gen_context(system_u:object_r:hostapd_conf_t,s0)";
+        "/etc/hostapd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hostapd_conf_t,s0)";
 
-        "/run/hostapd\\.pid" = "-- gen_context(system_u:object_r:hostapd_runtime_t,s0)";
+        "/run/hostapd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:hostapd_runtime_t,s0)";
       };
     };
   };

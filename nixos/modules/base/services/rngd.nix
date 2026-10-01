@@ -86,11 +86,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/rngd" = "-- gen_context(system_u:object_r:rngd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/rngd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rngd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/rngd" = "-- gen_context(system_u:object_r:rngd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rngd" = lib.mkDefault "-- gen_context(system_u:object_r:rngd_exec_t,s0)";
 
-        "/run/rngd\\.pid" = "-- gen_context(system_u:object_r:rngd_runtime_t,s0)";
+        "/run/rngd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:rngd_runtime_t,s0)";
       };
     };
   };

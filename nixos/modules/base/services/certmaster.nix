@@ -225,17 +225,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/certmaster(/.*)?" = "gen_context(system_u:object_r:certmaster_etc_rw_t,s0)";
+        "/etc/certmaster(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:certmaster_etc_rw_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/certmaster" = "-- gen_context(system_u:object_r:certmaster_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/certmaster" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certmaster_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/certmaster" = "-- gen_context(system_u:object_r:certmaster_exec_t,s0)";
+        "/nix/store/[^/]+/bin/certmaster" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certmaster_exec_t,s0)";
 
-        "/var/lib/certmaster(/.*)?" = "gen_context(system_u:object_r:certmaster_var_lib_t,s0)";
+        "/var/lib/certmaster(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:certmaster_var_lib_t,s0)";
 
-        "/var/log/certmaster(/.*)?" = "gen_context(system_u:object_r:certmaster_var_log_t,s0)";
+        "/var/log/certmaster(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:certmaster_var_log_t,s0)";
 
-        "/run/certmaster.*" = "gen_context(system_u:object_r:certmaster_runtime_t,s0)";
+        "/run/certmaster.*" = lib.mkDefault "gen_context(system_u:object_r:certmaster_runtime_t,s0)";
       };
     };
   };

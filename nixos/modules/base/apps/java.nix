@@ -498,36 +498,51 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.java(/.*)?" = "gen_context(system_u:object_r:java_home_t,s0)";
+        "HOME_DIR/\\.java(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:java_home_t,s0)";
 
-        "/nix/store/[^/]+/(.*/)?bin/java[^/-]*" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fastjar" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/frysk" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gappletviewer" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gcj-dbtool" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gij" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gjarsigner" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gkeytool" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grmic" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grmiregistry" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/jv-convert" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/bin/octave-[^/]*" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/(.*/)?bin/java[^/-]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fastjar" = lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/frysk" = lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gappletviewer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gcj-dbtool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gij" = lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gjarsigner" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gkeytool" = lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grmic" = lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grmiregistry" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/jv-convert" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/bin/octave-[^/]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
 
-        "/nix/store/[^/]+/java/eclipse[^/]*/eclipse" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/java/eclipse[^/]*/eclipse" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/bin/java[^/]*" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/lib/eclipse/eclipse" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/lib/icedtea[0-9]+/bin/.*" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/bin/java[^/]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/eclipse/eclipse" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/icedtea[0-9]+/bin/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
         "/nix/store/[^/]+/lib/icedtea[0-9]+/jre/bin/.*" =
-          "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/lib/jvm/java.*/bin(/.*)?" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/lib/opera(/.*)?/opera" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
-        "/nix/store/[^/]+/lib/opera(/.*)?/works" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/jvm/java.*/bin(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/opera(/.*)?/opera" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/lib/opera(/.*)?/works" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
 
         "/nix/store/[^/]+/local/matlab.*/bin.*/MATLAB.*" =
-          "-- gen_context(system_u:object_r:java_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
 
-        "/nix/store/[^/]+/matlab.*/bin.*/MATLAB.*" = "-- gen_context(system_u:object_r:java_exec_t,s0)";
+        "/nix/store/[^/]+/matlab.*/bin.*/MATLAB.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:java_exec_t,s0)";
       };
     };
   };

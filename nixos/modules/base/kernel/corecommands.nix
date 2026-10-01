@@ -884,369 +884,460 @@
         #
         # /dev
         #
-        "/dev/MAKEDEV" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/dev/MAKEDEV" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
         #
         # /etc
         #
-        "/etc/acpi/actions(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/acpi/actions(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/apcupsd/apccontrol" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/changeme" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/commfailure" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/commok" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/masterconnect" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/mastertimeout" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/offbattery" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/apcupsd/onbattery" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/apccontrol" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/changeme" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/commfailure" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/commok" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/masterconnect" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/mastertimeout" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/offbattery" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/apcupsd/onbattery" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/avahi/.*\\.action" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/avahi/.*\\.action" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/cipe/ip-up.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/cipe/ip-down.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cipe/ip-up.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cipe/ip-down.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/ConsoleKit/run-seat\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/ConsoleKit/run-session\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ConsoleKit/run-seat\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ConsoleKit/run-session\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/cron\\.daily(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/cron\\.hourly(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/cron\\.weekly(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/cron\\.monthly(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cron\\.daily(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cron\\.hourly(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cron\\.weekly(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/cron\\.monthly(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/dhcp/dhclient\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/dhcp/dhclient-enter-hooks\\.d(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/dhcp/dhclient-exit-hooks\\.d(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/dhcp/dhclient\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/dhcp/dhclient-enter-hooks\\.d(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/dhcp/dhclient-exit-hooks\\.d(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/hotplug/.*agent" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/hotplug/.*rc" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/hotplug/hotplug\\.functions" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/hotplug\\.d/default/default.*" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/hotplug/.*agent" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/hotplug/.*rc" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/hotplug/hotplug\\.functions" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/hotplug\\.d/default/default.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/kde/env(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/kde/shutdown(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/kde/env(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/kde/shutdown(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/letsencrypt/renewal-hooks/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/letsencrypt/renewal-hooks/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/mail/make" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/mail/make" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/mcelog/.*-trigger" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/mcelog/.*\\.local" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/mcelog/.*-trigger" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/mcelog/.*\\.local" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/mgetty\\+sendfax/new_fax" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/mgetty\\+sendfax/new_fax" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/netplug\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/netplug\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/PackageKit/events(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/PackageKit/events(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/pki/tls/certs/make-dummy-cert" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/pki/tls/misc(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/pki/tls/certs/make-dummy-cert" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/pki/tls/misc(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/pm/power\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/pm/sleep\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/pm/power\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/pm/sleep\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/ppp/ip-down\\..*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/ppp/ip-up\\..*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/ppp/ipv6-up\\..*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/ppp/ipv6-down\\..*" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ppp/ip-down\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ppp/ip-up\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ppp/ipv6-up\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/ppp/ipv6-down\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/profile\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/profile\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/racoon/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/racoon/scripts(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/functions" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/rc\\.d/init\\.d/functions" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/security/namespace\\.init" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/security/namespace\\.init" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/sysconfig/crond" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/init" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/netconsole" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/readonly-root" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/crond" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/init" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/netconsole" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/readonly-root" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/sysconfig/network-scripts/ifup.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/network-scripts/ifdown.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/network-scripts/net.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/sysconfig/network-scripts/init.*" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/network-scripts/ifup.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/network-scripts/ifdown.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/network-scripts/net.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/sysconfig/network-scripts/init.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/update-motd\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/update-motd\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/vmware-tools(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/vmware-tools(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/wide-dhcpv6/dhcp6c-ifupdown" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/wide-dhcpv6/dhcp6c-script" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/wpa_supplicant/.*\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/wide-dhcpv6/dhcp6c-ifupdown" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/wide-dhcpv6/dhcp6c-script" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/wpa_supplicant/.*\\.sh" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/X11/xdm/GiveConsole" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/X11/xdm/TakeConsole" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/X11/xdm/Xsetup_0" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/X11/xinit(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/X11/xdm/GiveConsole" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/X11/xdm/TakeConsole" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/X11/xdm/Xsetup_0" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/X11/xinit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/xen/qemu-ifup" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/etc/xen/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/xen/qemu-ifup" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/xen/scripts(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/etc/zfs/zfs-functions" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/etc/zfs/zfs-functions" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/(.*/)?Bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/(.*/)?bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/bin/d?ash" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bash" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bash2" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fish" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/git-shell" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/insmod_ksymoops_clean" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/bin/ksh.*" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkfs\\.cramfs" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/bin/mksh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mountpoint" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/bin/nologin" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sash" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sesh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/scponly" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/scponlyc" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smrsh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcsh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/yash" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zsh.*" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/(.*/)?Bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/(.*/)?bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/bin/d?ash" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bash" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bash2" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fish" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/git-shell" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/insmod_ksymoops_clean" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/bin/ksh.*" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkfs\\.cramfs" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/bin/mksh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mountpoint" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/bin/nologin" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sash" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sesh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/scponly" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/scponlyc" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smrsh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcsh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/yash" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zsh.*" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/(.*/)?bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/(.*/)?glib-2\\.0(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/(.*/)?bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/(.*/)?glib-2\\.0(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/postfix/configure-instance\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/(.*/)?sbin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/(.*/)?sbin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/(.*/)?sbin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/(.*/)?sbin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/lib/atril/atrild" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/at-spi2-core(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/atril/atrild" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/at-spi2-core(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/avahi/avahi-daemon-check-dns\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/bluetooth/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/bridge-utils/.*\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ccache/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/cloud-init(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dhcpcd/dhcpcd-hooks(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dhcpcd/dhcpcd-run-hooks" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dovecot/.+" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dracut(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/fence(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/pgsql/test/regress/.*\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/qt.*/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/wicd/monitor\\.py" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/apt/methods.+" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ConsoleKit/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ConsoleKit/run-seat\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ConsoleKit/run-session\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ConsoleKit/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/courier(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/crda/setregdomain" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/cups(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/cyrus/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/cyrus-imapd/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dconf/dconf-service" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/dpkg/.+" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/emacsen-common/.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/evince/evinced" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/getconf(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/gimp/.*/plug-ins(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/git-core/git-shell" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/lib/git-core(/.*)" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/gnome-settings-daemon/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/gvfs/gvfs.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/jvm/java.*/lib/jspawnhelper" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/kde4/libexec/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/[^/]+/libexec/kf5/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/mailman/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/mailman/mail(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/mediawiki/math/texvc.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/misc/sftp-server" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/mon/alert\\.d(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/nagios/plugins(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/netsaint/plugins(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/bluetooth/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/bridge-utils/.*\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ccache/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/cloud-init(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dhcpcd/dhcpcd-hooks(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dhcpcd/dhcpcd-run-hooks" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dovecot/.+" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dracut(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/fence(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/pgsql/test/regress/.*\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/qt.*/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/wicd/monitor\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/apt/methods.+" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ConsoleKit/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ConsoleKit/run-seat\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ConsoleKit/run-session\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ConsoleKit/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/courier(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/crda/setregdomain" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/cups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/cyrus/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/cyrus-imapd/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dconf/dconf-service" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/dpkg/.+" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/emacsen-common/.*" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/evince/evinced" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/getconf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/gimp/.*/plug-ins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/git-core/git-shell" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/lib/git-core(/.*)" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/gnome-settings-daemon/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/gvfs/gvfs.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/jvm/java.*/lib/jspawnhelper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/kde4/libexec/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/[^/]+/libexec/kf5/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/mailman/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/mailman/mail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/mediawiki/math/texvc.*" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/misc/sftp-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/mon/alert\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/nagios/plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/netsaint/plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/NetworkManager/dispatcher\\.d(/.*)?" =
-          "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/NetworkManager/nm-.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/networkmanager/nm-.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/nspluginwrapper/np.*" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/nut/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/portage/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/pm-utils(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/readahead(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/rpm/rpmd" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/rpm/rpmk" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/rpm/rpmq" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/rpm/rpmv" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/rsyslog/rsyslog-rotate" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/NetworkManager/nm-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/networkmanager/nm-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/nspluginwrapper/np.*" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/nut/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/portage/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/pm-utils(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/readahead(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/rpm/rpmd" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/rpm/rpmk" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/rpm/rpmq" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/rpm/rpmv" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/rsyslog/rsyslog-rotate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/security/pam_krb5/pam_krb5_storetmp" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/selinux/hll/pp" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/sftp-server" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/ssh(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/sudo/sesh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/lib/systemd/systemd.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/systemd/system-shutdown(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/systemd/system-sleep(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/tumbler-1/tumblerd" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/udev/[^/]*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/udev/scsi_id" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/upstart(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/vte/gnome-pty-helper" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/selinux/hll/pp" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/sftp-server" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/ssh(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/sudo/sesh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/systemd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system-shutdown(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system-sleep(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/tumbler-1/tumblerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/udev/[^/]*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/udev/scsi_id" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/upstart(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/vte/gnome-pty-helper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/xfce4/exo-1/exo-compose-mail-1" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/exo-1/exo-helper-1" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/exo-2/exo-helper-2" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/notifyd/xfce4-notifyd" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/panel/migrate" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/panel/wrapper" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/panel/wrapper-1\\.0" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/panel/wrapper-2\\.0" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/exo-1/exo-helper-1" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/exo-2/exo-helper-2" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/notifyd/xfce4-notifyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/panel/migrate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/panel/wrapper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/panel/wrapper-1\\.0" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/panel/wrapper-2\\.0" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/xfce4/session/balou-export-theme" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/xfce4/session/balou-install-theme" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/xfce4/session/xfsm-shutdown-helper" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/xfconf/xfconfd" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/xfce4/xfwm4/helper-dialog" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/xfconf/xfconfd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/xfce4/xfwm4/helper-dialog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
         "/nix/store/[^/]+/lib/couchdb/erlang/lib/couch-[0-9.]+/priv/couchspawnkillable" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/lib/debug/bin(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/debug/sbin(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/debug/usr/bin(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/debug/usr/sbin(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/debug/bin(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/debug/sbin(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/debug/usr/bin(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/debug/usr/sbin(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/lib/selinux/hll(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/selinux/hll(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
         "/nix/store/[^/]+/lib/[^/]*thunderbird[^/]*/thunderbird" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*thunderbird[^/]*/thunderbird-bin" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*thunderbird[^/]*/open-browser\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/[^/]*/run-mozilla\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/[^/]*/mozilla-xremote-client" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/[^/]*/run-mozilla\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/[^/]*/mozilla-xremote-client" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/lib/thunderbird.*/mozilla-xremote-client" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/libexec(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/libexec/git-core/git-shell" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/sesh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/sudo/sesh" = "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/libexec(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/libexec/git-core/git-shell" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/sesh" = lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/sudo/sesh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shell_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/openssh/sftp-server" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/libexec/openssh/sftp-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/local/(.*/)?bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/local/sbin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/local/Brother(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/local/Printer(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/local/linuxprinter/filters(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/local/(.*/)?bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/local/sbin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/local/Brother(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/local/Printer(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/local/linuxprinter/filters(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/sbin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/sbin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/share/(.*/)?bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/ajaxterm/ajaxterm\\.py.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/ajaxterm/qweb\\.py.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/(.*/)?bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/ajaxterm/ajaxterm\\.py.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/ajaxterm/qweb\\.py.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/apr(-[0-9])?/build/[^/]+\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/apr(-[0-9])?/build/libtool" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/build-1/[^/]+\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/build-1/libtool" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/dayplanner/dayplanner" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/debconf/.+" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/denyhosts/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/denyhosts/plugins(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/dput/execute-dput" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/cluster/.*\\.sh" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/cluster/ocf-shellfuncs" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/cluster/svclib_nfslock" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/cockpit/motd/update-motd" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/cvs/contrib/rcs2log" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/e16/misc(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/apr(-[0-9])?/build/libtool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/build-1/[^/]+\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/build-1/libtool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/dayplanner/dayplanner" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/debconf/.+" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/denyhosts/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/denyhosts/plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/dput/execute-dput" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/cluster/.*\\.sh" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/cluster/ocf-shellfuncs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/cluster/svclib_nfslock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/cockpit/motd/update-motd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/cvs/contrib/rcs2log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/e16/misc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gedit/plugins/externaltools/tools(/.*)?" =
-          "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gedit-2/plugins/externaltools/tools(/.*)?" =
-          "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gitolite/hooks/common/update" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gitolite/hooks/gitolite-admin/post-update" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gnome-sound-recorder/org\\.gnome\\.SoundRecorder" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/gnucash/finance-quote-check" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/gnucash/finance-quote-check" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/gnucash/finance-quote-helper" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/hal/device-manager/hal-device-manager" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/hal/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/ifupdown2/__main__\\.py" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/libalpm/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/hal/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/ifupdown2/__main__\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/libalpm/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/libpam-kwallet-common/pam_kwallet_init" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/mc/extfs/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/Modules/init(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/mc/extfs/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/Modules/init(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/org\\.gnome\\.Weather/org\\.gnome\\.Weather\\.Application" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/org\\.gnome\\.Weather/org\\.gnome\\.Weather\\.BackgroundService" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/pam/security/namespace\\.init" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/printconf/util/print\\.py" = "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/printconf/util/print\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/PackageKit/pk-upgrade-distro\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/PackageKit/helpers(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/reportbug/handle_bugscript" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/sandbox/sandboxX\\.sh" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/sectool/.*\\.py" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/selinux/devel/policygentool" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/smartmontools/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/smolt/client(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall/compiler\\.pl" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall/configpath" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall-perl(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall-shell(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall-lite(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/shorewall6-lite(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/spamassassin/sa-update\\.cron" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/PackageKit/helpers(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/reportbug/handle_bugscript" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/sandbox/sandboxX\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/sectool/.*\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/selinux/devel/policygentool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/smartmontools/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/smolt/client(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall/compiler\\.pl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall/configpath" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall-perl(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall-shell(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall-lite(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/shorewall6-lite(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/spamassassin/sa-update\\.cron" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/system-config-printer/applet\\.py" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/texlive/texmf-dist/scripts/checkcites/checkcites\\.lua" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/texlive/texmf-dist/scripts/checklistings/checklistings\\.sh" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/texlive/texmf-dist/scripts/fontools/autoinst" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/texlive/texmf-dist/scripts/match_parens/match_parens" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
         "/nix/store/[^/]+/share/texlive/texmf-dist/scripts/yplan/yplan" =
-          "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/texmf-dist/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/turboprint/lib(/.*)?" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/unattended-upgrades/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/share/vhostmd/scripts(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/texmf-dist/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/turboprint/lib(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/unattended-upgrades/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/share/vhostmd/scripts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/nix/store/[^/]+/X11R6/lib(64)?/X11/xkb/xkbcomp" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/X11R6/lib(64)?/X11/xkb/xkbcomp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
         #
         # /var
         #
-        "/var/mailman/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/var/mailman/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/var/ftp/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
+        "/var/ftp/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
 
-        "/var/lib/asterisk/agi-bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/chkrootkit/.*" = "-- gen_context(system_u:object_r:bin_t,s0)";
-        "/nix/store/[^/]+/lib/yp/.+" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/var/lib/asterisk/agi-bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/chkrootkit/.*" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/nix/store/[^/]+/lib/yp/.+" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
 
-        "/var/qmail/bin" = "-d gen_context(system_u:object_r:bin_t,s0)";
-        "/var/qmail/bin(/.*)?" = "gen_context(system_u:object_r:bin_t,s0)";
-        "/var/qmail/rc" = "-- gen_context(system_u:object_r:bin_t,s0)";
+        "/var/qmail/bin" = lib.mkDefault "-d gen_context(system_u:object_r:bin_t,s0)";
+        "/var/qmail/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bin_t,s0)";
+        "/var/qmail/rc" = lib.mkDefault "-- gen_context(system_u:object_r:bin_t,s0)";
       };
     };
   };

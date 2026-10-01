@@ -271,15 +271,16 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.wine(/.*)?" = "gen_context(system_u:object_r:wine_home_t,s0)";
-        "HOME_DIR/cxoffice/bin/wine.+" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "HOME_DIR/\\.wine(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wine_home_t,s0)";
+        "HOME_DIR/cxoffice/bin/wine.+" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/msiexec" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/notepad" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/regsvr32" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/regedit" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/uninstaller" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wine.*" = "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/msiexec" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/notepad" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/regsvr32" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/regedit" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uninstaller" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wine.*" = lib.mkDefault "-- gen_context(system_u:object_r:wine_exec_t,s0)";
       };
     };
   };

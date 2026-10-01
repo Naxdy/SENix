@@ -290,12 +290,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/firstboot.*" = "-- gen_context(system_u:object_r:firstboot_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/firstboot.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:firstboot_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/firstboot" = "-- gen_context(system_u:object_r:firstboot_exec_t,s0)";
+        "/nix/store/[^/]+/bin/firstboot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:firstboot_exec_t,s0)";
 
         "/nix/store/[^/]+/share/firstboot/firstboot\\.py" =
-          "-- gen_context(system_u:object_r:firstboot_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:firstboot_exec_t,s0)";
       };
     };
   };

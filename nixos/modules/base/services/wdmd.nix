@@ -121,11 +121,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/wdmd" = "-- gen_context(system_u:object_r:wdmd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/wdmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wdmd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/wdmd" = "-- gen_context(system_u:object_r:wdmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wdmd" = lib.mkDefault "-- gen_context(system_u:object_r:wdmd_exec_t,s0)";
 
-        "/run/wdmd(/.*)?" = "gen_context(system_u:object_r:wdmd_runtime_t,s0)";
+        "/run/wdmd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wdmd_runtime_t,s0)";
       };
     };
   };

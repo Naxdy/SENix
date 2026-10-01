@@ -152,13 +152,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/cyphesis" = "-- gen_context(system_u:object_r:cyphesis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cyphesis" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cyphesis_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cyphesis" = "-- gen_context(system_u:object_r:cyphesis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cyphesis" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cyphesis_exec_t,s0)";
 
-        "/var/log/cyphesis(/.*)?" = "gen_context(system_u:object_r:cyphesis_log_t,s0)";
+        "/var/log/cyphesis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cyphesis_log_t,s0)";
 
-        "/run/cyphesis(/.*)?" = "gen_context(system_u:object_r:cyphesis_runtime_t,s0)";
+        "/run/cyphesis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cyphesis_runtime_t,s0)";
       };
     };
   };

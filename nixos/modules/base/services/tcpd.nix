@@ -102,7 +102,7 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/tcpd" = "-- gen_context(system_u:object_r:tcpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcpd" = lib.mkDefault "-- gen_context(system_u:object_r:tcpd_exec_t,s0)";
       };
     };
   };

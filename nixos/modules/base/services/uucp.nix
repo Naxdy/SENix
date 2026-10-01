@@ -301,17 +301,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/uucp" = "-- gen_context(system_u:object_r:uucpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/uucp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:uucpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/uux" = "-- gen_context(system_u:object_r:uux_exec_t,s0)";
-        "/nix/store/[^/]+/bin/uucico" = "-- gen_context(system_u:object_r:uucpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uux" = lib.mkDefault "-- gen_context(system_u:object_r:uux_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uucico" = lib.mkDefault "-- gen_context(system_u:object_r:uucpd_exec_t,s0)";
 
-        "/var/spool/uucp(/.*)?" = "gen_context(system_u:object_r:uucpd_spool_t,s0)";
-        "/var/spool/uucppublic(/.*)?" = "gen_context(system_u:object_r:uucpd_spool_t,s0)";
+        "/var/spool/uucp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uucpd_spool_t,s0)";
+        "/var/spool/uucppublic(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uucpd_spool_t,s0)";
 
-        "/var/lock/uucp(/.*)?" = "gen_context(system_u:object_r:uucpd_lock_t,s0)";
+        "/var/lock/uucp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uucpd_lock_t,s0)";
 
-        "/var/log/uucp(/.*)?" = "gen_context(system_u:object_r:uucpd_log_t,s0)";
+        "/var/log/uucp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uucpd_log_t,s0)";
       };
     };
   };

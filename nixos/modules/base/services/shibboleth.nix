@@ -119,12 +119,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/shibboleth(/.*)?" = "gen_context(system_u:object_r:shibboleth_etc_t,s0)";
+        "/etc/shibboleth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shibboleth_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/shibd" = "-- gen_context(system_u:object_r:shibboleth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/shibd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shibboleth_exec_t,s0)";
 
-        "/var/log/shibboleth(/.*)?" = "gen_context(system_u:object_r:shibboleth_log_t,s0)";
-        "/run/shibboleth(/.*)?" = "gen_context(system_u:object_r:shibboleth_runtime_t,s0)";
+        "/var/log/shibboleth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shibboleth_log_t,s0)";
+        "/run/shibboleth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:shibboleth_runtime_t,s0)";
       };
     };
   };

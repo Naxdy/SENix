@@ -1074,84 +1074,97 @@
     '';
     fileContext = {
       rules = {
-        "/etc/alchemist/namespace/printconf(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/alchemist/namespace/printconf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
 
-        "/etc/cups(/.*)?" = "gen_context(system_u:object_r:cupsd_etc_t,s0)";
-        "/etc/cups/classes\\.conf.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/cupsd\\.conf.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/lpoptions.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/ppd(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/ppds\\.dat" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/printers\\.conf.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/subscriptions.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/certs" = "-d gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/cups/certs/.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/etc/rc\\.d/init\\.d/cups" = "-- gen_context(system_u:object_r:cupsd_initrc_exec_t,s0)";
+        "/etc/cups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_etc_t,s0)";
+        "/etc/cups/classes\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/cupsd\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/lpoptions.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/ppd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/ppds\\.dat" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/printers\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/subscriptions.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/certs" = lib.mkDefault "-d gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/cups/certs/.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/rc\\.d/init\\.d/cups" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_initrc_exec_t,s0)";
 
-        "/etc/cups/interfaces(/.*)?" = "gen_context(system_u:object_r:cupsd_interface_t,s0)";
+        "/etc/cups/interfaces(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_interface_t,s0)";
 
-        "/etc/hp(/.*)?" = "gen_context(system_u:object_r:hplip_etc_t,s0)";
+        "/etc/hp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hplip_etc_t,s0)";
 
-        "/etc/printcap.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/etc/printcap.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/hp-[^/]+" = "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cups-browsed" = "-- gen_context(system_u:object_r:cupsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hp-[^/]+" = lib.mkDefault "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cups-browsed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_exec_t,s0)";
         "/nix/store/[^/]+/bin/cups-config-daemon" =
-          "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cupsd" = "-- gen_context(system_u:object_r:cupsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hal_lpadmin" = "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hpijs" = "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hpiod" = "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cupsd" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hal_lpadmin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hpijs" = lib.mkDefault "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hpiod" = lib.mkDefault "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
         "/nix/store/[^/]+/bin/printconf-backend" =
-          "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
 
-        "/nix/store/[^/]+/Brother/fax/.*\\.log.*" = "gen_context(system_u:object_r:cupsd_log_t,s0)";
-        "/nix/store/[^/]+/Brother/(.*/)?inf(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/nix/store/[^/]+/Printer/(.*/)?inf(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/nix/store/[^/]+/Brother/fax/.*\\.log.*" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_log_t,s0)";
+        "/nix/store/[^/]+/Brother/(.*/)?inf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/nix/store/[^/]+/Printer/(.*/)?inf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
 
         "/nix/store/[^/]+/lib/cups-pk-helper/cups-pk-helper-mechanism" =
-          "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
         "/nix/store/[^/]+/lib/cups/daemon/cups-lpd" =
-          "-- gen_context(system_u:object_r:cupsd_lpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_lpd_exec_t,s0)";
         "/nix/store/[^/]+/lib/cups/backend/cups-pdf" =
-          "-- gen_context(system_u:object_r:cups_pdf_exec_t,s0)";
-        "/nix/store/[^/]+/lib/cups/backend/hp.*" = "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cups_pdf_exec_t,s0)";
+        "/nix/store/[^/]+/lib/cups/backend/hp.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/cups.*\\.service" =
-          "-- gen_context(system_u:object_r:cupsd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_unit_t,s0)";
         "/nix/store/[^/]+/lib/udev/udev-configure-printer" =
-          "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/cups-pk-helper-mechanism" =
-          "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/hal_lpadmin" = "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/hal_lpadmin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_config_exec_t,s0)";
 
         "/nix/store/[^/]+/local/linuxprinter/ppd(/.*)?" =
-          "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
 
-        "/nix/store/[^/]+/share/cups(/.*)?" = "gen_context(system_u:object_r:cupsd_etc_t,s0)";
+        "/nix/store/[^/]+/share/cups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_etc_t,s0)";
         "/nix/store/[^/]+/share/foomatic/db/oldprinterids" =
-          "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/nix/store/[^/]+/share/hplip/.*\\.py" = "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/nix/store/[^/]+/share/hplip/.*\\.py" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hplip_exec_t,s0)";
 
-        "/var/cache/alchemist/printconf.*" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/var/cache/foomatic(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/var/cache/cups(/.*)?" = "gen_context(system_u:object_r:cupsd_rw_etc_t,mls_systemhigh)";
+        "/var/cache/alchemist/printconf.*" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/var/cache/foomatic(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/var/cache/cups(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_rw_etc_t,mls_systemhigh)";
 
-        "/var/lib/cups/certs" = "-d gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
-        "/var/lib/cups/certs/.*" = "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/var/lib/cups/certs" = lib.mkDefault "-d gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
+        "/var/lib/cups/certs/.*" = lib.mkDefault "-- gen_context(system_u:object_r:cupsd_rw_etc_t,s0)";
 
-        "/var/lib/hp(/.*)?" = "gen_context(system_u:object_r:hplip_var_lib_t,s0)";
+        "/var/lib/hp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hplip_var_lib_t,s0)";
 
-        "/var/log/cups(/.*)?" = "gen_context(system_u:object_r:cupsd_log_t,s0)";
-        "/var/log/turboprint.*" = "gen_context(system_u:object_r:cupsd_log_t,s0)";
+        "/var/log/cups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_log_t,s0)";
+        "/var/log/turboprint.*" = lib.mkDefault "gen_context(system_u:object_r:cupsd_log_t,s0)";
 
-        "/var/ccpd(/.*)?" = "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
-        "/var/ekpd(/.*)?" = "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
-        "/run/cups(/.*)?" = "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
-        "/run/hp.*\\.pid" = "-- gen_context(system_u:object_r:hplip_runtime_t,s0)";
-        "/run/hp.*\\.port" = "-- gen_context(system_u:object_r:hplip_runtime_t,s0)";
-        "/run/udev-configure-printer(/.*)?" = "gen_context(system_u:object_r:cupsd_config_runtime_t,s0)";
-        "/var/turboprint(/.*)?" = "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
+        "/var/ccpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
+        "/var/ekpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
+        "/run/cups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
+        "/run/hp.*\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:hplip_runtime_t,s0)";
+        "/run/hp.*\\.port" = lib.mkDefault "-- gen_context(system_u:object_r:hplip_runtime_t,s0)";
+        "/run/udev-configure-printer(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cupsd_config_runtime_t,s0)";
+        "/var/turboprint(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cupsd_runtime_t,s0)";
       };
     };
   };

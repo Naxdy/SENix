@@ -333,17 +333,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/apm/event\\.d/autofs" = "-- gen_context(system_u:object_r:automount_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/autofs" = "-- gen_context(system_u:object_r:automount_initrc_exec_t,s0)";
+        "/etc/apm/event\\.d/autofs" = lib.mkDefault "-- gen_context(system_u:object_r:automount_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/autofs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:automount_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/autofs.*\\.service" =
-          "-- gen_context(system_u:object_r:automount_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:automount_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/automount" = "-- gen_context(system_u:object_r:automount_exec_t,s0)";
+        "/nix/store/[^/]+/bin/automount" =
+          lib.mkDefault "-- gen_context(system_u:object_r:automount_exec_t,s0)";
 
-        "/var/lock/subsys/autofs" = "-- gen_context(system_u:object_r:automount_lock_t,s0)";
+        "/var/lock/subsys/autofs" = lib.mkDefault "-- gen_context(system_u:object_r:automount_lock_t,s0)";
 
-        "/run/autofs.*" = "gen_context(system_u:object_r:automount_runtime_t,s0)";
+        "/run/autofs.*" = lib.mkDefault "gen_context(system_u:object_r:automount_runtime_t,s0)";
       };
     };
   };

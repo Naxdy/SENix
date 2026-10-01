@@ -191,12 +191,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/gpsd" = "-- gen_context(system_u:object_r:gpsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gpsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gpsd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/gpsd" = "-- gen_context(system_u:object_r:gpsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpsd" = lib.mkDefault "-- gen_context(system_u:object_r:gpsd_exec_t,s0)";
 
-        "/run/gpsd\\.pid" = "-- gen_context(system_u:object_r:gpsd_runtime_t,s0)";
-        "/run/gpsd\\.sock" = "-s gen_context(system_u:object_r:gpsd_runtime_t,s0)";
+        "/run/gpsd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:gpsd_runtime_t,s0)";
+        "/run/gpsd\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:gpsd_runtime_t,s0)";
       };
     };
   };

@@ -95,10 +95,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/biosdecode" = "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dmidecode" = "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ownership" = "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vpddecode" = "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
+        "/nix/store/[^/]+/bin/biosdecode" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmidecode" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ownership" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vpddecode" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dmidecode_exec_t,s0)";
       };
     };
   };

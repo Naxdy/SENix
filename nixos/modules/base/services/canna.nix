@@ -158,22 +158,25 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/canna" = "-- gen_context(system_u:object_r:canna_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/canna" =
+          lib.mkDefault "-- gen_context(system_u:object_r:canna_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cannaping" = "-- gen_context(system_u:object_r:canna_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cannaserver" = "-- gen_context(system_u:object_r:canna_exec_t,s0)";
-        "/nix/store/[^/]+/bin/catdic" = "-- gen_context(system_u:object_r:canna_exec_t,s0)";
-        "/nix/store/[^/]+/bin/jserver" = "-- gen_context(system_u:object_r:canna_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cannaping" =
+          lib.mkDefault "-- gen_context(system_u:object_r:canna_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cannaserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:canna_exec_t,s0)";
+        "/nix/store/[^/]+/bin/catdic" = lib.mkDefault "-- gen_context(system_u:object_r:canna_exec_t,s0)";
+        "/nix/store/[^/]+/bin/jserver" = lib.mkDefault "-- gen_context(system_u:object_r:canna_exec_t,s0)";
 
-        "/var/lib/canna/dic(/.*)?" = "gen_context(system_u:object_r:canna_var_lib_t,s0)";
-        "/var/lib/wnn/dic(/.*)?" = "gen_context(system_u:object_r:canna_var_lib_t,s0)";
+        "/var/lib/canna/dic(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:canna_var_lib_t,s0)";
+        "/var/lib/wnn/dic(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:canna_var_lib_t,s0)";
 
-        "/var/log/canna(/.*)?" = "gen_context(system_u:object_r:canna_log_t,s0)";
-        "/var/log/wnn(/.*)?" = "gen_context(system_u:object_r:canna_log_t,s0)";
+        "/var/log/canna(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:canna_log_t,s0)";
+        "/var/log/wnn(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:canna_log_t,s0)";
 
-        "/run/\\.iroha_unix" = "-d gen_context(system_u:object_r:canna_runtime_t,s0)";
-        "/run/\\.iroha_unix/.*" = "-s gen_context(system_u:object_r:canna_runtime_t,s0)";
-        "/run/wnn-unix(/.*)" = "gen_context(system_u:object_r:canna_runtime_t,s0)";
+        "/run/\\.iroha_unix" = lib.mkDefault "-d gen_context(system_u:object_r:canna_runtime_t,s0)";
+        "/run/\\.iroha_unix/.*" = lib.mkDefault "-s gen_context(system_u:object_r:canna_runtime_t,s0)";
+        "/run/wnn-unix(/.*)" = lib.mkDefault "gen_context(system_u:object_r:canna_runtime_t,s0)";
       };
     };
   };

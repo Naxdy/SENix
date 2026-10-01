@@ -139,13 +139,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/ksmtuned" = "-- gen_context(system_u:object_r:ksmtuned_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ksmtuned" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ksmtuned_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/ksmtuned" = "-- gen_context(system_u:object_r:ksmtuned_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ksmtuned" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ksmtuned_exec_t,s0)";
 
-        "/var/log/ksmtuned.*" = "gen_context(system_u:object_r:ksmtuned_log_t,s0)";
+        "/var/log/ksmtuned.*" = lib.mkDefault "gen_context(system_u:object_r:ksmtuned_log_t,s0)";
 
-        "/run/ksmtune\\.pid" = "-- gen_context(system_u:object_r:ksmtuned_runtime_t,s0)";
+        "/run/ksmtune\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:ksmtuned_runtime_t,s0)";
       };
     };
   };

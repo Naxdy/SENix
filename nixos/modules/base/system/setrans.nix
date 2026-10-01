@@ -168,14 +168,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/mcstrans" = "-- gen_context(system_u:object_r:setrans_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mcstrans" =
+          lib.mkDefault "-- gen_context(system_u:object_r:setrans_initrc_exec_t,s0)";
 
-        "/run/setrans(/.*)?" = "gen_context(system_u:object_r:setrans_runtime_t,mls_systemhigh)";
+        "/run/setrans(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:setrans_runtime_t,mls_systemhigh)";
 
-        "/nix/store/[^/]+/bin/mcstransd" = "-- gen_context(system_u:object_r:setrans_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mcstransd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:setrans_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/mcstrans.*\\.service" =
-          "-- gen_context(system_u:object_r:setrans_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:setrans_unit_t,s0)";
       };
     };
   };

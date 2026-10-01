@@ -97,7 +97,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/obfs4proxy" = "-- gen_context(system_u:object_r:obfs4proxy_exec_t,s0)";
+        "/nix/store/[^/]+/bin/obfs4proxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:obfs4proxy_exec_t,s0)";
       };
     };
   };

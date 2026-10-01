@@ -124,9 +124,9 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/pwauth" = "-- gen_context(system_u:object_r:pwauth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pwauth" = lib.mkDefault "-- gen_context(system_u:object_r:pwauth_exec_t,s0)";
 
-        "/run/pwauth\\.lock" = "-- gen_context(system_u:object_r:pwauth_runtime_t,s0)";
+        "/run/pwauth\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:pwauth_runtime_t,s0)";
       };
     };
   };

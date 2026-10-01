@@ -117,13 +117,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/slrnpull" = "-- gen_context(system_u:object_r:slrnpull_exec_t,s0)";
+        "/nix/store/[^/]+/bin/slrnpull" =
+          lib.mkDefault "-- gen_context(system_u:object_r:slrnpull_exec_t,s0)";
 
-        "/var/log/slrnpull\\.log.*" = "-- gen_context(system_u:object_r:slrnpull_log_t,s0)";
+        "/var/log/slrnpull\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:slrnpull_log_t,s0)";
 
-        "/run/slrnpull\\.pid" = "-- gen_context(system_u:object_r:slrnpull_runtime_t,s0)";
+        "/run/slrnpull\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:slrnpull_runtime_t,s0)";
 
-        "/var/spool/slrnpull(/.*)?" = "gen_context(system_u:object_r:slrnpull_spool_t,s0)";
+        "/var/spool/slrnpull(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slrnpull_spool_t,s0)";
       };
     };
   };

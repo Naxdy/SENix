@@ -104,12 +104,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/fcoe" = "-- gen_context(system_u:object_r:fcoemon_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/fcoe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fcoemon_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/fcoemon" = "-- gen_context(system_u:object_r:fcoemon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fcoemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fcoemon_exec_t,s0)";
 
-        "/run/fcm(/.*)?" = "gen_context(system_u:object_r:fcoemon_runtime_t,s0)";
-        "/run/fcoemon\\.pid" = "-- gen_context(system_u:object_r:fcoemon_runtime_t,s0)";
+        "/run/fcm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fcoemon_runtime_t,s0)";
+        "/run/fcoemon\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:fcoemon_runtime_t,s0)";
       };
     };
   };

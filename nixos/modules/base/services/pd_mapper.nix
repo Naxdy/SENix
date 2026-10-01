@@ -38,7 +38,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/pd-mapper" = "-- gen_context(system_u:object_r:pd_mapper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pd-mapper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pd_mapper_exec_t,s0)";
       };
     };
   };

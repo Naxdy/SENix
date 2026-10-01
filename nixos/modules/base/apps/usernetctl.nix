@@ -134,7 +134,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/usernetctl" = "-- gen_context(system_u:object_r:usernetctl_exec_t,s0)";
+        "/nix/store/[^/]+/bin/usernetctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:usernetctl_exec_t,s0)";
       };
     };
   };

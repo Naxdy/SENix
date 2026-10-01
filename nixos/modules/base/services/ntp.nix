@@ -561,49 +561,53 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/ntp" = "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
-        "/etc/cron\\.(daily|weekly)/ntp-simple" = "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
-        "/etc/cron\\.(daily|weekly)/ntp-server" = "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+        "/etc/cron\\.daily/ntp" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+        "/etc/cron\\.(daily|weekly)/ntp-simple" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+        "/etc/cron\\.(daily|weekly)/ntp-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
 
-        "/etc/ntp\\.conf" = "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
-        "/etc/ntp\\.drift" = "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/etc/ntpd.*\\.conf.*" = "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
-        "/etc/ntp/crypto(/.*)?" = "gen_context(system_u:object_r:ntpd_key_t,s0)";
-        "/etc/ntp/data(/.*)?" = "gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/etc/ntp/keys" = "-- gen_context(system_u:object_r:ntpd_key_t,s0)";
-        "/etc/ntp/step-tickers.*" = "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
+        "/etc/ntp\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
+        "/etc/ntp\\.drift" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/etc/ntpd.*\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
+        "/etc/ntp/crypto(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntpd_key_t,s0)";
+        "/etc/ntp/data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/etc/ntp/keys" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_key_t,s0)";
+        "/etc/ntp/step-tickers.*" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/ntpd?" = "-- gen_context(system_u:object_r:ntpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ntpd?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_initrc_exec_t,s0)";
 
-        "/run/ntpd\\.pid" = "-- gen_context(system_u:object_r:ntpd_pid_t,s0)";
-        "/run/lock/ntpsec-ntpdate" = "-- gen_context(system_u:object_r:ntpd_lock_t,s0)";
-        "/run/systemd/timesync(/.*)?" = "gen_context(system_u:object_r:ntpd_pid_t,s0)";
+        "/run/ntpd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_pid_t,s0)";
+        "/run/lock/ntpsec-ntpdate" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_lock_t,s0)";
+        "/run/systemd/timesync(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntpd_pid_t,s0)";
 
-        "/nix/store/[^/]+/bin/ntpd" = "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ntpdate" = "-- gen_context(system_u:object_r:ntpdate_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sntp" = "-- gen_context(system_u:object_r:ntpdate_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ntpd" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ntpdate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpdate_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sntp" = lib.mkDefault "-- gen_context(system_u:object_r:ntpdate_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/ntp-units\\.d/.*" =
-          "-- gen_context(system_u:object_r:ntpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/ntpd.*\\.service" =
-          "-- gen_context(system_u:object_r:ntpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/systemd-timedated" =
-          "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/systemd-timesyncd" =
-          "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ntpd_exec_t,s0)";
 
-        "/var/db/ntp-kod" = "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/var/lib/ntp(/.*)?" = "gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/var/lib/ntpsec(/.*)?" = "gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/var/lib/sntp-kod(/.*)?" = "gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/var/lib/systemd/clock" = "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
-        "/var/lib/systemd/timesync(/.*)?" = "gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/db/ntp-kod" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/lib/ntp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/lib/ntpsec(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/lib/sntp-kod(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/lib/systemd/clock" = lib.mkDefault "-- gen_context(system_u:object_r:ntp_drift_t,s0)";
+        "/var/lib/systemd/timesync(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntp_drift_t,s0)";
 
-        "/var/lock/ntpdate" = "-- gen_context(system_u:object_r:ntpd_lock_t,s0)";
+        "/var/lock/ntpdate" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_lock_t,s0)";
 
-        "/var/log/ntp.*" = "-- gen_context(system_u:object_r:ntpd_log_t,s0)";
-        "/var/log/ntpstats(/.*)?" = "gen_context(system_u:object_r:ntpd_log_t,s0)";
-        "/var/log/xntpd.*" = "-- gen_context(system_u:object_r:ntpd_log_t,s0)";
+        "/var/log/ntp.*" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_log_t,s0)";
+        "/var/log/ntpstats(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ntpd_log_t,s0)";
+        "/var/log/xntpd.*" = lib.mkDefault "-- gen_context(system_u:object_r:ntpd_log_t,s0)";
       };
     };
   };

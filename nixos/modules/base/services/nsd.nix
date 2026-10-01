@@ -201,22 +201,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/nsd" = "-- gen_context(system_u:object_r:nsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nsd" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_initrc_exec_t,s0)";
 
-        "/etc/nsd(/.*)?" = "gen_context(system_u:object_r:nsd_conf_t,s0)";
-        "/etc/nsd/nsd\\.db" = "-- gen_context(system_u:object_r:nsd_db_t,s0)";
-        "/etc/nsd/primary(/.*)?" = "gen_context(system_u:object_r:nsd_zone_t,s0)";
-        "/etc/nsd/secondary(/.*)?" = "gen_context(system_u:object_r:nsd_zone_t,s0)";
+        "/etc/nsd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nsd_conf_t,s0)";
+        "/etc/nsd/nsd\\.db" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_db_t,s0)";
+        "/etc/nsd/primary(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nsd_zone_t,s0)";
+        "/etc/nsd/secondary(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nsd_zone_t,s0)";
 
-        "/nix/store/[^/]+/bin/nsd" = "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nsdc" = "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nsd-notify" = "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zonec" = "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nsd" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nsdc" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nsd-notify" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zonec" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_exec_t,s0)";
 
-        "/var/lib/nsd(/.*)?" = "gen_context(system_u:object_r:nsd_zone_t,s0)";
-        "/var/lib/nsd/nsd\\.db" = "-- gen_context(system_u:object_r:nsd_db_t,s0)";
+        "/var/lib/nsd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nsd_zone_t,s0)";
+        "/var/lib/nsd/nsd\\.db" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_db_t,s0)";
 
-        "/run/nsd\\.pid" = "-- gen_context(system_u:object_r:nsd_runtime_t,s0)";
+        "/run/nsd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:nsd_runtime_t,s0)";
       };
     };
   };

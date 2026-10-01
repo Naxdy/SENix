@@ -1706,45 +1706,50 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.esmtp_queue" = "-- gen_context(system_u:object_r:mail_home_t,s0)";
-        "HOME_DIR/\\.forward[^/]*" = "-- gen_context(system_u:object_r:mail_home_t,s0)";
-        "HOME_DIR/dead\\.letter" = "-- gen_context(system_u:object_r:mail_home_t,s0)";
-        "HOME_DIR/\\.mailrc" = "-- gen_context(system_u:object_r:mail_home_t,s0)";
-        "HOME_DIR/\\.msmtprc" = "-- gen_context(system_u:object_r:mail_home_t,s0)";
-        "HOME_DIR/Maildir(/.*)?" = "gen_context(system_u:object_r:mail_home_rw_t,s0)";
-        "HOME_DIR/DovecotMail(/.*)?" = "gen_context(system_u:object_r:mail_home_rw_t,s0)";
-        "HOME_DIR/\\.maildir(/.*)?" = "gen_context(system_u:object_r:mail_home_rw_t,s0)";
+        "HOME_DIR/\\.esmtp_queue" = lib.mkDefault "-- gen_context(system_u:object_r:mail_home_t,s0)";
+        "HOME_DIR/\\.forward[^/]*" = lib.mkDefault "-- gen_context(system_u:object_r:mail_home_t,s0)";
+        "HOME_DIR/dead\\.letter" = lib.mkDefault "-- gen_context(system_u:object_r:mail_home_t,s0)";
+        "HOME_DIR/\\.mailrc" = lib.mkDefault "-- gen_context(system_u:object_r:mail_home_t,s0)";
+        "HOME_DIR/\\.msmtprc" = lib.mkDefault "-- gen_context(system_u:object_r:mail_home_t,s0)";
+        "HOME_DIR/Maildir(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_home_rw_t,s0)";
+        "HOME_DIR/DovecotMail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_home_rw_t,s0)";
+        "HOME_DIR/\\.maildir(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_home_rw_t,s0)";
 
-        "/etc/aliases" = "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
-        "/etc/aliases\\.db" = "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
-        "/etc/mail(/.*)?" = "gen_context(system_u:object_r:etc_mail_t,s0)";
-        "/etc/mail/aliases.*" = "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
-        "/etc/msmtprc" = "-- gen_context(system_u:object_r:etc_mail_t,s0)";
-        "/etc/postfix/aliases.*" = "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
+        "/etc/aliases" = lib.mkDefault "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
+        "/etc/aliases\\.db" = lib.mkDefault "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
+        "/etc/mail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_mail_t,s0)";
+        "/etc/mail/aliases.*" = lib.mkDefault "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
+        "/etc/msmtprc" = lib.mkDefault "-- gen_context(system_u:object_r:etc_mail_t,s0)";
+        "/etc/postfix/aliases.*" = lib.mkDefault "-- gen_context(system_u:object_r:etc_aliases_t,s0)";
 
-        "/nix/store/[^/]+/bin/esmtp" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mail(x)?" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/msmtp" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rmail" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sendmail\\.postfix" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/esmtp" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mail(x)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/msmtp" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rmail" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sendmail\\.postfix" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
         "/nix/store/[^/]+/bin/sendmail(\\.sendmail)?" =
-          "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ssmtp" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ssmtp" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/sendmail" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/nix/store/[^/]+/lib/sendmail" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier/bin/sendmail" =
-          "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
 
-        "/var/mail(/.*)?" = "gen_context(system_u:object_r:mail_spool_t,s0)";
+        "/var/mail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_spool_t,s0)";
 
-        "/var/qmail/bin/sendmail" = "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
+        "/var/qmail/bin/sendmail" = lib.mkDefault "-- gen_context(system_u:object_r:sendmail_exec_t,s0)";
 
-        "/var/spool/imap(/.*)?" = "gen_context(system_u:object_r:mail_spool_t,s0)";
-        "/var/spool/(client)?mqueue(/.*)?" = "gen_context(system_u:object_r:mqueue_spool_t,s0)";
-        "/var/spool/mqueue\\.in(/.*)?" = "gen_context(system_u:object_r:mqueue_spool_t,s0)";
-        "/var/spool/mail(/.*)?" = "gen_context(system_u:object_r:mail_spool_t,s0)";
-        "/var/spool/nullmailer(/.*)?" = "gen_context(system_u:object_r:mail_spool_t,s0)";
-        "/var/spool/nullmailer/queue(/.*)?" = "gen_context(system_u:object_r:mqueue_spool_t,s0)";
+        "/var/spool/imap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_spool_t,s0)";
+        "/var/spool/(client)?mqueue(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mqueue_spool_t,s0)";
+        "/var/spool/mqueue\\.in(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mqueue_spool_t,s0)";
+        "/var/spool/mail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_spool_t,s0)";
+        "/var/spool/nullmailer(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mail_spool_t,s0)";
+        "/var/spool/nullmailer/queue(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mqueue_spool_t,s0)";
       };
     };
   };

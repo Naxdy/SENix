@@ -243,16 +243,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/knot(/.*)?" = "gen_context(system_u:object_r:knot_conf_t,s0)";
+        "/etc/knot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:knot_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/knot" = "-- gen_context(system_u:object_r:knot_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/knot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:knot_initrc_exec_t,s0)";
 
-        "/run/knot(/.*)?" = "gen_context(system_u:object_r:knot_runtime_t,s0)";
+        "/run/knot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:knot_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/knotc" = "-- gen_context(system_u:object_r:knotc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/knotd" = "-- gen_context(system_u:object_r:knotd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/knotc" = lib.mkDefault "-- gen_context(system_u:object_r:knotc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/knotd" = lib.mkDefault "-- gen_context(system_u:object_r:knotd_exec_t,s0)";
 
-        "/var/lib/knot(/.*)?" = "gen_context(system_u:object_r:knot_var_lib_t,s0)";
+        "/var/lib/knot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:knot_var_lib_t,s0)";
       };
     };
   };

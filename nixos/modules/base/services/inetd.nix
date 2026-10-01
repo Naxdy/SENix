@@ -409,20 +409,23 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/pysieved/pysieved.*\\.py" =
-          "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
 
         "/nix/store/[^/]+/local/lib/pysieved/pysieved.*\\.py" =
-          "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/identd" = "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
-        "/nix/store/[^/]+/bin/in\\..*d" = "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
+        "/nix/store/[^/]+/bin/identd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\..*d" =
+          lib.mkDefault "-- gen_context(system_u:object_r:inetd_child_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/rlinetd" = "-- gen_context(system_u:object_r:inetd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/(x)?inetd" = "-- gen_context(system_u:object_r:inetd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rlinetd" = lib.mkDefault "-- gen_context(system_u:object_r:inetd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/(x)?inetd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:inetd_exec_t,s0)";
 
-        "/var/log/(x)?inetd\\.log.*" = "-- gen_context(system_u:object_r:inetd_log_t,s0)";
+        "/var/log/(x)?inetd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:inetd_log_t,s0)";
 
-        "/run/(x)?inetd\\.pid" = "-- gen_context(system_u:object_r:inetd_runtime_t,s0)";
+        "/run/(x)?inetd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:inetd_runtime_t,s0)";
       };
     };
   };

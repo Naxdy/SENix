@@ -149,12 +149,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/matrix-synapse(/.*)?" = "gen_context(system_u:object_r:matrixd_conf_t,s0)";
+        "/etc/matrix-synapse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:matrixd_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/synctl" = "-- gen_context(system_u:object_r:matrixd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/synctl" = lib.mkDefault "-- gen_context(system_u:object_r:matrixd_exec_t,s0)";
 
-        "/var/lib/matrix-synapse(/.*)?" = "gen_context(system_u:object_r:matrixd_var_t,s0)";
-        "/var/log/matrix-synapse(/.*)?" = "gen_context(system_u:object_r:matrixd_log_t,s0)";
+        "/var/lib/matrix-synapse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:matrixd_var_t,s0)";
+        "/var/log/matrix-synapse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:matrixd_log_t,s0)";
       };
     };
   };

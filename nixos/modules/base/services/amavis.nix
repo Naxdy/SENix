@@ -461,30 +461,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/amavis(d)?\\.conf" = "-- gen_context(system_u:object_r:amavis_etc_t,s0)";
-        "/etc/amavisd(/.*)?" = "gen_context(system_u:object_r:amavis_etc_t,s0)";
+        "/etc/amavis(d)?\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:amavis_etc_t,s0)";
+        "/etc/amavisd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/amavis" = "-- gen_context(system_u:object_r:amavis_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/amavisd-snmp" = "-- gen_context(system_u:object_r:amavis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/amavis" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amavis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/amavisd-snmp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amavis_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/amavisd.*" = "-- gen_context(system_u:object_r:amavis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/amavisd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amavis_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/AntiVir/antivir" = "-- gen_context(system_u:object_r:amavis_exec_t,s0)";
+        "/nix/store/[^/]+/lib/AntiVir/antivir" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amavis_exec_t,s0)";
 
-        "/var/opt/f-secure(/.*)?" = "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
+        "/var/opt/f-secure(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
 
-        "/var/amavis(/.*)?" = "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
+        "/var/amavis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
 
-        "/var/lib/amavis(/.*)?" = "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
+        "/var/lib/amavis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_var_lib_t,s0)";
 
-        "/var/log/amavisd\\.log.*" = "-- gen_context(system_u:object_r:amavis_var_log_t,s0)";
+        "/var/log/amavisd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:amavis_var_log_t,s0)";
 
-        "/run/amavis(d)?(/.*)?" = "gen_context(system_u:object_r:amavis_runtime_t,s0)";
-        "/run/amavisd-snmp-subagent\\.pid" = "-- gen_context(system_u:object_r:amavis_runtime_t,s0)";
+        "/run/amavis(d)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_runtime_t,s0)";
+        "/run/amavisd-snmp-subagent\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amavis_runtime_t,s0)";
 
-        "/var/spool/amavisd(/.*)?" = "gen_context(system_u:object_r:amavis_spool_t,s0)";
+        "/var/spool/amavisd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_spool_t,s0)";
 
-        "/var/virusmails(/.*)?" = "gen_context(system_u:object_r:amavis_quarantine_t,s0)";
+        "/var/virusmails(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amavis_quarantine_t,s0)";
       };
     };
   };

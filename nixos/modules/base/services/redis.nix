@@ -127,18 +127,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/redis" = "-- gen_context(system_u:object_r:redis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/redis" =
+          lib.mkDefault "-- gen_context(system_u:object_r:redis_initrc_exec_t,s0)";
 
-        "/etc/redis.*\\.conf" = "-- gen_context(system_u:object_r:redis_conf_t,s0)";
+        "/etc/redis.*\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:redis_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/redis-server" = "-- gen_context(system_u:object_r:redis_exec_t,s0)";
-        "/nix/store/[^/]+/bin/redis-check-rdb" = "-- gen_context(system_u:object_r:redis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/redis-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:redis_exec_t,s0)";
+        "/nix/store/[^/]+/bin/redis-check-rdb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:redis_exec_t,s0)";
 
-        "/var/lib/redis(/.*)?" = "gen_context(system_u:object_r:redis_var_lib_t,s0)";
+        "/var/lib/redis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:redis_var_lib_t,s0)";
 
-        "/var/log/redis(/.*)?" = "gen_context(system_u:object_r:redis_log_t,s0)";
+        "/var/log/redis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:redis_log_t,s0)";
 
-        "/run/redis(/.*)?" = "gen_context(system_u:object_r:redis_runtime_t,s0)";
+        "/run/redis(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:redis_runtime_t,s0)";
       };
     };
   };

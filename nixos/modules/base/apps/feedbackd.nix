@@ -83,8 +83,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/libexec/feedbackd" = "-- gen_context(system_u:object_r:feedbackd_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/fbd-ledctrl" = "-- gen_context(system_u:object_r:feedbackd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/feedbackd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:feedbackd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/fbd-ledctrl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:feedbackd_exec_t,s0)";
       };
     };
   };

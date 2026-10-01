@@ -109,15 +109,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/geoclue(/.*)?" = "gen_context(system_u:object_r:geoclue_etc_t,s0)";
+        "/etc/geoclue(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:geoclue_etc_t,s0)";
 
-        "/nix/store/[^/]+/lib/geoclue2/geoclue" = "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
+        "/nix/store/[^/]+/lib/geoclue2/geoclue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
         "/nix/store/[^/]+/lib/geoclue-2\\.0/geoclue" =
-          "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/geoclue" = "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/geoclue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:geoclue_exec_t,s0)";
 
-        "/var/lib/geoclue(/.*)?" = "gen_context(system_u:object_r:geoclue_var_lib_t,s0)";
+        "/var/lib/geoclue(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:geoclue_var_lib_t,s0)";
       };
     };
   };

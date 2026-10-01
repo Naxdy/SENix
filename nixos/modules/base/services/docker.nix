@@ -457,16 +457,21 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/docker" = "-- gen_context(system_u:object_r:dockerc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dockerd" = "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/docker-proxy" = "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/containerd" = "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/containerd-shim" = "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/docker" = lib.mkDefault "-- gen_context(system_u:object_r:dockerc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dockerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/docker-proxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/containerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/containerd-shim" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
         "/nix/store/[^/]+/bin/containerd-shim-runc-v1" =
-          "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
         "/nix/store/[^/]+/bin/containerd-shim-runc-v2" =
-          "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/containerd-stress" = "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/containerd-stress" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dockerd_exec_t,s0)";
       };
     };
   };

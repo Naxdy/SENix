@@ -110,13 +110,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/pxe" = "-- gen_context(system_u:object_r:pxe_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pxe" = lib.mkDefault "-- gen_context(system_u:object_r:pxe_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pxe" = "-- gen_context(system_u:object_r:pxe_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pxe" = lib.mkDefault "-- gen_context(system_u:object_r:pxe_exec_t,s0)";
 
-        "/var/log/pxe\\.log.*" = "-- gen_context(system_u:object_r:pxe_log_t,s0)";
+        "/var/log/pxe\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:pxe_log_t,s0)";
 
-        "/run/pxe\\.pid" = "-- gen_context(system_u:object_r:pxe_runtime_t,s0)";
+        "/run/pxe\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:pxe_runtime_t,s0)";
       };
     };
   };

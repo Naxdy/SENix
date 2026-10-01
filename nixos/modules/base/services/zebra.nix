@@ -227,27 +227,33 @@
     '';
     fileContext = {
       rules = {
-        "/etc/quagga(/.*)?" = "gen_context(system_u:object_r:zebra_conf_t,s0)";
-        "/etc/zebra(/.*)?" = "gen_context(system_u:object_r:zebra_conf_t,s0)";
+        "/etc/quagga(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zebra_conf_t,s0)";
+        "/etc/zebra(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zebra_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/bgpd" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ospf6d" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ospfd" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ripd" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ripngd" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/zebra" = "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bgpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ospf6d" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ospfd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ripd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ripngd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/zebra" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zebra_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/bgpd" = "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ospf.*" = "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rip.*" = "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zebra" = "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bgpd" = lib.mkDefault "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ospf.*" = lib.mkDefault "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rip.*" = lib.mkDefault "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zebra" = lib.mkDefault "-- gen_context(system_u:object_r:zebra_exec_t,s0)";
 
-        "/var/log/quagga(/.*)?" = "gen_context(system_u:object_r:zebra_log_t,s0)";
-        "/var/log/zebra(/.*)?" = "gen_context(system_u:object_r:zebra_log_t,s0)";
+        "/var/log/quagga(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zebra_log_t,s0)";
+        "/var/log/zebra(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zebra_log_t,s0)";
 
-        "/run/\\.zebra" = "-s gen_context(system_u:object_r:zebra_runtime_t,s0)";
-        "/run/\\.zserv" = "-s gen_context(system_u:object_r:zebra_runtime_t,s0)";
-        "/run/quagga(/.*)?" = "gen_context(system_u:object_r:zebra_runtime_t,s0)";
+        "/run/\\.zebra" = lib.mkDefault "-s gen_context(system_u:object_r:zebra_runtime_t,s0)";
+        "/run/\\.zserv" = lib.mkDefault "-s gen_context(system_u:object_r:zebra_runtime_t,s0)";
+        "/run/quagga(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zebra_runtime_t,s0)";
       };
     };
   };

@@ -842,30 +842,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/dev\\.d/.+" = "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
+        "/etc/dev\\.d/.+" = lib.mkDefault "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
 
-        "/etc/hotplug\\.d/default/udev.*" = "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
+        "/etc/hotplug\\.d/default/udev.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
 
-        "/etc/udev/rules\\.d(/.*)?" = "gen_context(system_u:object_r:udev_rules_t,s0)";
-        "/etc/udev/scripts/.+" = "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
+        "/etc/udev/rules\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:udev_rules_t,s0)";
+        "/etc/udev/scripts/.+" = lib.mkDefault "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/udev" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/udevadm" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/udevd" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/udevinfo" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/udevsend" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/udevstart" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wait_for_sysfs" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udev" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udevadm" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udevd" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udevinfo" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udevsend" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/udevstart" = lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wait_for_sysfs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/systemd/systemd-udevd" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/lib/udev/udev-acl" = "-- gen_context(system_u:object_r:udev_exec_t,s0)";
-        "/nix/store/[^/]+/lib/udev/rules\\.d(/.*)?" = "gen_context(system_u:object_r:udev_rules_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/systemd-udevd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/lib/udev/udev-acl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:udev_exec_t,s0)";
+        "/nix/store/[^/]+/lib/udev/rules\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:udev_rules_t,s0)";
 
         "/nix/store/[^/]+/share/virtualbox/VBoxCreateUSBNode\\.sh" =
-          "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:udev_helper_exec_t,s0)";
 
-        "/run/udev(/.*)?" = "gen_context(system_u:object_r:udev_runtime_t,s0)";
-        "/run/udev/rules\\.d(/.*)?" = "gen_context(system_u:object_r:udev_rules_t,s0)";
+        "/run/udev(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:udev_runtime_t,s0)";
+        "/run/udev/rules\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:udev_rules_t,s0)";
       };
     };
   };

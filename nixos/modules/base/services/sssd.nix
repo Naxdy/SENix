@@ -473,22 +473,24 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sssd" = "-- gen_context(system_u:object_r:sssd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sssd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sssd_initrc_exec_t,s0)";
 
-        "/etc/sssd(/.*)?" = "gen_context(system_u:object_r:sssd_conf_t,s0)";
+        "/etc/sssd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sssd_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/sssd" = "-- gen_context(system_u:object_r:sssd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sssd" = lib.mkDefault "-- gen_context(system_u:object_r:sssd_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/sssd/sssd_.+" = "-- gen_context(system_u:object_r:sssd_exec_t,s0)";
-        "/var/lib/sss(/.*)?" = "gen_context(system_u:object_r:sssd_var_lib_t,s0)";
+        "/nix/store/[^/]+/libexec/sssd/sssd_.+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sssd_exec_t,s0)";
+        "/var/lib/sss(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sssd_var_lib_t,s0)";
 
-        "/var/lib/sss/mc(/.*)?" = "gen_context(system_u:object_r:sssd_public_t,s0)";
+        "/var/lib/sss/mc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sssd_public_t,s0)";
 
-        "/var/lib/sss/pubconf(/.*)?" = "gen_context(system_u:object_r:sssd_public_t,s0)";
+        "/var/lib/sss/pubconf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sssd_public_t,s0)";
 
-        "/var/log/sssd(/.*)?" = "gen_context(system_u:object_r:sssd_var_log_t,s0)";
+        "/var/log/sssd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sssd_var_log_t,s0)";
 
-        "/run/sssd\\.pid" = "-- gen_context(system_u:object_r:sssd_runtime_t,s0)";
+        "/run/sssd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sssd_runtime_t,s0)";
       };
     };
   };

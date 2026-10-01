@@ -574,19 +574,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/exim[0-9]?" = "-- gen_context(system_u:object_r:exim_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/exim[0-9]?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:exim_initrc_exec_t,s0)";
 
-        "/run/exim[0-9]?(/.*)?" = "gen_context(system_u:object_r:exim_pid_t,s0)";
-        "/run/exim[0-9]?\\.pid" = "-- gen_context(system_u:object_r:exim_pid_t,s0)";
+        "/run/exim[0-9]?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:exim_pid_t,s0)";
+        "/run/exim[0-9]?\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:exim_pid_t,s0)";
 
-        "/nix/store/[^/]+/bin/exim[0-9]?" = "-- gen_context(system_u:object_r:exim_exec_t,s0)";
-        "/nix/store/[^/]+/bin/exim_tidydb" = "-- gen_context(system_u:object_r:exim_exec_t,s0)";
+        "/nix/store/[^/]+/bin/exim[0-9]?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:exim_exec_t,s0)";
+        "/nix/store/[^/]+/bin/exim_tidydb" =
+          lib.mkDefault "-- gen_context(system_u:object_r:exim_exec_t,s0)";
 
-        "/var/lib/exim[0-9]?(/.*)?" = "gen_context(system_u:object_r:exim_var_lib_t,s0)";
+        "/var/lib/exim[0-9]?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:exim_var_lib_t,s0)";
 
-        "/var/log/exim[0-9]?(/.*)?" = "gen_context(system_u:object_r:exim_log_t,s0)";
+        "/var/log/exim[0-9]?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:exim_log_t,s0)";
 
-        "/var/spool/exim[0-9]?(/.*)?" = "gen_context(system_u:object_r:exim_spool_t,s0)";
+        "/var/spool/exim[0-9]?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:exim_spool_t,s0)";
       };
     };
   };

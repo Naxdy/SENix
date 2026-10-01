@@ -332,19 +332,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/asterisk(/.*)?" = "gen_context(system_u:object_r:asterisk_etc_t,s0)";
+        "/etc/asterisk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:asterisk_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/asterisk" = "-- gen_context(system_u:object_r:asterisk_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/asterisk" =
+          lib.mkDefault "-- gen_context(system_u:object_r:asterisk_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/asterisk" = "-- gen_context(system_u:object_r:asterisk_exec_t,s0)";
+        "/nix/store/[^/]+/bin/asterisk" =
+          lib.mkDefault "-- gen_context(system_u:object_r:asterisk_exec_t,s0)";
 
-        "/var/lib/asterisk(/.*)?" = "gen_context(system_u:object_r:asterisk_var_lib_t,s0)";
+        "/var/lib/asterisk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:asterisk_var_lib_t,s0)";
 
-        "/var/log/asterisk(/.*)?" = "gen_context(system_u:object_r:asterisk_log_t,s0)";
+        "/var/log/asterisk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:asterisk_log_t,s0)";
 
-        "/run/asterisk.*" = "gen_context(system_u:object_r:asterisk_runtime_t,s0)";
+        "/run/asterisk.*" = lib.mkDefault "gen_context(system_u:object_r:asterisk_runtime_t,s0)";
 
-        "/var/spool/asterisk(/.*)?" = "gen_context(system_u:object_r:asterisk_spool_t,s0)";
+        "/var/spool/asterisk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:asterisk_spool_t,s0)";
       };
     };
   };

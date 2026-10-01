@@ -147,10 +147,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/mandb" = "-- gen_context(system_u:object_r:mandb_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mandb" = lib.mkDefault "-- gen_context(system_u:object_r:mandb_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*man-db.*" =
-          "-- gen_context(system_u:object_r:mandb_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mandb_unit_t,s0)";
       };
     };
   };

@@ -5494,21 +5494,21 @@
     fileContext = {
       rules = {
         # new genhomedircon required for these patterns
-        "HOME_DIR" = "-d gen_context(system_u:object_r:user_home_dir_t,s0-mls_systemhigh)";
-        "HOME_DIR/.+" = "gen_context(system_u:object_r:user_home_t,s0)";
-        "HOME_DIR/bin(/.*)?" = "gen_context(system_u:object_r:user_bin_t,s0)";
-        "HOME_DIR/\\.local/bin(/.*)?" = "gen_context(system_u:object_r:user_bin_t,s0)";
-        "HOME_DIR/\\.pki(/.*)?" = "gen_context(system_u:object_r:user_cert_t,s0)";
+        "HOME_DIR" = lib.mkDefault "-d gen_context(system_u:object_r:user_home_dir_t,s0-mls_systemhigh)";
+        "HOME_DIR/.+" = lib.mkDefault "gen_context(system_u:object_r:user_home_t,s0)";
+        "HOME_DIR/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:user_bin_t,s0)";
+        "HOME_DIR/\\.local/bin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:user_bin_t,s0)";
+        "HOME_DIR/\\.pki(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:user_cert_t,s0)";
 
-        "/tmp/gconfd-%{USERNAME}" = "-d gen_context(system_u:object_r:user_tmp_t,s0)";
+        "/tmp/gconfd-%{USERNAME}" = lib.mkDefault "-d gen_context(system_u:object_r:user_tmp_t,s0)";
 
-        "/run/user" = "-d gen_context(system_u:object_r:user_runtime_root_t,s0)";
-        "/run/user/[^/]+" = "-d gen_context(system_u:object_r:user_runtime_t,s0)";
-        "/run/user/[^/]+/.+" = "-d <<none>>";
-        "/run/user/%{USERID}" = "-d gen_context(system_u:object_r:user_runtime_t,s0)";
-        "/run/user/%{USERID}/.+" = "<<none>>";
+        "/run/user" = lib.mkDefault "-d gen_context(system_u:object_r:user_runtime_root_t,s0)";
+        "/run/user/[^/]+" = lib.mkDefault "-d gen_context(system_u:object_r:user_runtime_t,s0)";
+        "/run/user/[^/]+/.+" = lib.mkDefault "-d <<none>>";
+        "/run/user/%{USERID}" = lib.mkDefault "-d gen_context(system_u:object_r:user_runtime_t,s0)";
+        "/run/user/%{USERID}/.+" = lib.mkDefault "<<none>>";
 
-        "/dev/pts/[0-9]+" = "-c gen_context(system_u:object_r:user_devpts_t,s0)";
+        "/dev/pts/[0-9]+" = lib.mkDefault "-c gen_context(system_u:object_r:user_devpts_t,s0)";
       };
     };
   };

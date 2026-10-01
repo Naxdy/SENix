@@ -4658,178 +4658,206 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.cache/containers(/.*)?" = "gen_context(system_u:object_r:container_cache_home_t,s0)";
-        "HOME_DIR/\\.config/containers(/.*)?" = "gen_context(system_u:object_r:container_conf_home_t,s0)";
-        "HOME_DIR/\\.config/cni(/.*)?" = "gen_context(system_u:object_r:container_conf_home_t,s0)";
-        "HOME_DIR/\\.config/docker(/.*)?" = "gen_context(system_u:object_r:container_conf_home_t,s0)";
+        "HOME_DIR/\\.cache/containers(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_cache_home_t,s0)";
+        "HOME_DIR/\\.config/containers(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_conf_home_t,s0)";
+        "HOME_DIR/\\.config/cni(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_conf_home_t,s0)";
+        "HOME_DIR/\\.config/docker(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_conf_home_t,s0)";
         "HOME_DIR/\\.local/share/containers(/.*)?" =
-          "gen_context(system_u:object_r:container_data_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_data_home_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay2(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay2-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/overlay2-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/containers/storage/volumes/[^/]+/.*" =
-          "gen_context(system_u:object_r:container_file_t,s0)";
-        "HOME_DIR/\\.local/share/docker(/.*)?" = "gen_context(system_u:object_r:container_data_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "HOME_DIR/\\.local/share/docker(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_data_home_t,s0)";
         "HOME_DIR/\\.local/share/docker/.*/config\\.env" =
-          "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/docker/containers/.*/.*\\.log" =
-          "-- gen_context(system_u:object_r:container_log_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_log_t,s0)";
         "HOME_DIR/\\.local/share/docker/containers/.*/hostname" =
-          "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/docker/containers/.*/hosts" =
-          "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/docker/init(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/docker/fuse-overlayfs(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "HOME_DIR/\\.local/share/docker/volumes(/.*)?" =
-          "gen_context(system_u:object_r:container_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "HOME_DIR/\\.docker(/.*)?" = "gen_context(system_u:object_r:container_conf_home_t,s0)";
+        "HOME_DIR/\\.docker(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_conf_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/crun" = "-- gen_context(system_u:object_r:container_engine_exec_t,s0)";
-        "/nix/store/[^/]+/bin/runc" = "-- gen_context(system_u:object_r:container_engine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/crun" =
+          lib.mkDefault "-- gen_context(system_u:object_r:container_engine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/runc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:container_engine_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/docker.*" =
-          "-- gen_context(system_u:object_r:container_engine_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_engine_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/containerd.*" =
-          "-- gen_context(system_u:object_r:container_engine_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_engine_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/container-.*" =
-          "-- gen_context(system_u:object_r:container_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/incus-.*" = "gen_context(system_u:object_r:container_engine_exec_t,s0)";
+        "/nix/store/[^/]+/bin/incus-.*" =
+          lib.mkDefault "gen_context(system_u:object_r:container_engine_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/incus.*" =
-          "gen_context(system_u:object_r:container_engine_unit_t,s0)";
-        "/nix/store/[^/]+/share/lxcfs/.*" = "gen_context(system_u:object_r:container_engine_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_engine_unit_t,s0)";
+        "/nix/store/[^/]+/share/lxcfs/.*" =
+          lib.mkDefault "gen_context(system_u:object_r:container_engine_exec_t,s0)";
 
-        "/etc/containers(/.*)?" = "gen_context(system_u:object_r:container_config_t,s0)";
-        "/etc/cni(/.*)?" = "gen_context(system_u:object_r:container_config_t,s0)";
-        "/etc/cdi(/.*)?" = "gen_context(system_u:object_r:container_config_t,s0)";
-        "/etc/docker(/.*)?" = "gen_context(system_u:object_r:container_config_t,s0)";
-        "/etc/containerd(/.*)?" = "gen_context(system_u:object_r:container_config_t,s0)";
+        "/etc/containers(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_config_t,s0)";
+        "/etc/cni(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_config_t,s0)";
+        "/etc/cdi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_config_t,s0)";
+        "/etc/docker(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_config_t,s0)";
+        "/etc/containerd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_config_t,s0)";
 
-        "/run/containers(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/crun(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/libpod(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/runc(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/containers(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/crun(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/libpod(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/runc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
 
-        "/run/docker(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/docker\\.pid" = "-- gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/docker\\.sock" = "-s gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/containerd(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/docker(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/docker\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/docker\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/containerd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
         "/run/containerd/[^/]+/sandboxes/[^/]+/shm(/.*)?" =
-          "gen_context(system_u:object_r:container_engine_tmpfs_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_engine_tmpfs_t,s0)";
 
-        "/run/incus(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/ipcns(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/lxc(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/pidns(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/userns(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
-        "/run/utsns(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/incus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/ipcns(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/lxc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/pidns(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/userns(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/utsns(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
 
-        "/run/user/%{USERID}/netns(/.*)?" = "gen_context(system_u:object_r:container_runtime_t,s0)";
+        "/run/user/%{USERID}/netns(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_runtime_t,s0)";
 
-        "/var/cache/containers(/.*)?" = "gen_context(system_u:object_r:container_engine_cache_t,s0)";
-        "/var/cache/incus(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/cache/containers(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_engine_cache_t,s0)";
+        "/var/cache/incus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
 
-        "/var/lib/cni(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
-        "/var/lib/containers(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
-        "/var/lib/containers/atomic(/.*)?" = "<<none>>";
-        "/var/lib/containers/volumes/[^/]+/.*" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/containers/overlay(/.*)?" = "gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/containers/overlay2(/.*)?" = "gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/cni(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/containers(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/containers/atomic(/.*)?" = lib.mkDefault "<<none>>";
+        "/var/lib/containers/volumes/[^/]+/.*" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/containers/overlay(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/containers/overlay2(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/overlay-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/overlay-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/overlay2-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/overlay2-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay2(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay2-layers(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/overlay2-images(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containers/storage/volumes/[^/]+/.*" =
-          "gen_context(system_u:object_r:container_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "/var/lib/crio(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/crio(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
 
-        "/var/lib/docker(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
-        "/var/lib/docker/.*/config\\.env" = "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/containers/.*/.*\\.log" = "-- gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/lib/docker(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/docker/.*/config\\.env" =
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/containers/.*/.*\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:container_log_t,s0)";
         "/var/lib/docker/containers/.*/hostname" =
-          "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/containers/.*/hosts" = "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/init(/.*)?" = "gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/overlay(/.*)?" = "gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/overlay2(/.*)?" = "gen_context(system_u:object_r:container_ro_file_t,s0)";
-        "/var/lib/docker/volumes/[^/]+/.*" = "gen_context(system_u:object_r:container_file_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/containers/.*/hosts" =
+          lib.mkDefault "-- gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/init(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/overlay(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/overlay2(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
+        "/var/lib/docker/volumes/[^/]+/.*" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "/var/lib/containerd(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/containerd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
         "/var/lib/containerd/[^/]+/sandboxes(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
         "/var/lib/containerd/[^/]+/snapshots(/.*)?" =
-          "gen_context(system_u:object_r:container_ro_file_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:container_ro_file_t,s0)";
 
-        "/var/lib/incus(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/incus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
         "/var/lib/incus/storage-pools/[^/]+/containers(/.*)?" =
-          "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/incus/storage-pools/[^/]+/containers/.*/rootfs(/.*)?" = "<<none>>";
-        "/var/lib/incus/storage-pools/[^/]+/virtual-machines/.*" = "<<none>>";
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/incus/storage-pools/[^/]+/containers/.*/rootfs(/.*)?" = lib.mkDefault "<<none>>";
+        "/var/lib/incus/storage-pools/[^/]+/virtual-machines/.*" = lib.mkDefault "<<none>>";
 
-        "/var/lib/lxc(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/lxc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
 
-        "/var/lib/kubelet(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
-        "/var/lib/kubelet/device-plugins(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/kubelet/pods(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/kubelet/plugins(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/kubelet/plugins_registry(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/kubelet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/kubelet/device-plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/kubelet/pods(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/kubelet/plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/kubelet/plugins_registry(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "/var/lib/kubevirt(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
-        "/var/lib/kubevirt-node-labeller(/.*)?" = "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/kubevirt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
+        "/var/lib/kubevirt-node-labeller(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_var_lib_t,s0)";
 
-        "/var/lib/calico(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/etcd(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
-        "/var/lib/kube-proxy(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/calico(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/etcd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/kube-proxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "/var/lib/rook(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/lib/rook(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
         "/var/lib/rook/rook-ceph/[^/]+/[^/]+/block" =
-          "-b gen_context(system_u:object_r:container_device_t,s0)";
+          lib.mkDefault "-b gen_context(system_u:object_r:container_device_t,s0)";
 
-        "/var/local-path-provisioner(/.*)?" = "gen_context(system_u:object_r:container_file_t,s0)";
+        "/var/local-path-provisioner(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_file_t,s0)";
 
-        "/var/log/containerd(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/containers(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/crio(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/incus(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/pods(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/containerd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/containers(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/crio(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/incus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/pods(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
 
-        "/var/log/kubelet(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/kubernetes(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kubelet(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kubernetes(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
 
-        "/var/log/calico(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/kube-apiserver(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/kube-controller-manager(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/kube-proxy(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
-        "/var/log/kube-scheduler(/.*)?" = "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/calico(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kube-apiserver(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kube-controller-manager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kube-proxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
+        "/var/log/kube-scheduler(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:container_log_t,s0)";
       };
     };
   };

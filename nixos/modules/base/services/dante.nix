@@ -118,16 +118,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/danted" = "-- gen_context(system_u:object_r:dante_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/danted" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dante_initrc_exec_t,s0)";
 
-        "/etc/danted\\.conf" = "-- gen_context(system_u:object_r:dante_conf_t,s0)";
-        "/etc/socks(/.*)?" = "gen_context(system_u:object_r:dante_conf_t,s0)";
+        "/etc/danted\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:dante_conf_t,s0)";
+        "/etc/socks(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dante_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/danted" = "-- gen_context(system_u:object_r:dante_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sockd" = "-- gen_context(system_u:object_r:dante_exec_t,s0)";
+        "/nix/store/[^/]+/bin/danted" = lib.mkDefault "-- gen_context(system_u:object_r:dante_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sockd" = lib.mkDefault "-- gen_context(system_u:object_r:dante_exec_t,s0)";
 
-        "/run/danted\\.pid" = "-- gen_context(system_u:object_r:dante_runtime_t,s0)";
-        "/run/sockd\\.pid" = "-- gen_context(system_u:object_r:dante_runtime_t,s0)";
+        "/run/danted\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dante_runtime_t,s0)";
+        "/run/sockd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dante_runtime_t,s0)";
       };
     };
   };

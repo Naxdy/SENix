@@ -190,30 +190,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.(daily|monthly)/radiusd" = "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
+        "/etc/cron\\.(daily|monthly)/radiusd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
         "/etc/cron\\.((daily)|(weekly)|(monthly))/freeradius" =
-          "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/radiusd" = "-- gen_context(system_u:object_r:radiusd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/radiusd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:radiusd_initrc_exec_t,s0)";
 
-        "/etc/raddb(/.*)?" = "gen_context(system_u:object_r:radiusd_etc_t,s0)";
-        "/etc/raddb/db\\.daily" = "-- gen_context(system_u:object_r:radiusd_etc_rw_t,s0)";
+        "/etc/raddb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_etc_t,s0)";
+        "/etc/raddb/db\\.daily" = lib.mkDefault "-- gen_context(system_u:object_r:radiusd_etc_rw_t,s0)";
 
-        "/nix/store/[^/]+/bin/radiusd" = "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/freeradius" = "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/radiusd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/freeradius" =
+          lib.mkDefault "-- gen_context(system_u:object_r:radiusd_exec_t,s0)";
 
-        "/var/lib/radiusd(/.*)?" = "gen_context(system_u:object_r:radiusd_var_lib_t,s0)";
+        "/var/lib/radiusd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_var_lib_t,s0)";
 
-        "/var/log/freeradius(/.*)?" = "gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radacct(/.*)?" = "gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radius(/.*)?" = "gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radius\\.log.*" = "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radiusd-freeradius(/.*)?" = "gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radutmp.*" = "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
-        "/var/log/radwtmp.*" = "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/freeradius(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radacct(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radius(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radius\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radiusd-freeradius(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radutmp.*" = lib.mkDefault "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
+        "/var/log/radwtmp.*" = lib.mkDefault "-- gen_context(system_u:object_r:radiusd_log_t,s0)";
 
-        "/run/radiusd(/.*)?" = "gen_context(system_u:object_r:radiusd_runtime_t,s0)";
-        "/run/radiusd\\.pid" = "-- gen_context(system_u:object_r:radiusd_runtime_t,s0)";
+        "/run/radiusd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:radiusd_runtime_t,s0)";
+        "/run/radiusd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:radiusd_runtime_t,s0)";
       };
     };
   };

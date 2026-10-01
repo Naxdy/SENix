@@ -112,14 +112,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/default/gdomap" = "-- gen_context(system_u:object_r:gdomap_conf_t,s0)";
+        "/etc/default/gdomap" = lib.mkDefault "-- gen_context(system_u:object_r:gdomap_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/gdomap" = "-- gen_context(system_u:object_r:gdomap_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gdomap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gdomap_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/gdomap" = "-- gen_context(system_u:object_r:gdomap_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gdomap" = lib.mkDefault "-- gen_context(system_u:object_r:gdomap_exec_t,s0)";
 
-        "/run/gdomap\\.pid" = "-- gen_context(system_u:object_r:gdomap_runtime_t,s0)";
-        "/run/gdomap(/.*)?" = "gen_context(system_u:object_r:gdomap_runtime_t,s0)";
+        "/run/gdomap\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:gdomap_runtime_t,s0)";
+        "/run/gdomap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gdomap_runtime_t,s0)";
       };
     };
   };

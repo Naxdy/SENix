@@ -146,12 +146,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/hwloc-dump-hwdata" = "-- gen_context(system_u:object_r:hwloc_dhwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hwloc-dump-hwdata" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hwloc_dhwd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/hwloc-dump-hwdata.*" =
-          "-- gen_context(system_u:object_r:hwloc_dhwd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:hwloc_dhwd_unit_t,s0)";
 
-        "/run/hwloc(/.*)?" = "gen_context(system_u:object_r:hwloc_runtime_t,s0)";
+        "/run/hwloc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hwloc_runtime_t,s0)";
       };
     };
   };

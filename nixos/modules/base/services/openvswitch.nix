@@ -186,20 +186,21 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/openvswitch" =
-          "-- gen_context(system_u:object_r:openvswitch_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openvswitch_initrc_exec_t,s0)";
 
-        "/etc/openvswitch(/.*)?" = "gen_context(system_u:object_r:openvswitch_conf_t,s0)";
+        "/etc/openvswitch(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openvswitch_conf_t,s0)";
 
         "/nix/store/[^/]+/share/openvswitch/scripts/ovs-ctl" =
-          "-- gen_context(system_u:object_r:openvswitch_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openvswitch_exec_t,s0)";
         "/nix/store/[^/]+/share/openvswitch/scripts/openvswitch\\.init" =
-          "-- gen_context(system_u:object_r:openvswitch_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openvswitch_exec_t,s0)";
 
-        "/var/lib/openvswitch(/.*)?" = "gen_context(system_u:object_r:openvswitch_var_lib_t,s0)";
+        "/var/lib/openvswitch(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:openvswitch_var_lib_t,s0)";
 
-        "/var/log/openvswitch(/.*)?" = "gen_context(system_u:object_r:openvswitch_log_t,s0)";
+        "/var/log/openvswitch(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openvswitch_log_t,s0)";
 
-        "/run/openvswitch(/.*)?" = "gen_context(system_u:object_r:openvswitch_runtime_t,s0)";
+        "/run/openvswitch(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openvswitch_runtime_t,s0)";
       };
     };
   };

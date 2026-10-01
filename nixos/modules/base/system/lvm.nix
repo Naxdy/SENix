@@ -572,104 +572,115 @@
         #
         # /etc
         #
-        "/etc/lvm(/.*)?" = "gen_context(system_u:object_r:lvm_etc_t,s0)";
-        "/etc/lvm/\\.cache" = "-- gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/etc/lvm/cache(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/etc/lvm/archive(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/etc/lvm/backup(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/etc/lvm/lock(/.*)?" = "gen_context(system_u:object_r:lvm_lock_t,s0)";
+        "/etc/lvm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_etc_t,s0)";
+        "/etc/lvm/\\.cache" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvm/cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvm/archive(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvm/backup(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvm/lock(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_lock_t,s0)";
 
-        "/etc/lvmtab(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/etc/lvmtab\\.d(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvmtab(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/lvmtab\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
 
-        "/etc/multipath(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/etc/multipath(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/bin/cryptsetup" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dmeventd" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dmraid" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dmsetup" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dmsetup\\.static" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/e2fsadm" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvchange" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvcreate" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvdisplay" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvextend" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvm" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmetad" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvm\\.static" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmchange" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmdiskscan" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmiopversion" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmsadc" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvmsar" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvreduce" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvremove" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvrename" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvresize" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvs" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lvscan" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/multipath" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/multipathd" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/multipath\\.static" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvchange" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvcreate" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvdata" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvdisplay" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvmove" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvremove" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvs" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pvscan" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/veritysetup" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgcfgbackup" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgcfgrestore" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgchange" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgchange\\.static" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgck" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgcreate" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgdisplay" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgexport" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgextend" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgimport" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgmerge" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgmknodes" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgreduce" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgremove" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgrename" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgs" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgscan" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgscan\\.static" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgsplit" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vgwrapper" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cryptsetup" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmeventd" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmraid" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmsetup" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dmsetup\\.static" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/e2fsadm" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvchange" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvcreate" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvdisplay" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvextend" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvm" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmetad" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvm\\.static" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmchange" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmdiskscan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmiopversion" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmsadc" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvmsar" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvreduce" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvremove" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvrename" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvresize" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvs" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lvscan" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/multipath" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/multipathd" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/multipath\\.static" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvchange" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvcreate" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvdata" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvdisplay" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvmove" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvremove" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvs" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pvscan" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/veritysetup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgcfgbackup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgcfgrestore" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgchange" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgchange\\.static" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgck" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgcreate" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgdisplay" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgexport" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgextend" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgimport" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgmerge" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgmknodes" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgreduce" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgremove" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgrename" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgs" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgscan" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgscan\\.static" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgsplit" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vgwrapper" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/lvm-10/.*" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
-        "/nix/store/[^/]+/lib/lvm-200/.*" = "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/lib/lvm-10/.*" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+        "/nix/store/[^/]+/lib/lvm-200/.*" = lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/systemd-cryptsetup" =
-          "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/systemd-veritysetup" =
-          "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/blk-availability.*" =
-          "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/dm-event.*" =
-          "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
-        "/nix/store/[^/]+/lib/systemd/system/lvm2-.*" = "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system/lvm2-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/lvm2-lvmetad.*" =
-          "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_unit_t,s0)";
         "/nix/store/[^/]+/lib/udev/udisks-lvm-pv-export" =
-          "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lvm_exec_t,s0)";
 
         #
         # /var
         #
-        "/var/cache/multipathd(/.*)?" = "gen_context(system_u:object_r:lvm_metadata_t,s0)";
-        "/var/lib/multipath(/.*)?" = "gen_context(system_u:object_r:lvm_var_lib_t,s0)";
-        "/var/lock/lvm(/.*)?" = "gen_context(system_u:object_r:lvm_lock_t,s0)";
-        "/run/cryptsetup(/.*)?" = "gen_context(system_u:object_r:lvm_runtime_t,s0)";
-        "/run/multipathd\\.sock" = "-s gen_context(system_u:object_r:lvm_runtime_t,s0)";
-        "/run/dmevent.*" = "gen_context(system_u:object_r:lvm_runtime_t,s0)";
-        "/run/lvm(/.*)?" = "gen_context(system_u:object_r:lvm_runtime_t,s0)";
+        "/var/cache/multipathd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_metadata_t,s0)";
+        "/var/lib/multipath(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_var_lib_t,s0)";
+        "/var/lock/lvm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_lock_t,s0)";
+        "/run/cryptsetup(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_runtime_t,s0)";
+        "/run/multipathd\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:lvm_runtime_t,s0)";
+        "/run/dmevent.*" = lib.mkDefault "gen_context(system_u:object_r:lvm_runtime_t,s0)";
+        "/run/lvm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lvm_runtime_t,s0)";
       };
     };
   };

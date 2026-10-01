@@ -1107,62 +1107,79 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.spamassassin(/.*)?" = "gen_context(system_u:object_r:spamassassin_home_t,s0)";
-        "HOME_DIR/\\.spamd(/.*)?" = "gen_context(system_u:object_r:spamd_home_t,s0)";
+        "HOME_DIR/\\.spamassassin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamassassin_home_t,s0)";
+        "HOME_DIR/\\.spamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_home_t,s0)";
 
         "/etc/rc\\.d/init\\.d/spamassassin" =
-          "-- gen_context(system_u:object_r:spamassassin_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/spamd" = "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/spampd" = "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/mimedefang.*" = "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:spamassassin_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/spamd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/spampd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mimedefang.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_initrc_exec_t,s0)";
 
-        "/etc/rspamd(/.*)?" = "gen_context(system_u:object_r:spamd_etc_t,s0)";
+        "/etc/rspamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/mimedefang" = "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mimedefang-multiplexor" = "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sa-learn" = "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/spamassassin" = "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/spamc" = "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/spamd" = "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/spampd" = "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sa-update" = "-- gen_context(system_u:object_r:spamd_update_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rspamd[^/]+" = "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rspamc-[^/]+" = "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rspamadm-[^/]+" = "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mimedefang" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mimedefang-multiplexor" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sa-learn" = lib.mkDefault "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/spamassassin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/spamc" = lib.mkDefault "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/spamd" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/spampd" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sa-update" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_update_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rspamd[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rspamc-[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rspamadm-[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:spamc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/spamassassin\\.service" =
-          "-- gen_context(system_u:object_r:spamassassin_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:spamassassin_unit_t,s0)";
 
         "/nix/store/[^/]+/share/rspamd/elastic(/.*)?" =
-          "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
         "/nix/store/[^/]+/share/rspamd/languages(/.*)?" =
-          "gen_context(system_u:object_r:spamd_compiled_t,s0)";
-        "/nix/store/[^/]+/share/rspamd/lualib(/.*)?" = "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+        "/nix/store/[^/]+/share/rspamd/lualib(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
         "/nix/store/[^/]+/share/rspamd/plugins(/.*)?" =
-          "gen_context(system_u:object_r:spamd_compiled_t,s0)";
-        "/nix/store/[^/]+/share/rspamd/rules(/.*)?" = "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+        "/nix/store/[^/]+/share/rspamd/rules(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
 
-        "/var/lib/spamassassin(/.*)?" = "gen_context(system_u:object_r:spamd_var_lib_t,s0)";
-        "/var/lib/spamassassin/compiled(/.*)?" = "gen_context(system_u:object_r:spamd_compiled_t,s0)";
-        "/var/lib/rspamd(/.*)?" = "gen_context(system_u:object_r:spamd_var_lib_t,s0)";
-        "/var/lib/rspamd/rspamd\\.sock" = "-s gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/var/lib/spamassassin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_var_lib_t,s0)";
+        "/var/lib/spamassassin/compiled(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamd_compiled_t,s0)";
+        "/var/lib/rspamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_var_lib_t,s0)";
+        "/var/lib/rspamd/rspamd\\.sock" =
+          lib.mkDefault "-s gen_context(system_u:object_r:spamd_runtime_t,s0)";
 
-        "/var/log/spamd\\.log.*" = "-- gen_context(system_u:object_r:spamd_log_t,s0)";
-        "/var/log/rspamd(/.*)?" = "gen_context(system_u:object_r:spamd_log_t,s0)";
-        "/var/log/rspamd\\.log.*" = "-- gen_context(system_u:object_r:spamd_log_t,s0)";
-        "/var/log/mimedefang.*" = "-- gen_context(system_u:object_r:spamd_log_t,s0)";
+        "/var/log/spamd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_log_t,s0)";
+        "/var/log/rspamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_log_t,s0)";
+        "/var/log/rspamd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_log_t,s0)";
+        "/var/log/mimedefang.*" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_log_t,s0)";
 
-        "/var/vmail/\\.spamassassin(/.*)?" = "gen_context(system_u:object_r:spamassassin_home_t,s0)";
+        "/var/vmail/\\.spamassassin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamassassin_home_t,s0)";
 
-        "/run/spamassassin(/.*)?" = "gen_context(system_u:object_r:spamd_runtime_t,s0)";
-        "/run/spamassassin\\.pid" = "-- gen_context(system_u:object_r:spamd_runtime_t,s0)";
-        "/run/spamd\\.pid" = "-- gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/run/spamassassin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/run/spamassassin\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/run/spamd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:spamd_runtime_t,s0)";
 
-        "/var/spool/spamassassin(/.*)?" = "gen_context(system_u:object_r:spamd_spool_t,s0)";
-        "/var/spool/spamd(/.*)?" = "gen_context(system_u:object_r:spamd_spool_t,s0)";
-        "/var/spool/spampd(/.*)?" = "gen_context(system_u:object_r:spamd_spool_t,s0)";
-        "/var/spool/MD-Quarantine(/.*)?" = "gen_context(system_u:object_r:spamd_runtime_t,s0)";
-        "/var/spool/MIMEDefang(/.*)?" = "gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/var/spool/spamassassin(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_spool_t,s0)";
+        "/var/spool/spamd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_spool_t,s0)";
+        "/var/spool/spampd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_spool_t,s0)";
+        "/var/spool/MD-Quarantine(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:spamd_runtime_t,s0)";
+        "/var/spool/MIMEDefang(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:spamd_runtime_t,s0)";
       };
     };
   };

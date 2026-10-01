@@ -52,7 +52,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/memlockd" = "-- gen_context(system_u:object_r:memlockd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/memlockd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:memlockd_exec_t,s0)";
       };
     };
   };

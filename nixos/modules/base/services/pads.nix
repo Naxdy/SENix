@@ -109,16 +109,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/pads-ether-codes" = "-- gen_context(system_u:object_r:pads_config_t,s0)";
-        "/etc/pads-signature-list" = "-- gen_context(system_u:object_r:pads_config_t,s0)";
-        "/etc/pads\\.conf" = "-- gen_context(system_u:object_r:pads_config_t,s0)";
-        "/etc/pads-assets\\.csv" = "-- gen_context(system_u:object_r:pads_config_t,s0)";
+        "/etc/pads-ether-codes" = lib.mkDefault "-- gen_context(system_u:object_r:pads_config_t,s0)";
+        "/etc/pads-signature-list" = lib.mkDefault "-- gen_context(system_u:object_r:pads_config_t,s0)";
+        "/etc/pads\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:pads_config_t,s0)";
+        "/etc/pads-assets\\.csv" = lib.mkDefault "-- gen_context(system_u:object_r:pads_config_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/pads" = "-- gen_context(system_u:object_r:pads_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pads" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pads_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pads" = "-- gen_context(system_u:object_r:pads_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pads" = lib.mkDefault "-- gen_context(system_u:object_r:pads_exec_t,s0)";
 
-        "/run/pads\\.pid" = "-- gen_context(system_u:object_r:pads_runtime_t,s0)";
+        "/run/pads\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:pads_runtime_t,s0)";
       };
     };
   };

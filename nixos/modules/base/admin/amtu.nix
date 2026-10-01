@@ -122,9 +122,10 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/amtu" = "-- gen_context(system_u:object_r:amtu_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/amtu" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amtu_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/amtu" = "-- gen_context(system_u:object_r:amtu_exec_t,s0)";
+        "/nix/store/[^/]+/bin/amtu" = lib.mkDefault "-- gen_context(system_u:object_r:amtu_exec_t,s0)";
       };
     };
   };

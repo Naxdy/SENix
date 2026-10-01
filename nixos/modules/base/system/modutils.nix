@@ -391,28 +391,32 @@
     '';
     fileContext = {
       rules = {
-        "/etc/modules\\.conf.*" = "-- gen_context(system_u:object_r:modules_conf_t,s0)";
-        "/etc/modprobe\\.conf.*" = "-- gen_context(system_u:object_r:modules_conf_t,s0)";
-        "/etc/modprobe\\.d(/.*)?" = "gen_context(system_u:object_r:modules_conf_t,s0)";
+        "/etc/modules\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:modules_conf_t,s0)";
+        "/etc/modprobe\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:modules_conf_t,s0)";
+        "/etc/modprobe\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:modules_conf_t,s0)";
 
-        "/run/tmpfiles\\.d/kmod\\.conf" = "-- gen_context(system_u:object_r:kmod_tmpfiles_conf_t,s0)";
+        "/run/tmpfiles\\.d/kmod\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_tmpfiles_conf_t,s0)";
         "/run/tmpfiles\\.d/static-nodes\\.conf" =
-          "-- gen_context(system_u:object_r:kmod_tmpfiles_conf_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_tmpfiles_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/depmod.*" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/depmod.*" = lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
         "/nix/store/[^/]+/bin/generate-modprobe\\.conf" =
-          "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/insmod.*" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kmod" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/modprobe.*" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/modules-update" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rmmod.*" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
-        "/nix/store/[^/]+/bin/update-modules" = "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/insmod.*" = lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kmod" = lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/modprobe.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/modules-update" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rmmod.*" = lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
+        "/nix/store/[^/]+/bin/update-modules" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kmod_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/modules/[^/]+/modules\\..+" =
-          "-- gen_context(system_u:object_r:modules_dep_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:modules_dep_t,s0)";
         "/nix/store/[^/]+/lib/modules/modprobe\\.conf" =
-          "-- gen_context(system_u:object_r:modules_conf_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:modules_conf_t,s0)";
       };
     };
   };

@@ -377,18 +377,21 @@
     fileContext = {
       rules = {
         # WirePlumber session manager executable.
-        "/nix/store/[^/]+/bin/wireplumber" = "-- gen_context(system_u:object_r:wireplumber_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wireplumber" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wireplumber_exec_t,s0)";
 
         # System-service runtime directory (/run/wireplumber).
-        "/run/wireplumber(/.*)?" = "gen_context(system_u:object_r:wireplumber_runtime_t,s0)";
+        "/run/wireplumber(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wireplumber_runtime_t,s0)";
 
         # Persistent system-service state.
-        "/var/lib/wireplumber(/.*)?" = "gen_context(system_u:object_r:wireplumber_var_lib_t,s0)";
+        "/var/lib/wireplumber(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:wireplumber_var_lib_t,s0)";
 
         # User home configuration and state.
-        "HOME_DIR/\\.config/wireplumber(/.*)?" = "gen_context(system_u:object_r:wireplumber_home_t,s0)";
+        "HOME_DIR/\\.config/wireplumber(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:wireplumber_home_t,s0)";
         "HOME_DIR/\\.local/share/wireplumber(/.*)?" =
-          "gen_context(system_u:object_r:wireplumber_home_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:wireplumber_home_t,s0)";
       };
     };
   };

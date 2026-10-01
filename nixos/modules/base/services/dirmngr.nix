@@ -271,24 +271,28 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.gnupg/crls\\.d(/.+)?" = "gen_context(system_u:object_r:dirmngr_home_t,s0)";
+        "HOME_DIR/\\.gnupg/crls\\.d(/.+)?" =
+          lib.mkDefault "gen_context(system_u:object_r:dirmngr_home_t,s0)";
 
-        "/etc/dirmngr(/.*)?" = "gen_context(system_u:object_r:dirmngr_conf_t,s0)";
+        "/etc/dirmngr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dirmngr_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/dirmngr" = "-- gen_context(system_u:object_r:dirmngr_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dirmngr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dirmngr_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dirmngr" = "-- gen_context(system_u:object_r:dirmngr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dirmngr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dirmngr_exec_t,s0)";
 
-        "/var/log/dirmngr(/.*)?" = "gen_context(system_u:object_r:dirmngr_log_t,s0)";
+        "/var/log/dirmngr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dirmngr_log_t,s0)";
 
-        "/var/lib/dirmngr(/.*)?" = "gen_context(system_u:object_r:dirmngr_var_lib_t,s0)";
-        "/var/cache/dirmngr(/.*)?" = "gen_context(system_u:object_r:dirmngr_var_lib_t,s0)";
+        "/var/lib/dirmngr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dirmngr_var_lib_t,s0)";
+        "/var/cache/dirmngr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dirmngr_var_lib_t,s0)";
 
-        "/run/dirmngr\\.pid" = "-- gen_context(system_u:object_r:dirmngr_runtime_t,s0)";
+        "/run/dirmngr\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dirmngr_runtime_t,s0)";
 
-        "/run/dirmngr(/.*)?" = "gen_context(system_u:object_r:dirmngr_runtime_t,s0)";
+        "/run/dirmngr(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dirmngr_runtime_t,s0)";
 
-        "/run/user/%{USERID}/gnupg/S\\.dirmngr" = "-s gen_context(system_u:object_r:dirmngr_tmp_t,s0)";
+        "/run/user/%{USERID}/gnupg/S\\.dirmngr" =
+          lib.mkDefault "-s gen_context(system_u:object_r:dirmngr_tmp_t,s0)";
       };
     };
   };

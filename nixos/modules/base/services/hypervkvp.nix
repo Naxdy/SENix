@@ -208,17 +208,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/hypervkvpd" = "-- gen_context(system_u:object_r:hypervkvpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/hypervkvpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hypervkvpd_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/hypervkvpd.*" =
-          "-- gen_context(system_u:object_r:hypervkvpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:hypervkvpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/hypervvssd.*" =
-          "-- gen_context(system_u:object_r:hypervvssd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:hypervvssd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/hypervkvpd" = "-- gen_context(system_u:object_r:hypervkvpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hypervvssd" = "-- gen_context(system_u:object_r:hypervvssd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hypervkvpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hypervkvpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hypervvssd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hypervvssd_exec_t,s0)";
 
-        "/var/lib/hyperv(/.*)?" = "gen_context(system_u:object_r:hypervkvpd_var_lib_t,s0)";
+        "/var/lib/hyperv(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:hypervkvpd_var_lib_t,s0)";
       };
     };
   };

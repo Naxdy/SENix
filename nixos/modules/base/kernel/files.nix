@@ -8274,124 +8274,128 @@
         #
         # /
         #
-        "/.*" = "gen_context(system_u:object_r:default_t,s0)";
-        "/" = "-d gen_context(system_u:object_r:root_t,s0)";
-        "/\\.journal" = "<<none>>";
-        "/afs" = "-d gen_context(system_u:object_r:mnt_t,s0)";
-        "/initrd\\.img.*" = "-l gen_context(system_u:object_r:boot_t,s0)";
-        "/vmlinuz.*" = "-l gen_context(system_u:object_r:boot_t,s0)";
+        "/.*" = lib.mkDefault "gen_context(system_u:object_r:default_t,s0)";
+        "/" = lib.mkDefault "-d gen_context(system_u:object_r:root_t,s0)";
+        "/\\.journal" = lib.mkDefault "<<none>>";
+        "/afs" = lib.mkDefault "-d gen_context(system_u:object_r:mnt_t,s0)";
+        "/initrd\\.img.*" = lib.mkDefault "-l gen_context(system_u:object_r:boot_t,s0)";
+        "/vmlinuz.*" = lib.mkDefault "-l gen_context(system_u:object_r:boot_t,s0)";
 
         #
         # /boot
         #
-        "/boot" = "-d gen_context(system_u:object_r:boot_t,s0)";
-        "/boot/.*" = "gen_context(system_u:object_r:boot_t,s0)";
-        "/boot/\\.journal" = "<<none>>";
-        "/boot/efi(/.*)?/System\\.map(-.*)?" = "-- gen_context(system_u:object_r:system_map_t,s0)";
-        "/boot/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/boot/lost\\+found/.*" = "<<none>>";
-        "/boot/System\\.map(-.*)?" = "-- gen_context(system_u:object_r:system_map_t,s0)";
+        "/boot" = lib.mkDefault "-d gen_context(system_u:object_r:boot_t,s0)";
+        "/boot/.*" = lib.mkDefault "gen_context(system_u:object_r:boot_t,s0)";
+        "/boot/\\.journal" = lib.mkDefault "<<none>>";
+        "/boot/efi(/.*)?/System\\.map(-.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_map_t,s0)";
+        "/boot/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/boot/lost\\+found/.*" = lib.mkDefault "<<none>>";
+        "/boot/System\\.map(-.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:system_map_t,s0)";
 
         #
         # /efi
         #
-        "/efi" = "-d gen_context(system_u:object_r:boot_t,s0)";
+        "/efi" = lib.mkDefault "-d gen_context(system_u:object_r:boot_t,s0)";
 
         #
         # /emul
         #
-        "/emul" = "-d gen_context(system_u:object_r:usr_t,s0)";
+        "/emul" = lib.mkDefault "-d gen_context(system_u:object_r:usr_t,s0)";
 
         #
         # /etc
         #
-        "/etc" = "-d gen_context(system_u:object_r:etc_t,s0)";
-        "/etc/.*" = "gen_context(system_u:object_r:etc_t,s0)";
-        "/etc/\\.fstab\\.hal\\..+" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/blkid(/.*)?" = "gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/cmtab" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/fstab\\.REVOKE" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/ioctl\\.save" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/killpower" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/localtime" = "-l gen_context(system_u:object_r:etc_t,s0)";
-        "/etc/machine-id" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/mtab" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/mtab~[0-9]*" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/mtab\\.tmp" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/mtab\\.fuselock" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/nohotplug" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/nologin.*" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc" = lib.mkDefault "-d gen_context(system_u:object_r:etc_t,s0)";
+        "/etc/.*" = lib.mkDefault "gen_context(system_u:object_r:etc_t,s0)";
+        "/etc/\\.fstab\\.hal\\..+" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/blkid(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/cmtab" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/fstab\\.REVOKE" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/ioctl\\.save" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/killpower" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/localtime" = lib.mkDefault "-l gen_context(system_u:object_r:etc_t,s0)";
+        "/etc/machine-id" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/mtab" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/mtab~[0-9]*" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/mtab\\.tmp" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/mtab\\.fuselock" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/nohotplug" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/nologin.*" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
 
-        "/etc/cups/client\\.conf" = "-- gen_context(system_u:object_r:etc_t,s0)";
+        "/etc/cups/client\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:etc_t,s0)";
 
-        "/etc/ipsec\\.d/examples(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
+        "/etc/ipsec\\.d/examples(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_t,s0)";
 
-        "/etc/network/ifstate" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/network/ifstate" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
 
-        "/etc/ptal/ptal-printd-like" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/ptal/ptal-printd-like" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
 
-        "/etc/sysconfig/hwconf" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/sysconfig/iptables\\.save" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
-        "/etc/sysconfig/firstboot" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/sysconfig/hwconf" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/sysconfig/iptables\\.save" =
+          lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/etc/sysconfig/firstboot" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
 
         #
         # HOME_ROOT
         # expanded by genhomedircon
         #
-        "HOME_ROOT" = [
+        "HOME_ROOT" = lib.mkDefault [
           "-d gen_context(system_u:object_r:home_root_t,s0-mls_systemhigh)"
           "-l gen_context(system_u:object_r:home_root_t,s0)"
         ];
-        "HOME_ROOT/\\.journal" = "<<none>>";
-        "HOME_ROOT/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "HOME_ROOT/lost\\+found/.*" = "<<none>>";
+        "HOME_ROOT/\\.journal" = lib.mkDefault "<<none>>";
+        "HOME_ROOT/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "HOME_ROOT/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
         #
         # /initrd
         #
         # initrd mount point, only used during boot
-        "/initrd" = "-d gen_context(system_u:object_r:root_t,s0)";
+        "/initrd" = lib.mkDefault "-d gen_context(system_u:object_r:root_t,s0)";
 
         #
         # /lost+found
         #
-        "/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/lost\\+found" = lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
 
         #
         # /misc
         #
-        "/misc" = "-d gen_context(system_u:object_r:mnt_t,s0)";
+        "/misc" = lib.mkDefault "-d gen_context(system_u:object_r:mnt_t,s0)";
 
         #
         # /net
         #
-        "/net" = "-d gen_context(system_u:object_r:mnt_t,s0)";
+        "/net" = lib.mkDefault "-d gen_context(system_u:object_r:mnt_t,s0)";
 
         #
         # /opt
         #
-        "/opt" = "-d gen_context(system_u:object_r:usr_t,s0)";
+        "/opt" = lib.mkDefault "-d gen_context(system_u:object_r:usr_t,s0)";
 
         #
         # /run
         #
-        "/run" = [
+        "/run" = lib.mkDefault [
           "-d gen_context(system_u:object_r:var_run_t,s0-mls_systemhigh)"
           "-l gen_context(system_u:object_r:var_run_t,s0)"
         ];
-        "/run/shm" = "-l gen_context(system_u:object_r:var_run_t,s0)";
-        "/run/.*" = "<<none>>";
-        "/run/machine-id" = "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
+        "/run/shm" = lib.mkDefault "-l gen_context(system_u:object_r:var_run_t,s0)";
+        "/run/.*" = lib.mkDefault "<<none>>";
+        "/run/machine-id" = lib.mkDefault "-- gen_context(system_u:object_r:etc_runtime_t,s0)";
 
         #
         # /selinux
         #
-        "/selinux" = "-d <<none>>";
+        "/selinux" = lib.mkDefault "-d <<none>>";
 
         #
         # /srv
         #
-        "/srv" = [
+        "/srv" = lib.mkDefault [
           "-d gen_context(system_u:object_r:var_t,s0)"
           "-l gen_context(system_u:object_r:var_t,s0)"
         ];
@@ -8399,106 +8403,119 @@
         #
         # /tmp
         #
-        "/tmp" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/tmp/.*" = "<<none>>";
-        "/tmp/\\.journal" = "<<none>>";
+        "/tmp" = lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/tmp/.*" = lib.mkDefault "<<none>>";
+        "/tmp/\\.journal" = lib.mkDefault "<<none>>";
 
-        "/tmp/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/tmp/lost\\+found/.*" = "<<none>>";
+        "/tmp/lost\\+found" = lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/tmp/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/tmp/systemd-private-[^/]+" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/tmp/systemd-private-[^/]+/tmp" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/tmp/systemd-private-[^/]+/tmp/.*" = "<<none>>";
+        "/tmp/systemd-private-[^/]+" =
+          lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/tmp/systemd-private-[^/]+/tmp" =
+          lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/tmp/systemd-private-[^/]+/tmp/.*" = lib.mkDefault "<<none>>";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+" = "-d gen_context(system_u:object_r:usr_t,s0)";
-        "/nix/store/[^/]+/.*" = "gen_context(system_u:object_r:usr_t,s0)";
-        "/nix/store/[^/]+/\\.journal" = "<<none>>";
+        "/nix/store/[^/]+" = lib.mkDefault "-d gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/.*" = lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/\\.journal" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/doc(/.*)?/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/doc(/.*)?/lib(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
 
-        "/nix/store/[^/]+/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
+        "/nix/store/[^/]+/etc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_t,s0)";
 
         # Avoid calling m4's include by using en empty string
-        "/nix/store/[^/]+/include`'(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/include`'(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
 
-        "/nix/store/[^/]+/lib/modules(/.*)?" = "gen_context(system_u:object_r:modules_object_t,s0)";
+        "/nix/store/[^/]+/lib/modules(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:modules_object_t,s0)";
 
-        "/nix/store/[^/]+/local/\\.journal" = "<<none>>";
+        "/nix/store/[^/]+/local/\\.journal" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/local/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
+        "/nix/store/[^/]+/local/etc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_t,s0)";
 
         "/nix/store/[^/]+/local/lost\\+found" =
-          "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/nix/store/[^/]+/local/lost\\+found/.*" = "<<none>>";
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/nix/store/[^/]+/local/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/nix/store/[^/]+/lost\\+found/.*" = "<<none>>";
+        "/nix/store/[^/]+/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/nix/store/[^/]+/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/share/doc(/.*)?/README.*" = "gen_context(system_u:object_r:usr_t,s0)";
-        "/nix/store/[^/]+/share/docbook2X/xslt/man(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/share/doc(/.*)?/README.*" =
+          lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/share/docbook2X/xslt/man(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
 
-        "/nix/store/[^/]+/share/munin/plugins/plugin\\.sh" = "-- gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/share/munin/plugins/plugin\\.sh" =
+          lib.mkDefault "-- gen_context(system_u:object_r:usr_t,s0)";
 
-        "/nix/store/[^/]+/tmp" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/nix/store/[^/]+/tmp/.*" = "<<none>>";
+        "/nix/store/[^/]+/tmp" = lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/nix/store/[^/]+/tmp/.*" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/local/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
+        "/nix/store/[^/]+/local/src(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:src_t,s0)";
 
-        "/nix/store/[^/]+/src(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
-        "/nix/store/[^/]+/src/kernels/.+/lib(/.*)?" = "gen_context(system_u:object_r:usr_t,s0)";
+        "/nix/store/[^/]+/src(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:src_t,s0)";
+        "/nix/store/[^/]+/src/kernels/.+/lib(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:usr_t,s0)";
 
         #
         # /var
         #
-        "/var" = "-d gen_context(system_u:object_r:var_t,s0)";
-        "/var/.*" = "gen_context(system_u:object_r:var_t,s0)";
-        "/var/\\.journal" = "<<none>>";
+        "/var" = lib.mkDefault "-d gen_context(system_u:object_r:var_t,s0)";
+        "/var/.*" = lib.mkDefault "gen_context(system_u:object_r:var_t,s0)";
+        "/var/\\.journal" = lib.mkDefault "<<none>>";
 
-        "/var/db/.*\\.db" = "-- gen_context(system_u:object_r:etc_t,s0)";
+        "/var/db/.*\\.db" = lib.mkDefault "-- gen_context(system_u:object_r:etc_t,s0)";
 
-        "/var/ftp/etc(/.*)?" = "gen_context(system_u:object_r:etc_t,s0)";
+        "/var/ftp/etc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:etc_t,s0)";
 
-        "/var/lib(/.*)?" = "gen_context(system_u:object_r:var_lib_t,s0)";
+        "/var/lib(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_lib_t,s0)";
 
-        "/var/lib/dkms(/.*)?" = "gen_context(system_u:object_r:src_t,s0)";
+        "/var/lib/dkms(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:src_t,s0)";
 
-        "/var/lib/nfs/rpc_pipefs(/.*)?" = "<<none>>";
+        "/var/lib/nfs/rpc_pipefs(/.*)?" = lib.mkDefault "<<none>>";
 
-        "/var/lock" = [
+        "/var/lock" = lib.mkDefault [
           "-d gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)"
           "-l gen_context(system_u:object_r:var_lock_t,s0)"
         ];
-        "/var/lock/subsys" = "-d gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)";
-        "/var/lock/.*" = "<<none>>";
+        "/var/lock/subsys" = lib.mkDefault "-d gen_context(system_u:object_r:var_lock_t,s0-mls_systemhigh)";
+        "/var/lock/.*" = lib.mkDefault "<<none>>";
 
-        "/var/log/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/var/log/lost\\+found/.*" = "<<none>>";
+        "/var/log/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/var/log/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/var/log/audit/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/var/log/audit/lost\\+found/.*" = "<<none>>";
+        "/var/log/audit/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/var/log/audit/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/var/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/var/lost\\+found/.*" = "<<none>>";
+        "/var/lost\\+found" = lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/var/lost\\+found/.*" = lib.mkDefault "<<none>>";
 
-        "/var/run" = "-l gen_context(system_u:object_r:var_run_t,s0)";
+        "/var/run" = lib.mkDefault "-l gen_context(system_u:object_r:var_run_t,s0)";
 
-        "/var/spool(/.*)?" = "gen_context(system_u:object_r:var_spool_t,s0)";
-        "/var/spool/postfix/pid" = "-d gen_context(system_u:object_r:var_run_t,s0)";
+        "/var/spool(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_spool_t,s0)";
+        "/var/spool/postfix/pid" = lib.mkDefault "-d gen_context(system_u:object_r:var_run_t,s0)";
 
-        "/var/tmp" = [
+        "/var/tmp" = lib.mkDefault [
           "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)"
           "-l gen_context(system_u:object_r:tmp_t,s0)"
         ];
-        "/var/tmp/.*" = "<<none>>";
-        "/var/tmp/lost\\+found" = "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
-        "/var/tmp/lost\\+found/.*" = "<<none>>";
-        "/var/tmp/systemd-private-[^/]+" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/var/tmp/systemd-private-[^/]+/tmp" = "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
-        "/var/tmp/systemd-private-[^/]+/tmp/.*" = "<<none>>";
-        "/var/tmp/vi\\.recover" = "-d gen_context(system_u:object_r:tmp_t,s0)";
+        "/var/tmp/.*" = lib.mkDefault "<<none>>";
+        "/var/tmp/lost\\+found" =
+          lib.mkDefault "-d gen_context(system_u:object_r:lost_found_t,mls_systemhigh)";
+        "/var/tmp/lost\\+found/.*" = lib.mkDefault "<<none>>";
+        "/var/tmp/systemd-private-[^/]+" =
+          lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/var/tmp/systemd-private-[^/]+/tmp" =
+          lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0-mls_systemhigh)";
+        "/var/tmp/systemd-private-[^/]+/tmp/.*" = lib.mkDefault "<<none>>";
+        "/var/tmp/vi\\.recover" = lib.mkDefault "-d gen_context(system_u:object_r:tmp_t,s0)";
       };
     };
   };

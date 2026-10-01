@@ -140,8 +140,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/obex-data-server" = "-- gen_context(system_u:object_r:obex_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/bluetooth/obexd" = "-- gen_context(system_u:object_r:obex_exec_t,s0)";
+        "/nix/store/[^/]+/bin/obex-data-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:obex_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/bluetooth/obexd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:obex_exec_t,s0)";
       };
     };
   };

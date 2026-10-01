@@ -408,15 +408,18 @@
         # "/usr/bin/pipewire" = "-- gen_context(system_u:object_r:pipewire_exec_t,s0)";
 
         # System-service runtime directory (/run/pipewire).
-        "/run/pipewire(/.*)?" = "gen_context(system_u:object_r:pipewire_runtime_t,s0)";
-        "/run/user/%{USERID}/pipewire-.*" = "-s gen_context(system_u:object_r:pipewire_runtime_t,s0)";
+        "/run/pipewire(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pipewire_runtime_t,s0)";
+        "/run/user/%{USERID}/pipewire-.*" =
+          lib.mkDefault "-s gen_context(system_u:object_r:pipewire_runtime_t,s0)";
 
         # Persistent system-service state.
-        "/var/lib/pipewire(/.*)?" = "gen_context(system_u:object_r:pipewire_var_lib_t,s0)";
+        "/var/lib/pipewire(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pipewire_var_lib_t,s0)";
 
         # User home configuration and state.
-        "HOME_DIR/\\.config/pipewire(/.*)?" = "gen_context(system_u:object_r:pipewire_home_t,s0)";
-        "HOME_DIR/\\.local/share/pipewire(/.*)?" = "gen_context(system_u:object_r:pipewire_home_t,s0)";
+        "HOME_DIR/\\.config/pipewire(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pipewire_home_t,s0)";
+        "HOME_DIR/\\.local/share/pipewire(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pipewire_home_t,s0)";
       };
     };
   };

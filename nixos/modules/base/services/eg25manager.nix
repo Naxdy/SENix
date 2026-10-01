@@ -101,7 +101,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/eg25-manager" = "-- gen_context(system_u:object_r:eg25manager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/eg25-manager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:eg25manager_exec_t,s0)";
       };
     };
   };

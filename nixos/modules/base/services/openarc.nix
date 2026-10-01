@@ -145,19 +145,21 @@
     '';
     fileContext = {
       rules = {
-        "/etc/openarc/keys(/.*)?" = "gen_context(system_u:object_r:openarc_milter_private_key_t,s0)";
+        "/etc/openarc/keys(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:openarc_milter_private_key_t,s0)";
 
         "/etc/rc\\.d/init\\.d/openarc" =
-          "-- gen_context(system_u:object_r:openarc_milter_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openarc_milter_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/openarc" = "-- gen_context(system_u:object_r:openarc_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openarc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openarc_milter_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/openarc\\.service" =
-          "-- gen_context(system_u:object_r:openarc_milter_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:openarc_milter_unit_t,s0)";
 
-        "/run/openarc(/.*)?" = "gen_context(system_u:object_r:openarc_milter_data_t,s0)";
+        "/run/openarc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openarc_milter_data_t,s0)";
 
-        "/var/run/openarc(/.*)?" = "gen_context(system_u:object_r:openarc_milter_data_t,s0)";
+        "/var/run/openarc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openarc_milter_data_t,s0)";
       };
     };
   };

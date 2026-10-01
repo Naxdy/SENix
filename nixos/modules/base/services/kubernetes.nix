@@ -1739,19 +1739,22 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.kube(/.*)?" = "gen_context(system_u:object_r:kubernetes_home_t,s0)";
+        "HOME_DIR/\\.kube(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kubernetes_home_t,s0)";
 
-        "/etc/kubernetes(/.*)?" = "gen_context(system_u:object_r:kubernetes_config_t,s0)";
+        "/etc/kubernetes(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:kubernetes_config_t,s0)";
 
-        "/nix/store/[^/]+/bin/kubectl" = "-- gen_context(system_u:object_r:kubectl_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kubelet" = "-- gen_context(system_u:object_r:kubelet_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kubeadm" = "-- gen_context(system_u:object_r:kubeadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kubectl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kubectl_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kubelet" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kubelet_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kubeadm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kubeadm_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/kubernetes(/.*)?" =
-          "gen_context(system_u:object_r:kubernetes_plugin_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:kubernetes_plugin_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*kubelet.*" =
-          "-- gen_context(system_u:object_r:kubernetes_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kubernetes_unit_t,s0)";
       };
     };
   };

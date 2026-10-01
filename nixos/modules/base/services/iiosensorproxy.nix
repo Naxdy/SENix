@@ -110,7 +110,7 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/iio-sensor-proxy" =
-          "-- gen_context(system_u:object_r:iiosensorproxy_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iiosensorproxy_exec_t,s0)";
       };
     };
   };

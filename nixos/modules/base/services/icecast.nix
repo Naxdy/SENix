@@ -264,14 +264,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/icecast" = "-- gen_context(system_u:object_r:icecast_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/icecast" =
+          lib.mkDefault "-- gen_context(system_u:object_r:icecast_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/icecast" = "-- gen_context(system_u:object_r:icecast_exec_t,s0)";
+        "/nix/store/[^/]+/bin/icecast" =
+          lib.mkDefault "-- gen_context(system_u:object_r:icecast_exec_t,s0)";
 
-        "/var/log/icecast(/.*)?" = "gen_context(system_u:object_r:icecast_log_t,s0)";
+        "/var/log/icecast(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:icecast_log_t,s0)";
 
-        "/run/icecast(/.*)?" = "gen_context(system_u:object_r:icecast_runtime_t,s0)";
-        "/run/icecast\\.pid" = "-- gen_context(system_u:object_r:icecast_runtime_t,s0)";
+        "/run/icecast(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:icecast_runtime_t,s0)";
+        "/run/icecast\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:icecast_runtime_t,s0)";
       };
     };
   };

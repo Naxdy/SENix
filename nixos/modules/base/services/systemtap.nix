@@ -152,18 +152,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/stap-server(/.*)?" = "-- gen_context(system_u:object_r:stapserver_conf_t,s0)";
+        "/etc/stap-server(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:stapserver_conf_t,s0)";
 
         "/etc/rc\\.d/init\\.d/stap-server" =
-          "-- gen_context(system_u:object_r:stapserver_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:stapserver_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/stap-server" = "-- gen_context(system_u:object_r:stapserver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/stap-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:stapserver_exec_t,s0)";
 
-        "/var/lib/stap-server(/.*)?" = "gen_context(system_u:object_r:stapserver_var_lib_t,s0)";
+        "/var/lib/stap-server(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:stapserver_var_lib_t,s0)";
 
-        "/var/log/stap-server(/.*)?" = "gen_context(system_u:object_r:stapserver_log_t,s0)";
+        "/var/log/stap-server(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:stapserver_log_t,s0)";
 
-        "/run/stap-server(/.*)?" = "gen_context(system_u:object_r:stapserver_runtime_t,s0)";
+        "/run/stap-server(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:stapserver_runtime_t,s0)";
       };
     };
   };

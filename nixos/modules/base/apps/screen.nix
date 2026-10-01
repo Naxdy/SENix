@@ -285,16 +285,18 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.config/tmux(/.*)?" = "-- gen_context(system_u:object_r:screen_home_t,s0)";
-        "HOME_DIR/\\.screen(/.*)?" = "gen_context(system_u:object_r:screen_home_t,s0)";
-        "HOME_DIR/\\.screenrc" = "-- gen_context(system_u:object_r:screen_home_t,s0)";
-        "HOME_DIR/\\.tmux\\.conf" = "-- gen_context(system_u:object_r:screen_home_t,s0)";
+        "HOME_DIR/\\.config/tmux(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:screen_home_t,s0)";
+        "HOME_DIR/\\.screen(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:screen_home_t,s0)";
+        "HOME_DIR/\\.screenrc" = lib.mkDefault "-- gen_context(system_u:object_r:screen_home_t,s0)";
+        "HOME_DIR/\\.tmux\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:screen_home_t,s0)";
 
-        "/run/screen(/.*)?" = "gen_context(system_u:object_r:screen_runtime_t,s0)";
-        "/run/tmux(/.*)?" = "gen_context(system_u:object_r:screen_runtime_t,s0)";
+        "/run/screen(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:screen_runtime_t,s0)";
+        "/run/tmux(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:screen_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/screen.*" = "-- gen_context(system_u:object_r:screen_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tmux" = "-- gen_context(system_u:object_r:screen_exec_t,s0)";
+        "/nix/store/[^/]+/bin/screen.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:screen_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tmux" = lib.mkDefault "-- gen_context(system_u:object_r:screen_exec_t,s0)";
       };
     };
   };

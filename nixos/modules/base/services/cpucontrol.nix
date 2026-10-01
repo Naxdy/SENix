@@ -123,14 +123,18 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/firmware/microcode.*\\.dat" =
-          "-- gen_context(system_u:object_r:cpucontrol_conf_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cpucontrol_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/cpufreqd" = "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cpuspeed" = "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
-        "/nix/store/[^/]+/bin/microcode_ctl" = "-- gen_context(system_u:object_r:cpucontrol_exec_t,s0)";
-        "/nix/store/[^/]+/bin/powernowd" = "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cpufreqd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cpuspeed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
+        "/nix/store/[^/]+/bin/microcode_ctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cpucontrol_exec_t,s0)";
+        "/nix/store/[^/]+/bin/powernowd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cpuspeed_exec_t,s0)";
 
-        "/run/cpufreqd\\.pid" = "-- gen_context(system_u:object_r:cpuspeed_runtime_t,s0)";
+        "/run/cpufreqd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:cpuspeed_runtime_t,s0)";
       };
     };
   };

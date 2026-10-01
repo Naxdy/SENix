@@ -279,30 +279,32 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/apcupsd" = "-- gen_context(system_u:object_r:apcupsd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/apcupsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/apcupsd.*\\.service" =
-          "-- gen_context(system_u:object_r:apcupsd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/apcupsd" = "-- gen_context(system_u:object_r:apcupsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apcupsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_exec_t,s0)";
 
-        "/var/lock/subsys/apcupsd" = "-- gen_context(system_u:object_r:apcupsd_lock_t,s0)";
+        "/var/lock/subsys/apcupsd" = lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_lock_t,s0)";
 
-        "/var/log/apcupsd\\.events.*" = "-- gen_context(system_u:object_r:apcupsd_log_t,s0)";
-        "/var/log/apcupsd\\.status.*" = "-- gen_context(system_u:object_r:apcupsd_log_t,s0)";
+        "/var/log/apcupsd\\.events.*" = lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_log_t,s0)";
+        "/var/log/apcupsd\\.status.*" = lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_log_t,s0)";
 
-        "/run/apcupsd\\.pid" = "-- gen_context(system_u:object_r:apcupsd_runtime_t,s0)";
+        "/run/apcupsd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:apcupsd_runtime_t,s0)";
 
         "/var/www/apcupsd/multimon\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
         "/var/www/apcupsd/upsfstats\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
         "/var/www/apcupsd/upsimage\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
         "/var/www/apcupsd/upsstats\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
         "/var/www/cgi-bin/apcgui(/.*)?" =
-          "gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_apcupsd_cgi_script_exec_t,s0)";
       };
     };
   };

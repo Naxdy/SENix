@@ -188,10 +188,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/cdrecord" = "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cdrskin" = "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
-        "/nix/store/[^/]+/bin/growisofs" = "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wodim" = "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cdrecord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cdrskin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/growisofs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wodim" = lib.mkDefault "-- gen_context(system_u:object_r:cdrecord_exec_t,s0)";
       };
     };
   };

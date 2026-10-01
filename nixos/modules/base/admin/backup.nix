@@ -158,11 +158,11 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/aptitude" = "-- gen_context(system_u:object_r:backup_exec_t,s0)";
-        "/etc/cron\\.daily/passwd" = "-- gen_context(system_u:object_r:backup_exec_t,s0)";
-        "/etc/cron\\.daily/standard" = "-- gen_context(system_u:object_r:backup_exec_t,s0)";
+        "/etc/cron\\.daily/aptitude" = lib.mkDefault "-- gen_context(system_u:object_r:backup_exec_t,s0)";
+        "/etc/cron\\.daily/passwd" = lib.mkDefault "-- gen_context(system_u:object_r:backup_exec_t,s0)";
+        "/etc/cron\\.daily/standard" = lib.mkDefault "-- gen_context(system_u:object_r:backup_exec_t,s0)";
 
-        "/var/backups(/.*)?" = "gen_context(system_u:object_r:backup_store_t,s0)";
+        "/var/backups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:backup_store_t,s0)";
       };
     };
   };

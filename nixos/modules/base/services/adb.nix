@@ -172,7 +172,7 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/adbd" = "-- gen_context(system_u:object_r:adbd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/adbd" = lib.mkDefault "-- gen_context(system_u:object_r:adbd_exec_t,s0)";
       };
     };
   };

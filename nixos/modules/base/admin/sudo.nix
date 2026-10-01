@@ -306,7 +306,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/sudo(edit)?" = "-- gen_context(system_u:object_r:sudo_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sudo(edit)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sudo_exec_t,s0)";
       };
     };
   };

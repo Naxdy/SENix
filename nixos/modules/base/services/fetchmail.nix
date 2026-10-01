@@ -159,21 +159,25 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.fetchmailrc" = "-- gen_context(system_u:object_r:fetchmail_home_t,s0)";
+        "HOME_DIR/\\.fetchmailrc" = lib.mkDefault "-- gen_context(system_u:object_r:fetchmail_home_t,s0)";
 
-        "/etc/fetchmailrc" = "-- gen_context(system_u:object_r:fetchmail_etc_t,s0)";
+        "/etc/fetchmailrc" = lib.mkDefault "-- gen_context(system_u:object_r:fetchmail_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/fetchmail" = "-- gen_context(system_u:object_r:fetchmail_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/fetchmail" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fetchmail_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/fetchmail" = "-- gen_context(system_u:object_r:fetchmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fetchmail" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fetchmail_exec_t,s0)";
 
-        "/var/lib/fetchmail(/.*)?" = "gen_context(system_u:object_r:fetchmail_uidl_cache_t,s0)";
+        "/var/lib/fetchmail(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fetchmail_uidl_cache_t,s0)";
 
-        "/var/log/fetchmail.*" = "gen_context(system_u:object_r:fetchmail_log_t,s0)";
+        "/var/log/fetchmail.*" = lib.mkDefault "gen_context(system_u:object_r:fetchmail_log_t,s0)";
 
-        "/var/mail/\\.fetchmail-UIDL-cache" = "-- gen_context(system_u:object_r:fetchmail_uidl_cache_t,s0)";
+        "/var/mail/\\.fetchmail-UIDL-cache" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fetchmail_uidl_cache_t,s0)";
 
-        "/run/fetchmail.*" = "gen_context(system_u:object_r:fetchmail_runtime_t,s0)";
+        "/run/fetchmail.*" = lib.mkDefault "gen_context(system_u:object_r:fetchmail_runtime_t,s0)";
       };
     };
   };

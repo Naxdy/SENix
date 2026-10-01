@@ -277,14 +277,17 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.rhosts" = "-- gen_context(system_u:object_r:rlogind_home_t,s0)";
-        "HOME_DIR/\\.rlogin" = "-- gen_context(system_u:object_r:rlogind_home_t,s0)";
+        "HOME_DIR/\\.rhosts" = lib.mkDefault "-- gen_context(system_u:object_r:rlogind_home_t,s0)";
+        "HOME_DIR/\\.rlogin" = lib.mkDefault "-- gen_context(system_u:object_r:rlogind_home_t,s0)";
 
-        "/nix/store/[^/]+/kerberos/sbin/klogind" = "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/klogind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/in\\.rlogind" = "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.rlogind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/telnetlogin" = "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
+        "/nix/store/[^/]+/lib/telnetlogin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rlogind_exec_t,s0)";
       };
     };
   };

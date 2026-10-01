@@ -426,6 +426,12 @@ def render_assignment(
     With ``commented`` set, every line is preceded by the indentation and a
     `# ` marker (nixfmt leaves such lines alone), turning the binding into a
     reference comment.
+
+    Uncommented bindings wrap their contexts in ``lib.mkDefault`` — multi-value
+    keys as one wrapped list, `key = lib.mkDefault [ ... ];`: the generated
+    rules are the low-priority defaults, so a hand-written declaration of the
+    same key (e.g. a `targeted` extension) takes precedence instead of
+    conflicting — file contexts must not repeat a wildcard.
     """
     pad = " " * indent
     marker = "# " if commented else ""
@@ -434,16 +440,36 @@ def render_assignment(
         return f"{pad}{marker}{' ' * extra}{text}"
 
     key = nix_dq(rule.text)
+    if commented:
+        if len(rules) == 1:
+            value = nix_dq(rules[0])
+            if len(key) + 3 + len(value) + 1 <= 100:
+                return line(0, f"{key} = {value};")
+            return "\n".join([line(0, f"{key} ="), line(2, f"{value};")])
+        if len(key) + 3 + 1 <= 100:
+            body = [line(2, nix_dq(value)) for value in rules]
+            return "\n".join([line(0, f"{key} = ["), *body, line(0, "];")])
+        body = [line(4, nix_dq(value)) for value in rules]
+        return "\n".join([line(0, f"{key} ="), line(2, "["), *body, line(2, "];")])
+
     if len(rules) == 1:
-        value = nix_dq(rules[0])
+        value = f"lib.mkDefault {nix_dq(rules[0])}"
         if len(key) + 3 + len(value) + 1 <= 100:
             return line(0, f"{key} = {value};")
         return "\n".join([line(0, f"{key} ="), line(2, f"{value};")])
-    if len(key) + 3 + 1 <= 100:
+    if len(key) + 3 + len("lib.mkDefault [") + 1 <= 100:
         body = [line(2, nix_dq(value)) for value in rules]
-        return "\n".join([line(0, f"{key} = ["), *body, line(0, "];")])
-    body = [line(4, nix_dq(value)) for value in rules]
-    return "\n".join([line(0, f"{key} ="), line(2, "["), *body, line(2, "];")])
+        return "\n".join([line(0, f"{key} = lib.mkDefault ["), *body, line(0, "];")])
+    body = [line(6, nix_dq(value)) for value in rules]
+    return "\n".join(
+        [
+            line(0, f"{key} ="),
+            line(2, "lib.mkDefault"),
+            line(4, "["),
+            *body,
+            line(4, "];"),
+        ]
+    )
 
 
 # --------------------------------------------------------------------------

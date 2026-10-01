@@ -722,44 +722,49 @@
     '';
     fileContext = {
       rules = {
-        "/etc/proftpd\\.conf" = "-- gen_context(system_u:object_r:ftpd_etc_t,s0)";
-        "/etc/pure-ftpd(/.*)?" = "gen_context(system_u:object_r:ftpd_etc_t,s0)";
+        "/etc/proftpd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_etc_t,s0)";
+        "/etc/pure-ftpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ftpd_etc_t,s0)";
 
-        "/etc/cron\\.monthly/proftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/etc/cron\\.monthly/proftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/vsftpd" = "-- gen_context(system_u:object_r:ftpd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/proftpd" = "-- gen_context(system_u:object_r:ftpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vsftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/proftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/ftpdctl" = "-- gen_context(system_u:object_r:ftpdctl_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ftpwho" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/in\\.ftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/muddleftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/proftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vsftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ftpdctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpdctl_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ftpwho" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.ftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/muddleftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/proftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vsftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
 
-        "/nix/store/[^/]+/kerberos/sbin/ftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/ftpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/proftpd.*\\.service" =
-          "-- gen_context(system_u:object_r:ftpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/vsftpd.*\\.service" =
-          "-- gen_context(system_u:object_r:ftpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ftpd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/pure-ftpd" = "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pure-ftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_exec_t,s0)";
 
-        "/run/proftpd.*" = "gen_context(system_u:object_r:ftpd_runtime_t,s0)";
-        "/run/pure-ftpd(/.*)?" = "gen_context(system_u:object_r:ftpd_runtime_t,s0)";
+        "/run/proftpd.*" = lib.mkDefault "gen_context(system_u:object_r:ftpd_runtime_t,s0)";
+        "/run/pure-ftpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ftpd_runtime_t,s0)";
 
         "/nix/store/[^/]+/libexec/webmin/vsftpd/webalizer/xfer_log" =
-          "-- gen_context(system_u:object_r:xferlog_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xferlog_t,s0)";
 
-        "/var/lock/subsys/.*ftpd" = "-- gen_context(system_u:object_r:ftpd_lock_t,s0)";
+        "/var/lock/subsys/.*ftpd" = lib.mkDefault "-- gen_context(system_u:object_r:ftpd_lock_t,s0)";
 
-        "/var/log/muddleftpd\\.log.*" = "-- gen_context(system_u:object_r:xferlog_t,s0)";
-        "/var/log/proftpd(/.*)?" = "gen_context(system_u:object_r:xferlog_t,s0)";
-        "/var/log/pure-ftpd(/.*)?" = "gen_context(system_u:object_r:xferlog_t,s0)";
-        "/var/log/vsftpd.*" = "-- gen_context(system_u:object_r:xferlog_t,s0)";
-        "/var/log/xferlog.*" = "-- gen_context(system_u:object_r:xferlog_t,s0)";
-        "/var/log/xferreport.*" = "-- gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/muddleftpd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/proftpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/pure-ftpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/vsftpd.*" = lib.mkDefault "-- gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/xferlog.*" = lib.mkDefault "-- gen_context(system_u:object_r:xferlog_t,s0)";
+        "/var/log/xferreport.*" = lib.mkDefault "-- gen_context(system_u:object_r:xferlog_t,s0)";
       };
     };
   };

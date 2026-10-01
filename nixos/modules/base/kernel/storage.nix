@@ -1081,106 +1081,139 @@
     '';
     fileContext = {
       rules = {
-        "/dev/\\.tmp-block-.*" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/n?(raw)?[qr]ft[0-3]" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/n?[hs]t[0-9].*" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/n?z?qft[0-3]" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/n?osst[0-3].*" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/n?pt[0-9]+" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/n?tpqic[12].*" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/[shmxv]d[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/aztcd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/bpcd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/bsg/.+" = "-c gen_context(system_u:object_r:scsi_generic_device_t,s0)";
-        "/dev/cdu.*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/cm20.*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/dasd[^/]*" = [
+        "/dev/\\.tmp-block-.*" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/n?(raw)?[qr]ft[0-3]" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/n?[hs]t[0-9].*" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/n?z?qft[0-3]" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/n?osst[0-3].*" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/n?pt[0-9]+" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/n?tpqic[12].*" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/[shmxv]d[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/aztcd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/bpcd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/bsg/.+" = lib.mkDefault "-c gen_context(system_u:object_r:scsi_generic_device_t,s0)";
+        "/dev/cdu.*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/cm20.*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/dasd[^/]*" = lib.mkDefault [
           "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)"
           "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)"
         ];
-        "/dev/dm-[0-9]+" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/drbd[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/etherd/.+" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/fd[^/]+" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/flash[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/gscd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/hitcd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/ht[0-1]" = "-b gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/hwcdrom" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/initrd" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/jsfd" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/jsflash" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/loop.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/lvm" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/mcdx?" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/megadev.*" = "-c gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/megaraid.*" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/mmcblk.*" = [
+        "/dev/dm-[0-9]+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/drbd[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/etherd/.+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/fd[^/]+" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/flash[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/gscd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/hitcd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/ht[0-1]" = lib.mkDefault "-b gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/hwcdrom" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/initrd" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/jsfd" = lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/jsflash" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/loop.*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/lvm" = lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/mcdx?" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/megadev.*" = lib.mkDefault "-c gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/megaraid.*" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/mmcblk.*" = lib.mkDefault [
           "-b gen_context(system_u:object_r:removable_device_t,s0)"
           "-c gen_context(system_u:object_r:removable_device_t,s0)"
         ];
-        "/dev/mspblk.*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/mpt[23]?ctl" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/mtd.*" = [
+        "/dev/mspblk.*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/mpt[23]?ctl" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/mtd.*" = lib.mkDefault [
           "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)"
           "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)"
         ];
-        "/dev/nb[^/]+" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/ng[0-9]+n[0-9]+" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/nvme[0-9]+" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/nvme[0-9]n[^/]+" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/optcd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/p[fg][0-3]" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/pcd[0-3]" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/pd[a-d][^/]*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/pg[0-3]" = "-c gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/pmem[0-9]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/ps3d.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/ram.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/(raw/)?rawctl" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/rd.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/nb[^/]+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ng[0-9]+n[0-9]+" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/nvme[0-9]+" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/nvme[0-9]n[^/]+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/optcd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/p[fg][0-3]" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/pcd[0-3]" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/pd[a-d][^/]*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/pg[0-3]" = lib.mkDefault "-c gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/pmem[0-9]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ps3d.*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ram.*" = lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/(raw/)?rawctl" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/rd.*" = lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/s(cd|r)[^/]*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/sbpcd.*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/sg[0-9]+" = "-c gen_context(system_u:object_r:scsi_generic_device_t,s0)";
-        "/dev/sjcd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/sonycd" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
-        "/dev/tape.*" = "-c gen_context(system_u:object_r:tape_device_t,s0)";
-        "/dev/tw[a-z][^/]+" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/ub[a-z][^/]+" = "-b gen_context(system_u:object_r:removable_device_t,mls_systemhigh)";
-        "/dev/ubd[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/vd[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/xvd[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/zd.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/zfs" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/zpios" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/zram[0-9]+" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/s(cd|r)[^/]*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/sbpcd.*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/sg[0-9]+" = lib.mkDefault "-c gen_context(system_u:object_r:scsi_generic_device_t,s0)";
+        "/dev/sjcd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/sonycd" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/tape.*" = lib.mkDefault "-c gen_context(system_u:object_r:tape_device_t,s0)";
+        "/dev/tw[a-z][^/]+" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ub[a-z][^/]+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,mls_systemhigh)";
+        "/dev/ubd[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/vd[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/xvd[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/zd.*" = lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/zfs" = lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/zpios" = lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/zram[0-9]+" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/ataraid/.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ataraid/.*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/cciss/[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/cciss/[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/fuse" = "-c gen_context(system_u:object_r:fuse_device_t,s0)";
-        "/dev/floppy/[^/]*" = "-b gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/fuse" = lib.mkDefault "-c gen_context(system_u:object_r:fuse_device_t,s0)";
+        "/dev/floppy/[^/]*" = lib.mkDefault "-b gen_context(system_u:object_r:removable_device_t,s0)";
 
-        "/dev/i2o/hd[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/i2o/hd[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/ida/[^/]*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/ida/[^/]*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/md/.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/dev/mapper/.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/md/.*" = lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/mapper/.*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/device-mapper" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/device-mapper" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/raw/raw[0-9]+" = "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/raw/raw[0-9]+" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/scramdisk/.*" = "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/dev/scramdisk/.*" =
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
 
-        "/dev/usb/rio500" = "-c gen_context(system_u:object_r:removable_device_t,s0)";
+        "/dev/usb/rio500" = lib.mkDefault "-c gen_context(system_u:object_r:removable_device_t,s0)";
 
         "/nix/store/[^/]+/lib/udev/devices/loop.*" =
-          "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
-        "/nix/store/[^/]+/lib/udev/devices/fuse" = "-c gen_context(system_u:object_r:fuse_device_t,s0)";
+          lib.mkDefault "-b gen_context(system_u:object_r:fixed_disk_device_t,mls_systemhigh)";
+        "/nix/store/[^/]+/lib/udev/devices/fuse" =
+          lib.mkDefault "-c gen_context(system_u:object_r:fuse_device_t,s0)";
       };
     };
   };

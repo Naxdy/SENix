@@ -140,14 +140,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/opensm" = "-- gen_context(system_u:object_r:opensm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/opensm" = lib.mkDefault "-- gen_context(system_u:object_r:opensm_exec_t,s0)";
 
-        "/etc/opensm(/.*)?" = "gen_context(system_u:object_r:opensm_conf_t,s0)";
+        "/etc/opensm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:opensm_conf_t,s0)";
 
-        "/var/cache/opensm(/.*)?" = "gen_context(system_u:object_r:opensm_cache_t,s0)";
+        "/var/cache/opensm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:opensm_cache_t,s0)";
 
-        "/var/log/opensm\\.log" = "-- gen_context(system_u:object_r:opensm_log_t,s0)";
-        "/var/log/opensm-subnet\\.lst" = "-- gen_context(system_u:object_r:opensm_log_t,s0)";
+        "/var/log/opensm\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:opensm_log_t,s0)";
+        "/var/log/opensm-subnet\\.lst" = lib.mkDefault "-- gen_context(system_u:object_r:opensm_log_t,s0)";
       };
     };
   };

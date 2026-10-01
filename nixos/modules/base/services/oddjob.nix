@@ -264,16 +264,16 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/oddjob/mkhomedir" =
-          "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/oddjob/mkhomedir" =
-          "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/oddjobd" = "-- gen_context(system_u:object_r:oddjob_exec_t,s0)";
+        "/nix/store/[^/]+/bin/oddjobd" = lib.mkDefault "-- gen_context(system_u:object_r:oddjob_exec_t,s0)";
         "/nix/store/[^/]+/bin/mkhomedir_helper" =
-          "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:oddjob_mkhomedir_exec_t,s0)";
 
-        "/run/oddjobd\\.pid" = "gen_context(system_u:object_r:oddjob_runtime_t,s0)";
+        "/run/oddjobd\\.pid" = lib.mkDefault "gen_context(system_u:object_r:oddjob_runtime_t,s0)";
       };
     };
   };

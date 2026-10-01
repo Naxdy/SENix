@@ -124,12 +124,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/checksecurity\\.se" = "-- gen_context(system_u:object_r:sxid_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sxid" = "-- gen_context(system_u:object_r:sxid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/checksecurity\\.se" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sxid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sxid" = lib.mkDefault "-- gen_context(system_u:object_r:sxid_exec_t,s0)";
 
-        "/var/log/setuid.*" = "-- gen_context(system_u:object_r:sxid_log_t,s0)";
-        "/var/log/setuid\\.today.*" = "-- gen_context(system_u:object_r:sxid_log_t,s0)";
-        "/var/log/sxid\\.log.*" = "-- gen_context(system_u:object_r:sxid_log_t,s0)";
+        "/var/log/setuid.*" = lib.mkDefault "-- gen_context(system_u:object_r:sxid_log_t,s0)";
+        "/var/log/setuid\\.today.*" = lib.mkDefault "-- gen_context(system_u:object_r:sxid_log_t,s0)";
+        "/var/log/sxid\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:sxid_log_t,s0)";
       };
     };
   };

@@ -346,9 +346,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/(local/)?bin/ksu" = "-- gen_context(system_u:object_r:su_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kdesu" = "-- gen_context(system_u:object_r:su_exec_t,s0)";
-        "/nix/store/[^/]+/bin/su" = "-- gen_context(system_u:object_r:su_exec_t,s0)";
+        "/nix/store/[^/]+/(local/)?bin/ksu" =
+          lib.mkDefault "-- gen_context(system_u:object_r:su_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kdesu" = lib.mkDefault "-- gen_context(system_u:object_r:su_exec_t,s0)";
+        "/nix/store/[^/]+/bin/su" = lib.mkDefault "-- gen_context(system_u:object_r:su_exec_t,s0)";
       };
     };
   };

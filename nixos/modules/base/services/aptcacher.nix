@@ -253,23 +253,25 @@
     '';
     fileContext = {
       rules = {
-        "/etc/apt-cacher-ng(/.*)?" = "gen_context(system_u:object_r:aptcacher_conf_t,s0)";
+        "/etc/apt-cacher-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_conf_t,s0)";
 
         "/nix/store/[^/]+/lib/apt-cacher-ng/acngtool" =
-          "-- gen_context(system_u:object_r:acngtool_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:acngtool_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/apt-cacher.*" = "-- gen_context(system_u:object_r:aptcacher_exec_t,s0)";
+        "/nix/store/[^/]+/bin/apt-cacher.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aptcacher_exec_t,s0)";
 
-        "/run/apt-cacher(/.*)?" = "gen_context(system_u:object_r:aptcacher_runtime_t,s0)";
-        "/run/apt-cacher-ng(/.*)?" = "gen_context(system_u:object_r:aptcacher_runtime_t,s0)";
+        "/run/apt-cacher(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_runtime_t,s0)";
+        "/run/apt-cacher-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_runtime_t,s0)";
 
-        "/var/cache/apt-cacher(/.*)?" = "gen_context(system_u:object_r:aptcacher_cache_t,s0)";
-        "/var/cache/apt-cacher-ng(/.*)?" = "gen_context(system_u:object_r:aptcacher_cache_t,s0)";
+        "/var/cache/apt-cacher(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_cache_t,s0)";
+        "/var/cache/apt-cacher-ng(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:aptcacher_cache_t,s0)";
 
-        "/var/lib/apt-cacher-ng(/.*)?" = "gen_context(system_u:object_r:aptcacher_lib_t,s0)";
+        "/var/lib/apt-cacher-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_lib_t,s0)";
 
-        "/var/log/apt-cacher(/.*)?" = "gen_context(system_u:object_r:aptcacher_log_t,s0)";
-        "/var/log/apt-cacher-ng(/.*)?" = "gen_context(system_u:object_r:aptcacher_log_t,s0)";
+        "/var/log/apt-cacher(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_log_t,s0)";
+        "/var/log/apt-cacher-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aptcacher_log_t,s0)";
       };
     };
   };

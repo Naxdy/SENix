@@ -630,39 +630,46 @@
     '';
     fileContext = {
       rules = {
-        "/dev/xen/tapctrl.*" = "-p gen_context(system_u:object_r:xenctl_t,s0)";
+        "/dev/xen/tapctrl.*" = lib.mkDefault "-p gen_context(system_u:object_r:xenctl_t,s0)";
 
         "/nix/store/[^/]+/lib/xen-[^/]*/bin/xenconsoled" =
-          "-- gen_context(system_u:object_r:xenconsoled_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xenconsoled_exec_t,s0)";
         "/nix/store/[^/]+/lib/xen-[^/]*/bin/xenstored" =
-          "-- gen_context(system_u:object_r:xenstored_exec_t,s0)";
-        "/nix/store/[^/]+/lib/xen-[^/]*/bin/xl" = "-- gen_context(system_u:object_r:xm_exec_t,s0)";
-        "/nix/store/[^/]+/lib/xen-[^/]*/xl" = "-- gen_context(system_u:object_r:xm_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xenstored_exec_t,s0)";
+        "/nix/store/[^/]+/lib/xen-[^/]*/bin/xl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xm_exec_t,s0)";
+        "/nix/store/[^/]+/lib/xen-[^/]*/xl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xm_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/blktapctrl" = "-- gen_context(system_u:object_r:blktap_exec_t,s0)";
-        "/nix/store/[^/]+/bin/evtchnd" = "-- gen_context(system_u:object_r:evtchnd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tapdisk" = "-- gen_context(system_u:object_r:blktap_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xenconsoled" = "-- gen_context(system_u:object_r:xenconsoled_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xenstored" = "-- gen_context(system_u:object_r:xenstored_exec_t,s0)";
-        "/nix/store/[^/]+/bin/xl" = "-- gen_context(system_u:object_r:xm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blktapctrl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:blktap_exec_t,s0)";
+        "/nix/store/[^/]+/bin/evtchnd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:evtchnd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tapdisk" = lib.mkDefault "-- gen_context(system_u:object_r:blktap_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xenconsoled" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xenconsoled_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xenstored" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xenstored_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xl" = lib.mkDefault "-- gen_context(system_u:object_r:xm_exec_t,s0)";
 
-        "/var/lib/xen(/.*)?" = "gen_context(system_u:object_r:xen_state_t,s0)";
-        "/var/lib/xen/images(/.*)?" = "gen_context(system_u:object_r:xen_image_t,s0)";
-        "/var/lib/xenstored(/.*)?" = "gen_context(system_u:object_r:xenstored_var_lib_t,s0)";
+        "/var/lib/xen(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xen_state_t,s0)";
+        "/var/lib/xen/images(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xen_image_t,s0)";
+        "/var/lib/xenstored(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xenstored_var_lib_t,s0)";
 
-        "/var/lock/xl" = "-- gen_context(system_u:object_r:xen_lock_t,s0)";
+        "/var/lock/xl" = lib.mkDefault "-- gen_context(system_u:object_r:xen_lock_t,s0)";
 
-        "/var/log/evtchnd\\.log.*" = "-- gen_context(system_u:object_r:evtchnd_var_log_t,s0)";
-        "/var/log/xen(/.*)?" = "gen_context(system_u:object_r:xen_log_t,s0)";
-        "/var/log/xen-hotplug\\.log.*" = "-- gen_context(system_u:object_r:xen_log_t,s0)";
+        "/var/log/evtchnd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:evtchnd_var_log_t,s0)";
+        "/var/log/xen(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xen_log_t,s0)";
+        "/var/log/xen-hotplug\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:xen_log_t,s0)";
 
-        "/run/evtchnd" = "-s gen_context(system_u:object_r:evtchnd_runtime_t,s0)";
-        "/run/evtchnd\\.pid" = "-- gen_context(system_u:object_r:evtchnd_runtime_t,s0)";
-        "/run/xenconsoled\\.pid" = "-- gen_context(system_u:object_r:xenconsoled_runtime_t,s0)";
-        "/run/xen" = "-d gen_context(system_u:object_r:xen_runtime_t,s0)";
-        "/run/xenner(/.*)?" = "gen_context(system_u:object_r:xen_runtime_t,s0)";
-        "/run/xenstore\\.pid" = "-- gen_context(system_u:object_r:xenstored_runtime_t,s0)";
-        "/run/xenstored(/.*)?" = "gen_context(system_u:object_r:xenstored_runtime_t,s0)";
+        "/run/evtchnd" = lib.mkDefault "-s gen_context(system_u:object_r:evtchnd_runtime_t,s0)";
+        "/run/evtchnd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:evtchnd_runtime_t,s0)";
+        "/run/xenconsoled\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xenconsoled_runtime_t,s0)";
+        "/run/xen" = lib.mkDefault "-d gen_context(system_u:object_r:xen_runtime_t,s0)";
+        "/run/xenner(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xen_runtime_t,s0)";
+        "/run/xenstore\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:xenstored_runtime_t,s0)";
+        "/run/xenstored(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:xenstored_runtime_t,s0)";
       };
     };
   };

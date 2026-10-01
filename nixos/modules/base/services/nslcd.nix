@@ -163,13 +163,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/nss-ldapd\\.conf" = "-- gen_context(system_u:object_r:nslcd_conf_t,s0)";
+        "/etc/nss-ldapd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:nslcd_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/nslcd" = "-- gen_context(system_u:object_r:nslcd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nslcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nslcd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/nslcd" = "-- gen_context(system_u:object_r:nslcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nslcd" = lib.mkDefault "-- gen_context(system_u:object_r:nslcd_exec_t,s0)";
 
-        "/run/nslcd(/.*)?" = "gen_context(system_u:object_r:nslcd_runtime_t,s0)";
+        "/run/nslcd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nslcd_runtime_t,s0)";
       };
     };
   };

@@ -165,15 +165,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/wireguard(/.*)?" = "gen_context(system_u:object_r:wireguard_etc_t,s0)";
+        "/etc/wireguard(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wireguard_etc_t,s0)";
 
-        "/run/wireguard(/.*)?" = "gen_context(system_u:object_r:wireguard_runtime_t,s0)";
+        "/run/wireguard(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:wireguard_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/wg" = "-- gen_context(system_u:object_r:wireguard_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wg-quick" = "-- gen_context(system_u:object_r:wireguard_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wg" = lib.mkDefault "-- gen_context(system_u:object_r:wireguard_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wg-quick" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wireguard_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/wg-quick.*\\.service" =
-          "-- gen_context(system_u:object_r:wireguard_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:wireguard_unit_t,s0)";
       };
     };
   };

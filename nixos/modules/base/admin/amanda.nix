@@ -372,34 +372,43 @@
     fileContext = {
       rules = {
         # empty m4 string so the index macro is not invoked
-        "/etc/amanda(/.*)?" = "gen_context(system_u:object_r:amanda_config_t,s0)";
-        "/etc/amanda/.*/tapelist(/.*)?" = "gen_context(system_u:object_r:amanda_data_t,s0)";
-        "/etc/amandates" = "gen_context(system_u:object_r:amanda_amandates_t,s0)";
-        "/etc/dumpdates" = "gen_context(system_u:object_r:amanda_dumpdates_t,s0)";
-        "/etc/amanda/.*/index`'(/.*)?" = "gen_context(system_u:object_r:amanda_data_t,s0)";
+        "/etc/amanda(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_config_t,s0)";
+        "/etc/amanda/.*/tapelist(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_data_t,s0)";
+        "/etc/amandates" = lib.mkDefault "gen_context(system_u:object_r:amanda_amandates_t,s0)";
+        "/etc/dumpdates" = lib.mkDefault "gen_context(system_u:object_r:amanda_dumpdates_t,s0)";
+        "/etc/amanda/.*/index`'(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_data_t,s0)";
 
-        "/root/restore" = "-d gen_context(system_u:object_r:amanda_recover_dir_t,s0)";
+        "/root/restore" = lib.mkDefault "-d gen_context(system_u:object_r:amanda_recover_dir_t,s0)";
 
-        "/nix/store/[^/]+/bin/amandad" = "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/amrecover" = "-- gen_context(system_u:object_r:amanda_recover_exec_t,s0)";
+        "/nix/store/[^/]+/bin/amandad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/amrecover" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_recover_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/amanda" = "-d gen_context(system_u:object_r:amanda_usr_lib_t,s0)";
-        "/nix/store/[^/]+/lib/amanda/.+" = "-- gen_context(system_u:object_r:amanda_exec_t,s0)";
-        "/nix/store/[^/]+/lib/amanda/amandad" = "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/amanda" =
+          lib.mkDefault "-d gen_context(system_u:object_r:amanda_usr_lib_t,s0)";
+        "/nix/store/[^/]+/lib/amanda/.+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_exec_t,s0)";
+        "/nix/store/[^/]+/lib/amanda/amandad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
         "/nix/store/[^/]+/lib/amanda/amidxtaped" =
-          "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/amanda/amindexd" = "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/amanda/amindexd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_inetd_exec_t,s0)";
 
-        "/var/lib/amanda" = "-d gen_context(system_u:object_r:amanda_var_lib_t,s0)";
-        "/var/lib/amanda/[^/]+(/.*)?" = "gen_context(system_u:object_r:amanda_data_t,s0)";
-        "/var/lib/amanda/[^/]*/log(/.*)?" = "gen_context(system_u:object_r:amanda_log_t,s0)";
-        "/var/lib/amanda/\\.amandahosts" = "-- gen_context(system_u:object_r:amanda_config_t,s0)";
-        "/var/lib/amanda/gnutar-lists(/.*)?" = "gen_context(system_u:object_r:amanda_gnutarlists_t,s0)";
+        "/var/lib/amanda" = lib.mkDefault "-d gen_context(system_u:object_r:amanda_var_lib_t,s0)";
+        "/var/lib/amanda/[^/]+(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_data_t,s0)";
+        "/var/lib/amanda/[^/]*/log(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_log_t,s0)";
+        "/var/lib/amanda/\\.amandahosts" =
+          lib.mkDefault "-- gen_context(system_u:object_r:amanda_config_t,s0)";
+        "/var/lib/amanda/gnutar-lists(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:amanda_gnutarlists_t,s0)";
 
         # empty m4 string so the index macro is not invoked
-        "/var/lib/amanda/[^/]+/index`'(/.*)?" = "gen_context(system_u:object_r:amanda_var_lib_t,s0)";
+        "/var/lib/amanda/[^/]+/index`'(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:amanda_var_lib_t,s0)";
 
-        "/var/log/amanda(/.*)?" = "gen_context(system_u:object_r:amanda_log_t,s0)";
+        "/var/log/amanda(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:amanda_log_t,s0)";
       };
     };
   };

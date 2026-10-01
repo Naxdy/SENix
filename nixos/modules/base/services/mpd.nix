@@ -556,17 +556,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/mpd\\.conf" = "-- gen_context(system_u:object_r:mpd_etc_t,s0)";
+        "/etc/mpd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:mpd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/mpd" = "-- gen_context(system_u:object_r:mpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mpd" = lib.mkDefault "-- gen_context(system_u:object_r:mpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mpd" = "-- gen_context(system_u:object_r:mpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mpd" = lib.mkDefault "-- gen_context(system_u:object_r:mpd_exec_t,s0)";
 
-        "/var/lib/mpd(/.*)?" = "gen_context(system_u:object_r:mpd_var_lib_t,s0)";
-        "/var/lib/mpd/music(/.*)?" = "gen_context(system_u:object_r:mpd_data_t,s0)";
-        "/var/lib/mpd/playlists(/.*)?" = "gen_context(system_u:object_r:mpd_data_t,s0)";
+        "/var/lib/mpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mpd_var_lib_t,s0)";
+        "/var/lib/mpd/music(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mpd_data_t,s0)";
+        "/var/lib/mpd/playlists(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mpd_data_t,s0)";
 
-        "/var/log/mpd(/.*)?" = "gen_context(system_u:object_r:mpd_log_t,s0)";
+        "/var/log/mpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mpd_log_t,s0)";
       };
     };
   };

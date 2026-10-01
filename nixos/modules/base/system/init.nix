@@ -5474,23 +5474,24 @@
         #
         # /etc
         #
-        "/etc/rc\\.d/rc" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
-        "/etc/rc\\.d/rc\\.[^/]+" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
+        "/etc/rc\\.d/rc" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
+        "/etc/rc\\.d/rc\\.[^/]+" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/.*" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
-        "/etc/sysconfig/network-scripts/ifup-ipsec" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/.*" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
+        "/etc/sysconfig/network-scripts/ifup-ipsec" =
+          lib.mkDefault "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
 
-        "/etc/X11/prefdm" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
+        "/etc/X11/prefdm" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
 
         #
         # /dev
         #
-        "/dev/initctl" = "-p gen_context(system_u:object_r:initctl_t,s0)";
+        "/dev/initctl" = lib.mkDefault "-p gen_context(system_u:object_r:initctl_t,s0)";
 
         #
         # /etc
         #
-        "/etc/containers/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/etc/containers/systemd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
 
         #
         # /usr
@@ -5512,12 +5513,15 @@
         # "/usr/lib/systemd/ntp-units\\.d" = "-d gen_context(system_u:object_r:systemd_unit_t,s0)";
         # "/usr/lib/systemd/system(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
         # "/usr/share/containers/systemd(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/generator(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/generator\\.early(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/generator\\.late(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/system(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/units(/.*)?" = "gen_context(system_u:object_r:systemd_unit_t,s0)";
-        "/run/systemd/transient(/.*)?" = "gen_context(system_u:object_r:systemd_transient_unit_t,s0)";
+        "/run/systemd/generator(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/run/systemd/generator\\.early(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/run/systemd/generator\\.late(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/run/systemd/system(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/run/systemd/units(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:systemd_unit_t,s0)";
+        "/run/systemd/transient(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:systemd_transient_unit_t,s0)";
 
         # "/usr/libexec/dcc/start-.*" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
         # "/usr/libexec/dcc/stop-.*" = "-- gen_context(system_u:object_r:initrc_exec_t,s0)";
@@ -5525,17 +5529,17 @@
         #
         # /var
         #
-        "/var/lib/random-seed" = "-- gen_context(system_u:object_r:init_random_seed_t,s0)";
-        "/var/lib/systemd(/.*)?" = "gen_context(system_u:object_r:init_var_lib_t,s0)";
+        "/var/lib/random-seed" = lib.mkDefault "-- gen_context(system_u:object_r:init_random_seed_t,s0)";
+        "/var/lib/systemd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:init_var_lib_t,s0)";
 
-        "/run/initctl" = "-p gen_context(system_u:object_r:initctl_t,s0)";
-        "/run/kerneloops\\.pid" = "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
-        "/run/utmp" = "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
-        "/run/runlevel\\.dir" = "gen_context(system_u:object_r:initrc_runtime_t,s0)";
-        "/run/random-seed" = "-- gen_context(system_u:object_r:init_random_seed_t,s0)";
-        "/run/setmixer_flag" = "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
-        "/run/systemd(/.*)?" = "gen_context(system_u:object_r:init_runtime_t,s0)";
-        "/run/wd_keepalive\\.pid" = "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
+        "/run/initctl" = lib.mkDefault "-p gen_context(system_u:object_r:initctl_t,s0)";
+        "/run/kerneloops\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
+        "/run/utmp" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
+        "/run/runlevel\\.dir" = lib.mkDefault "gen_context(system_u:object_r:initrc_runtime_t,s0)";
+        "/run/random-seed" = lib.mkDefault "-- gen_context(system_u:object_r:init_random_seed_t,s0)";
+        "/run/setmixer_flag" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
+        "/run/systemd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:init_runtime_t,s0)";
+        "/run/wd_keepalive\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:initrc_runtime_t,s0)";
       };
     };
   };

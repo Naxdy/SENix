@@ -98,10 +98,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/adsprpcd" = "-- gen_context(system_u:object_r:adsprpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cdsprpcd" = "-- gen_context(system_u:object_r:cdsprpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gdsprpcd" = "-- gen_context(system_u:object_r:gdsprpcd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sdsprpcd" = "-- gen_context(system_u:object_r:sdsprpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/adsprpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:adsprpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cdsprpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cdsprpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gdsprpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gdsprpcd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sdsprpcd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sdsprpcd_exec_t,s0)";
       };
     };
   };

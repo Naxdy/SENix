@@ -142,13 +142,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/watchdog" = "-- gen_context(system_u:object_r:watchdog_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/watchdog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:watchdog_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/watchdog" = "-- gen_context(system_u:object_r:watchdog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/watchdog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:watchdog_exec_t,s0)";
 
-        "/var/log/watchdog.*" = "gen_context(system_u:object_r:watchdog_log_t,s0)";
+        "/var/log/watchdog.*" = lib.mkDefault "gen_context(system_u:object_r:watchdog_log_t,s0)";
 
-        "/run/watchdog\\.pid" = "-- gen_context(system_u:object_r:watchdog_runtime_t,s0)";
+        "/run/watchdog\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:watchdog_runtime_t,s0)";
       };
     };
   };

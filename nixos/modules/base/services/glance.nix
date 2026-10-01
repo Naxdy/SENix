@@ -348,19 +348,20 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/openstack-glance-api" =
-          "-- gen_context(system_u:object_r:glance_api_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:glance_api_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/openstack-glance-registry" =
-          "-- gen_context(system_u:object_r:glance_registry_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:glance_registry_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/glance-api" = "-- gen_context(system_u:object_r:glance_api_exec_t,s0)";
+        "/nix/store/[^/]+/bin/glance-api" =
+          lib.mkDefault "-- gen_context(system_u:object_r:glance_api_exec_t,s0)";
         "/nix/store/[^/]+/bin/glance-registry" =
-          "-- gen_context(system_u:object_r:glance_registry_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:glance_registry_exec_t,s0)";
 
-        "/var/lib/glance(/.*)?" = "gen_context(system_u:object_r:glance_var_lib_t,s0)";
+        "/var/lib/glance(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glance_var_lib_t,s0)";
 
-        "/var/log/glance(/.*)?" = "gen_context(system_u:object_r:glance_log_t,s0)";
+        "/var/log/glance(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glance_log_t,s0)";
 
-        "/run/glance(/.*)?" = "gen_context(system_u:object_r:glance_runtime_t,s0)";
+        "/run/glance(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glance_runtime_t,s0)";
       };
     };
   };

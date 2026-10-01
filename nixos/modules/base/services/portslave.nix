@@ -133,12 +133,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/portslave(/.*)?" = "gen_context(system_u:object_r:portslave_etc_t,s0)";
+        "/etc/portslave(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portslave_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/ctlportslave" = "-- gen_context(system_u:object_r:portslave_exec_t,s0)";
-        "/nix/store/[^/]+/bin/portslave" = "-- gen_context(system_u:object_r:portslave_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ctlportslave" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portslave_exec_t,s0)";
+        "/nix/store/[^/]+/bin/portslave" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portslave_exec_t,s0)";
 
-        "/var/lock/subsys/portslave" = "-- gen_context(system_u:object_r:portslave_lock_t,s0)";
+        "/var/lock/subsys/portslave" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portslave_lock_t,s0)";
       };
     };
   };

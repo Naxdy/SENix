@@ -1378,16 +1378,20 @@
     '';
     fileContext = {
       rules = {
-        "/run/cloud-init(/.*)?" = "gen_context(system_u:object_r:cloud_init_runtime_t,s0)";
+        "/run/cloud-init(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cloud_init_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/cloud-id" = "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cloud-init" = "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cloud-init-per" = "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cloud-id" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cloud-init" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cloud-init-per" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cloud_init_exec_t,s0)";
 
-        "/var/lib/cloud(/.*)?" = "gen_context(system_u:object_r:cloud_init_state_t,s0)";
+        "/var/lib/cloud(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cloud_init_state_t,s0)";
 
-        "/var/log/cloud-init-output\\.log" = "-- gen_context(system_u:object_r:cloud_init_log_t,s0)";
-        "/var/log/cloud-init\\.log" = "-- gen_context(system_u:object_r:cloud_init_log_t,s0)";
+        "/var/log/cloud-init-output\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cloud_init_log_t,s0)";
+        "/var/log/cloud-init\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:cloud_init_log_t,s0)";
       };
     };
   };

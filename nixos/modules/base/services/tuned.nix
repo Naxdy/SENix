@@ -232,18 +232,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/tuned" = "-- gen_context(system_u:object_r:tuned_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/tuned" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tuned_initrc_exec_t,s0)";
 
-        "/etc/tuned(/.*)?" = "gen_context(system_u:object_r:tuned_etc_t,s0)";
-        "/etc/tuned/active_profile" = "-- gen_context(system_u:object_r:tuned_rw_etc_t,s0)";
+        "/etc/tuned(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tuned_etc_t,s0)";
+        "/etc/tuned/active_profile" = lib.mkDefault "-- gen_context(system_u:object_r:tuned_rw_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/tuned" = "-- gen_context(system_u:object_r:tuned_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tuned" = lib.mkDefault "-- gen_context(system_u:object_r:tuned_exec_t,s0)";
 
-        "/var/log/tuned(/.*)?" = "gen_context(system_u:object_r:tuned_log_t,s0)";
-        "/var/log/tuned\\.log.*" = "-- gen_context(system_u:object_r:tuned_log_t,s0)";
+        "/var/log/tuned(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tuned_log_t,s0)";
+        "/var/log/tuned\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:tuned_log_t,s0)";
 
-        "/run/tuned(/.*)?" = "gen_context(system_u:object_r:tuned_runtime_t,s0)";
-        "/run/tuned\\.pid" = "-- gen_context(system_u:object_r:tuned_runtime_t,s0)";
+        "/run/tuned(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tuned_runtime_t,s0)";
+        "/run/tuned\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:tuned_runtime_t,s0)";
       };
     };
   };

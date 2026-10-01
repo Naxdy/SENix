@@ -210,15 +210,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/openais" = "-- gen_context(system_u:object_r:aisexec_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openais" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aisexec_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/aisexec" = "-- gen_context(system_u:object_r:aisexec_exec_t,s0)";
+        "/nix/store/[^/]+/bin/aisexec" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aisexec_exec_t,s0)";
 
-        "/var/lib/openais(/.*)?" = "gen_context(system_u:object_r:aisexec_var_lib_t,s0)";
+        "/var/lib/openais(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aisexec_var_lib_t,s0)";
 
-        "/var/log/cluster/aisexec\\.log.*" = "-- gen_context(system_u:object_r:aisexec_var_log_t,s0)";
+        "/var/log/cluster/aisexec\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aisexec_var_log_t,s0)";
 
-        "/run/aisexec.*" = "gen_context(system_u:object_r:aisexec_runtime_t,s0)";
+        "/run/aisexec.*" = lib.mkDefault "gen_context(system_u:object_r:aisexec_runtime_t,s0)";
       };
     };
   };

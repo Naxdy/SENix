@@ -458,19 +458,22 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/nix/store/[^/]+/bin/plymouth" = "-- gen_context(system_u:object_r:plymouth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/plymouthd" = "-- gen_context(system_u:object_r:plymouthd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/plymouth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:plymouth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/plymouthd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:plymouthd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*plymouth-.*" =
-          "-- gen_context(system_u:object_r:plymouthd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:plymouthd_unit_t,s0)";
 
-        "/var/lib/plymouth(/.*)?" = "gen_context(system_u:object_r:plymouthd_var_lib_t,s0)";
+        "/var/lib/plymouth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:plymouthd_var_lib_t,s0)";
 
-        "/var/log/boot\\.log.*" = "-- gen_context(system_u:object_r:plymouthd_var_log_t,mls_systemhigh)";
+        "/var/log/boot\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:plymouthd_var_log_t,mls_systemhigh)";
 
-        "/run/plymouth(/.*)?" = "gen_context(system_u:object_r:plymouthd_runtime_t,s0)";
+        "/run/plymouth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:plymouthd_runtime_t,s0)";
 
-        "/var/spool/plymouth(/.*)?" = "gen_context(system_u:object_r:plymouthd_spool_t,s0)";
+        "/var/spool/plymouth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:plymouthd_spool_t,s0)";
       };
     };
   };

@@ -350,23 +350,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/gluster.*" = "-- gen_context(system_u:object_r:glusterd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gluster.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:glusterd_initrc_exec_t,s0)";
 
-        "/etc/glusterfs(/.*)?" = "gen_context(system_u:object_r:glusterd_conf_t,s0)";
-        "/etc/glusterd(/.*)?" = "gen_context(system_u:object_r:glusterd_conf_t,s0)";
+        "/etc/glusterfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_conf_t,s0)";
+        "/etc/glusterd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/glusterd" = "-- gen_context(system_u:object_r:glusterd_initrc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/glusterfsd" = "-- gen_context(system_u:object_r:glusterd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/glusterd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:glusterd_initrc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/glusterfsd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:glusterd_exec_t,s0)";
 
-        "/var/lib/gluster.*" = "gen_context(system_u:object_r:glusterd_var_lib_t,s0)";
-        "/var/lib/glusterd/hooks(/.*)?" = "gen_context(system_u:object_r:glusterd_hook_t,s0)";
+        "/var/lib/gluster.*" = lib.mkDefault "gen_context(system_u:object_r:glusterd_var_lib_t,s0)";
+        "/var/lib/glusterd/hooks(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_hook_t,s0)";
 
-        "/var/log/glusterfs(/.*)?" = "gen_context(system_u:object_r:glusterd_log_t,s0)";
+        "/var/log/glusterfs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_log_t,s0)";
 
-        "/run/gluster(/.*)?" = "gen_context(system_u:object_r:glusterd_runtime_t,s0)";
-        "/run/glusterd(/.*)?" = "gen_context(system_u:object_r:glusterd_runtime_t,s0)";
-        "/run/glusterd\\.pid" = "-- gen_context(system_u:object_r:glusterd_runtime_t,s0)";
-        "/run/glusterd\\.socket" = "-s gen_context(system_u:object_r:glusterd_runtime_t,s0)";
+        "/run/gluster(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_runtime_t,s0)";
+        "/run/glusterd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:glusterd_runtime_t,s0)";
+        "/run/glusterd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:glusterd_runtime_t,s0)";
+        "/run/glusterd\\.socket" = lib.mkDefault "-s gen_context(system_u:object_r:glusterd_runtime_t,s0)";
       };
     };
   };

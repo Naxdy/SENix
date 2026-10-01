@@ -199,12 +199,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/openct" = "-- gen_context(system_u:object_r:openct_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openct" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openct_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/ifdhandler" = "-- gen_context(system_u:object_r:openct_exec_t,s0)";
-        "/nix/store/[^/]+/bin/openct-control" = "-- gen_context(system_u:object_r:openct_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ifdhandler" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openct_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openct-control" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openct_exec_t,s0)";
 
-        "/run/openct(/.*)?" = "gen_context(system_u:object_r:openct_runtime_t,s0)";
+        "/run/openct(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openct_runtime_t,s0)";
       };
     };
   };

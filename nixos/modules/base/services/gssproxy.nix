@@ -225,15 +225,16 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/gssproxy" = "-- gen_context(system_u:object_r:gssproxy_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gssproxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gssproxy_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/gssproxy\\.service" =
-          "-- gen_context(system_u:object_r:gssproxy_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gssproxy_unit_t,s0)";
 
-        "/var/lib/gssproxy(/.*)?" = "gen_context(system_u:object_r:gssproxy_var_lib_t,s0)";
+        "/var/lib/gssproxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gssproxy_var_lib_t,s0)";
 
-        "/run/gssproxy\\.pid" = "-- gen_context(system_u:object_r:gssproxy_run_t,s0)";
-        "/run/gssproxy\\.sock" = "-s gen_context(system_u:object_r:gssproxy_run_t,s0)";
+        "/run/gssproxy\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:gssproxy_run_t,s0)";
+        "/run/gssproxy\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:gssproxy_run_t,s0)";
       };
     };
   };

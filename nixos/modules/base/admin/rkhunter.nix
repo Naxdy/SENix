@@ -189,11 +189,12 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/rkhunter" = "-- gen_context(system_u:object_r:rkhunter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rkhunter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rkhunter_exec_t,s0)";
 
-        "/var/lib/rkhunter(/.*)?" = "gen_context(system_u:object_r:rkhunter_var_lib_t,s0)";
+        "/var/lib/rkhunter(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rkhunter_var_lib_t,s0)";
 
-        "/var/log/rkhunter\\.log.*" = "-- gen_context(system_u:object_r:rkhunter_log_t,s0)";
+        "/var/log/rkhunter\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:rkhunter_log_t,s0)";
       };
     };
   };

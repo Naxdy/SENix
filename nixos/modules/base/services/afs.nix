@@ -442,65 +442,78 @@
     '';
     fileContext = {
       rules = {
-        "/etc/(open)?afs(/.*)?" = "gen_context(system_u:object_r:afs_config_t,s0)";
+        "/etc/(open)?afs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_config_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/openafs-client" = "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/openafs-server" = "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/(open)?afs" = "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openafs-client" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openafs-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/(open)?afs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/afs/bin/bosserver" = "-- gen_context(system_u:object_r:afs_bosserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/bosserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_bosserver_exec_t,s0)";
         "/nix/store/[^/]+/afs/bin/dafileserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/dasalvager" = "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/davolserver" = "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/fileserver" = "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/kaserver" = "-- gen_context(system_u:object_r:afs_kaserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/ptserver" = "-- gen_context(system_u:object_r:afs_ptserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/salvager" = "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/dasalvager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/davolserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/fileserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/kaserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_kaserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/ptserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_ptserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/salvager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/afs/bin/salvageserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/volserver" = "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
-        "/nix/store/[^/]+/afs/bin/vlserver" = "-- gen_context(system_u:object_r:afs_vlserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/volserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+        "/nix/store/[^/]+/afs/bin/vlserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_vlserver_exec_t,s0)";
 
-        "/nix/store/[^/]+/afs/db" = "-d gen_context(system_u:object_r:afs_dbdir_t,s0)";
-        "/nix/store/[^/]+/afs/db/pr.*" = "-- gen_context(system_u:object_r:afs_pt_db_t,s0)";
-        "/nix/store/[^/]+/afs/db/ka.*" = "-- gen_context(system_u:object_r:afs_ka_db_t,s0)";
-        "/nix/store/[^/]+/afs/db/vl.*" = "-- gen_context(system_u:object_r:afs_vl_db_t,s0)";
+        "/nix/store/[^/]+/afs/db" = lib.mkDefault "-d gen_context(system_u:object_r:afs_dbdir_t,s0)";
+        "/nix/store/[^/]+/afs/db/pr.*" = lib.mkDefault "-- gen_context(system_u:object_r:afs_pt_db_t,s0)";
+        "/nix/store/[^/]+/afs/db/ka.*" = lib.mkDefault "-- gen_context(system_u:object_r:afs_ka_db_t,s0)";
+        "/nix/store/[^/]+/afs/db/vl.*" = lib.mkDefault "-- gen_context(system_u:object_r:afs_vl_db_t,s0)";
 
-        "/nix/store/[^/]+/afs/etc(/.*)?" = "gen_context(system_u:object_r:afs_config_t,s0)";
+        "/nix/store/[^/]+/afs/etc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_config_t,s0)";
 
-        "/nix/store/[^/]+/afs/local(/.*)?" = "gen_context(system_u:object_r:afs_config_t,s0)";
+        "/nix/store/[^/]+/afs/local(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_config_t,s0)";
 
-        "/nix/store/[^/]+/afs/logs(/.*)?" = "gen_context(system_u:object_r:afs_logfile_t,s0)";
+        "/nix/store/[^/]+/afs/logs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_logfile_t,s0)";
 
-        "/nix/store/[^/]+/bin/afsd" = "-- gen_context(system_u:object_r:afs_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bosserver" = "-- gen_context(system_u:object_r:afs_bosserver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/afsd" = lib.mkDefault "-- gen_context(system_u:object_r:afs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bosserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_bosserver_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/openafs/dafileserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/dasalvager" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/davolserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/fileserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/kaserver" =
-          "-- gen_context(system_u:object_r:afs_kaserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_kaserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/ptserver" =
-          "-- gen_context(system_u:object_r:afs_ptserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_ptserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/salvager" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/salvagerserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/volserver" =
-          "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_fsserver_exec_t,s0)";
         "/nix/store/[^/]+/libexec/openafs/vlserver" =
-          "-- gen_context(system_u:object_r:afs_vlserver_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:afs_vlserver_exec_t,s0)";
 
-        "/nix/store/[^/]+/vice/cache(/.*)?" = "gen_context(system_u:object_r:afs_cache_t,s0)";
-        "/nix/store/[^/]+/vice/etc/afsd" = "-- gen_context(system_u:object_r:afs_exec_t,s0)";
+        "/nix/store/[^/]+/vice/cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_cache_t,s0)";
+        "/nix/store/[^/]+/vice/etc/afsd" = lib.mkDefault "-- gen_context(system_u:object_r:afs_exec_t,s0)";
 
-        "/var/cache/(open)?afs(/.*)?" = "gen_context(system_u:object_r:afs_cache_t,s0)";
+        "/var/cache/(open)?afs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:afs_cache_t,s0)";
       };
     };
   };

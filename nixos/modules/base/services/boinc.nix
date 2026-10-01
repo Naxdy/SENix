@@ -306,20 +306,23 @@
     fileContext = {
       rules = {
         "/etc/boinc-client/global_prefs_override\\.xml" =
-          "-- gen_context(system_u:object_r:boinc_var_lib_t,s0)";
-        "/etc/rc\\.d/init\\.d/boinc-client" = "-- gen_context(system_u:object_r:boinc_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:boinc_var_lib_t,s0)";
+        "/etc/rc\\.d/init\\.d/boinc-client" =
+          lib.mkDefault "-- gen_context(system_u:object_r:boinc_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/boinc" = "-- gen_context(system_u:object_r:boinc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/boinc_client" = "-- gen_context(system_u:object_r:boinc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/boinc" = lib.mkDefault "-- gen_context(system_u:object_r:boinc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/boinc_client" =
+          lib.mkDefault "-- gen_context(system_u:object_r:boinc_exec_t,s0)";
 
-        "/var/lib/boinc(/.*)?" = "gen_context(system_u:object_r:boinc_var_lib_t,s0)";
-        "/var/lib/boinc-client(/.*)?" = "gen_context(system_u:object_r:boinc_var_lib_t,s0)";
+        "/var/lib/boinc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:boinc_var_lib_t,s0)";
+        "/var/lib/boinc-client(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:boinc_var_lib_t,s0)";
         "/var/lib/boinc-client/projects(/.*)?" =
-          "gen_context(system_u:object_r:boinc_project_var_lib_t,s0)";
-        "/var/lib/boinc-client/slots(/.*)?" = "gen_context(system_u:object_r:boinc_project_var_lib_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:boinc_project_var_lib_t,s0)";
+        "/var/lib/boinc-client/slots(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:boinc_project_var_lib_t,s0)";
 
-        "/var/log/boinc\\.log.*" = "-- gen_context(system_u:object_r:boinc_log_t,s0)";
-        "/var/log/boincerr\\.log.*" = "-- gen_context(system_u:object_r:boinc_log_t,s0)";
+        "/var/log/boinc\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:boinc_log_t,s0)";
+        "/var/log/boincerr\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:boinc_log_t,s0)";
       };
     };
   };

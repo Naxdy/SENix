@@ -162,7 +162,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/bwrap" = "-- gen_context(system_u:object_r:bubblewrap_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bwrap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bubblewrap_exec_t,s0)";
       };
     };
   };

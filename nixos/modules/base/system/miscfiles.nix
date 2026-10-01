@@ -1288,60 +1288,71 @@
         #
         # /etc
         #
-        "/etc/avahi/etc/localtime" = "-- gen_context(system_u:object_r:locale_t,s0)";
-        "/etc/httpd/alias/[^/]*\\.db(\\.[^/]*)*" = "-- gen_context(system_u:object_r:cert_t,s0)";
-        "/etc/httpd/conf/ssl(/.*)?" = "-- gen_context(system_u:object_r:tls_privkey_t,s0)";
-        "/etc/httpd/conf/ssl/.*\\.crt" = "-- gen_context(system_u:object_r:cert_t,s0)";
-        "/etc/letsencrypt/archive/[^/]+/privkey.*" = "-- gen_context(system_u:object_r:tls_privkey_t,s0)";
-        "/etc/letsencrypt/keys(/.*)?" = "gen_context(system_u:object_r:tls_privkey_t,s0)";
-        "/etc/localtime" = "-- gen_context(system_u:object_r:locale_t,s0)";
-        "/etc/pki(/.*)?" = "gen_context(system_u:object_r:cert_t,s0)";
-        "/etc/pki/.*/private(/.*)?" = "gen_context(system_u:object_r:tls_privkey_t,s0)";
-        "/etc/ssl(/.*)?" = "gen_context(system_u:object_r:cert_t,s0)";
-        "/etc/ssl/private(/.*)?" = "gen_context(system_u:object_r:tls_privkey_t,s0)";
-        "/etc/timezone" = "-- gen_context(system_u:object_r:locale_t,s0)";
+        "/etc/avahi/etc/localtime" = lib.mkDefault "-- gen_context(system_u:object_r:locale_t,s0)";
+        "/etc/httpd/alias/[^/]*\\.db(\\.[^/]*)*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cert_t,s0)";
+        "/etc/httpd/conf/ssl(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/etc/httpd/conf/ssl/.*\\.crt" = lib.mkDefault "-- gen_context(system_u:object_r:cert_t,s0)";
+        "/etc/letsencrypt/archive/[^/]+/privkey.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/etc/letsencrypt/keys(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/etc/localtime" = lib.mkDefault "-- gen_context(system_u:object_r:locale_t,s0)";
+        "/etc/pki(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cert_t,s0)";
+        "/etc/pki/.*/private(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/etc/ssl(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cert_t,s0)";
+        "/etc/ssl/private(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/etc/timezone" = lib.mkDefault "-- gen_context(system_u:object_r:locale_t,s0)";
 
         #
         # /usr
         #
-        "/nix/store/[^/]+/(.*/)?man" = "-d gen_context(system_u:object_r:man_t,s0)";
-        "/nix/store/[^/]+/(.*/)?man/.*" = "gen_context(system_u:object_r:man_t,s0)";
+        "/nix/store/[^/]+/(.*/)?man" = lib.mkDefault "-d gen_context(system_u:object_r:man_t,s0)";
+        "/nix/store/[^/]+/(.*/)?man/.*" = lib.mkDefault "gen_context(system_u:object_r:man_t,s0)";
 
-        "/nix/store/[^/]+/lib/locale(/.*)?" = "gen_context(system_u:object_r:locale_t,s0)";
+        "/nix/store/[^/]+/lib/locale(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:locale_t,s0)";
 
-        "/nix/store/[^/]+/lib/perl5/man(/.*)?" = "gen_context(system_u:object_r:man_t,s0)";
+        "/nix/store/[^/]+/lib/perl5/man(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:man_t,s0)";
 
-        "/nix/store/[^/]+/local/share/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/local/share/fonts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
 
-        "/nix/store/[^/]+/share/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
-        "/nix/store/[^/]+/share/ghostscript/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
-        "/nix/store/[^/]+/share/texmf[^/]*/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
-        "/nix/store/[^/]+/share/X11/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/share/fonts(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/share/ghostscript/fonts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/share/texmf[^/]*/fonts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/share/X11/fonts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
 
-        "/nix/store/[^/]+/share/locale(/.*)?" = "gen_context(system_u:object_r:locale_t,s0)";
-        "/nix/store/[^/]+/share/X11/locale(/.*)?" = "gen_context(system_u:object_r:locale_t,s0)";
-        "/nix/store/[^/]+/share/zoneinfo(/.*)?" = "gen_context(system_u:object_r:locale_t,s0)";
+        "/nix/store/[^/]+/share/locale(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:locale_t,s0)";
+        "/nix/store/[^/]+/share/X11/locale(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:locale_t,s0)";
+        "/nix/store/[^/]+/share/zoneinfo(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:locale_t,s0)";
 
-        "/nix/store/[^/]+/share/ssl/certs(/.*)?" = "gen_context(system_u:object_r:cert_t,s0)";
-        "/nix/store/[^/]+/share/ssl/private(/.*)?" = "gen_context(system_u:object_r:tls_privkey_t,s0)";
+        "/nix/store/[^/]+/share/ssl/certs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cert_t,s0)";
+        "/nix/store/[^/]+/share/ssl/private(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:tls_privkey_t,s0)";
 
-        "/nix/store/[^/]+/X11R6/lib/X11/fonts(/.*)?" = "gen_context(system_u:object_r:fonts_t,s0)";
+        "/nix/store/[^/]+/X11R6/lib/X11/fonts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fonts_t,s0)";
 
         #
         # /var
         #
-        "/var/ftp(/.*)?" = "gen_context(system_u:object_r:public_content_t,s0)";
+        "/var/ftp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:public_content_t,s0)";
 
-        "/var/lib/texmf(/.*)?" = "gen_context(system_u:object_r:tetex_data_t,s0)";
+        "/var/lib/texmf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tetex_data_t,s0)";
 
-        "/var/cache/fontconfig(/.*)?" = "gen_context(system_u:object_r:fonts_cache_t,s0)";
-        "/var/cache/fonts(/.*)?" = "gen_context(system_u:object_r:tetex_data_t,s0)";
-        "/var/cache/man(/.*)?" = "gen_context(system_u:object_r:man_cache_t,s0)";
+        "/var/cache/fontconfig(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fonts_cache_t,s0)";
+        "/var/cache/fonts(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tetex_data_t,s0)";
+        "/var/cache/man(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:man_cache_t,s0)";
 
-        "/var/named/chroot/etc/pki(/.*)?" = "gen_context(system_u:object_r:cert_t,s0)";
+        "/var/named/chroot/etc/pki(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cert_t,s0)";
 
-        "/var/spool/abrt-upload(/.*)?" = "gen_context(system_u:object_r:public_content_rw_t,s0)";
-        "/var/spool/texmf(/.*)?" = "gen_context(system_u:object_r:tetex_data_t,s0)";
+        "/var/spool/abrt-upload(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:public_content_rw_t,s0)";
+        "/var/spool/texmf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tetex_data_t,s0)";
       };
     };
   };

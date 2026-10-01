@@ -1227,65 +1227,69 @@
         #
         # /etc
         #
-        "/etc/postgresql(-.*)?(/.*)?" = "gen_context(system_u:object_r:postgresql_etc_t,s0)";
+        "/etc/postgresql(-.*)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_etc_t,s0)";
 
         "/etc/rc\\.d/init\\.d/(se)?postgresql(-.*)?" =
-          "-- gen_context(system_u:object_r:postgresql_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_initrc_exec_t,s0)";
 
-        "/etc/sysconfig/pgsql(/.*)?" = "gen_context(system_u:object_r:postgresql_etc_t,s0)";
+        "/etc/sysconfig/pgsql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_etc_t,s0)";
 
         #
         # /usr
         #
         "/nix/store/[^/]+/bin/initdb(\\.sepgsql)?" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
-        "/nix/store/[^/]+/bin/(se)?postgres" = "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+        "/nix/store/[^/]+/bin/(se)?postgres" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/pgsql/test/regress(/.*)?" =
-          "gen_context(system_u:object_r:postgresql_db_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:postgresql_db_t,s0)";
         "/nix/store/[^/]+/lib/pgsql/test/regress/pg_regress" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_archivecleanup" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_basebackup" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_controldata" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_ctl" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_resetxlog" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_standby" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_upgrade" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/pg_xlogdump" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/postgres" =
-          "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_exec_t,s0)";
         "/nix/store/[^/]+/lib/postgresql(-.*)?/(.*/)?bin/postmaster" =
-          "-l gen_context(system_u:object_r:postgresql_exec_t,s0)";
+          lib.mkDefault "-l gen_context(system_u:object_r:postgresql_exec_t,s0)";
 
         #
         # /var
         #
-        "/var/lib/postgres(ql)?(/.*)?" = "gen_context(system_u:object_r:postgresql_db_t,s0)";
+        "/var/lib/postgres(ql)?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_db_t,s0)";
 
-        "/var/lib/pgsql/data(/.*)?" = "gen_context(system_u:object_r:postgresql_db_t,s0)";
-        "/var/lib/pgsql/logfile(/.*)?" = "gen_context(system_u:object_r:postgresql_log_t,s0)";
-        "/var/lib/pgsql/pgstartup\\.log" = "gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/lib/pgsql/data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_db_t,s0)";
+        "/var/lib/pgsql/logfile(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/lib/pgsql/pgstartup\\.log" =
+          lib.mkDefault "gen_context(system_u:object_r:postgresql_log_t,s0)";
 
-        "/var/lib/sepgsql(/.*)?" = "gen_context(system_u:object_r:postgresql_db_t,s0)";
-        "/var/lib/sepgsql/pgstartup\\.log" = "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/lib/sepgsql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_db_t,s0)";
+        "/var/lib/sepgsql/pgstartup\\.log" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
 
-        "/var/log/postgres\\.log.*" = "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
-        "/var/log/postgresql(/.*)?" = "gen_context(system_u:object_r:postgresql_log_t,s0)";
-        "/var/log/sepostgresql\\.log.*" = "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/log/postgres\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/log/postgresql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_log_t,s0)";
+        "/var/log/sepostgresql\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postgresql_log_t,s0)";
 
-        "/run/postgresql(/.*)?" = "gen_context(system_u:object_r:postgresql_runtime_t,s0)";
+        "/run/postgresql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:postgresql_runtime_t,s0)";
 
-        "/run/postmaster.*" = "gen_context(system_u:object_r:postgresql_runtime_t,s0)";
+        "/run/postmaster.*" = lib.mkDefault "gen_context(system_u:object_r:postgresql_runtime_t,s0)";
       };
     };
   };

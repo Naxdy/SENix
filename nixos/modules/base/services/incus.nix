@@ -418,10 +418,12 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/incus" = "-- gen_context(system_u:object_r:incusc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/incus-benchmark" = "-- gen_context(system_u:object_r:incusc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/incus-user" = "-- gen_context(system_u:object_r:incusd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/incusd" = "-- gen_context(system_u:object_r:incusd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/incus" = lib.mkDefault "-- gen_context(system_u:object_r:incusc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/incus-benchmark" =
+          lib.mkDefault "-- gen_context(system_u:object_r:incusc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/incus-user" =
+          lib.mkDefault "-- gen_context(system_u:object_r:incusd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/incusd" = lib.mkDefault "-- gen_context(system_u:object_r:incusd_exec_t,s0)";
       };
     };
   };

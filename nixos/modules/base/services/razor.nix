@@ -285,15 +285,15 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.razor(/.*)?" = "gen_context(system_u:object_r:razor_home_t,s0)";
+        "HOME_DIR/\\.razor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:razor_home_t,s0)";
 
-        "/etc/razor(/.*)?" = "gen_context(system_u:object_r:razor_etc_t,s0)";
+        "/etc/razor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:razor_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/razor.*" = "-- gen_context(system_u:object_r:razor_exec_t,s0)";
+        "/nix/store/[^/]+/bin/razor.*" = lib.mkDefault "-- gen_context(system_u:object_r:razor_exec_t,s0)";
 
-        "/var/lib/razor(/.*)?" = "gen_context(system_u:object_r:razor_var_lib_t,s0)";
+        "/var/lib/razor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:razor_var_lib_t,s0)";
 
-        "/var/log/razor-agent\\.log.*" = "-- gen_context(system_u:object_r:razor_log_t,s0)";
+        "/var/log/razor-agent\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:razor_log_t,s0)";
       };
     };
   };

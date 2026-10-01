@@ -185,14 +185,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/portreserve(/.*)?" = "gen_context(system_u:object_r:portreserve_etc_t,s0)";
+        "/etc/portreserve(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portreserve_etc_t,s0)";
 
         "/etc/rc\\.d/init\\.d/portreserve" =
-          "-- gen_context(system_u:object_r:portreserve_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:portreserve_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/portreserve" = "-- gen_context(system_u:object_r:portreserve_exec_t,s0)";
+        "/nix/store/[^/]+/bin/portreserve" =
+          lib.mkDefault "-- gen_context(system_u:object_r:portreserve_exec_t,s0)";
 
-        "/run/portreserve(/.*)?" = "gen_context(system_u:object_r:portreserve_runtime_t,s0)";
+        "/run/portreserve(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:portreserve_runtime_t,s0)";
       };
     };
   };

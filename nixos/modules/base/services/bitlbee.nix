@@ -200,20 +200,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/bitlbee(/.*)?" = "gen_context(system_u:object_r:bitlbee_conf_t,s0)";
+        "/etc/bitlbee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bitlbee_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/bitlbee" = "-- gen_context(system_u:object_r:bitlbee_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bitlbee" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bitlbee_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/bip" = "-- gen_context(system_u:object_r:bitlbee_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bitlbee" = "-- gen_context(system_u:object_r:bitlbee_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bip" = lib.mkDefault "-- gen_context(system_u:object_r:bitlbee_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bitlbee" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bitlbee_exec_t,s0)";
 
-        "/var/lib/bitlbee(/.*)?" = "gen_context(system_u:object_r:bitlbee_var_t,s0)";
+        "/var/lib/bitlbee(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bitlbee_var_t,s0)";
 
-        "/var/log/bip(/.*)?" = "gen_context(system_u:object_r:bitlbee_log_t,s0)";
+        "/var/log/bip(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bitlbee_log_t,s0)";
 
-        "/run/bitlbee\\.pid" = "-- gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
-        "/run/bitlbee\\.sock" = "-s gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
-        "/run/bip(/.*)?" = "gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
+        "/run/bitlbee\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
+        "/run/bitlbee\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
+        "/run/bip(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bitlbee_runtime_t,s0)";
       };
     };
   };

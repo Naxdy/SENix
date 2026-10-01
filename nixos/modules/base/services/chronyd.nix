@@ -568,27 +568,30 @@
     fileContext = {
       rules = {
         # Systemd unit files
-        "/etc/chrony\\.conf" = "-- gen_context(system_u:object_r:chronyd_conf_t,s0)";
-        "/etc/chrony\\.keys" = "-- gen_context(system_u:object_r:chronyd_keys_t,s0)";
+        "/etc/chrony\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:chronyd_conf_t,s0)";
+        "/etc/chrony\\.keys" = lib.mkDefault "-- gen_context(system_u:object_r:chronyd_keys_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/chronyd" = "-- gen_context(system_u:object_r:chronyd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/chronyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chronyd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/chronyd" = "-- gen_context(system_u:object_r:chronyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chronyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chronyd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*chrony-wait.*" =
-          "-- gen_context(system_u:object_r:chronyd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chronyd_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*chronyd.*" =
-          "-- gen_context(system_u:object_r:chronyd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chronyd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/chronyc" = "-- gen_context(system_u:object_r:chronyc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chronyc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chronyc_exec_t,s0)";
 
-        "/var/lib/chrony(/.*)?" = "gen_context(system_u:object_r:chronyd_var_lib_t,s0)";
+        "/var/lib/chrony(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:chronyd_var_lib_t,s0)";
 
-        "/var/log/chrony(/.*)?" = "gen_context(system_u:object_r:chronyd_var_log_t,s0)";
+        "/var/log/chrony(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:chronyd_var_log_t,s0)";
 
-        "/run/chronyd?(/.*)?" = "gen_context(system_u:object_r:chronyd_runtime_t,s0)";
-        "/run/chronyd\\.pid" = "-- gen_context(system_u:object_r:chronyd_runtime_t,s0)";
-        "/run/chronyd\\.sock" = "-s gen_context(system_u:object_r:chronyd_runtime_t,s0)";
+        "/run/chronyd?(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:chronyd_runtime_t,s0)";
+        "/run/chronyd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:chronyd_runtime_t,s0)";
+        "/run/chronyd\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:chronyd_runtime_t,s0)";
       };
     };
   };

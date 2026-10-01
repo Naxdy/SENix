@@ -702,35 +702,41 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/ypbind" = "-- gen_context(system_u:object_r:ypbind_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/yppasswd" = "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ypserv" = "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/ypxfrd" = "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ypbind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ypbind_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/yppasswd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ypserv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ypxfrd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_initrc_exec_t,s0)";
 
-        "/etc/ypserv\\.conf" = "-- gen_context(system_u:object_r:ypserv_conf_t,s0)";
+        "/etc/ypserv\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ypserv_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/rpc\\.yppasswdd" = "-- gen_context(system_u:object_r:yppasswdd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpc\\.ypxfrd" = "-- gen_context(system_u:object_r:ypxfr_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ypbind" = "-- gen_context(system_u:object_r:ypbind_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ypserv" = "-- gen_context(system_u:object_r:ypserv_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.yppasswdd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:yppasswdd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpc\\.ypxfrd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ypxfr_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ypbind" = lib.mkDefault "-- gen_context(system_u:object_r:ypbind_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ypserv" = lib.mkDefault "-- gen_context(system_u:object_r:ypserv_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/yp/ypxfr" = "-- gen_context(system_u:object_r:ypxfr_exec_t,s0)";
+        "/nix/store/[^/]+/lib/yp/ypxfr" = lib.mkDefault "-- gen_context(system_u:object_r:ypxfr_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/ypbind.*\\.service" =
-          "-- gen_context(system_u:object_r:ypbind_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ypbind_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/yppasswdd.*\\.service" =
-          "-- gen_context(system_u:object_r:nis_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/ypserv.*\\.service" =
-          "-- gen_context(system_u:object_r:nis_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/ypxfrd.*\\.service" =
-          "-- gen_context(system_u:object_r:nis_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:nis_unit_t,s0)";
 
-        "/var/yp(/.*)?" = "gen_context(system_u:object_r:var_yp_t,s0)";
+        "/var/yp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_yp_t,s0)";
 
-        "/run/ypxfrd.*" = "-- gen_context(system_u:object_r:ypxfr_runtime_t,s0)";
-        "/run/ypbind.*" = "-- gen_context(system_u:object_r:ypbind_runtime_t,s0)";
-        "/run/ypserv.*" = "-- gen_context(system_u:object_r:ypserv_runtime_t,s0)";
-        "/run/yppass.*" = "-- gen_context(system_u:object_r:yppasswdd_runtime_t,s0)";
+        "/run/ypxfrd.*" = lib.mkDefault "-- gen_context(system_u:object_r:ypxfr_runtime_t,s0)";
+        "/run/ypbind.*" = lib.mkDefault "-- gen_context(system_u:object_r:ypbind_runtime_t,s0)";
+        "/run/ypserv.*" = lib.mkDefault "-- gen_context(system_u:object_r:ypserv_runtime_t,s0)";
+        "/run/yppass.*" = lib.mkDefault "-- gen_context(system_u:object_r:yppasswdd_runtime_t,s0)";
       };
     };
   };

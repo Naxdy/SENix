@@ -80,9 +80,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/libexec/boltd" = "-- gen_context(system_u:object_r:thunderboltd_exec_t,s0)";
-        "/var/lib/boltd(/.*)?" = "gen_context(system_u:object_r:thunderboltd_var_lib_t,s0)";
-        "/run/boltd(/.*)?" = "gen_context(system_u:object_r:thunderboltd_runtime_t,s0)";
+        "/nix/store/[^/]+/libexec/boltd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:thunderboltd_exec_t,s0)";
+        "/var/lib/boltd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:thunderboltd_var_lib_t,s0)";
+        "/run/boltd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:thunderboltd_runtime_t,s0)";
       };
     };
   };

@@ -73,8 +73,9 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/rasdaemon" = "-- gen_context(system_u:object_r:rasdaemon_exec_t,s0)";
-        "/var/lib/rasdaemon(/.*)?" = "gen_context(system_u:object_r:rasdaemon_var_t,s0)";
+        "/nix/store/[^/]+/bin/rasdaemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rasdaemon_exec_t,s0)";
+        "/var/lib/rasdaemon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rasdaemon_var_t,s0)";
       };
     };
   };

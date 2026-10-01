@@ -180,12 +180,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/gatherer" = "-- gen_context(system_u:object_r:sblim_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gatherer" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sblim_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/gatherd" = "-- gen_context(system_u:object_r:sblim_gatherd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/reposd" = "-- gen_context(system_u:object_r:sblim_reposd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gatherd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sblim_gatherd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/reposd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sblim_reposd_exec_t,s0)";
 
-        "/run/gather(/.*)?" = "gen_context(system_u:object_r:sblim_runtime_t,s0)";
+        "/run/gather(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sblim_runtime_t,s0)";
       };
     };
   };

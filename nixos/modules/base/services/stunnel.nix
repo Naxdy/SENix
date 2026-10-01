@@ -159,11 +159,12 @@
     '';
     fileContext = {
       rules = {
-        "/etc/stunnel(/.*)?" = "gen_context(system_u:object_r:stunnel_etc_t,s0)";
+        "/etc/stunnel(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:stunnel_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/stunnel" = "-- gen_context(system_u:object_r:stunnel_exec_t,s0)";
+        "/nix/store/[^/]+/bin/stunnel" =
+          lib.mkDefault "-- gen_context(system_u:object_r:stunnel_exec_t,s0)";
 
-        "/run/stunnel(/.*)?" = "gen_context(system_u:object_r:stunnel_runtime_t,s0)";
+        "/run/stunnel(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:stunnel_runtime_t,s0)";
       };
     };
   };

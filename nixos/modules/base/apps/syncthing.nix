@@ -119,9 +119,11 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/syncthing" = "-- gen_context(system_u:object_r:syncthing_exec_t,s0)";
+        "/nix/store/[^/]+/bin/syncthing" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syncthing_exec_t,s0)";
 
-        "HOME_DIR/\\.config/syncthing(/.*)?" = "gen_context(system_u:object_r:syncthing_xdg_config_t,s0)";
+        "HOME_DIR/\\.config/syncthing(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:syncthing_xdg_config_t,s0)";
       };
     };
   };

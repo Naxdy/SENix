@@ -223,10 +223,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/rssh" = "-- gen_context(system_u:object_r:rssh_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rssh" = lib.mkDefault "-- gen_context(system_u:object_r:rssh_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/rssh_chroot_helper" =
-          "-- gen_context(system_u:object_r:rssh_chroot_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rssh_chroot_helper_exec_t,s0)";
       };
     };
   };

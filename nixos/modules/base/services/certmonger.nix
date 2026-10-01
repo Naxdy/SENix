@@ -265,13 +265,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/certmonger" = "-- gen_context(system_u:object_r:certmonger_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/certmonger" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certmonger_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/certmonger" = "-- gen_context(system_u:object_r:certmonger_exec_t,s0)";
+        "/nix/store/[^/]+/bin/certmonger" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certmonger_exec_t,s0)";
 
-        "/var/lib/certmonger(/.*)?" = "gen_context(system_u:object_r:certmonger_var_lib_t,s0)";
+        "/var/lib/certmonger(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:certmonger_var_lib_t,s0)";
 
-        "/run/certmonger.*" = "gen_context(system_u:object_r:certmonger_runtime_t,s0)";
+        "/run/certmonger.*" = lib.mkDefault "gen_context(system_u:object_r:certmonger_runtime_t,s0)";
       };
     };
   };

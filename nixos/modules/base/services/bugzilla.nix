@@ -133,12 +133,13 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/share/bugzilla(/.*)?" = [
+        "/nix/store/[^/]+/share/bugzilla(/.*)?" = lib.mkDefault [
           "-d gen_context(system_u:object_r:httpd_bugzilla_content_t,s0)"
           "-- gen_context(system_u:object_r:httpd_bugzilla_script_exec_t,s0)"
         ];
 
-        "/var/lib/bugzilla(/.*)?" = "gen_context(system_u:object_r:httpd_bugzilla_rw_content_t,s0)";
+        "/var/lib/bugzilla(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_bugzilla_rw_content_t,s0)";
       };
     };
   };

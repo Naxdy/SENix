@@ -242,34 +242,40 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/((jabber)|(ejabberd)|(jabberd))" =
-          "-- gen_context(system_u:object_r:jabberd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/c2s" = "-- gen_context(system_u:object_r:jabberd_router_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ejabberd" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ejabberdctl" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/jabberd" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/prosody" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/router" = "-- gen_context(system_u:object_r:jabberd_router_exec_t,s0)";
-        "/nix/store/[^/]+/bin/s2s" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sm" = "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/c2s" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_router_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ejabberd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ejabberdctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/jabberd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/prosody" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/router" =
+          lib.mkDefault "-- gen_context(system_u:object_r:jabberd_router_exec_t,s0)";
+        "/nix/store/[^/]+/bin/s2s" = lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sm" = lib.mkDefault "-- gen_context(system_u:object_r:jabberd_exec_t,s0)";
 
-        "/var/lock/ejabberdctl(/.*)" = "gen_context(system_u:object_r:jabberd_lock_t,s0)";
+        "/var/lock/ejabberdctl(/.*)" = lib.mkDefault "gen_context(system_u:object_r:jabberd_lock_t,s0)";
 
-        "/var/log/ejabberd(/.*)?" = "gen_context(system_u:object_r:jabberd_log_t,s0)";
-        "/var/log/jabber(/.*)?" = "gen_context(system_u:object_r:jabberd_log_t,s0)";
-        "/var/log/prosody(/.*)?" = "gen_context(system_u:object_r:jabberd_log_t,s0)";
+        "/var/log/ejabberd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_log_t,s0)";
+        "/var/log/jabber(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_log_t,s0)";
+        "/var/log/prosody(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_log_t,s0)";
 
-        "/var/lib/ejabberd(/.*)?" = "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
-        "/var/lib/ejabberd/spool(/.*)?" = "gen_context(system_u:object_r:jabberd_spool_t,s0)";
-        "/var/lib/jabber(/.*)?" = "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
-        "/var/lib/jabberd(/.*)?" = "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
-        "/var/lib/prosody(/.*)?" = "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
-        "/var/lib/jabberd/log(/.*)?" = "gen_context(system_u:object_r:jabberd_log_t,s0)";
-        "/var/lib/jabberd/pid(/.*)?" = "gen_context(system_u:object_r:jabberd_runtime_t,s0)";
+        "/var/lib/ejabberd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
+        "/var/lib/ejabberd/spool(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_spool_t,s0)";
+        "/var/lib/jabber(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
+        "/var/lib/jabberd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
+        "/var/lib/prosody(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_var_lib_t,s0)";
+        "/var/lib/jabberd/log(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_log_t,s0)";
+        "/var/lib/jabberd/pid(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_runtime_t,s0)";
 
-        "/run/ejabber\\.pid" = "-- gen_context(system_u:object_r:jabberd_runtime_t,s0)";
-        "/run/jabber\\.pid" = "-- gen_context(system_u:object_r:jabberd_runtime_t,s0)";
-        "/run/prosody(/.*)?" = "gen_context(system_u:object_r:jabberd_runtime_t,s0)";
+        "/run/ejabber\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:jabberd_runtime_t,s0)";
+        "/run/jabber\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:jabberd_runtime_t,s0)";
+        "/run/prosody(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:jabberd_runtime_t,s0)";
       };
     };
   };

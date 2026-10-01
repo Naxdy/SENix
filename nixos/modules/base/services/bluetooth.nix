@@ -540,39 +540,50 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/etc/bluetooth(/.*)?" = "gen_context(system_u:object_r:bluetooth_conf_t,s0)";
-        "/etc/bluetooth/link_key" = "-- gen_context(system_u:object_r:bluetooth_conf_rw_t,s0)";
+        "/etc/bluetooth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bluetooth_conf_t,s0)";
+        "/etc/bluetooth/link_key" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_conf_rw_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/bluetooth" = "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/dund" = "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/pand" = "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bluetooth" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dund" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pand" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/blue.*pin" = "-- gen_context(system_u:object_r:bluetooth_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/bluetoothd" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blue.*pin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bluetoothd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
         "/nix/store/[^/]+/bin/bluetoothctl" =
-          "-- gen_context(system_u:object_r:bluetooth_helper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dund" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hciattach" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hcid" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hid2hci" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hidd" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rfcomm" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sdpd" = "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_helper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dund" = lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hciattach" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hcid" = lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hid2hci" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hidd" = lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rfcomm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sdpd" = lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/bluetooth/bluetoothd" =
-          "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*bluetooth.*" =
-          "-- gen_context(system_u:object_r:bluetooth_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_unit_t,s0)";
 
         "/nix/store/[^/]+/libexec/bluetooth/bluetoothd" =
-          "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_exec_t,s0)";
 
-        "/var/lib/bluetooth(/.*)?" = "gen_context(system_u:object_r:bluetooth_var_lib_t,s0)";
+        "/var/lib/bluetooth(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bluetooth_var_lib_t,s0)";
 
-        "/var/lock/subsys/bluetoothd" = "-- gen_context(system_u:object_r:bluetooth_lock_t,s0)";
+        "/var/lock/subsys/bluetoothd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_lock_t,s0)";
 
-        "/run/bluetoothd_address" = "-- gen_context(system_u:object_r:bluetooth_runtime_t,s0)";
-        "/run/sdp" = "-s gen_context(system_u:object_r:bluetooth_runtime_t,s0)";
+        "/run/bluetoothd_address" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bluetooth_runtime_t,s0)";
+        "/run/sdp" = lib.mkDefault "-s gen_context(system_u:object_r:bluetooth_runtime_t,s0)";
       };
     };
   };

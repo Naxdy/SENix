@@ -256,16 +256,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/kdump\\.conf" = "-- gen_context(system_u:object_r:kdump_etc_t,s0)";
+        "/etc/kdump\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:kdump_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/kdump" = "-- gen_context(system_u:object_r:kdump_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/kdump" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kdump_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/kdump" = "-- gen_context(system_u:object_r:kdump_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kdumpctl" = "-- gen_context(system_u:object_r:kdumpctl_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kexec" = "-- gen_context(system_u:object_r:kdump_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kdump" = lib.mkDefault "-- gen_context(system_u:object_r:kdump_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kdumpctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:kdumpctl_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kexec" = lib.mkDefault "-- gen_context(system_u:object_r:kdump_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/kdump.*\\.service" =
-          "-- gen_context(system_u:object_r:kdump_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:kdump_unit_t,s0)";
       };
     };
   };

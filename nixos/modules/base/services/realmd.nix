@@ -141,7 +141,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/lib/realmd/realmd" = "-- gen_context(system_u:object_r:realmd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/realmd/realmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:realmd_exec_t,s0)";
       };
     };
   };

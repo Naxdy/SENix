@@ -141,21 +141,23 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/lightsquid" = "-- gen_context(system_u:object_r:lightsquid_exec_t,s0)";
+        "/etc/cron\\.daily/lightsquid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lightsquid_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/cgi-bin/lightsquid/.*\\.cfg" =
-          "-- gen_context(system_u:object_r:httpd_lightsquid_content_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_lightsquid_content_t,s0)";
         "/nix/store/[^/]+/lib/cgi-bin/lightsquid/.*\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_lightsquid_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_lightsquid_script_exec_t,s0)";
 
         "/nix/store/[^/]+/share/lightsquid/cgi/.*\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_lightsquid_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_lightsquid_script_exec_t,s0)";
 
-        "/var/lightsquid(/.*)?" = "gen_context(system_u:object_r:lightsquid_rw_content_t,s0)";
+        "/var/lightsquid(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lightsquid_rw_content_t,s0)";
 
-        "/var/www/html/lightsquid(/.*)?" = "gen_context(system_u:object_r:httpd_lightsquid_content_t,s0)";
+        "/var/www/html/lightsquid(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_lightsquid_content_t,s0)";
         "/var/www/html/lightsquid/report(/.*)?" =
-          "gen_context(system_u:object_r:lightsquid_rw_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:lightsquid_rw_content_t,s0)";
       };
     };
   };

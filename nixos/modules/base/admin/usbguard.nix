@@ -137,17 +137,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/usbguard" = "-d gen_context(system_u:object_r:usbguard_conf_t,s0)";
-        "/etc/usbguard/rules\\.conf" = "gen_context(system_u:object_r:usbguard_rules_t,s0)";
-        "/etc/usbguard/.+" = "gen_context(system_u:object_r:usbguard_conf_t,s0)";
+        "/etc/usbguard" = lib.mkDefault "-d gen_context(system_u:object_r:usbguard_conf_t,s0)";
+        "/etc/usbguard/rules\\.conf" = lib.mkDefault "gen_context(system_u:object_r:usbguard_rules_t,s0)";
+        "/etc/usbguard/.+" = lib.mkDefault "gen_context(system_u:object_r:usbguard_conf_t,s0)";
 
-        "/run/usbguard(/.*)?" = "gen_context(system_u:object_r:usbguard_runtime_t,s0)";
-        "/run/usbguard\\.pid" = "gen_context(system_u:object_r:usbguard_runtime_t,s0)";
+        "/run/usbguard(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:usbguard_runtime_t,s0)";
+        "/run/usbguard\\.pid" = lib.mkDefault "gen_context(system_u:object_r:usbguard_runtime_t,s0)";
 
         "/nix/store/[^/]+/bin/usbguard-daemon" =
-          "-- gen_context(system_u:object_r:usbguard_daemon_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:usbguard_daemon_exec_t,s0)";
 
-        "/var/log/usbguard(/.*)?" = "gen_context(system_u:object_r:usbguard_log_t,s0)";
+        "/var/log/usbguard(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:usbguard_log_t,s0)";
       };
     };
   };

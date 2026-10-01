@@ -86,7 +86,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/netlabelctl" = "-- gen_context(system_u:object_r:netlabel_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/netlabelctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:netlabel_mgmt_exec_t,s0)";
       };
     };
   };

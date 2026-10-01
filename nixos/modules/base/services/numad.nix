@@ -89,13 +89,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/numad" = "-- gen_context(system_u:object_r:numad_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/numad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:numad_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/numad" = "-- gen_context(system_u:object_r:numad_exec_t,s0)";
+        "/nix/store/[^/]+/bin/numad" = lib.mkDefault "-- gen_context(system_u:object_r:numad_exec_t,s0)";
 
-        "/var/log/numad\\.log.*" = "-- gen_context(system_u:object_r:numad_log_t,s0)";
+        "/var/log/numad\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:numad_log_t,s0)";
 
-        "/run/numad\\.pid" = "-- gen_context(system_u:object_r:numad_runtime_t,s0)";
+        "/run/numad\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:numad_runtime_t,s0)";
       };
     };
   };

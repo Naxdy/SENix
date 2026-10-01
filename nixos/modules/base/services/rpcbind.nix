@@ -238,15 +238,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/rpcbind" = "-- gen_context(system_u:object_r:rpcbind_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/rpcbind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcbind_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/rpcbind" = "-- gen_context(system_u:object_r:rpcbind_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpcbind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rpcbind_exec_t,s0)";
 
-        "/var/cache/rpcbind(/.*)?" = "gen_context(system_u:object_r:rpcbind_var_lib_t,s0)";
+        "/var/cache/rpcbind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpcbind_var_lib_t,s0)";
 
-        "/var/lib/rpcbind(/.*)?" = "gen_context(system_u:object_r:rpcbind_var_lib_t,s0)";
+        "/var/lib/rpcbind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rpcbind_var_lib_t,s0)";
 
-        "/run/rpcbind.*" = "gen_context(system_u:object_r:rpcbind_runtime_t,s0)";
+        "/run/rpcbind.*" = lib.mkDefault "gen_context(system_u:object_r:rpcbind_runtime_t,s0)";
       };
     };
   };

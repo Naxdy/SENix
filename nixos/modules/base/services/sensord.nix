@@ -76,11 +76,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sensord" = "-- gen_context(system_u:object_r:sensord_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sensord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sensord_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/sensord" = "-- gen_context(system_u:object_r:sensord_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sensord" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sensord_exec_t,s0)";
 
-        "/run/sensord\\.pid" = "-- gen_context(system_u:object_r:sensord_runtime_t,s0)";
+        "/run/sensord\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:sensord_runtime_t,s0)";
       };
     };
   };

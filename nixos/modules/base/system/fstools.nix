@@ -620,68 +620,81 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/addpart" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/badblocks" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/blkid" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/blockdev" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/btrfs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cfdisk" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/clubufflush" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/delpart" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dosfsck" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dump" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dumpe2fs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/e2fsck" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/e4fsck" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/e2label" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/e2mmpstatus" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fatsort" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fdisk" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/findfs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fsck.*" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gdisk" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/hdparm" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/install-mbr" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/jfs_.*" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/losetup.*" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lsraid" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkdosfs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mke2fs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mke4fs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkfs.*" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkraid" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkswap" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/parted" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/partition_uuid" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/partprobe" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/partx" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/raidautorun" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/raidstart" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/raw" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/resize.*fs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/scsi_info" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/scsi_unique_id" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/syslinux" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/sfdisk" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/smartctl" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/swapoff" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/swapon.*" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tune2fs" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zdb" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zhack" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zinject" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zpios" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zstreamdump" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ztest" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/addpart" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/badblocks" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blkid" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/blockdev" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/btrfs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cfdisk" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/clubufflush" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/delpart" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dosfsck" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dump" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dumpe2fs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/e2fsck" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/e4fsck" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/e2label" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/e2mmpstatus" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fatsort" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fdisk" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/findfs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fsck.*" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gdisk" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hdparm" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/install-mbr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/jfs_.*" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/losetup.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lsraid" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkdosfs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mke2fs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mke4fs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkfs.*" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkraid" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkswap" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/parted" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/partition_uuid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/partprobe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/partx" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/raidautorun" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/raidstart" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/raw" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/resize.*fs" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/scsi_info" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/scsi_unique_id" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/syslinux" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sfdisk" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smartctl" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/swapoff" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/swapon.*" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tune2fs" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zdb" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zhack" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zinject" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zpios" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zstreamdump" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ztest" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/fstrim" = "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fstrim" = lib.mkDefault "-- gen_context(system_u:object_r:fsadm_exec_t,s0)";
 
-        "/var/swap" = "-- gen_context(system_u:object_r:swapfile_t,s0)";
+        "/var/swap" = lib.mkDefault "-- gen_context(system_u:object_r:swapfile_t,s0)";
 
-        "/var/log/fsck(/.*)?" = "gen_context(system_u:object_r:fsadm_log_t,s0)";
+        "/var/log/fsck(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fsadm_log_t,s0)";
 
-        "/run/blkid(/.*)?" = "gen_context(system_u:object_r:fsadm_run_t,s0)";
-        "/run/fsck(/.*)?" = "gen_context(system_u:object_r:fsadm_run_t,s0)";
+        "/run/blkid(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fsadm_run_t,s0)";
+        "/run/fsck(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fsadm_run_t,s0)";
       };
     };
   };

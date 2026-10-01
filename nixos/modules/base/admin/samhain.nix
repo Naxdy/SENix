@@ -347,19 +347,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/samhain" = "-- gen_context(system_u:object_r:samhain_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/samhain" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_initrc_exec_t,s0)";
 
-        "/etc/samhainrc" = "-- gen_context(system_u:object_r:samhain_etc_t,mls_systemhigh)";
+        "/etc/samhainrc" = lib.mkDefault "-- gen_context(system_u:object_r:samhain_etc_t,mls_systemhigh)";
 
-        "/nix/store/[^/]+/bin/samhain" = "-- gen_context(system_u:object_r:samhain_exec_t,s0)";
-        "/nix/store/[^/]+/bin/samhain_setpwd" = "-- gen_context(system_u:object_r:samhain_exec_t,s0)";
+        "/nix/store/[^/]+/bin/samhain" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_exec_t,s0)";
+        "/nix/store/[^/]+/bin/samhain_setpwd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_exec_t,s0)";
 
-        "/var/lib/samhain(/.*)?" = "gen_context(system_u:object_r:samhain_db_t,mls_systemhigh)";
+        "/var/lib/samhain(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:samhain_db_t,mls_systemhigh)";
 
-        "/var/log/samhain_log.*" = "-- gen_context(system_u:object_r:samhain_log_t,mls_systemhigh)";
-        "/var/log/samhain_log\\.lock" = "-- gen_context(system_u:object_r:samhain_log_t,mls_systemhigh)";
+        "/var/log/samhain_log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_log_t,mls_systemhigh)";
+        "/var/log/samhain_log\\.lock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_log_t,mls_systemhigh)";
 
-        "/run/samhain\\.pid" = "-- gen_context(system_u:object_r:samhain_runtime_t,mls_systemhigh)";
+        "/run/samhain\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:samhain_runtime_t,mls_systemhigh)";
       };
     };
   };

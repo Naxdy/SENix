@@ -148,17 +148,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/gatekeeper\\.ini" = "-- gen_context(system_u:object_r:gatekeeper_etc_t,s0)";
+        "/etc/gatekeeper\\.ini" = lib.mkDefault "-- gen_context(system_u:object_r:gatekeeper_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/gnugk" = "-- gen_context(system_u:object_r:gatekeeper_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/gnugk" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gatekeeper_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/gk" = "-- gen_context(system_u:object_r:gatekeeper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gnugk" = "-- gen_context(system_u:object_r:gatekeeper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gk" = lib.mkDefault "-- gen_context(system_u:object_r:gatekeeper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gnugk" =
+          lib.mkDefault "-- gen_context(system_u:object_r:gatekeeper_exec_t,s0)";
 
-        "/var/log/gnugk(/.*)?" = "gen_context(system_u:object_r:gatekeeper_log_t,s0)";
+        "/var/log/gnugk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gatekeeper_log_t,s0)";
 
-        "/run/gk\\.pid" = "-- gen_context(system_u:object_r:gatekeeper_runtime_t,s0)";
-        "/run/gnugk(/.*)?" = "gen_context(system_u:object_r:gatekeeper_runtime_t,s0)";
+        "/run/gk\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:gatekeeper_runtime_t,s0)";
+        "/run/gnugk(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:gatekeeper_runtime_t,s0)";
       };
     };
   };

@@ -93,12 +93,16 @@
     '';
     fileContext = {
       rules = {
-        "/run/node_exporter\\.pid" = "-- gen_context(system_u:object_r:node_exporter_runtime_t,s0)";
+        "/run/node_exporter\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:node_exporter_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/node_exporter" = "-- gen_context(system_u:object_r:node_exporter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/node_exporter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:node_exporter_exec_t,s0)";
 
-        "/var/lib/node_exporter(/.*)?" = "gen_context(system_u:object_r:node_exporter_var_lib_t,s0)";
-        "/var/log/node_exporter(/.*)?" = "gen_context(system_u:object_r:node_exporter_log_t,s0)";
+        "/var/lib/node_exporter(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:node_exporter_var_lib_t,s0)";
+        "/var/log/node_exporter(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:node_exporter_log_t,s0)";
       };
     };
   };

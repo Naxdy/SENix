@@ -231,7 +231,7 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/crio" = "-- gen_context(system_u:object_r:crio_exec_t,s0)";
+        "/nix/store/[^/]+/bin/crio" = lib.mkDefault "-- gen_context(system_u:object_r:crio_exec_t,s0)";
       };
     };
   };

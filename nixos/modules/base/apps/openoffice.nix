@@ -317,7 +317,8 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.openoffice(\\.org)?(/.*)?" = "gen_context(system_u:object_r:ooffice_home_t,s0)";
+        "HOME_DIR/\\.openoffice(\\.org)?(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:ooffice_home_t,s0)";
       };
     };
   };

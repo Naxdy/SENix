@@ -103,13 +103,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/[sm]locate" = "-- gen_context(system_u:object_r:locate_exec_t,s0)";
+        "/etc/cron\\.daily/[sm]locate" = lib.mkDefault "-- gen_context(system_u:object_r:locate_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/updatedb.*" = "-- gen_context(system_u:object_r:locate_exec_t,s0)";
+        "/nix/store/[^/]+/bin/updatedb.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:locate_exec_t,s0)";
 
-        "/var/lib/[sm]locate(/.*)?" = "gen_context(system_u:object_r:locate_var_lib_t,s0)";
+        "/var/lib/[sm]locate(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:locate_var_lib_t,s0)";
 
-        "/run/mlocate\\.daily\\.lock" = "-- gen_context(system_u:object_r:locate_runtime_t,s0)";
+        "/run/mlocate\\.daily\\.lock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:locate_runtime_t,s0)";
       };
     };
   };

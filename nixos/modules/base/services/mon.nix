@@ -335,20 +335,21 @@
     '';
     fileContext = {
       rules = {
-        "/run/mon(/.*)?" = "gen_context(system_u:object_r:mon_runtime_t,s0)";
+        "/run/mon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mon_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/mon" = "-- gen_context(system_u:object_r:mon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mon" = lib.mkDefault "-- gen_context(system_u:object_r:mon_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/mon/mon\\.d/.*" = "-- gen_context(system_u:object_r:mon_net_test_exec_t,s0)";
+        "/nix/store/[^/]+/lib/mon/mon\\.d/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mon_net_test_exec_t,s0)";
         "/nix/store/[^/]+/lib/mon/mon-local\\.d/.*" =
-          "-- gen_context(system_u:object_r:mon_local_test_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mon_local_test_exec_t,s0)";
         "/nix/store/[^/]+/lib/mon-contrib/mon\\.d/.*" =
-          "-- gen_context(system_u:object_r:mon_net_test_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mon_net_test_exec_t,s0)";
         "/nix/store/[^/]+/lib/mon-contrib/mon-local\\.d/.*" =
-          "-- gen_context(system_u:object_r:mon_local_test_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mon_local_test_exec_t,s0)";
 
-        "/var/lib/mon(/.*)?" = "gen_context(system_u:object_r:mon_var_lib_t,s0)";
-        "/var/log/mon(/.*)?" = "gen_context(system_u:object_r:mon_var_log_t,s0)";
+        "/var/lib/mon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mon_var_lib_t,s0)";
+        "/var/log/mon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mon_var_log_t,s0)";
       };
     };
   };

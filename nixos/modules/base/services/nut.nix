@@ -203,31 +203,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/nut(/.*)?" = "gen_context(system_u:object_r:nut_conf_t,s0)";
-        "/etc/ups(/.*)?" = "gen_context(system_u:object_r:nut_conf_t,s0)";
+        "/etc/nut(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nut_conf_t,s0)";
+        "/etc/ups(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nut_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/nut-driver" = "-- gen_context(system_u:object_r:nut_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/nut-server" = "-- gen_context(system_u:object_r:nut_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nut-driver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nut_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nut-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nut_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/upsd" = "-- gen_context(system_u:object_r:nut_upsd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/upsdrvctl" = "-- gen_context(system_u:object_r:nut_upsdrvctl_exec_t,s0)";
-        "/nix/store/[^/]+/bin/upsmon" = "-- gen_context(system_u:object_r:nut_upsmon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/upsd" = lib.mkDefault "-- gen_context(system_u:object_r:nut_upsd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/upsdrvctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nut_upsdrvctl_exec_t,s0)";
+        "/nix/store/[^/]+/bin/upsmon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nut_upsmon_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/cgi-bin/nut/upsimage\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/cgi-bin/nut/upsset\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/cgi-bin/nut/upsstats\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
 
-        "/run/nut(/.*)?" = "gen_context(system_u:object_r:nut_runtime_t,s0)";
+        "/run/nut(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nut_runtime_t,s0)";
 
         "/var/www/nut-cgi-bin/upsimage\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
         "/var/www/nut-cgi-bin/upsset\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
         "/var/www/nut-cgi-bin/upsstats\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_nutups_cgi_script_exec_t,s0)";
       };
     };
   };

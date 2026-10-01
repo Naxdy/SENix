@@ -188,7 +188,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/consoletype" = "-- gen_context(system_u:object_r:consoletype_exec_t,s0)";
+        "/nix/store/[^/]+/bin/consoletype" =
+          lib.mkDefault "-- gen_context(system_u:object_r:consoletype_exec_t,s0)";
       };
     };
   };

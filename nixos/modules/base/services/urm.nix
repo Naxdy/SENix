@@ -154,9 +154,9 @@
     '';
     fileContext = {
       rules = {
-        "/etc/urm(/.*)?" = "gen_context(system_u:object_r:urm_config_t,s0)";
-        "/run/restune_sock" = "-s gen_context(system_u:object_r:urm_runtime_t,s0)";
-        "/nix/store/[^/]+/bin/urm" = "-- gen_context(system_u:object_r:urm_exec_t,s0)";
+        "/etc/urm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:urm_config_t,s0)";
+        "/run/restune_sock" = lib.mkDefault "-s gen_context(system_u:object_r:urm_runtime_t,s0)";
+        "/nix/store/[^/]+/bin/urm" = lib.mkDefault "-- gen_context(system_u:object_r:urm_exec_t,s0)";
       };
     };
   };

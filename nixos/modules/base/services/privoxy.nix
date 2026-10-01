@@ -152,15 +152,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/privoxy/[^/]*\\.action" = "-- gen_context(system_u:object_r:privoxy_etc_rw_t,s0)";
+        "/etc/privoxy/[^/]*\\.action" =
+          lib.mkDefault "-- gen_context(system_u:object_r:privoxy_etc_rw_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/privoxy" = "-- gen_context(system_u:object_r:privoxy_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/privoxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:privoxy_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/privoxy" = "-- gen_context(system_u:object_r:privoxy_exec_t,s0)";
+        "/nix/store/[^/]+/bin/privoxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:privoxy_exec_t,s0)";
 
-        "/var/log/privoxy(/.*)?" = "gen_context(system_u:object_r:privoxy_log_t,s0)";
+        "/var/log/privoxy(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:privoxy_log_t,s0)";
 
-        "/run/privoxy\\.pid" = "-- gen_context(system_u:object_r:privoxy_runtime_t,s0)";
+        "/run/privoxy\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:privoxy_runtime_t,s0)";
       };
     };
   };

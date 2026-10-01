@@ -248,23 +248,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/dhcpd(6)?" = "-- gen_context(system_u:object_r:dhcpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/dhcpd(6)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/dhcpcd.*\\.service" =
-          "-- gen_context(system_u:object_r:dhcpd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_unit_t,s0)";
 
-        "/nix/store/[^/]+/bin/dhcpd.*" = "-- gen_context(system_u:object_r:dhcpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dhcpd.*" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/kea-.*" = "-- gen_context(system_u:object_r:dhcpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kea-.*" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_exec_t,s0)";
 
-        "/var/lib/dhcpd(/.*)?" = "gen_context(system_u:object_r:dhcpd_state_t,s0)";
-        "/var/lib/dhcp(3)?/dhcpd\\.leases.*" = "-- gen_context(system_u:object_r:dhcpd_state_t,s0)";
-        "/var/lib/dhcp/dhcpd6\\.leases.*" = "-- gen_context(system_u:object_r:dhcpd_state_t,s0)";
-        "/var/lib/kea(/.*)?" = "gen_context(system_u:object_r:dhcpd_state_t,s0)";
+        "/var/lib/dhcpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpd_state_t,s0)";
+        "/var/lib/dhcp(3)?/dhcpd\\.leases.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_state_t,s0)";
+        "/var/lib/dhcp/dhcpd6\\.leases.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_state_t,s0)";
+        "/var/lib/kea(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpd_state_t,s0)";
 
-        "/run/dhcpd(6)?\\.pid" = "-- gen_context(system_u:object_r:dhcpd_runtime_t,s0)";
-        "/run/kea(/.*)?" = "gen_context(system_u:object_r:dhcpd_runtime_t,s0)";
-        "/run/lock/kea/.*" = "-- gen_context(system_u:object_r:dhcpd_lock_t,s0)";
+        "/run/dhcpd(6)?\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_runtime_t,s0)";
+        "/run/kea(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dhcpd_runtime_t,s0)";
+        "/run/lock/kea/.*" = lib.mkDefault "-- gen_context(system_u:object_r:dhcpd_lock_t,s0)";
       };
     };
   };

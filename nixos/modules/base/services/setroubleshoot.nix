@@ -367,16 +367,19 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/bin/setroubleshootd" =
-          "-- gen_context(system_u:object_r:setroubleshootd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:setroubleshootd_exec_t,s0)";
 
         "/nix/store/[^/]+/share/setroubleshoot/SetroubleshootFixit\\.py" =
-          "-- gen_context(system_u:object_r:setroubleshoot_fixit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:setroubleshoot_fixit_exec_t,s0)";
 
-        "/run/setroubleshoot(/.*)?" = "gen_context(system_u:object_r:setroubleshoot_runtime_t,s0)";
+        "/run/setroubleshoot(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:setroubleshoot_runtime_t,s0)";
 
-        "/var/log/setroubleshoot(/.*)?" = "gen_context(system_u:object_r:setroubleshoot_var_log_t,s0)";
+        "/var/log/setroubleshoot(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:setroubleshoot_var_log_t,s0)";
 
-        "/var/lib/setroubleshoot(/.*)?" = "gen_context(system_u:object_r:setroubleshoot_var_lib_t,s0)";
+        "/var/lib/setroubleshoot(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:setroubleshoot_var_lib_t,s0)";
       };
     };
   };

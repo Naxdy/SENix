@@ -76,7 +76,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/txt-stat" = "-- gen_context(system_u:object_r:txtstat_exec_t,s0)";
+        "/nix/store/[^/]+/bin/txt-stat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:txtstat_exec_t,s0)";
       };
     };
   };

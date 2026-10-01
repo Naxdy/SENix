@@ -286,37 +286,39 @@
     '';
     fileContext = {
       rules = {
-        "/etc/ldap/slapd\\.conf" = "-- gen_context(system_u:object_r:slapd_etc_t,s0)";
-        "/etc/openldap/certs(/.*)?" = "gen_context(system_u:object_r:slapd_cert_t,s0)";
-        "/etc/openldap/slapd\\.d(/.*)?" = "gen_context(system_u:object_r:slapd_db_t,s0)";
+        "/etc/ldap/slapd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_etc_t,s0)";
+        "/etc/openldap/certs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_cert_t,s0)";
+        "/etc/openldap/slapd\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_db_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/ldap" = "-- gen_context(system_u:object_r:slapd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ldap" =
+          lib.mkDefault "-- gen_context(system_u:object_r:slapd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/slapd" = "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/slapd" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/openldap/slapd" = "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/slapd" = "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/openldap/slapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/slapd" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_exec_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/slapd.*\\.service" =
-          "-- gen_context(system_u:object_r:slapd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:slapd_unit_t,s0)";
 
-        "/var/lib/ldap(/.*)?" = "gen_context(system_u:object_r:slapd_db_t,s0)";
-        "/var/lib/ldap/replog(/.*)?" = "gen_context(system_u:object_r:slapd_replog_t,s0)";
+        "/var/lib/ldap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_db_t,s0)";
+        "/var/lib/ldap/replog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_replog_t,s0)";
 
-        "/var/lib/openldap-data(/.*)?" = "gen_context(system_u:object_r:slapd_db_t,s0)";
-        "/var/lib/openldap-ldbm(/.*)?" = "gen_context(system_u:object_r:slapd_db_t,s0)";
-        "/var/lib/openldap-slurpd(/.*)?" = "gen_context(system_u:object_r:slapd_db_t,s0)";
+        "/var/lib/openldap-data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_db_t,s0)";
+        "/var/lib/openldap-ldbm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_db_t,s0)";
+        "/var/lib/openldap-slurpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_db_t,s0)";
 
-        "/var/lock/subsys/ldap" = "-- gen_context(system_u:object_r:slapd_lock_t,s0)";
-        "/var/lock/subsys/slapd" = "-- gen_context(system_u:object_r:slapd_lock_t,s0)";
+        "/var/lock/subsys/ldap" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_lock_t,s0)";
+        "/var/lock/subsys/slapd" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_lock_t,s0)";
 
-        "/var/log/ldap.*" = "gen_context(system_u:object_r:slapd_log_t,s0)";
-        "/var/log/slapd.*" = "gen_context(system_u:object_r:slapd_log_t,s0)";
+        "/var/log/ldap.*" = lib.mkDefault "gen_context(system_u:object_r:slapd_log_t,s0)";
+        "/var/log/slapd.*" = lib.mkDefault "gen_context(system_u:object_r:slapd_log_t,s0)";
 
-        "/run/ldapi" = "-s gen_context(system_u:object_r:slapd_runtime_t,s0)";
-        "/run/openldap(/.*)?" = "gen_context(system_u:object_r:slapd_runtime_t,s0)";
-        "/run/slapd.*" = "-s gen_context(system_u:object_r:slapd_runtime_t,s0)";
-        "/run/slapd\\.args" = "-- gen_context(system_u:object_r:slapd_runtime_t,s0)";
-        "/run/slapd\\.pid" = "-- gen_context(system_u:object_r:slapd_runtime_t,s0)";
+        "/run/ldapi" = lib.mkDefault "-s gen_context(system_u:object_r:slapd_runtime_t,s0)";
+        "/run/openldap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:slapd_runtime_t,s0)";
+        "/run/slapd.*" = lib.mkDefault "-s gen_context(system_u:object_r:slapd_runtime_t,s0)";
+        "/run/slapd\\.args" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_runtime_t,s0)";
+        "/run/slapd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:slapd_runtime_t,s0)";
       };
     };
   };

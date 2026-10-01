@@ -574,30 +574,35 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/lib/chromium/chromium" = "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
+        "/nix/store/[^/]+/lib/chromium/chromium" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium/chrome-sandbox" =
-          "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium/chrome_crashpad_handler" =
-          "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium-browser/chrome" =
-          "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium-browser/chrome_sandbox" =
-          "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium-browser/chrome-sandbox" =
-          "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_sandbox_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium-browser/chromium-launcher\\.sh" =
-          "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_exec_t,s0)";
         "/nix/store/[^/]+/lib/chromium-browser/nacl_helper_bootstrap" =
-          "-- gen_context(system_u:object_r:chromium_naclhelper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:chromium_naclhelper_exec_t,s0)";
 
-        "HOME_DIR/\\.cache/chromium(/.*)?" = "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
-        "HOME_DIR/\\.cache/google-chrome(/.*)?" = "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
-        "HOME_DIR/\\.cache/microsoft-edge(/.*)?" = "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
-        "HOME_DIR/\\.config/chromium(/.*)?" = "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
+        "HOME_DIR/\\.cache/chromium(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
+        "HOME_DIR/\\.cache/google-chrome(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
+        "HOME_DIR/\\.cache/microsoft-edge(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_cache_t,s0)";
+        "HOME_DIR/\\.config/chromium(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
         "HOME_DIR/\\.config/google-chrome(/.*)?" =
-          "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
         "HOME_DIR/\\.config/microsoft-edge(/.*)?" =
-          "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:chromium_xdg_config_t,s0)";
       };
     };
   };

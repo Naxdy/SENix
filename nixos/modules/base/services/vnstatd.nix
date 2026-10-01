@@ -189,17 +189,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/vnstat" = "-- gen_context(system_u:object_r:vnstatd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vnstat" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vnstatd_initrc_exec_t,s0)";
 
-        "/run/vnstat.*" = "gen_context(system_u:object_r:vnstatd_pid_t,s0)";
+        "/run/vnstat.*" = lib.mkDefault "gen_context(system_u:object_r:vnstatd_pid_t,s0)";
 
-        "/nix/store/[^/]+/bin/vnstat" = "-- gen_context(system_u:object_r:vnstat_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vnstatd" = "-- gen_context(system_u:object_r:vnstatd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vnstat" = lib.mkDefault "-- gen_context(system_u:object_r:vnstat_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vnstatd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vnstatd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/vnstat\\.service" =
-          "-- gen_context(system_u:object_r:vnstatd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:vnstatd_unit_t,s0)";
 
-        "/var/lib/vnstat(/.*)?" = "gen_context(system_u:object_r:vnstatd_var_lib_t,s0)";
+        "/var/lib/vnstat(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:vnstatd_var_lib_t,s0)";
       };
     };
   };

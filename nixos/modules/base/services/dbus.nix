@@ -1314,14 +1314,17 @@
     fileContext = {
       rules = {
         # needed by dbus-broker
-        "HOME_DIR/\\.dbus(/.*)?" = "gen_context(system_u:object_r:session_dbusd_home_t,s0)";
+        "HOME_DIR/\\.dbus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:session_dbusd_home_t,s0)";
 
-        "/etc/dbus-.*(/.*)?" = "gen_context(system_u:object_r:dbusd_etc_t,s0)";
+        "/etc/dbus-.*(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dbusd_etc_t,s0)";
 
-        "/run/dbus(/.*)?" = "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
-        "/run/messagebus\\.pid" = "-- gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
-        "/run/user/%{USERID}/bus" = "-s gen_context(system_u:object_r:session_dbusd_runtime_t,s0)";
-        "/run/user/%{USERID}/dbus-1(/.*)?" = "gen_context(system_u:object_r:session_dbusd_runtime_t,s0)";
+        "/run/dbus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
+        "/run/messagebus\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
+        "/run/user/%{USERID}/bus" =
+          lib.mkDefault "-s gen_context(system_u:object_r:session_dbusd_runtime_t,s0)";
+        "/run/user/%{USERID}/dbus-1(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:session_dbusd_runtime_t,s0)";
 
         # "/usr/bin/dbus-daemon(-1)?" = "-- gen_context(system_u:object_r:dbusd_exec_t,s0)";
 
@@ -1335,12 +1338,14 @@
 
         # "/usr/libexec/dbus-daemon-launch-helper" = "-- gen_context(system_u:object_r:dbusd_exec_t,s0)";
 
-        "/var/lib/dbus(/.*)?" = "gen_context(system_u:object_r:system_dbusd_var_lib_t,s0)";
+        "/var/lib/dbus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:system_dbusd_var_lib_t,s0)";
 
-        "/var/named/chroot/var/run/dbus(/.*)?" = "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
+        "/var/named/chroot/var/run/dbus(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
 
         # /var/run prefix exception; https://dbus.freedesktop.org/doc/dbus-specification.html#idm2461
-        "/var/run/dbus/system_bus_socket" = "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
+        "/var/run/dbus/system_bus_socket" =
+          lib.mkDefault "gen_context(system_u:object_r:system_dbusd_runtime_t,s0)";
       };
     };
   };

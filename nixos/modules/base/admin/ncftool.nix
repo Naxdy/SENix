@@ -140,7 +140,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/ncftool" = "-- gen_context(system_u:object_r:ncftool_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ncftool" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ncftool_exec_t,s0)";
       };
     };
   };

@@ -216,18 +216,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/cvs" = "-- gen_context(system_u:object_r:cvs_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cvs" = lib.mkDefault "-- gen_context(system_u:object_r:cvs_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cvs" = "-- gen_context(system_u:object_r:cvs_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cvs" = lib.mkDefault "-- gen_context(system_u:object_r:cvs_exec_t,s0)";
 
         "/nix/store/[^/]+/share/cvsweb/cvsweb\\.cgi" =
-          "-- gen_context(system_u:object_r:httpd_cvs_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_cvs_script_exec_t,s0)";
 
-        "/var/cvs(/.*)?" = "gen_context(system_u:object_r:cvs_data_t,s0)";
+        "/var/cvs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cvs_data_t,s0)";
 
-        "/run/cvs\\.pid" = "-- gen_context(system_u:object_r:cvs_runtime_t,s0)";
+        "/run/cvs\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:cvs_runtime_t,s0)";
 
-        "/var/www/cgi-bin/cvsweb\\.cgi" = "-- gen_context(system_u:object_r:httpd_cvs_script_exec_t,s0)";
+        "/var/www/cgi-bin/cvsweb\\.cgi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_cvs_script_exec_t,s0)";
       };
     };
   };

@@ -230,18 +230,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/mgetty(/.*)?" = "gen_context(system_u:object_r:getty_conf_t,s0)";
+        "/etc/mgetty(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:getty_conf_t,s0)";
 
-        "/run/mgetty\\.pid.*" = "-- gen_context(system_u:object_r:getty_runtime_t,s0)";
-        "/run/agetty\\.reload" = "-- gen_context(system_u:object_r:getty_runtime_t,s0)";
+        "/run/mgetty\\.pid.*" = lib.mkDefault "-- gen_context(system_u:object_r:getty_runtime_t,s0)";
+        "/run/agetty\\.reload" = lib.mkDefault "-- gen_context(system_u:object_r:getty_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/.*getty" = "-- gen_context(system_u:object_r:getty_exec_t,s0)";
+        "/nix/store/[^/]+/bin/.*getty" = lib.mkDefault "-- gen_context(system_u:object_r:getty_exec_t,s0)";
 
-        "/var/log/mgetty\\.log.*" = "-- gen_context(system_u:object_r:getty_log_t,s0)";
-        "/var/log/vgetty\\.log\\..*" = "-- gen_context(system_u:object_r:getty_log_t,s0)";
+        "/var/log/mgetty\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:getty_log_t,s0)";
+        "/var/log/vgetty\\.log\\..*" = lib.mkDefault "-- gen_context(system_u:object_r:getty_log_t,s0)";
 
-        "/var/spool/fax(/.*)?" = "gen_context(system_u:object_r:getty_runtime_t,s0)";
-        "/var/spool/voice(/.*)?" = "gen_context(system_u:object_r:getty_runtime_t,s0)";
+        "/var/spool/fax(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:getty_runtime_t,s0)";
+        "/var/spool/voice(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:getty_runtime_t,s0)";
       };
     };
   };

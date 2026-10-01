@@ -783,34 +783,42 @@
     '';
     fileContext = {
       rules = {
-        "/etc/clamav(/.*)?" = "gen_context(system_u:object_r:clamd_etc_t,s0)";
+        "/etc/clamav(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:clamd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/clamd.*" = "-- gen_context(system_u:object_r:clamd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/clamd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:clamd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/clamav-milter" = "-- gen_context(system_u:object_r:clamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/clamscan" = "-- gen_context(system_u:object_r:clamscan_exec_t,s0)";
-        "/nix/store/[^/]+/bin/clamd" = "-- gen_context(system_u:object_r:clamd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/clamdscan" = "-- gen_context(system_u:object_r:clamscan_exec_t,s0)";
-        "/nix/store/[^/]+/bin/freshclam" = "-- gen_context(system_u:object_r:freshclam_exec_t,s0)";
+        "/nix/store/[^/]+/bin/clamav-milter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:clamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/clamscan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:clamscan_exec_t,s0)";
+        "/nix/store/[^/]+/bin/clamd" = lib.mkDefault "-- gen_context(system_u:object_r:clamd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/clamdscan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:clamscan_exec_t,s0)";
+        "/nix/store/[^/]+/bin/freshclam" =
+          lib.mkDefault "-- gen_context(system_u:object_r:freshclam_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/clamd.*\\.service" =
-          "-- gen_context(system_u:object_r:clamd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:clamd_unit_t,s0)";
 
-        "/var/clamav(/.*)?" = "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
+        "/var/clamav(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
 
-        "/var/lib/clamav(/.*)?" = "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
-        "/var/lib/clamd.*" = "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
+        "/var/lib/clamav(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
+        "/var/lib/clamd.*" = lib.mkDefault "gen_context(system_u:object_r:clamd_var_lib_t,s0)";
 
-        "/var/log/clamav.*" = "gen_context(system_u:object_r:clamd_var_log_t,s0)";
-        "/var/log/freshclam.*" = "-- gen_context(system_u:object_r:freshclam_var_log_t,s0)";
-        "/var/log/clamav/freshclam.*" = "-- gen_context(system_u:object_r:freshclam_var_log_t,s0)";
-        "/var/log/clamd.*" = "gen_context(system_u:object_r:clamd_var_log_t,s0)";
+        "/var/log/clamav.*" = lib.mkDefault "gen_context(system_u:object_r:clamd_var_log_t,s0)";
+        "/var/log/freshclam.*" = lib.mkDefault "-- gen_context(system_u:object_r:freshclam_var_log_t,s0)";
+        "/var/log/clamav/freshclam.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:freshclam_var_log_t,s0)";
+        "/var/log/clamd.*" = lib.mkDefault "gen_context(system_u:object_r:clamd_var_log_t,s0)";
 
-        "/run/amavis(d)?/clamd\\.pid" = "-- gen_context(system_u:object_r:clamd_runtime_t,s0)";
-        "/run/clamav.*" = "gen_context(system_u:object_r:clamd_runtime_t,s0)";
-        "/run/clamd.*" = "gen_context(system_u:object_r:clamd_runtime_t,s0)";
+        "/run/amavis(d)?/clamd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:clamd_runtime_t,s0)";
+        "/run/clamav.*" = lib.mkDefault "gen_context(system_u:object_r:clamd_runtime_t,s0)";
+        "/run/clamd.*" = lib.mkDefault "gen_context(system_u:object_r:clamd_runtime_t,s0)";
 
-        "/var/spool/amavisd/clamd\\.sock" = "-s gen_context(system_u:object_r:clamd_runtime_t,s0)";
+        "/var/spool/amavisd/clamd\\.sock" =
+          lib.mkDefault "-s gen_context(system_u:object_r:clamd_runtime_t,s0)";
       };
     };
   };

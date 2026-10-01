@@ -96,7 +96,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/usbmodules" = "-- gen_context(system_u:object_r:usbmodules_exec_t,s0)";
+        "/nix/store/[^/]+/bin/usbmodules" =
+          lib.mkDefault "-- gen_context(system_u:object_r:usbmodules_exec_t,s0)";
       };
     };
   };

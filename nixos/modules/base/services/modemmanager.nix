@@ -123,8 +123,10 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/ModemManager" = "-- gen_context(system_u:object_r:modemmanager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/modem-manager" = "-- gen_context(system_u:object_r:modemmanager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ModemManager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:modemmanager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/modem-manager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:modemmanager_exec_t,s0)";
       };
     };
   };

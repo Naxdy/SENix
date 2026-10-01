@@ -85,7 +85,7 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/bin/audispd-zos-remote" =
-          "-- gen_context(system_u:object_r:zos_remote_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zos_remote_exec_t,s0)";
       };
     };
   };

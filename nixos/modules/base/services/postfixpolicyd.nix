@@ -112,14 +112,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/policyd\\.conf" = "-- gen_context(system_u:object_r:postfix_policyd_conf_t,s0)";
+        "/etc/policyd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:postfix_policyd_conf_t,s0)";
 
         "/etc/rc\\.d/init\\.d/postfixpolicyd" =
-          "-- gen_context(system_u:object_r:postfix_policyd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_policyd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/policyd" = "-- gen_context(system_u:object_r:postfix_policyd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/policyd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_policyd_exec_t,s0)";
 
-        "/run/policyd\\.pid" = "-- gen_context(system_u:object_r:postfix_policyd_runtime_t,s0)";
+        "/run/policyd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:postfix_policyd_runtime_t,s0)";
       };
     };
   };

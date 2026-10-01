@@ -148,13 +148,17 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/axfrdns" = "-- gen_context(system_u:object_r:djbdns_axfrdns_exec_t,s0)";
-        "/nix/store/[^/]+/bin/dnscache" = "-- gen_context(system_u:object_r:djbdns_dnscache_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tinydns" = "-- gen_context(system_u:object_r:djbdns_tinydns_exec_t,s0)";
+        "/nix/store/[^/]+/bin/axfrdns" =
+          lib.mkDefault "-- gen_context(system_u:object_r:djbdns_axfrdns_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dnscache" =
+          lib.mkDefault "-- gen_context(system_u:object_r:djbdns_dnscache_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tinydns" =
+          lib.mkDefault "-- gen_context(system_u:object_r:djbdns_tinydns_exec_t,s0)";
 
-        "/var/axfrdns/root(/.*)?" = "gen_context(system_u:object_r:djbdns_axfrdns_conf_t,s0)";
-        "/var/dnscache/root(/.*)?" = "gen_context(system_u:object_r:djbdns_dnscache_conf_t,s0)";
-        "/var/tinydns/root(/.*)?" = "gen_context(system_u:object_r:djbdns_tinydns_conf_t,s0)";
+        "/var/axfrdns/root(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:djbdns_axfrdns_conf_t,s0)";
+        "/var/dnscache/root(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:djbdns_dnscache_conf_t,s0)";
+        "/var/tinydns/root(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:djbdns_tinydns_conf_t,s0)";
       };
     };
   };

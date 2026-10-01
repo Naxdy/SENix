@@ -110,19 +110,20 @@
     '';
     fileContext = {
       rules = {
-        "/etc/bird\\.conf" = "-- gen_context(system_u:object_r:bird_etc_t,s0)";
+        "/etc/bird\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:bird_etc_t,s0)";
 
-        "/etc/default/bird" = "-- gen_context(system_u:object_r:bird_etc_t,s0)";
+        "/etc/default/bird" = lib.mkDefault "-- gen_context(system_u:object_r:bird_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/bird" = "-- gen_context(system_u:object_r:bird_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bird" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bird_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/bird" = "-- gen_context(system_u:object_r:bird_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bird" = lib.mkDefault "-- gen_context(system_u:object_r:bird_exec_t,s0)";
 
-        "/var/log/bird\\.log.*" = "-- gen_context(system_u:object_r:bird_log_t,s0)";
+        "/var/log/bird\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:bird_log_t,s0)";
 
-        "/run/bird\\.ctl" = "-s gen_context(system_u:object_r:bird_runtime_t,s0)";
+        "/run/bird\\.ctl" = lib.mkDefault "-s gen_context(system_u:object_r:bird_runtime_t,s0)";
 
-        "/run/bird(/.*)?" = "gen_context(system_u:object_r:bird_runtime_t,s0)";
+        "/run/bird(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bird_runtime_t,s0)";
       };
     };
   };

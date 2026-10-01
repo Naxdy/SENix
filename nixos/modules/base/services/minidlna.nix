@@ -175,20 +175,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/minidlna" = "-- gen_context(system_u:object_r:minidlna_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/minidlna" =
+          lib.mkDefault "-- gen_context(system_u:object_r:minidlna_initrc_exec_t,s0)";
 
-        "/etc/minidlna\\.conf" = "-- gen_context(system_u:object_r:minidlna_conf_t,s0)";
+        "/etc/minidlna\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:minidlna_conf_t,s0)";
 
-        "/nix/store/[^/]+/bin/minidlna" = "-- gen_context(system_u:object_r:minidlna_exec_t,s0)";
+        "/nix/store/[^/]+/bin/minidlna" =
+          lib.mkDefault "-- gen_context(system_u:object_r:minidlna_exec_t,s0)";
 
-        "/var/cache/minidlna(/.*)?" = "gen_context(system_u:object_r:minidlna_db_t,s0)";
+        "/var/cache/minidlna(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:minidlna_db_t,s0)";
 
-        "/var/lib/minidlna(/.*)?" = "gen_context(system_u:object_r:minidlna_db_t,s0)";
+        "/var/lib/minidlna(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:minidlna_db_t,s0)";
 
-        "/var/log/minidlna(/.*)?" = "gen_context(system_u:object_r:minidlna_log_t,s0)";
-        "/var/log/minidlna\\.log.*" = "-- gen_context(system_u:object_r:minidlna_log_t,s0)";
+        "/var/log/minidlna(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:minidlna_log_t,s0)";
+        "/var/log/minidlna\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:minidlna_log_t,s0)";
 
-        "/run/minidlna(/.*)?" = "gen_context(system_u:object_r:minidlna_runtime_t,s0)";
+        "/run/minidlna(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:minidlna_runtime_t,s0)";
       };
     };
   };

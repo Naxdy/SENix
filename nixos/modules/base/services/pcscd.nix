@@ -187,18 +187,19 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/etc/rc\\.d/init\\.d/pcscd" = "-- gen_context(system_u:object_r:pcscd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pcscd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pcscd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pcscd" = "-- gen_context(system_u:object_r:pcscd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pcscd" = lib.mkDefault "-- gen_context(system_u:object_r:pcscd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*pcscd.*" =
-          "-- gen_context(system_u:object_r:pcscd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:pcscd_unit_t,s0)";
 
-        "/run/pcscd\\.comm" = "-s gen_context(system_u:object_r:pcscd_runtime_t,s0)";
-        "/run/pcscd(/.*)?" = "gen_context(system_u:object_r:pcscd_runtime_t,s0)";
-        "/run/pcscd\\.pid" = "-- gen_context(system_u:object_r:pcscd_runtime_t,s0)";
-        "/run/pcscd\\.pub" = "-- gen_context(system_u:object_r:pcscd_runtime_t,s0)";
-        "/run/pcscd\\.events(/.*)?" = "gen_context(system_u:object_r:pcscd_runtime_t,s0)";
+        "/run/pcscd\\.comm" = lib.mkDefault "-s gen_context(system_u:object_r:pcscd_runtime_t,s0)";
+        "/run/pcscd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pcscd_runtime_t,s0)";
+        "/run/pcscd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:pcscd_runtime_t,s0)";
+        "/run/pcscd\\.pub" = lib.mkDefault "-- gen_context(system_u:object_r:pcscd_runtime_t,s0)";
+        "/run/pcscd\\.events(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pcscd_runtime_t,s0)";
       };
     };
   };

@@ -113,14 +113,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/default/minissdpd" = "-- gen_context(system_u:object_r:minissdpd_conf_t,s0)";
+        "/etc/default/minissdpd" = lib.mkDefault "-- gen_context(system_u:object_r:minissdpd_conf_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/minissdpd" = "-- gen_context(system_u:object_r:minissdpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/minissdpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:minissdpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/minissdpd" = "-- gen_context(system_u:object_r:minissdpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/minissdpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:minissdpd_exec_t,s0)";
 
-        "/run/minissdpd\\.pid" = "-- gen_context(system_u:object_r:minissdpd_runtime_t,s0)";
-        "/run/minissdpd\\.sock" = "-s gen_context(system_u:object_r:minissdpd_runtime_t,s0)";
+        "/run/minissdpd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:minissdpd_runtime_t,s0)";
+        "/run/minissdpd\\.sock" = lib.mkDefault "-s gen_context(system_u:object_r:minissdpd_runtime_t,s0)";
       };
     };
   };

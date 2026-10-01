@@ -112,9 +112,11 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/opensnitchd" = "-- gen_context(system_u:object_r:opensnitchd_exec_t,s0)";
-        "/var/log/opensnitchd\\.log.*" = "-- gen_context(system_u:object_r:opensnitchd_log_t,s0)";
-        "/etc/opensnitchd(/.*)?" = "gen_context(system_u:object_r:opensnitchd_conf_t,s0)";
+        "/nix/store/[^/]+/bin/opensnitchd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:opensnitchd_exec_t,s0)";
+        "/var/log/opensnitchd\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:opensnitchd_log_t,s0)";
+        "/etc/opensnitchd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:opensnitchd_conf_t,s0)";
       };
     };
   };

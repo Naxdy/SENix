@@ -332,17 +332,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/psad(/.*)?" = "gen_context(system_u:object_r:psad_etc_t,s0)";
+        "/etc/psad(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:psad_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/psad" = "-- gen_context(system_u:object_r:psad_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/psad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:psad_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/psad" = "-- gen_context(system_u:object_r:psad_exec_t,s0)";
+        "/nix/store/[^/]+/bin/psad" = lib.mkDefault "-- gen_context(system_u:object_r:psad_exec_t,s0)";
 
-        "/var/lib/psad(/.*)?" = "gen_context(system_u:object_r:psad_var_lib_t,s0)";
+        "/var/lib/psad(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:psad_var_lib_t,s0)";
 
-        "/var/log/psad(/.*)?" = "gen_context(system_u:object_r:psad_var_log_t,s0)";
+        "/var/log/psad(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:psad_var_log_t,s0)";
 
-        "/run/psad(/.*)?" = "gen_context(system_u:object_r:psad_runtime_t,s0)";
+        "/run/psad(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:psad_runtime_t,s0)";
       };
     };
   };

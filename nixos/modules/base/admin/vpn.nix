@@ -277,10 +277,11 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/openconnect" = "-- gen_context(system_u:object_r:vpnc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vpnc" = "-- gen_context(system_u:object_r:vpnc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openconnect" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vpnc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vpnc" = lib.mkDefault "-- gen_context(system_u:object_r:vpnc_exec_t,s0)";
 
-        "/run/vpnc(/.*)?" = "gen_context(system_u:object_r:vpnc_runtime_t,s0)";
+        "/run/vpnc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:vpnc_runtime_t,s0)";
       };
     };
   };

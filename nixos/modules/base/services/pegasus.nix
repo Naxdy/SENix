@@ -246,22 +246,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/Pegasus(/.*)?" = "gen_context(system_u:object_r:pegasus_conf_t,s0)";
-        "/etc/Pegasus/pegasus_current\\.conf" = "gen_context(system_u:object_r:pegasus_data_t,s0)";
+        "/etc/Pegasus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pegasus_conf_t,s0)";
+        "/etc/Pegasus/pegasus_current\\.conf" =
+          lib.mkDefault "gen_context(system_u:object_r:pegasus_data_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/tog-pegasus" = "-- gen_context(system_u:object_r:pegasus_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/tog-pegasus" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pegasus_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cimserver" = "-- gen_context(system_u:object_r:pegasus_exec_t,s0)";
-        "/nix/store/[^/]+/bin/init_repository" = "-- gen_context(system_u:object_r:pegasus_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cimserver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pegasus_exec_t,s0)";
+        "/nix/store/[^/]+/bin/init_repository" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pegasus_exec_t,s0)";
 
-        "/var/cache/Pegasus(/.*)?" = "gen_context(system_u:object_r:pegasus_cache_t,s0)";
+        "/var/cache/Pegasus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pegasus_cache_t,s0)";
 
-        "/var/lib/Pegasus(/.*)?" = "gen_context(system_u:object_r:pegasus_data_t,s0)";
+        "/var/lib/Pegasus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pegasus_data_t,s0)";
 
-        "/run/tog-pegasus(/.*)?" = "gen_context(system_u:object_r:pegasus_runtime_t,s0)";
+        "/run/tog-pegasus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pegasus_runtime_t,s0)";
 
         "/nix/store/[^/]+/share/Pegasus/mof(/.*)?/.*\\.mof" =
-          "gen_context(system_u:object_r:pegasus_mof_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:pegasus_mof_t,s0)";
       };
     };
   };

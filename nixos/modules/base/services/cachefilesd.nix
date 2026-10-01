@@ -122,13 +122,15 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/cachefilesd" =
-          "-- gen_context(system_u:object_r:cachefilesd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cachefilesd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cachefilesd" = "-- gen_context(system_u:object_r:cachefilesd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cachefilesd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cachefilesd_exec_t,s0)";
 
-        "/var/cache/fscache(/.*)?" = "gen_context(system_u:object_r:cachefilesd_cache_t,s0)";
+        "/var/cache/fscache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cachefilesd_cache_t,s0)";
 
-        "/run/cachefilesd\\.pid" = "-- gen_context(system_u:object_r:cachefilesd_runtime_t,s0)";
+        "/run/cachefilesd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cachefilesd_runtime_t,s0)";
       };
     };
   };

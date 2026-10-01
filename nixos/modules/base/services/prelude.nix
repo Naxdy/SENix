@@ -450,33 +450,39 @@
     '';
     fileContext = {
       rules = {
-        "/etc/prelude-correlator(/.*)?" = "gen_context(system_u:object_r:prelude_correlator_config_t, s0)";
+        "/etc/prelude-correlator(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:prelude_correlator_config_t, s0)";
 
         "/etc/rc\\.d/init\\.d/prelude-correlator" =
-          "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/prelude-lml" = "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/prelude-lml" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/prelude-manager" =
-          "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_initrc_exec_t,s0)";
 
         "/nix/store/[^/]+/bin/audisp-prelude" =
-          "-- gen_context(system_u:object_r:prelude_audisp_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_audisp_exec_t,s0)";
         "/nix/store/[^/]+/bin/prelude-correlator" =
-          "-- gen_context(system_u:object_r:prelude_correlator_exec_t,s0)";
-        "/nix/store/[^/]+/bin/prelude-lml" = "-- gen_context(system_u:object_r:prelude_lml_exec_t,s0)";
-        "/nix/store/[^/]+/bin/prelude-manager" = "-- gen_context(system_u:object_r:prelude_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_correlator_exec_t,s0)";
+        "/nix/store/[^/]+/bin/prelude-lml" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_lml_exec_t,s0)";
+        "/nix/store/[^/]+/bin/prelude-manager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_exec_t,s0)";
 
         "/nix/store/[^/]+/share/prewikka/cgi-bin(/.*)?" =
-          "gen_context(system_u:object_r:httpd_prewikka_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_prewikka_script_exec_t,s0)";
 
-        "/var/lib/prelude-lml(/.*)?" = "gen_context(system_u:object_r:prelude_var_lib_t,s0)";
+        "/var/lib/prelude-lml(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:prelude_var_lib_t,s0)";
 
-        "/var/log/prelude.*" = "gen_context(system_u:object_r:prelude_log_t,s0)";
+        "/var/log/prelude.*" = lib.mkDefault "gen_context(system_u:object_r:prelude_log_t,s0)";
 
-        "/run/prelude-lml\\.pid" = "-- gen_context(system_u:object_r:prelude_lml_runtime_t,s0)";
-        "/run/prelude-manager(/.*)?" = "gen_context(system_u:object_r:prelude_runtime_t,s0)";
+        "/run/prelude-lml\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:prelude_lml_runtime_t,s0)";
+        "/run/prelude-manager(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:prelude_runtime_t,s0)";
 
-        "/var/spool/prelude-manager(/.*)?" = "gen_context(system_u:object_r:prelude_spool_t,s0)";
-        "/var/spool/prelude(/.*)?" = "gen_context(system_u:object_r:prelude_spool_t,s0)";
+        "/var/spool/prelude-manager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:prelude_spool_t,s0)";
+        "/var/spool/prelude(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:prelude_spool_t,s0)";
       };
     };
   };

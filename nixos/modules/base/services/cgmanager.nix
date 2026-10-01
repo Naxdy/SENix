@@ -97,17 +97,20 @@
     '';
     fileContext = {
       rules = {
-        "/sys/fs/cgroup/cgmanager(/.*)?" = "gen_context(system_u:object_r:cgmanager_cgroup_t,s0)";
+        "/sys/fs/cgroup/cgmanager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:cgmanager_cgroup_t,s0)";
 
-        "/run/cgmanager(/.*)?" = "gen_context(system_u:object_r:cgmanager_run_t,s0)";
-        "/run/cgmanager\\.pid" = "gen_context(system_u:object_r:cgmanager_run_t,s0)";
-        "/run/cgmanager/fs(/.*)?" = "<<none>>";
+        "/run/cgmanager(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:cgmanager_run_t,s0)";
+        "/run/cgmanager\\.pid" = lib.mkDefault "gen_context(system_u:object_r:cgmanager_run_t,s0)";
+        "/run/cgmanager/fs(/.*)?" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/bin/cgmanager" = "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cgproxy" = "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgmanager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgproxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/cgmanager/cgm-release-agent" =
-          "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:cgmanager_exec_t,s0)";
       };
     };
   };

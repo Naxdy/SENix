@@ -28,17 +28,19 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/lib/mediawiki/math/texvc" =
-          "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/mediawiki/math/texvc_tex" =
-          "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
         "/nix/store/[^/]+/lib/mediawiki/math/texvc_tes" =
-          "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_mediawiki_script_exec_t,s0)";
 
         "/nix/store/[^/]+/share/mediawiki(/.*)?" =
-          "gen_context(system_u:object_r:httpd_mediawiki_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_mediawiki_content_t,s0)";
 
-        "/var/www/wiki(/.*)?" = "gen_context(system_u:object_r:httpd_mediawiki_rw_content_t,s0)";
-        "/var/www/wiki/.*\\.php" = "-- gen_context(system_u:object_r:httpd_mediawiki_content_t,s0)";
+        "/var/www/wiki(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:httpd_mediawiki_rw_content_t,s0)";
+        "/var/www/wiki/.*\\.php" =
+          lib.mkDefault "-- gen_context(system_u:object_r:httpd_mediawiki_content_t,s0)";
       };
     };
   };

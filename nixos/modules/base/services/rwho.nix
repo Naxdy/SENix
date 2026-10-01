@@ -223,13 +223,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/rwhod" = "-- gen_context(system_u:object_r:rwho_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/rwhod" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rwho_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/rwhod" = "-- gen_context(system_u:object_r:rwho_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rwhod" = lib.mkDefault "-- gen_context(system_u:object_r:rwho_exec_t,s0)";
 
-        "/var/spool/rwho(/.*)?" = "gen_context(system_u:object_r:rwho_spool_t,s0)";
+        "/var/spool/rwho(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rwho_spool_t,s0)";
 
-        "/var/log/rwhod(/.*)?" = "gen_context(system_u:object_r:rwho_log_t,s0)";
+        "/var/log/rwhod(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rwho_log_t,s0)";
       };
     };
   };

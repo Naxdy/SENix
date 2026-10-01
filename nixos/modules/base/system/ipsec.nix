@@ -933,70 +933,92 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/ipsec" = "-- gen_context(system_u:object_r:ipsec_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/racoon" = "-- gen_context(system_u:object_r:ipsec_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ipsec" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/racoon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_initrc_exec_t,s0)";
 
-        "/etc/ipsec\\.secrets" = "-- gen_context(system_u:object_r:ipsec_key_file_t,s0)";
-        "/etc/ipsec\\.conf" = "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
-        "/etc/racoon/psk\\.txt" = "-- gen_context(system_u:object_r:ipsec_key_file_t,s0)";
+        "/etc/ipsec\\.secrets" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_key_file_t,s0)";
+        "/etc/ipsec\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/racoon/psk\\.txt" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_key_file_t,s0)";
 
-        "/etc/racoon(/.*)?" = "gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
-        "/etc/racoon/certs(/.*)?" = "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
+        "/etc/racoon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/racoon/certs(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
 
-        "/etc/ipsec\\.d(/.*)?" = "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
+        "/etc/ipsec\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
 
-        "/etc/strongswan\\.conf" = "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/strongswan\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
 
-        "/etc/strongswan\\.d(/.*)?" = "gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/strongswan\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
 
-        "/etc/swanctl/.+" = "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
-        "/etc/swanctl" = "-d gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
-        "/etc/swanctl/swanctl\\.conf" = "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/swanctl/.+" = lib.mkDefault "gen_context(system_u:object_r:ipsec_key_file_t,s0)";
+        "/etc/swanctl" = lib.mkDefault "-d gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
+        "/etc/swanctl/swanctl\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_conf_file_t,s0)";
 
-        "/nix/store/[^/]+/bin/ipsec" = "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/racoon" = "-- gen_context(system_u:object_r:racoon_exec_t,s0)";
-        "/nix/store/[^/]+/bin/setkey" = "-- gen_context(system_u:object_r:setkey_exec_t,s0)";
-        "/nix/store/[^/]+/bin/swanctl" = "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipsec" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/racoon" = lib.mkDefault "-- gen_context(system_u:object_r:racoon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/setkey" = lib.mkDefault "-- gen_context(system_u:object_r:setkey_exec_t,s0)";
+        "/nix/store/[^/]+/bin/swanctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/ipsec/_plutoload" = "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/_plutorun" = "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/eroute" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/klipsdebug" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/pluto" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/lib/ipsec/spi" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/_plutoload" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/_plutorun" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/eroute" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/klipsdebug" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/pluto" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/lib/ipsec/spi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/ipsec/_copyright" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/_copyright" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
         "/nix/store/[^/]+/libexec/ipsec/_plutoload" =
-          "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
         "/nix/store/[^/]+/libexec/ipsec/_plutorun" =
-          "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/_updown" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/charon" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/eroute" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/klipsdebug" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/lookip" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/pluto" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/scepclient" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/spi" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/_updown" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/charon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/eroute" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/klipsdebug" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/lookip" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/pluto" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/scepclient" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/spi" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
         "/nix/store/[^/]+/libexec/ipsec/starter" =
-          "-- gen_context(system_u:object_r:ipsec_supervisor_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/ipsec/stroke" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_supervisor_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/ipsec/stroke" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
         "/nix/store/[^/]+/libexec/nm-openswan-service" =
-          "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/charon-systemd" = "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
+        "/nix/store/[^/]+/bin/charon-systemd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ipsec_exec_t,s0)";
 
-        "/var/lib/racoon(/.*)?" = "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
+        "/var/lib/racoon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
 
-        "/var/lock/subsys/ipsec" = "-- gen_context(system_u:object_r:ipsec_mgmt_lock_t,s0)";
+        "/var/lock/subsys/ipsec" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_mgmt_lock_t,s0)";
 
-        "/var/log/pluto\\.log" = "-- gen_context(system_u:object_r:ipsec_log_t,s0)";
+        "/var/log/pluto\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_log_t,s0)";
 
-        "/var/racoon(/.*)?" = "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
+        "/var/racoon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
 
-        "/run/charon\\.[^/]+" = "-- gen_context(system_u:object_r:ipsec_runtime_t,s0)";
-        "/run/pluto(/.*)?" = "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
-        "/run/racoon\\.pid" = "-- gen_context(system_u:object_r:ipsec_runtime_t,s0)";
+        "/run/charon\\.[^/]+" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_runtime_t,s0)";
+        "/run/pluto(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:ipsec_runtime_t,s0)";
+        "/run/racoon\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:ipsec_runtime_t,s0)";
       };
     };
   };

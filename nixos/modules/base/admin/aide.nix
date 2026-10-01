@@ -147,12 +147,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/aide" = "-- gen_context(system_u:object_r:aide_exec_t,mls_systemhigh)";
+        "/nix/store/[^/]+/bin/aide" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aide_exec_t,mls_systemhigh)";
 
-        "/var/lib/aide(/.*)?" = "gen_context(system_u:object_r:aide_db_t,mls_systemhigh)";
+        "/var/lib/aide(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aide_db_t,mls_systemhigh)";
 
-        "/var/log/aide(/.*)?" = "gen_context(system_u:object_r:aide_log_t,mls_systemhigh)";
-        "/var/log/aide\\.log.*" = "-- gen_context(system_u:object_r:aide_log_t,mls_systemhigh)";
+        "/var/log/aide(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:aide_log_t,mls_systemhigh)";
+        "/var/log/aide\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:aide_log_t,mls_systemhigh)";
       };
     };
   };

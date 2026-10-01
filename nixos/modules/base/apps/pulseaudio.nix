@@ -795,19 +795,22 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.esd_auth" = "-- gen_context(system_u:object_r:pulseaudio_home_t,s0)";
-        "HOME_DIR/\\.pulse(/.*)?" = "gen_context(system_u:object_r:pulseaudio_home_t,s0)";
-        "HOME_DIR/\\.pulse-cookie" = "-- gen_context(system_u:object_r:pulseaudio_home_t,s0)";
-        "HOME_DIR/\\.config/pulse(/.*)?" = "gen_context(system_u:object_r:pulseaudio_xdg_config_t,s0)";
+        "HOME_DIR/\\.esd_auth" = lib.mkDefault "-- gen_context(system_u:object_r:pulseaudio_home_t,s0)";
+        "HOME_DIR/\\.pulse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pulseaudio_home_t,s0)";
+        "HOME_DIR/\\.pulse-cookie" = lib.mkDefault "-- gen_context(system_u:object_r:pulseaudio_home_t,s0)";
+        "HOME_DIR/\\.config/pulse(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pulseaudio_xdg_config_t,s0)";
         "HOME_DIR/\\.cache/gstreamer-[0-9\\.]+(/.*)?" =
-          "gen_context(system_u:object_r:pulseaudio_xdg_cache_t, s0)";
+          lib.mkDefault "gen_context(system_u:object_r:pulseaudio_xdg_cache_t, s0)";
 
-        "/nix/store/[^/]+/bin/pulseaudio" = "-- gen_context(system_u:object_r:pulseaudio_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pulseaudio" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pulseaudio_exec_t,s0)";
 
-        "/var/lib/pulse(/.*)?" = "gen_context(system_u:object_r:pulseaudio_var_lib_t,s0)";
+        "/var/lib/pulse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pulseaudio_var_lib_t,s0)";
 
-        "/run/pulse(/.*)?" = "gen_context(system_u:object_r:pulseaudio_runtime_t,s0)";
-        "/run/user/%{USERID}/pulse(/.*)?" = "gen_context(system_u:object_r:pulseaudio_tmp_t,s0)";
+        "/run/pulse(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pulseaudio_runtime_t,s0)";
+        "/run/user/%{USERID}/pulse(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pulseaudio_tmp_t,s0)";
       };
     };
   };

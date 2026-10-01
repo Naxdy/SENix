@@ -368,31 +368,33 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.asoundrc" = "-- gen_context(system_u:object_r:alsa_home_t,s0)";
+        "HOME_DIR/\\.asoundrc" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_home_t,s0)";
 
-        "/etc/alsa(/.*)?" = "gen_context(system_u:object_r:alsa_etc_t,s0)";
-        "/etc/asound\\.conf" = "-- gen_context(system_u:object_r:alsa_etc_t,s0)";
+        "/etc/alsa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:alsa_etc_t,s0)";
+        "/etc/asound\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_etc_t,s0)";
 
-        "/run/alsa(/.*)?" = "gen_context(system_u:object_r:alsa_runtime_t,s0)";
-        "/run/alsactl\\.pid" = "-- gen_context(system_u:object_r:alsa_runtime_t,s0)";
+        "/run/alsa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:alsa_runtime_t,s0)";
+        "/run/alsactl\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/ainit" = "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
-        "/nix/store/[^/]+/bin/alsactl" = "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
-        "/nix/store/[^/]+/bin/alsaunmute" = "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
-        "/nix/store/[^/]+/bin/salsa" = "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ainit" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
+        "/nix/store/[^/]+/bin/alsactl" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
+        "/nix/store/[^/]+/bin/alsaunmute" =
+          lib.mkDefault "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
+        "/nix/store/[^/]+/bin/salsa" = lib.mkDefault "-- gen_context(system_u:object_r:alsa_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*alsa-restore.*" =
-          "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*alsa-state.*" =
-          "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*alsa-store.*" =
-          "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:alsa_unit_t,s0)";
 
-        "/nix/store/[^/]+/share/alsa(/.*)?" = "gen_context(system_u:object_r:alsa_etc_t,s0)";
+        "/nix/store/[^/]+/share/alsa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:alsa_etc_t,s0)";
 
-        "/var/lib/alsa(/.*)?" = "gen_context(system_u:object_r:alsa_var_lib_t,s0)";
+        "/var/lib/alsa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:alsa_var_lib_t,s0)";
 
-        "/var/lock/asound\\.state\\.lock" = "-- gen_context(system_u:object_r:alsa_var_lock_t,s0)";
+        "/var/lock/asound\\.state\\.lock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:alsa_var_lock_t,s0)";
       };
     };
   };

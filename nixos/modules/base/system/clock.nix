@@ -205,9 +205,10 @@
     '';
     fileContext = {
       rules = {
-        "/etc/adjtime" = "-- gen_context(system_u:object_r:adjtime_t,s0)";
+        "/etc/adjtime" = lib.mkDefault "-- gen_context(system_u:object_r:adjtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/hwclock" = "-- gen_context(system_u:object_r:hwclock_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hwclock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hwclock_exec_t,s0)";
       };
     };
   };

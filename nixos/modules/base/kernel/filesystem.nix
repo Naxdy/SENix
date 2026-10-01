@@ -7834,29 +7834,32 @@
     '';
     fileContext = {
       rules = {
-        "/cgroup" = "-d gen_context(system_u:object_r:cgroup_t,s0)";
+        "/cgroup" = lib.mkDefault "-d gen_context(system_u:object_r:cgroup_t,s0)";
 
-        "/dev/hugepages" = "-d gen_context(system_u:object_r:hugetlbfs_t,s0)";
-        "/dev/hugepages(/.*)?" = "<<none>>";
-        "/dev/shm" = "-d gen_context(system_u:object_r:tmpfs_t,s0)";
-        "/dev/shm/.*" = "<<none>>";
+        "/dev/hugepages" = lib.mkDefault "-d gen_context(system_u:object_r:hugetlbfs_t,s0)";
+        "/dev/hugepages(/.*)?" = lib.mkDefault "<<none>>";
+        "/dev/shm" = lib.mkDefault "-d gen_context(system_u:object_r:tmpfs_t,s0)";
+        "/dev/shm/.*" = lib.mkDefault "<<none>>";
 
-        "/nix/store/[^/]+/lib/udev/devices/hugepages" = "-d gen_context(system_u:object_r:hugetlbfs_t,s0)";
-        "/nix/store/[^/]+/lib/udev/devices/hugepages/.*" = "<<none>>";
-        "/nix/store/[^/]+/lib/udev/devices/shm" = "-d gen_context(system_u:object_r:tmpfs_t,s0)";
-        "/nix/store/[^/]+/lib/udev/devices/shm/.*" = "<<none>>";
+        "/nix/store/[^/]+/lib/udev/devices/hugepages" =
+          lib.mkDefault "-d gen_context(system_u:object_r:hugetlbfs_t,s0)";
+        "/nix/store/[^/]+/lib/udev/devices/hugepages/.*" = lib.mkDefault "<<none>>";
+        "/nix/store/[^/]+/lib/udev/devices/shm" =
+          lib.mkDefault "-d gen_context(system_u:object_r:tmpfs_t,s0)";
+        "/nix/store/[^/]+/lib/udev/devices/shm/.*" = lib.mkDefault "<<none>>";
 
-        "/sys/fs/bpf(/.*)?" = "<<none>>";
+        "/sys/fs/bpf(/.*)?" = lib.mkDefault "<<none>>";
 
-        "/sys/fs/cgroup" = "-d gen_context(system_u:object_r:cgroup_t,s0)";
-        "/sys/fs/cgroup/.*" = "gen_context(system_u:object_r:cgroup_t,s0)";
+        "/sys/fs/cgroup" = lib.mkDefault "-d gen_context(system_u:object_r:cgroup_t,s0)";
+        "/sys/fs/cgroup/.*" = lib.mkDefault "gen_context(system_u:object_r:cgroup_t,s0)";
 
-        "/sys/fs/pstore" = "-d gen_context(system_u:object_r:pstore_t,s0)";
-        "/sys/fs/pstore/.*" = "<<none>>";
+        "/sys/fs/pstore" = lib.mkDefault "-d gen_context(system_u:object_r:pstore_t,s0)";
+        "/sys/fs/pstore/.*" = lib.mkDefault "<<none>>";
 
-        "/sys/kernel/tracing(/.*)?" = "<<none>>";
+        "/sys/kernel/tracing(/.*)?" = lib.mkDefault "<<none>>";
 
-        "/sys/fs/cgroup/.*/memory\\.pressure" = "-- gen_context(system_u:object_r:memory_pressure_t,s0)";
+        "/sys/fs/cgroup/.*/memory\\.pressure" =
+          lib.mkDefault "-- gen_context(system_u:object_r:memory_pressure_t,s0)";
       };
     };
   };

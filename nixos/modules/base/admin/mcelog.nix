@@ -191,15 +191,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/mcelog(/.*)?" = "gen_context(system_u:object_r:mcelog_etc_t,s0)";
+        "/etc/mcelog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mcelog_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/mcelog" = "-- gen_context(system_u:object_r:mcelog_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mcelog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mcelog_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mcelog" = "-- gen_context(system_u:object_r:mcelog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mcelog" = lib.mkDefault "-- gen_context(system_u:object_r:mcelog_exec_t,s0)";
 
-        "/var/log/mcelog.*" = "-- gen_context(system_u:object_r:mcelog_log_t,s0)";
+        "/var/log/mcelog.*" = lib.mkDefault "-- gen_context(system_u:object_r:mcelog_log_t,s0)";
 
-        "/run/mcelog.*" = "gen_context(system_u:object_r:mcelog_runtime_t,s0)";
+        "/run/mcelog.*" = lib.mkDefault "gen_context(system_u:object_r:mcelog_runtime_t,s0)";
       };
     };
   };

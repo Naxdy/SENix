@@ -83,10 +83,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/matrix-eno-bot(/.*)?" = "gen_context(system_u:object_r:matrixbot_conf_t,s0)";
-        "/nix/store/[^/]+/sbin/matrix-eno-bot" = "-- gen_context(system_u:object_r:matrixbot_exec_t,s0)";
-        "/var/lib/matrix-eno-bot(/.*)?" = "gen_context(system_u:object_r:matrixbot_state_t,s0)";
-        "/var/log/matrix-eno-bot\\.log.*" = "-- gen_context(system_u:object_r:matrixbot_log_t,s0)";
+        "/etc/matrix-eno-bot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:matrixbot_conf_t,s0)";
+        "/nix/store/[^/]+/sbin/matrix-eno-bot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:matrixbot_exec_t,s0)";
+        "/var/lib/matrix-eno-bot(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:matrixbot_state_t,s0)";
+        "/var/log/matrix-eno-bot\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:matrixbot_log_t,s0)";
       };
     };
   };

@@ -239,21 +239,23 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/((iscsi)|(iscsid))" =
-          "-- gen_context(system_u:object_r:iscsi_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:iscsi_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/iscsid" = "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
-        "/nix/store/[^/]+/bin/brcm_iscsiuio" = "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iscsiuio" = "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iscsid" = lib.mkDefault "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/brcm_iscsiuio" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iscsiuio" =
+          lib.mkDefault "-- gen_context(system_u:object_r:iscsid_exec_t,s0)";
 
-        "/var/lib/iscsi(/.*)?" = "gen_context(system_u:object_r:iscsi_var_lib_t,s0)";
+        "/var/lib/iscsi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:iscsi_var_lib_t,s0)";
 
-        "/var/lock/iscsi(/.*)?" = "gen_context(system_u:object_r:iscsi_lock_t,s0)";
+        "/var/lock/iscsi(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:iscsi_lock_t,s0)";
 
-        "/var/log/brcm-iscsi\\.log.*" = "-- gen_context(system_u:object_r:iscsi_log_t,s0)";
-        "/var/log/iscsiuio\\.log.*" = "-- gen_context(system_u:object_r:iscsi_log_t,s0)";
+        "/var/log/brcm-iscsi\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:iscsi_log_t,s0)";
+        "/var/log/iscsiuio\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:iscsi_log_t,s0)";
 
-        "/run/iscsid\\.pid" = "-- gen_context(system_u:object_r:iscsi_runtime_t,s0)";
-        "/run/iscsiuio\\.pid" = "-- gen_context(system_u:object_r:iscsi_runtime_t,s0)";
+        "/run/iscsid\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:iscsi_runtime_t,s0)";
+        "/run/iscsiuio\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:iscsi_runtime_t,s0)";
       };
     };
   };

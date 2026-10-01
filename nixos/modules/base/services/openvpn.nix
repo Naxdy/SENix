@@ -360,19 +360,24 @@
     '';
     fileContext = {
       rules = {
-        "/etc/openvpn(/.*)?" = "gen_context(system_u:object_r:openvpn_etc_t,s0)";
-        "/etc/openvpn/([^/]+/)?ipp\\.txt" = "-- gen_context(system_u:object_r:openvpn_etc_rw_t,s0)";
-        "/etc/openvpn/openvpn-status\\.log.*" = "-- gen_context(system_u:object_r:openvpn_status_t,s0)";
+        "/etc/openvpn(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openvpn_etc_t,s0)";
+        "/etc/openvpn/([^/]+/)?ipp\\.txt" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openvpn_etc_rw_t,s0)";
+        "/etc/openvpn/openvpn-status\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openvpn_status_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/openvpn" = "-- gen_context(system_u:object_r:openvpn_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/openvpn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openvpn_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/openvpn" = "-- gen_context(system_u:object_r:openvpn_exec_t,s0)";
+        "/nix/store/[^/]+/bin/openvpn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openvpn_exec_t,s0)";
 
-        "/var/log/openvpn-status\\.log.*" = "-- gen_context(system_u:object_r:openvpn_status_t,s0)";
-        "/var/log/openvpn.*" = "gen_context(system_u:object_r:openvpn_var_log_t,s0)";
+        "/var/log/openvpn-status\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:openvpn_status_t,s0)";
+        "/var/log/openvpn.*" = lib.mkDefault "gen_context(system_u:object_r:openvpn_var_log_t,s0)";
 
-        "/run/openvpn(/.*)?" = "gen_context(system_u:object_r:openvpn_runtime_t,s0)";
-        "/run/openvpn\\.client.*" = "-- gen_context(system_u:object_r:openvpn_runtime_t,s0)";
+        "/run/openvpn(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:openvpn_runtime_t,s0)";
+        "/run/openvpn\\.client.*" = lib.mkDefault "-- gen_context(system_u:object_r:openvpn_runtime_t,s0)";
       };
     };
   };

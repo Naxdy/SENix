@@ -705,39 +705,48 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.my\\.cnf" = "-- gen_context(system_u:object_r:mysqld_home_t,s0)";
-        "HOME_DIR/\\.mylogin\\.cnf" = "-- gen_context(system_u:object_r:mysqld_home_t,s0)";
+        "HOME_DIR/\\.my\\.cnf" = lib.mkDefault "-- gen_context(system_u:object_r:mysqld_home_t,s0)";
+        "HOME_DIR/\\.mylogin\\.cnf" = lib.mkDefault "-- gen_context(system_u:object_r:mysqld_home_t,s0)";
 
-        "/etc/my\\.cnf" = "-- gen_context(system_u:object_r:mysqld_etc_t,s0)";
-        "/etc/my\\.cnf\\.d(/.*)?" = "gen_context(system_u:object_r:mysqld_etc_t,s0)";
-        "/etc/mysql(/.*)?" = "gen_context(system_u:object_r:mysqld_etc_t,s0)";
+        "/etc/my\\.cnf" = lib.mkDefault "-- gen_context(system_u:object_r:mysqld_etc_t,s0)";
+        "/etc/my\\.cnf\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mysqld_etc_t,s0)";
+        "/etc/mysql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mysqld_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/mysqld?" = "-- gen_context(system_u:object_r:mysqld_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/mysqld?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/mysqlmanager" =
-          "-- gen_context(system_u:object_r:mysqlmanagerd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqlmanagerd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mysqld(-max)?" = "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mysqld_safe" = "-- gen_context(system_u:object_r:mysqld_safe_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mysql_upgrade" = "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mysqlmanager" = "-- gen_context(system_u:object_r:mysqlmanagerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ndbd" = "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mysqld(-max)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mysqld_safe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_safe_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mysql_upgrade" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mysqlmanager" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqlmanagerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ndbd" = lib.mkDefault "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/mysqld.*\\.service" =
-          "-- gen_context(system_u:object_r:mysqld_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_unit_t,s0)";
 
-        "/nix/store/[^/]+/libexec/mysqld" = "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/mysqld" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/mariadbd" = "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mariadbd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqld_exec_t,s0)";
 
-        "/var/lib/mysql(/.*)?" = "gen_context(system_u:object_r:mysqld_db_t,s0)";
-        "/var/lib/mysql/mysql.*" = "-s gen_context(system_u:object_r:mysqld_runtime_t,s0)";
+        "/var/lib/mysql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mysqld_db_t,s0)";
+        "/var/lib/mysql/mysql.*" = lib.mkDefault "-s gen_context(system_u:object_r:mysqld_runtime_t,s0)";
 
-        "/var/log/mariadb(/.*)?" = "gen_context(system_u:object_r:mysqld_log_t,s0)";
-        "/var/log/mysql(/.*)?" = "gen_context(system_u:object_r:mysqld_log_t,s0)";
+        "/var/log/mariadb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mysqld_log_t,s0)";
+        "/var/log/mysql(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mysqld_log_t,s0)";
 
-        "/run/mysqld.*" = "gen_context(system_u:object_r:mysqld_runtime_t,s0)";
-        "/run/mysqlmanager.*" = "-- gen_context(system_u:object_r:mysqlmanagerd_runtime_t,s0)";
-        "/run/mysqld/mysqlmanager.*" = "-- gen_context(system_u:object_r:mysqlmanagerd_runtime_t,s0)";
+        "/run/mysqld.*" = lib.mkDefault "gen_context(system_u:object_r:mysqld_runtime_t,s0)";
+        "/run/mysqlmanager.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqlmanagerd_runtime_t,s0)";
+        "/run/mysqld/mysqlmanager.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mysqlmanagerd_runtime_t,s0)";
       };
     };
   };

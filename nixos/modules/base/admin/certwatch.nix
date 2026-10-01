@@ -114,7 +114,8 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cron\\.daily/certwatch" = "-- gen_context(system_u:object_r:certwatch_exec_t,s0)";
+        "/etc/cron\\.daily/certwatch" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certwatch_exec_t,s0)";
       };
     };
   };

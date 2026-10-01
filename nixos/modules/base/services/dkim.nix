@@ -120,31 +120,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/opendkim/keys(/.*)?" = "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
-        "/etc/dkimkeys(/.*)?" = "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
+        "/etc/opendkim/keys(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
+        "/etc/dkimkeys(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
 
         "/etc/rc\\.d/init\\.d/((opendkim)|(dkim-milter))" =
-          "-- gen_context(system_u:object_r:dkim_milter_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dkim_milter_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/dkim-filter" = "-- gen_context(system_u:object_r:dkim_milter_exec_t,s0)";
-        "/nix/store/[^/]+/bin/opendkim" = "-- gen_context(system_u:object_r:dkim_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/dkim-filter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dkim_milter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/opendkim" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dkim_milter_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/opendkim\\.service" =
-          "-- gen_context(system_u:object_r:dkim_milter_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:dkim_milter_unit_t,s0)";
 
-        "/var/db/dkim(/.*)?" = "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
+        "/var/db/dkim(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_private_key_t,s0)";
 
-        "/var/lib/dkim-milter(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/var/lib/dkim-milter(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
 
-        "/var/spool/postfix/opendkim(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/var/spool/postfix/opendkim(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
 
-        "/run/dkim-filter(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
-        "/run/dkim-milter(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
-        "/run/dkim-milter\\.pid" = "-- gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/run/dkim-filter(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/run/dkim-milter(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/run/dkim-milter\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:dkim_milter_data_t,s0)";
 
-        "/run/opendkim(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/run/opendkim(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
 
-        "/var/spool/opendkim(/.*)?" = "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
+        "/var/spool/opendkim(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dkim_milter_data_t,s0)";
       };
     };
   };

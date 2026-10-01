@@ -112,12 +112,14 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/mountall-bootclean\\.sh" =
-          "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/mountnfs-bootclean\\.sh" =
-          "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/tmpreaper" = "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tmpwatch" = "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tmpreaper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tmpwatch" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tmpreaper_exec_t,s0)";
       };
     };
   };

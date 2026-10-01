@@ -127,16 +127,19 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cfingerd(/.*)?" = "gen_context(system_u:object_r:fingerd_etc_t,s0)";
+        "/etc/cfingerd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:fingerd_etc_t,s0)";
 
-        "/etc/cron\\.weekly/(c)?fingerd" = "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
+        "/etc/cron\\.weekly/(c)?fingerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/in\\.(x)?fingerd" = "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/[cef]fingerd" = "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.(x)?fingerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/[cef]fingerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fingerd_exec_t,s0)";
 
-        "/var/log/cfingerd\\.log.*" = "-- gen_context(system_u:object_r:fingerd_log_t,s0)";
+        "/var/log/cfingerd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:fingerd_log_t,s0)";
 
-        "/run/fingerd\\.pid" = "-- gen_context(system_u:object_r:fingerd_runtime_t,s0)";
+        "/run/fingerd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:fingerd_runtime_t,s0)";
       };
     };
   };

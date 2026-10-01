@@ -143,13 +143,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/lldpad" = "-- gen_context(system_u:object_r:lldpad_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lldpad" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lldpad_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/lldpad" = "-- gen_context(system_u:object_r:lldpad_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lldpad" = lib.mkDefault "-- gen_context(system_u:object_r:lldpad_exec_t,s0)";
 
-        "/var/lib/lldpad(/.*)?" = "gen_context(system_u:object_r:lldpad_var_lib_t,s0)";
+        "/var/lib/lldpad(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lldpad_var_lib_t,s0)";
 
-        "/run/lldpad.*" = "gen_context(system_u:object_r:lldpad_runtime_t,s0)";
+        "/run/lldpad.*" = lib.mkDefault "gen_context(system_u:object_r:lldpad_runtime_t,s0)";
       };
     };
   };

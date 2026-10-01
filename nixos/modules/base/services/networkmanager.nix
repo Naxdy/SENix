@@ -840,71 +840,87 @@
     fileContext = {
       rules = {
         # Systemd unit files
-        "/etc/rc\\.d/init\\.d/wicd" = "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/wicd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
 
-        "/etc/NetworkManager(/.*)?" = "gen_context(system_u:object_r:NetworkManager_etc_t,s0)";
+        "/etc/NetworkManager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_etc_t,s0)";
         "/etc/NetworkManager/NetworkManager\\.conf" =
-          "gen_context(system_u:object_r:NetworkManager_etc_rw_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_etc_rw_t,s0)";
         "/etc/NetworkManager/system-connections(/.*)?" =
-          "gen_context(system_u:object_r:NetworkManager_etc_rw_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_etc_rw_t,s0)";
         "/etc/NetworkManager/dispatcher\\.d(/.*)?" =
-          "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
 
         "/etc/dhcp/manager-settings\\.conf" =
-          "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
         "/etc/dhcp/wireless-settings\\.conf" =
-          "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
-        "/etc/dhcp/wired-settings\\.conf" = "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+        "/etc/dhcp/wired-settings\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
 
-        "/etc/iwd/main\\.conf" = "-- gen_context(system_u:object_r:NetworkManager_etc_t, s0)";
+        "/etc/iwd/main\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_t, s0)";
 
         "/etc/wicd/manager-settings\\.conf" =
-          "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
         "/etc/wicd/wireless-settings\\.conf" =
-          "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
-        "/etc/wicd/wired-settings\\.conf" = "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
+        "/etc/wicd/wired-settings\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_etc_rw_t, s0)";
 
         "/nix/store/[^/]+/lib/NetworkManager/nm-dispatcher.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
         "/nix/store/[^/]+/lib/networkmanager/nm-dispatcher.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_initrc_exec_t,s0)";
         "/nix/store/[^/]+/libexec/nm-dispatcher.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/iwd" = "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/iwd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*NetworkManager.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*iwd.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/[^/]*wpa_supplicant.*" =
-          "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_unit_t,s0)";
 
         "/nix/store/[^/]+/bin/NetworkManager" =
-          "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
         "/nix/store/[^/]+/bin/NetworkManagerDispatcher" =
-          "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iwctl" = "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/iwmon" = "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iwctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/iwmon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
         "/nix/store/[^/]+/bin/nm-system-settings" =
-          "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wicd" = "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
-        "/nix/store/[^/]+/bin/wpa_cli" = "-- gen_context(system_u:object_r:wpa_cli_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wicd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+        "/nix/store/[^/]+/bin/wpa_cli" =
+          lib.mkDefault "-- gen_context(system_u:object_r:wpa_cli_exec_t,s0)";
         "/nix/store/[^/]+/bin/wpa_supplicant" =
-          "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_exec_t,s0)";
 
-        "/var/lib/iwd(/.*)?" = "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
-        "/var/lib/wicd(/.*)?" = "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
-        "/var/lib/NetworkManager(/.*)?" = "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
+        "/var/lib/iwd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
+        "/var/lib/wicd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
+        "/var/lib/NetworkManager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_var_lib_t,s0)";
 
-        "/var/log/wicd(/.*)?" = "gen_context(system_u:object_r:NetworkManager_log_t,s0)";
-        "/var/log/wpa_supplicant.*" = "-- gen_context(system_u:object_r:NetworkManager_log_t,s0)";
+        "/var/log/wicd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:NetworkManager_log_t,s0)";
+        "/var/log/wpa_supplicant.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_log_t,s0)";
 
-        "/run/NetworkManager\\.pid" = "-- gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
-        "/run/NetworkManager(/.*)?" = "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
-        "/run/nm-dhclient.*" = "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
-        "/run/nm-dns-dnsmasq\\.conf" = "-- gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
-        "/run/wpa_supplicant(/.*)?" = "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
-        "/run/wpa_supplicant-global" = "-s gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/NetworkManager\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/NetworkManager(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/nm-dhclient.*" = lib.mkDefault "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/nm-dns-dnsmasq\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/wpa_supplicant(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
+        "/run/wpa_supplicant-global" =
+          lib.mkDefault "-s gen_context(system_u:object_r:NetworkManager_runtime_t,s0)";
       };
     };
   };

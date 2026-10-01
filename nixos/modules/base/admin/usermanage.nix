@@ -940,32 +940,50 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/chage" = "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/chfn" = "-- gen_context(system_u:object_r:chfn_exec_t,s0)";
-        "/nix/store/[^/]+/bin/chpasswd" = "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/chsh" = "-- gen_context(system_u:object_r:chfn_exec_t,s0)";
-        "/nix/store/[^/]+/bin/crack_[a-z]*" = "-- gen_context(system_u:object_r:crack_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cracklib-[a-z]*" = "-- gen_context(system_u:object_r:crack_exec_t,s0)";
-        "/nix/store/[^/]+/bin/gpasswd" = "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/groupadd" = "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/groupdel" = "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/groupmod" = "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grpconv" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grpunconv" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/passwd" = "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pwconv" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pwunconv" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/useradd" = "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/userdel" = "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/usermod" = "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vigr" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vipw" = "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chage" = lib.mkDefault "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chfn" = lib.mkDefault "-- gen_context(system_u:object_r:chfn_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chpasswd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/chsh" = lib.mkDefault "-- gen_context(system_u:object_r:chfn_exec_t,s0)";
+        "/nix/store/[^/]+/bin/crack_[a-z]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crack_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cracklib-[a-z]*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crack_exec_t,s0)";
+        "/nix/store/[^/]+/bin/gpasswd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/groupadd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/groupdel" =
+          lib.mkDefault "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/groupmod" =
+          lib.mkDefault "-- gen_context(system_u:object_r:groupadd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grpconv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grpunconv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/passwd" = lib.mkDefault "-- gen_context(system_u:object_r:passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pwconv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pwunconv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/useradd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/userdel" =
+          lib.mkDefault "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/usermod" =
+          lib.mkDefault "-- gen_context(system_u:object_r:useradd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vigr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vipw" =
+          lib.mkDefault "-- gen_context(system_u:object_r:admin_passwd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/cracklib_dict.*" = "-- gen_context(system_u:object_r:crack_db_t,s0)";
+        "/nix/store/[^/]+/lib/cracklib_dict.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:crack_db_t,s0)";
 
-        "/nix/store/[^/]+/share/cracklib(/.*)?" = "gen_context(system_u:object_r:crack_db_t,s0)";
+        "/nix/store/[^/]+/share/cracklib(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:crack_db_t,s0)";
 
-        "/var/cache/cracklib(/.*)?" = "gen_context(system_u:object_r:crack_db_t,s0)";
+        "/var/cache/cracklib(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:crack_db_t,s0)";
       };
     };
   };

@@ -272,11 +272,12 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.uml(/.*)?" = "gen_context(system_u:object_r:uml_rw_t,s0)";
+        "HOME_DIR/\\.uml(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uml_rw_t,s0)";
 
-        "/nix/store/[^/]+/bin/uml_switch" = "-- gen_context(system_u:object_r:uml_switch_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uml_switch" =
+          lib.mkDefault "-- gen_context(system_u:object_r:uml_switch_exec_t,s0)";
 
-        "/run/uml-utilities(/.*)?" = "gen_context(system_u:object_r:uml_switch_runtime_t,s0)";
+        "/run/uml-utilities(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uml_switch_runtime_t,s0)";
       };
     };
   };

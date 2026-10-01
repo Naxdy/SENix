@@ -78,7 +78,8 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/timidity" = "-- gen_context(system_u:object_r:timidity_exec_t,s0)";
+        "/nix/store/[^/]+/bin/timidity" =
+          lib.mkDefault "-- gen_context(system_u:object_r:timidity_exec_t,s0)";
       };
     };
   };

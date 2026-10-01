@@ -464,42 +464,67 @@
     '';
     fileContext = {
       rules = {
-        "/etc/qmail(/.*)?" = "gen_context(system_u:object_r:qmail_etc_t,s0)";
+        "/etc/qmail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:qmail_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/qmail-clean" = "-- gen_context(system_u:object_r:qmail_clean_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-getpw" = "-- gen_context(system_u:object_r:qmail_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-inject" = "-- gen_context(system_u:object_r:qmail_inject_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-local" = "-- gen_context(system_u:object_r:qmail_local_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-lspawn" = "-- gen_context(system_u:object_r:qmail_lspawn_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-queue" = "-- gen_context(system_u:object_r:qmail_queue_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-remote" = "-- gen_context(system_u:object_r:qmail_remote_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-rspawn" = "-- gen_context(system_u:object_r:qmail_rspawn_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-send" = "-- gen_context(system_u:object_r:qmail_send_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-smtpd" = "-- gen_context(system_u:object_r:qmail_smtpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qmail-start" = "-- gen_context(system_u:object_r:qmail_start_exec_t,s0)";
-        "/nix/store/[^/]+/bin/splogger" = "-- gen_context(system_u:object_r:qmail_splogger_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcp-env" = "-- gen_context(system_u:object_r:qmail_tcp_env_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-clean" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_clean_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-getpw" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-inject" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_inject_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-local" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_local_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-lspawn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_lspawn_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-queue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_queue_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-remote" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_remote_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-rspawn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_rspawn_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-send" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_send_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-smtpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_smtpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qmail-start" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_start_exec_t,s0)";
+        "/nix/store/[^/]+/bin/splogger" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_splogger_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcp-env" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_tcp_env_exec_t,s0)";
 
-        "/var/qmail/alias" = "-d gen_context(system_u:object_r:qmail_alias_home_t,s0)";
-        "/var/qmail/alias(/.*)?" = "gen_context(system_u:object_r:qmail_alias_home_t,s0)";
+        "/var/qmail/alias" = lib.mkDefault "-d gen_context(system_u:object_r:qmail_alias_home_t,s0)";
+        "/var/qmail/alias(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:qmail_alias_home_t,s0)";
 
-        "/var/qmail/bin/qmail-clean" = "-- gen_context(system_u:object_r:qmail_clean_exec_t,s0)";
-        "/var/qmail/bin/qmail-getpw" = "-- gen_context(system_u:object_r:qmail_exec_t,s0)";
-        "/var/qmail/bin/qmail-inject" = "-- gen_context(system_u:object_r:qmail_inject_exec_t,s0)";
-        "/var/qmail/bin/qmail-local" = "-- gen_context(system_u:object_r:qmail_local_exec_t,s0)";
-        "/var/qmail/bin/qmail-lspawn" = "-- gen_context(system_u:object_r:qmail_lspawn_exec_t,s0)";
-        "/var/qmail/bin/qmail-queue" = "-- gen_context(system_u:object_r:qmail_queue_exec_t,s0)";
-        "/var/qmail/bin/qmail-remote" = "-- gen_context(system_u:object_r:qmail_remote_exec_t,s0)";
-        "/var/qmail/bin/qmail-rspawn" = "-- gen_context(system_u:object_r:qmail_rspawn_exec_t,s0)";
-        "/var/qmail/bin/qmail-send" = "-- gen_context(system_u:object_r:qmail_send_exec_t,s0)";
-        "/var/qmail/bin/qmail-smtpd" = "-- gen_context(system_u:object_r:qmail_smtpd_exec_t,s0)";
-        "/var/qmail/bin/qmail-start" = "-- gen_context(system_u:object_r:qmail_start_exec_t,s0)";
-        "/var/qmail/bin/splogger" = "-- gen_context(system_u:object_r:qmail_splogger_exec_t,s0)";
-        "/var/qmail/bin/tcp-env" = "-- gen_context(system_u:object_r:qmail_tcp_env_exec_t,s0)";
+        "/var/qmail/bin/qmail-clean" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_clean_exec_t,s0)";
+        "/var/qmail/bin/qmail-getpw" = lib.mkDefault "-- gen_context(system_u:object_r:qmail_exec_t,s0)";
+        "/var/qmail/bin/qmail-inject" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_inject_exec_t,s0)";
+        "/var/qmail/bin/qmail-local" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_local_exec_t,s0)";
+        "/var/qmail/bin/qmail-lspawn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_lspawn_exec_t,s0)";
+        "/var/qmail/bin/qmail-queue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_queue_exec_t,s0)";
+        "/var/qmail/bin/qmail-remote" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_remote_exec_t,s0)";
+        "/var/qmail/bin/qmail-rspawn" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_rspawn_exec_t,s0)";
+        "/var/qmail/bin/qmail-send" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_send_exec_t,s0)";
+        "/var/qmail/bin/qmail-smtpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_smtpd_exec_t,s0)";
+        "/var/qmail/bin/qmail-start" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_start_exec_t,s0)";
+        "/var/qmail/bin/splogger" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_splogger_exec_t,s0)";
+        "/var/qmail/bin/tcp-env" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qmail_tcp_env_exec_t,s0)";
 
-        "/var/qmail(/.*)?" = "gen_context(system_u:object_r:qmail_etc_t,s0)";
+        "/var/qmail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:qmail_etc_t,s0)";
 
-        "/var/spool/qmail(/.*)?" = "gen_context(system_u:object_r:qmail_spool_t,s0)";
+        "/var/spool/qmail(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:qmail_spool_t,s0)";
       };
     };
   };

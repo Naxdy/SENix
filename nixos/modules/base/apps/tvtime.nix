@@ -148,9 +148,9 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.tvtime(/.*)?" = "gen_context(system_u:object_r:tvtime_home_t,s0)";
+        "HOME_DIR/\\.tvtime(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tvtime_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/tvtime" = "-- gen_context(system_u:object_r:tvtime_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tvtime" = lib.mkDefault "-- gen_context(system_u:object_r:tvtime_exec_t,s0)";
       };
     };
   };

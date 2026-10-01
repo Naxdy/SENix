@@ -97,13 +97,14 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/slpd" = "-- gen_context(system_u:object_r:slpd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/slpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:slpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/slpd" = "-- gen_context(system_u:object_r:slpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/slpd" = lib.mkDefault "-- gen_context(system_u:object_r:slpd_exec_t,s0)";
 
-        "/var/log/slpd\\.log.*" = "-- gen_context(system_u:object_r:slpd_log_t,s0)";
+        "/var/log/slpd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:slpd_log_t,s0)";
 
-        "/run/slpd\\.pid" = "-- gen_context(system_u:object_r:slpd_runtime_t,s0)";
+        "/run/slpd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:slpd_runtime_t,s0)";
       };
     };
   };

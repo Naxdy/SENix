@@ -2161,16 +2161,20 @@
     '';
     fileContext = {
       rules = {
-        "/dev/log" = "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
+        "/dev/log" = lib.mkDefault "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
 
-        "/etc/rsyslog\\.conf" = "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
-        "/etc/syslog\\.conf" = "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
-        "/etc/rsyslog\\.d(/.*)?" = "gen_context(system_u:object_r:syslog_conf_t,s0)";
-        "/etc/audit(/.*)?" = "gen_context(system_u:object_r:auditd_etc_t,mls_systemhigh)";
-        "/etc/systemd/journal.*\\.conf" = "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
-        "/etc/systemd/journald\\.conf\\.d(/.*)?" = "gen_context(system_u:object_r:syslog_conf_t,s0)";
-        "/etc/rc\\.d/init\\.d/auditd" = "-- gen_context(system_u:object_r:auditd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/rsyslog" = "-- gen_context(system_u:object_r:syslogd_initrc_exec_t,s0)";
+        "/etc/rsyslog\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
+        "/etc/syslog\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
+        "/etc/rsyslog\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:syslog_conf_t,s0)";
+        "/etc/audit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:auditd_etc_t,mls_systemhigh)";
+        "/etc/systemd/journal.*\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslog_conf_t,s0)";
+        "/etc/systemd/journald\\.conf\\.d(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:syslog_conf_t,s0)";
+        "/etc/rc\\.d/init\\.d/auditd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:auditd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/rsyslog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_initrc_exec_t,s0)";
 
         # "/usr/bin/audispd" = "-- gen_context(system_u:object_r:audisp_exec_t,s0)";
         # "/usr/bin/audisp-remote" = "-- gen_context(system_u:object_r:audisp_remote_exec_t,s0)";
@@ -2192,59 +2196,71 @@
         # "/usr/lib/systemd/systemd-journald" = "-- gen_context(system_u:object_r:syslogd_exec_t,s0)";
         # "/usr/lib/systemd/systemd-kmsg-syslogd" = "-- gen_context(system_u:object_r:syslogd_exec_t,s0)";
 
-        "/var/lib/misc/syslog-ng\\.persist-?" = "-- gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
-        "/var/lib/syslog-ng(/.*)?" = "gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
-        "/var/lib/r?syslog(/.*)?" = "gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
-        "/var/lib/syslog-ng\\.persist" = "-- gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
+        "/var/lib/misc/syslog-ng\\.persist-?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
+        "/var/lib/syslog-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
+        "/var/lib/r?syslog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
+        "/var/lib/syslog-ng\\.persist" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_var_lib_t,s0)";
 
-        "/var/axfrdns/log/main(/.*)?" = "gen_context(system_u:object_r:var_log_t,s0)";
-        "/var/dnscache/log/main(/.*)?" = "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/axfrdns/log/main(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/dnscache/log/main(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
 
-        "/var/log" = "-d gen_context(system_u:object_r:var_log_t,s0-mls_systemhigh)";
-        "/var/log/.*" = "gen_context(system_u:object_r:var_log_t,s0)";
-        "/var/log/dmesg" = "-- gen_context(system_u:object_r:var_log_t,s0)";
-        "/var/log/syslog" = "-- gen_context(system_u:object_r:var_log_t,s0)";
-        "/var/log/boot\\.log" = "-- gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/log/messages[^/]*" = "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/log/secure[^/]*" = "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/log/maillog[^/]*" = "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/log/spooler[^/]*" = "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/log/audit(/.*)?" = "gen_context(system_u:object_r:auditd_log_t,mls_systemhigh)";
-        "/var/log/syslog-ng(/.*)?" = "gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
+        "/var/log" = lib.mkDefault "-d gen_context(system_u:object_r:var_log_t,s0-mls_systemhigh)";
+        "/var/log/.*" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/log/dmesg" = lib.mkDefault "-- gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/log/syslog" = lib.mkDefault "-- gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/log/boot\\.log" = lib.mkDefault "-- gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/log/messages[^/]*" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/log/secure[^/]*" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/log/maillog[^/]*" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/log/spooler[^/]*" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/log/audit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:auditd_log_t,mls_systemhigh)";
+        "/var/log/syslog-ng(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
 
-        "/run/audit(/.*)?" = "gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
-        "/run/audit_events" = "-s gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
-        "/run/audispd_events" = "-s gen_context(system_u:object_r:audisp_runtime_t,mls_systemhigh)";
-        "/run/auditd\\.pid" = "-- gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
-        "/run/auditd_sock" = "-s gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
-        "/run/klogd\\.pid" = "-- gen_context(system_u:object_r:klogd_runtime_t,s0)";
-        "/run/log" = [
+        "/run/audit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
+        "/run/audit_events" =
+          lib.mkDefault "-s gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
+        "/run/audispd_events" =
+          lib.mkDefault "-s gen_context(system_u:object_r:audisp_runtime_t,mls_systemhigh)";
+        "/run/auditd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
+        "/run/auditd_sock" =
+          lib.mkDefault "-s gen_context(system_u:object_r:auditd_runtime_t,mls_systemhigh)";
+        "/run/klogd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:klogd_runtime_t,s0)";
+        "/run/log" = lib.mkDefault [
           "-s gen_context(system_u:object_r:devlog_t,s0)"
           "-d gen_context(system_u:object_r:var_log_t,s0-mls_systemhigh)"
         ];
-        "/run/metalog\\.pid" = "-- gen_context(system_u:object_r:syslogd_runtime_t,s0)";
-        "/run/rsyslogd\\.pid" = "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
-        "/run/syslogd\\.pid" = "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
-        "/run/syslog-ng\\.ctl" = "-- gen_context(system_u:object_r:syslogd_runtime_t,s0)";
-        "/run/syslog-ng\\.pid" = "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
-        "/run/syslog-ng(/.*)?" = "gen_context(system_u:object_r:syslogd_runtime_t,s0)";
+        "/run/metalog\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:syslogd_runtime_t,s0)";
+        "/run/rsyslogd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
+        "/run/syslogd\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
+        "/run/syslog-ng\\.ctl" = lib.mkDefault "-- gen_context(system_u:object_r:syslogd_runtime_t,s0)";
+        "/run/syslog-ng\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
+        "/run/syslog-ng(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:syslogd_runtime_t,s0)";
         "/run/systemd/journal(\\.[^/]*)?(/.*)?" =
-          "gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
+          lib.mkDefault "gen_context(system_u:object_r:syslogd_runtime_t,mls_systemhigh)";
         "/run/systemd/journal(\\.[^/]*)?/socket" =
-          "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
+          lib.mkDefault "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
         "/run/systemd/journal(\\.[^/]*)?/stdout" =
-          "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
+          lib.mkDefault "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
         "/run/systemd/journal(\\.[^/]*)?/syslog" =
-          "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
+          lib.mkDefault "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
         "/run/systemd/journal(\\.[^/]*)?/dev-log" =
-          "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
+          lib.mkDefault "-s gen_context(system_u:object_r:devlog_t,mls_systemhigh)";
 
-        "/var/spool/audit(/.*)?" = "gen_context(system_u:object_r:audit_spool_t,mls_systemhigh)";
-        "/var/spool/bacula/log(/.*)?" = "gen_context(system_u:object_r:var_log_t,s0)";
-        "/var/spool/plymouth/boot\\.log" = "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
-        "/var/spool/rsyslog(/.*)?" = "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/spool/audit(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:audit_spool_t,mls_systemhigh)";
+        "/var/spool/bacula/log(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/spool/plymouth/boot\\.log" =
+          lib.mkDefault "gen_context(system_u:object_r:var_log_t,mls_systemhigh)";
+        "/var/spool/rsyslog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
 
-        "/var/tinydns/log/main(/.*)?" = "gen_context(system_u:object_r:var_log_t,s0)";
+        "/var/tinydns/log/main(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_log_t,s0)";
       };
     };
   };

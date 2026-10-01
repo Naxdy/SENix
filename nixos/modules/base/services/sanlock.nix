@@ -205,13 +205,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/sanlock" = "-- gen_context(system_u:object_r:sanlock_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/sanlock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sanlock_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/sanlock" = "-- gen_context(system_u:object_r:sanlock_exec_t,s0)";
+        "/nix/store/[^/]+/bin/sanlock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:sanlock_exec_t,s0)";
 
-        "/run/sanlock(/.*)?" = "gen_context(system_u:object_r:sanlock_runtime_t,s0)";
+        "/run/sanlock(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:sanlock_runtime_t,s0)";
 
-        "/var/log/sanlock\\.log.*" = "-- gen_context(system_u:object_r:sanlock_log_t,s0)";
+        "/var/log/sanlock\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:sanlock_log_t,s0)";
       };
     };
   };

@@ -139,7 +139,7 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/xdg-document-portal" =
-          "-- gen_context(system_u:object_r:docportal_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:docportal_exec_t,s0)";
       };
     };
   };

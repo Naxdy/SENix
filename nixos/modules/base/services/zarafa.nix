@@ -350,43 +350,63 @@
     '';
     fileContext = {
       rules = {
-        "/etc/zarafa(/.*)?" = "gen_context(system_u:object_r:zarafa_etc_t,s0)";
+        "/etc/zarafa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zarafa_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/zarafa.*" = "-- gen_context(system_u:object_r:zarafa_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/zarafa.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/zarafa-dagent" = "-- gen_context(system_u:object_r:zarafa_deliver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zarafa-dagent" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_deliver_exec_t,s0)";
         "/nix/store/[^/]+/bin/zarafa-gateway" =
-          "-- gen_context(system_u:object_r:zarafa_gateway_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zarafa-ical" = "-- gen_context(system_u:object_r:zarafa_ical_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_gateway_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zarafa-ical" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_ical_exec_t,s0)";
         "/nix/store/[^/]+/bin/zarafa-indexer" =
-          "-- gen_context(system_u:object_r:zarafa_indexer_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_indexer_exec_t,s0)";
         "/nix/store/[^/]+/bin/zarafa-monitor" =
-          "-- gen_context(system_u:object_r:zarafa_monitor_exec_t,s0)";
-        "/nix/store/[^/]+/bin/zarafa-server" = "-- gen_context(system_u:object_r:zarafa_server_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_monitor_exec_t,s0)";
+        "/nix/store/[^/]+/bin/zarafa-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_server_exec_t,s0)";
         "/nix/store/[^/]+/bin/zarafa-spooler" =
-          "-- gen_context(system_u:object_r:zarafa_spooler_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_spooler_exec_t,s0)";
 
-        "/var/lib/zarafa(/.*)?" = "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
-        "/var/lib/zarafa-webaccess(/.*)?" = "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
-        "/var/lib/zarafa-webapp(/.*)?" = "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
+        "/var/lib/zarafa(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
+        "/var/lib/zarafa-webaccess(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
+        "/var/lib/zarafa-webapp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:zarafa_var_lib_t,s0)";
 
-        "/var/log/zarafa/dagent\\.log.*" = "-- gen_context(system_u:object_r:zarafa_deliver_log_t,s0)";
-        "/var/log/zarafa/gateway\\.log.*" = "-- gen_context(system_u:object_r:zarafa_gateway_log_t,s0)";
-        "/var/log/zarafa/ical\\.log.*" = "-- gen_context(system_u:object_r:zarafa_ical_log_t,s0)";
-        "/var/log/zarafa/indexer\\.log.*" = "-- gen_context(system_u:object_r:zarafa_indexer_log_t,s0)";
-        "/var/log/zarafa/monitor\\.log.*" = "-- gen_context(system_u:object_r:zarafa_monitor_log_t,s0)";
-        "/var/log/zarafa/server\\.log.*" = "-- gen_context(system_u:object_r:zarafa_server_log_t,s0)";
-        "/var/log/zarafa/spooler\\.log.*" = "-- gen_context(system_u:object_r:zarafa_spooler_log_t,s0)";
+        "/var/log/zarafa/dagent\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_deliver_log_t,s0)";
+        "/var/log/zarafa/gateway\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_gateway_log_t,s0)";
+        "/var/log/zarafa/ical\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_ical_log_t,s0)";
+        "/var/log/zarafa/indexer\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_indexer_log_t,s0)";
+        "/var/log/zarafa/monitor\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_monitor_log_t,s0)";
+        "/var/log/zarafa/server\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_server_log_t,s0)";
+        "/var/log/zarafa/spooler\\.log.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_spooler_log_t,s0)";
 
-        "/run/zarafa" = "-s gen_context(system_u:object_r:zarafa_server_runtime_t,s0)";
-        "/run/zarafa-dagent\\.pid" = "-- gen_context(system_u:object_r:zarafa_deliver_runtime_t,s0)";
-        "/run/zarafa-gateway\\.pid" = "-- gen_context(system_u:object_r:zarafa_gateway_runtime_t,s0)";
-        "/run/zarafa-ical\\.pid" = "-- gen_context(system_u:object_r:zarafa_ical_runtime_t,s0)";
-        "/run/zarafa-indexer" = "-s gen_context(system_u:object_r:zarafa_indexer_runtime_t,s0)";
-        "/run/zarafa-indexer\\.pid" = "-- gen_context(system_u:object_r:zarafa_indexer_runtime_t,s0)";
-        "/run/zarafa-monitor\\.pid" = "-- gen_context(system_u:object_r:zarafa_monitor_runtime_t,s0)";
-        "/run/zarafa-server\\.pid" = "-- gen_context(system_u:object_r:zarafa_server_runtime_t,s0)";
-        "/run/zarafa-spooler\\.pid" = "-- gen_context(system_u:object_r:zarafa_spooler_runtime_t,s0)";
+        "/run/zarafa" = lib.mkDefault "-s gen_context(system_u:object_r:zarafa_server_runtime_t,s0)";
+        "/run/zarafa-dagent\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_deliver_runtime_t,s0)";
+        "/run/zarafa-gateway\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_gateway_runtime_t,s0)";
+        "/run/zarafa-ical\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_ical_runtime_t,s0)";
+        "/run/zarafa-indexer" =
+          lib.mkDefault "-s gen_context(system_u:object_r:zarafa_indexer_runtime_t,s0)";
+        "/run/zarafa-indexer\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_indexer_runtime_t,s0)";
+        "/run/zarafa-monitor\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_monitor_runtime_t,s0)";
+        "/run/zarafa-server\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_server_runtime_t,s0)";
+        "/run/zarafa-spooler\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:zarafa_spooler_runtime_t,s0)";
       };
     };
   };

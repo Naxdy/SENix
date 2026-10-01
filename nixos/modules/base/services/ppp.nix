@@ -810,37 +810,40 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.ppprc" = "-- gen_context(system_u:object_r:ppp_home_t,s0)";
+        "HOME_DIR/\\.ppprc" = lib.mkDefault "-- gen_context(system_u:object_r:ppp_home_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/ppp" = "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/ppp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
 
-        "/etc/ppp" = "-d gen_context(system_u:object_r:pppd_etc_t,s0)";
-        "/etc/ppp(/.*)?" = "-- gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
-        "/etc/ppp/peers(/.*)?" = "gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
-        "/etc/ppp/.*secrets" = "-- gen_context(system_u:object_r:pppd_secret_t,s0)";
-        "/etc/ppp/resolv\\.conf" = "-- gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
-        "/etc/ppp/(auth|ip(v6|x)?)-(up|down)" = "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
-        "/etc/ppp/ip-pre-up" = "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
+        "/etc/ppp" = lib.mkDefault "-d gen_context(system_u:object_r:pppd_etc_t,s0)";
+        "/etc/ppp(/.*)?" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
+        "/etc/ppp/peers(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
+        "/etc/ppp/.*secrets" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_secret_t,s0)";
+        "/etc/ppp/resolv\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_etc_rw_t,s0)";
+        "/etc/ppp/(auth|ip(v6|x)?)-(up|down)" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
+        "/etc/ppp/ip-pre-up" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/ipppd" = "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ppp-watch" = "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pppd" = "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pppoe-server" = "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pptp" = "-- gen_context(system_u:object_r:pptp_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ipppd" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ppp-watch" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pppd" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pppoe-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pppd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pptp" = lib.mkDefault "-- gen_context(system_u:object_r:pptp_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/ppp.*\\.service" =
-          "-- gen_context(system_u:object_r:pppd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:pppd_unit_t,s0)";
 
-        "/var/lock/ppp(/.*)?" = "gen_context(system_u:object_r:pppd_lock_t,s0)";
+        "/var/lock/ppp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pppd_lock_t,s0)";
 
-        "/var/log/ppp-connect-errors.*" = "-- gen_context(system_u:object_r:pppd_log_t,s0)";
-        "/var/log/ppp/.*" = "-- gen_context(system_u:object_r:pppd_log_t,s0)";
-        "/var/log/pptp.*" = "-- gen_context(system_u:object_r:pptp_log_t,s0)";
+        "/var/log/ppp-connect-errors.*" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_log_t,s0)";
+        "/var/log/ppp/.*" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_log_t,s0)";
+        "/var/log/pptp.*" = lib.mkDefault "-- gen_context(system_u:object_r:pptp_log_t,s0)";
 
-        "/run/(i)?ppp.*pid[^/]*" = "-- gen_context(system_u:object_r:pppd_runtime_t,s0)";
-        "/run/pppd[0-9]*\\.tdb" = "-- gen_context(system_u:object_r:pppd_runtime_t,s0)";
-        "/run/ppp(/.*)?" = "gen_context(system_u:object_r:pppd_runtime_t,s0)";
-        "/run/pptp(/.*)?" = "gen_context(system_u:object_r:pptp_runtime_t,s0)";
+        "/run/(i)?ppp.*pid[^/]*" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_runtime_t,s0)";
+        "/run/pppd[0-9]*\\.tdb" = lib.mkDefault "-- gen_context(system_u:object_r:pppd_runtime_t,s0)";
+        "/run/ppp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pppd_runtime_t,s0)";
+        "/run/pptp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pptp_runtime_t,s0)";
       };
     };
   };

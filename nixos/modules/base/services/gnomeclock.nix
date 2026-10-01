@@ -181,16 +181,16 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/libexec/gnome-clock-applet-mechanism" =
-          "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/gsd-datetime-mechanism" =
-          "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/kde(3|4)/kcmdatetimehelper" =
-          "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/gnome-settings-daemon/gsd-datetime-mechanism" =
-          "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:gnomeclock_exec_t,s0)";
       };
     };
   };

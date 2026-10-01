@@ -334,12 +334,14 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/tpm2-abrmd" = "-- gen_context(system_u:object_r:tpm2_abrmd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tpm2" = "-- gen_context(system_u:object_r:tpm2_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tpm2_[^/]+" = "-- gen_context(system_u:object_r:tpm2_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tpm2-abrmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tpm2_abrmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tpm2" = lib.mkDefault "-- gen_context(system_u:object_r:tpm2_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tpm2_[^/]+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tpm2_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*tpm2-abrmd\\.service" =
-          "-- gen_context(system_u:object_r:tpm2_abrmd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tpm2_abrmd_unit_t,s0)";
       };
     };
   };

@@ -357,36 +357,48 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/varnish" = "-- gen_context(system_u:object_r:varnishd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/varnishlog" = "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/varnish" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/varnishlog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
         "/etc/rc\\.d/init\\.d/varnishncsa" =
-          "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/vinyld" = "-- gen_context(system_u:object_r:varnishd_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/vinyllog" = "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/vinylncsa" = "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vinyld" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vinyllog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vinylncsa" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_initrc_exec_t,s0)";
 
-        "/etc/varnish(/.*)?" = "gen_context(system_u:object_r:varnishd_etc_t,s0)";
-        "/etc/vinyl-cache(/.*)?" = "gen_context(system_u:object_r:varnishd_etc_t,s0)";
+        "/etc/varnish(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishd_etc_t,s0)";
+        "/etc/vinyl-cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishd_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/varnishd" = "-- gen_context(system_u:object_r:varnishd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/varnishlog" = "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
-        "/nix/store/[^/]+/bin/varnishncsa" = "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vinyld" = "-- gen_context(system_u:object_r:varnishd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vinyllog" = "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
-        "/nix/store/[^/]+/bin/vinylncsa" = "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/varnishd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/varnishlog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/varnishncsa" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vinyld" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vinyllog" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vinylncsa" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_exec_t,s0)";
 
-        "/var/lib/varnish(/.*)?" = "gen_context(system_u:object_r:varnishd_var_lib_t,s0)";
-        "/var/lib/vinyl-cache(/.*)?" = "gen_context(system_u:object_r:varnishd_var_lib_t,s0)";
+        "/var/lib/varnish(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishd_var_lib_t,s0)";
+        "/var/lib/vinyl-cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishd_var_lib_t,s0)";
 
-        "/var/log/varnish(/.*)?" = "gen_context(system_u:object_r:varnishlog_log_t,s0)";
-        "/var/log/vinyl-cache(/.*)?" = "gen_context(system_u:object_r:varnishlog_log_t,s0)";
+        "/var/log/varnish(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishlog_log_t,s0)";
+        "/var/log/vinyl-cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:varnishlog_log_t,s0)";
 
-        "/run/varnish\\.pid" = "-- gen_context(system_u:object_r:varnishd_runtime_t,s0)";
-        "/run/varnishlog\\.pid" = "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
-        "/run/varnishncsa\\.pid" = "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
-        "/run/vinyld\\.pid" = "-- gen_context(system_u:object_r:varnishd_runtime_t,s0)";
-        "/run/vinyllog\\.pid" = "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
-        "/run/vinylncsa\\.pid" = "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
+        "/run/varnish\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:varnishd_runtime_t,s0)";
+        "/run/varnishlog\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
+        "/run/varnishncsa\\.pid" =
+          lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
+        "/run/vinyld\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:varnishd_runtime_t,s0)";
+        "/run/vinyllog\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
+        "/run/vinylncsa\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:varnishlog_runtime_t,s0)";
       };
     };
   };

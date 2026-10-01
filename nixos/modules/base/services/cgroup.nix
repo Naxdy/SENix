@@ -304,21 +304,26 @@
     '';
     fileContext = {
       rules = {
-        "/etc/cgconfig\\.conf" = "-- gen_context(system_u:object_r:cgconfig_etc_t,s0)";
-        "/etc/cgrules\\.conf" = "-- gen_context(system_u:object_r:cgrules_etc_t,s0)";
+        "/etc/cgconfig\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:cgconfig_etc_t,s0)";
+        "/etc/cgrules\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:cgrules_etc_t,s0)";
 
-        "/etc/sysconfig/cgconfig" = "-- gen_context(system_u:object_r:cgconfig_etc_t,s0)";
-        "/etc/sysconfig/cgred\\.conf" = "-- gen_context(system_u:object_r:cgrules_etc_t,s0)";
+        "/etc/sysconfig/cgconfig" = lib.mkDefault "-- gen_context(system_u:object_r:cgconfig_etc_t,s0)";
+        "/etc/sysconfig/cgred\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:cgrules_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/cgconfig" = "-- gen_context(system_u:object_r:cgconfig_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/cgred" = "-- gen_context(system_u:object_r:cgred_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cgconfig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgconfig_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/cgred" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgred_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/cgconfigparser" = "-- gen_context(system_u:object_r:cgconfig_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cgrulesengd" = "-- gen_context(system_u:object_r:cgred_exec_t,s0)";
-        "/nix/store/[^/]+/bin/cgclear" = "-- gen_context(system_u:object_r:cgclear_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgconfigparser" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgconfig_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgrulesengd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgred_exec_t,s0)";
+        "/nix/store/[^/]+/bin/cgclear" =
+          lib.mkDefault "-- gen_context(system_u:object_r:cgclear_exec_t,s0)";
 
-        "/var/log/cgrulesengd\\.log.*" = "-- gen_context(system_u:object_r:cgred_log_t,s0)";
-        "/run/cgred.*" = "gen_context(system_u:object_r:cgred_runtime_t,s0)";
+        "/var/log/cgrulesengd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:cgred_log_t,s0)";
+        "/run/cgred.*" = lib.mkDefault "gen_context(system_u:object_r:cgred_runtime_t,s0)";
       };
     };
   };

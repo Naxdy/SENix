@@ -130,9 +130,11 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/in\\.telnetd" = "-- gen_context(system_u:object_r:telnetd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.telnetd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:telnetd_exec_t,s0)";
 
-        "/nix/store/[^/]+/kerberos/sbin/telnetd" = "-- gen_context(system_u:object_r:telnetd_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/telnetd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:telnetd_exec_t,s0)";
       };
     };
   };

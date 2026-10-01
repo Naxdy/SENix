@@ -441,28 +441,30 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/(snmpd|snmptrapd)" =
-          "-- gen_context(system_u:object_r:snmpd_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:snmpd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/snmpd" = "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/snmptrap" = "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/snmptrapd" = "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snmpd" = lib.mkDefault "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snmptrap" = lib.mkDefault "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snmptrapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:snmpd_exec_t,s0)";
 
         "/nix/store/[^/]+/share/snmp/mibs/\\.index" =
-          "-- gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
 
-        "/nix/store/[^/]+/lib/systemd/system/snmp.*" = "-- gen_context(system_u:object_r:snmpd_unit_t,s0)";
+        "/nix/store/[^/]+/lib/systemd/system/snmp.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:snmpd_unit_t,s0)";
 
-        "/var/agentx(/.*)?" = "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
-        "/var/net-snmp(/.*)?" = "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
+        "/var/agentx(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
+        "/var/net-snmp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
 
-        "/var/lib/net-snmp(/.*)?" = "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
-        "/var/lib/snmp(/.*)?" = "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
+        "/var/lib/net-snmp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
+        "/var/lib/snmp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_var_lib_t,s0)";
 
-        "/var/log/snmpd\\.log.*" = "-- gen_context(system_u:object_r:snmpd_log_t,s0)";
+        "/var/log/snmpd\\.log.*" = lib.mkDefault "-- gen_context(system_u:object_r:snmpd_log_t,s0)";
 
-        "/run/net-snmpd(/.*)?" = "gen_context(system_u:object_r:snmpd_runtime_t,s0)";
-        "/run/snmpd(/.*)?" = "gen_context(system_u:object_r:snmpd_runtime_t,s0)";
-        "/run/snmpd\\.pid" = "-- gen_context(system_u:object_r:snmpd_runtime_t,s0)";
+        "/run/net-snmpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_runtime_t,s0)";
+        "/run/snmpd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:snmpd_runtime_t,s0)";
+        "/run/snmpd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:snmpd_runtime_t,s0)";
       };
     };
   };

@@ -312,23 +312,25 @@
     '';
     fileContext = {
       rules = {
-        "/slot\\.raucs" = "-- gen_context(system_u:object_r:rauc_status_t,s0)";
+        "/slot\\.raucs" = lib.mkDefault "-- gen_context(system_u:object_r:rauc_status_t,s0)";
 
-        "/etc/rauc(/.*)?" = "gen_context(system_u:object_r:rauc_conf_t,s0)";
+        "/etc/rauc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rauc_conf_t,s0)";
 
-        "/run/rauc(/.*)?" = "gen_context(system_u:object_r:rauc_runtime_t,s0)";
+        "/run/rauc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rauc_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/fw_printenv" = "-- gen_context(system_u:object_r:rauc_ubootenv_exec_t,s0)";
-        "/nix/store/[^/]+/bin/fw_setenv" = "-- gen_context(system_u:object_r:rauc_ubootenv_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rauc" = "-- gen_context(system_u:object_r:rauc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fw_printenv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rauc_ubootenv_exec_t,s0)";
+        "/nix/store/[^/]+/bin/fw_setenv" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rauc_ubootenv_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rauc" = lib.mkDefault "-- gen_context(system_u:object_r:rauc_exec_t,s0)";
 
-        "/var/cache/rauc(/.*)?" = "gen_context(system_u:object_r:rauc_bundle_t,s0)";
+        "/var/cache/rauc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rauc_bundle_t,s0)";
 
-        "/var/lib/rauc(/.*)?" = "gen_context(system_u:object_r:rauc_var_lib_t,s0)";
+        "/var/lib/rauc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rauc_var_lib_t,s0)";
 
-        "/var/lock/fw_printenv\\.lock" = "-- gen_context(system_u:object_r:rauc_lock_t,s0)";
+        "/var/lock/fw_printenv\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:rauc_lock_t,s0)";
 
-        "/var/log/rauc(/.*)?" = "gen_context(system_u:object_r:rauc_log_t,s0)";
+        "/var/log/rauc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:rauc_log_t,s0)";
       };
     };
   };

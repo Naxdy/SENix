@@ -129,13 +129,13 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/share/awstats/tools/.+\\.pl" =
-          "-- gen_context(system_u:object_r:awstats_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:awstats_exec_t,s0)";
         "/nix/store/[^/]+/share/awstats/wwwroot(/.*)?" =
-          "gen_context(system_u:object_r:httpd_awstats_content_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_awstats_content_t,s0)";
         "/nix/store/[^/]+/share/awstats/wwwroot/cgi-bin(/.*)?" =
-          "gen_context(system_u:object_r:httpd_awstats_script_exec_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:httpd_awstats_script_exec_t,s0)";
 
-        "/var/lib/awstats(/.*)?" = "gen_context(system_u:object_r:awstats_var_lib_t,s0)";
+        "/var/lib/awstats(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:awstats_var_lib_t,s0)";
       };
     };
   };

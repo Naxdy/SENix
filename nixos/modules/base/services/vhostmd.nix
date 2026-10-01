@@ -283,11 +283,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/vhostmd" = "-- gen_context(system_u:object_r:vhostmd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/vhostmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vhostmd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/vhostmd" = "-- gen_context(system_u:object_r:vhostmd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/vhostmd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:vhostmd_exec_t,s0)";
 
-        "/run/vhostmd.*" = "gen_context(system_u:object_r:vhostmd_runtime_t,s0)";
+        "/run/vhostmd.*" = lib.mkDefault "gen_context(system_u:object_r:vhostmd_runtime_t,s0)";
       };
     };
   };

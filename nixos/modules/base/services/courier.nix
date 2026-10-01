@@ -405,44 +405,54 @@
     '';
     fileContext = {
       rules = {
-        "/etc/courier(/.*)?" = "gen_context(system_u:object_r:courier_etc_t,s0)";
-        "/etc/courier-imap(/.*)?" = "gen_context(system_u:object_r:courier_etc_t,s0)";
+        "/etc/courier(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_etc_t,s0)";
+        "/etc/courier-imap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_etc_t,s0)";
 
         "/nix/store/[^/]+/bin/authdaemond" =
-          "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
-        "/nix/store/[^/]+/bin/courier-imapd" = "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
-        "/nix/store/[^/]+/bin/courierlogger" = "-- gen_context(system_u:object_r:courier_exec_t,s0)";
-        "/nix/store/[^/]+/bin/courierldapaliasd" = "-- gen_context(system_u:object_r:courier_exec_t,s0)";
-        "/nix/store/[^/]+/bin/couriertcpd" = "-- gen_context(system_u:object_r:courier_tcpd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/imapd" = "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
-        "/nix/store/[^/]+/bin/imaplogin" = "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/courier-imapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+        "/nix/store/[^/]+/bin/courierlogger" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_exec_t,s0)";
+        "/nix/store/[^/]+/bin/courierldapaliasd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_exec_t,s0)";
+        "/nix/store/[^/]+/bin/couriertcpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_tcpd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/imapd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+        "/nix/store/[^/]+/bin/imaplogin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/courier/authlib/.*" =
-          "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier/courier-authlib/.*" =
-          "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
-        "/nix/store/[^/]+/lib/courier/courier/.*" = "-- gen_context(system_u:object_r:courier_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_authdaemon_exec_t,s0)";
+        "/nix/store/[^/]+/lib/courier/courier/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier/courier/courierpop.*" =
-          "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier/courier/imaplogin" =
-          "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier/courier/pcpd" =
-          "-- gen_context(system_u:object_r:courier_pcp_exec_t,s0)";
-        "/nix/store/[^/]+/lib/courier/imapd.*" = "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
-        "/nix/store/[^/]+/lib/courier/pop3d.*" = "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
-        "/nix/store/[^/]+/lib/courier/rootcerts(/.*)?" = "gen_context(system_u:object_r:courier_etc_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pcp_exec_t,s0)";
+        "/nix/store/[^/]+/lib/courier/imapd.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+        "/nix/store/[^/]+/lib/courier/pop3d.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_pop_exec_t,s0)";
+        "/nix/store/[^/]+/lib/courier/rootcerts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:courier_etc_t,s0)";
         "/nix/store/[^/]+/lib/courier/sqwebmail/cleancache\\.pl" =
-          "-- gen_context(system_u:object_r:courier_sqwebmail_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_sqwebmail_exec_t,s0)";
         "/nix/store/[^/]+/lib/courier-imap/couriertcpd" =
-          "-- gen_context(system_u:object_r:courier_tcpd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:courier_tcpd_exec_t,s0)";
 
-        "/var/lib/courier(/.*)?" = "gen_context(system_u:object_r:courier_var_lib_t,s0)";
-        "/var/lib/courier-imap(/.*)?" = "gen_context(system_u:object_r:courier_var_lib_t,s0)";
+        "/var/lib/courier(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_var_lib_t,s0)";
+        "/var/lib/courier-imap(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_var_lib_t,s0)";
 
-        "/run/courier(/.*)?" = "gen_context(system_u:object_r:courier_runtime_t,s0)";
+        "/run/courier(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_runtime_t,s0)";
 
-        "/var/spool/authdaemon(/.*)?" = "gen_context(system_u:object_r:courier_spool_t,s0)";
-        "/var/spool/courier(/.*)?" = "gen_context(system_u:object_r:courier_spool_t,s0)";
+        "/var/spool/authdaemon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_spool_t,s0)";
+        "/var/spool/courier(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:courier_spool_t,s0)";
       };
     };
   };

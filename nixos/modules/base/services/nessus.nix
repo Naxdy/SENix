@@ -154,19 +154,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/nessus/nessusd\\.conf" = "-- gen_context(system_u:object_r:nessusd_etc_t,s0)";
+        "/etc/nessus/nessusd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:nessusd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/nessusd" = "-- gen_context(system_u:object_r:nessusd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/nessusd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nessusd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/nessusd" = "-- gen_context(system_u:object_r:nessusd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nessusd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nessusd_exec_t,s0)";
 
-        "/nix/store/[^/]+/lib/nessus/plugins/.*" = "-- gen_context(system_u:object_r:nessusd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/nessus/plugins/.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:nessusd_exec_t,s0)";
 
-        "/var/lib/nessus(/.*)?" = "gen_context(system_u:object_r:nessusd_db_t,s0)";
+        "/var/lib/nessus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nessusd_db_t,s0)";
 
-        "/var/log/nessus(/.*)?" = "gen_context(system_u:object_r:nessusd_log_t,s0)";
+        "/var/log/nessus(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:nessusd_log_t,s0)";
 
-        "/run/nessus.*" = "-- gen_context(system_u:object_r:nessusd_runtime_t,s0)";
+        "/run/nessus.*" = lib.mkDefault "-- gen_context(system_u:object_r:nessusd_runtime_t,s0)";
       };
     };
   };

@@ -159,11 +159,13 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/hddtemp" = "-- gen_context(system_u:object_r:hddtemp_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/hddtemp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hddtemp_initrc_exec_t,s0)";
 
-        "/etc/sysconfig/hddtemp" = "-- gen_context(system_u:object_r:hddtemp_etc_t,s0)";
+        "/etc/sysconfig/hddtemp" = lib.mkDefault "-- gen_context(system_u:object_r:hddtemp_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/hddtemp" = "-- gen_context(system_u:object_r:hddtemp_exec_t,s0)";
+        "/nix/store/[^/]+/bin/hddtemp" =
+          lib.mkDefault "-- gen_context(system_u:object_r:hddtemp_exec_t,s0)";
       };
     };
   };

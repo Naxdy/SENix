@@ -128,14 +128,16 @@
     '';
     fileContext = {
       rules = {
-        "/etc/resmgr\\.conf" = "-- gen_context(system_u:object_r:resmgrd_etc_t,s0)";
+        "/etc/resmgr\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:resmgrd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/resmgr" = "-- gen_context(system_u:object_r:resmgrd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/resmgr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:resmgrd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/resmgrd" = "-- gen_context(system_u:object_r:resmgrd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/resmgrd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:resmgrd_exec_t,s0)";
 
-        "/run/\\.resmgr_socket" = "-s gen_context(system_u:object_r:resmgrd_runtime_t,s0)";
-        "/run/resmgr\\.pid" = "-- gen_context(system_u:object_r:resmgrd_runtime_t,s0)";
+        "/run/\\.resmgr_socket" = lib.mkDefault "-s gen_context(system_u:object_r:resmgrd_runtime_t,s0)";
+        "/run/resmgr\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:resmgrd_runtime_t,s0)";
       };
     };
   };

@@ -600,17 +600,19 @@
     '';
     fileContext = {
       rules = {
-        "/run/xen/qmp.*" = "-- gen_context(system_u:object_r:qemu_runtime_t,s0)";
+        "/run/xen/qmp.*" = lib.mkDefault "-- gen_context(system_u:object_r:qemu_runtime_t,s0)";
 
-        "/nix/store/[^/]+/bin/qemu" = "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qemu-system-.*" = "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
-        "/nix/store/[^/]+/bin/qemu-kvm" = "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
-        "/nix/store/[^/]+/bin/kvm" = "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qemu" = lib.mkDefault "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qemu-system-.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
+        "/nix/store/[^/]+/bin/qemu-kvm" = lib.mkDefault "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
+        "/nix/store/[^/]+/bin/kvm" = lib.mkDefault "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*qemu-guest-agent.*" =
-          "-- gen_context(system_u:object_r:qemu_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:qemu_unit_t,s0)";
 
-        "/nix/store/[^/]+/libexec/qemu.*" = "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/qemu.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:qemu_exec_t,s0)";
       };
     };
   };

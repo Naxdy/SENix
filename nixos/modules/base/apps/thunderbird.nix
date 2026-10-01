@@ -264,9 +264,11 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.thunderbird(/.*)?" = "gen_context(system_u:object_r:thunderbird_home_t,s0)";
+        "HOME_DIR/\\.thunderbird(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:thunderbird_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/thunderbird.*" = "-- gen_context(system_u:object_r:thunderbird_exec_t,s0)";
+        "/nix/store/[^/]+/bin/thunderbird.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:thunderbird_exec_t,s0)";
       };
     };
   };

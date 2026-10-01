@@ -178,21 +178,22 @@
     fileContext = {
       rules = {
         # Systemd unit file
-        "/dev/lircd" = "-s gen_context(system_u:object_r:lircd_runtime_t,s0)";
+        "/dev/lircd" = lib.mkDefault "-s gen_context(system_u:object_r:lircd_runtime_t,s0)";
 
-        "/etc/lirc(/.*)?" = "gen_context(system_u:object_r:lircd_etc_t,s0)";
-        "/etc/lircd\\.conf" = "-- gen_context(system_u:object_r:lircd_etc_t,s0)";
+        "/etc/lirc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lircd_etc_t,s0)";
+        "/etc/lircd\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:lircd_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/lirc" = "-- gen_context(system_u:object_r:lircd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/lirc" =
+          lib.mkDefault "-- gen_context(system_u:object_r:lircd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/lircd" = "-- gen_context(system_u:object_r:lircd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lircd" = lib.mkDefault "-- gen_context(system_u:object_r:lircd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/[^/]*lircd.*" =
-          "-- gen_context(system_u:object_r:lircd_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:lircd_unit_t,s0)";
 
-        "/run/lirc(/.*)?" = "gen_context(system_u:object_r:lircd_runtime_t,s0)";
-        "/run/lircd(/.*)?" = "gen_context(system_u:object_r:lircd_runtime_t,s0)";
-        "/run/lircd\\.pid" = "-- gen_context(system_u:object_r:lircd_runtime_t,s0)";
+        "/run/lirc(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lircd_runtime_t,s0)";
+        "/run/lircd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lircd_runtime_t,s0)";
+        "/run/lircd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:lircd_runtime_t,s0)";
       };
     };
   };

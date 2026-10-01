@@ -173,19 +173,19 @@
     fileContext = {
       rules = {
         "/nix/store/[^/]+/.*/gems/.*/passenger-.*/ext/apache2/ApplicationPoolServerExecutable" =
-          "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
         "/nix/store/[^/]+/.*/gems/.*/passenger-.*/agents/PassengerWatchdog" =
-          "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
         "/nix/store/[^/]+/.*/gems/.*/passenger-.*/agents/PassengerLoggingAgent" =
-          "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
         "/nix/store/[^/]+/.*/gems/.*/passenger-.*/agents/apache2/PassengerHelperAgent" =
-          "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:passenger_exec_t,s0)";
 
-        "/var/lib/passenger(/.*)?" = "gen_context(system_u:object_r:passenger_var_lib_t,s0)";
+        "/var/lib/passenger(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:passenger_var_lib_t,s0)";
 
-        "/var/log/passenger.*" = "gen_context(system_u:object_r:passenger_log_t,s0)";
+        "/var/log/passenger.*" = lib.mkDefault "gen_context(system_u:object_r:passenger_log_t,s0)";
 
-        "/run/passenger(/.*)?" = "gen_context(system_u:object_r:passenger_runtime_t,s0)";
+        "/run/passenger(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:passenger_runtime_t,s0)";
       };
     };
   };

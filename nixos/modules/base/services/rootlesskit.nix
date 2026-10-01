@@ -182,10 +182,12 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/rootlesskit" = "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rootlessctl" = "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rootlesskit" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rootlessctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
         "/nix/store/[^/]+/bin/rootlesskit-docker-proxy" =
-          "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:rootlesskit_exec_t,s0)";
       };
     };
   };

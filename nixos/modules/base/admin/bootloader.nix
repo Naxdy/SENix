@@ -381,23 +381,35 @@
     '';
     fileContext = {
       rules = {
-        "/etc/lilo\\.conf.*" = "-- gen_context(system_u:object_r:bootloader_etc_t,s0)";
-        "/etc/yaboot\\.conf.*" = "-- gen_context(system_u:object_r:bootloader_etc_t,s0)";
+        "/etc/lilo\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:bootloader_etc_t,s0)";
+        "/etc/yaboot\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:bootloader_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/bootctl" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/efibootmgr" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grub" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grub2?-bios-setup" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grub2?-install" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grub2?-mkconfig" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/grub2?-probe" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lilo.*" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mkrlconf" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mvrefind" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/refind-install" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
-        "/nix/store/[^/]+/bin/ybin.*" = "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/bootctl" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/efibootmgr" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grub" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grub2?-bios-setup" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grub2?-install" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grub2?-mkconfig" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/grub2?-probe" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lilo.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mkrlconf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mvrefind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/refind-install" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
+        "/nix/store/[^/]+/bin/ybin.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:bootloader_exec_t,s0)";
 
-        "/var/lib/os-prober(/.*)?" = "gen_context(system_u:object_r:bootloader_tmp_t,s0)";
+        "/var/lib/os-prober(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:bootloader_tmp_t,s0)";
       };
     };
   };

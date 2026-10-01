@@ -416,63 +416,99 @@
     '';
     fileContext = {
       rules = {
-        "/etc/news(/.*)?" = "gen_context(system_u:object_r:innd_etc_t,s0)";
-        "/etc/news/boot" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/etc/news(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:innd_etc_t,s0)";
+        "/etc/news/boot" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/innd" = "-- gen_context(system_u:object_r:innd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/innd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/inews" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/in\\.nnrpd" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/innd.*" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rnews" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/rpost" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/suck" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/inews" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/in\\.nnrpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/innd.*" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rnews" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/rpost" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/suck" = lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
 
-        "/var/lib/news(/.*)?" = "gen_context(system_u:object_r:innd_var_lib_t,s0)";
+        "/var/lib/news(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:innd_var_lib_t,s0)";
 
-        "/nix/store/[^/]+/lib/news/bin/actsync" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/archive" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/batcher" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/buffchan" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/convdate" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/ctlinnd" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/cvtbatch" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/expire" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/expireover" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/fastrm" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/filechan" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/getlist" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/grephistory" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/inews" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/innconfval" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/innd" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/inndf" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/inndstart" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/innfeed" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/innxbatch" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/innxmit" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/makedbz" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/makehistory" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/newsrequeue" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/nnrpd" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/nntpget" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/ovdb_recover" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/overchan" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/prunehistory" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/rnews" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/shlock" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/shrinkfile" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/sm" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
-        "/nix/store/[^/]+/lib/news/bin/startinnfeed" = "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/actsync" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/archive" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/batcher" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/buffchan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/convdate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/ctlinnd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/cvtbatch" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/expire" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/expireover" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/fastrm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/filechan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/getlist" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/grephistory" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/inews" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/innconfval" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/innd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/inndf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/inndstart" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/innfeed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/innxbatch" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/innxmit" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/makedbz" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/makehistory" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/newsrequeue" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/nnrpd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/nntpget" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/ovdb_recover" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/overchan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/prunehistory" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/rnews" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/shlock" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/shrinkfile" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/sm" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
+        "/nix/store/[^/]+/lib/news/bin/startinnfeed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:innd_exec_t,s0)";
 
-        "/var/log/news.*" = "-- gen_context(system_u:object_r:innd_log_t,s0)";
+        "/var/log/news.*" = lib.mkDefault "-- gen_context(system_u:object_r:innd_log_t,s0)";
 
-        "/run/innd(/.*)?" = "gen_context(system_u:object_r:innd_runtime_t,s0)";
-        "/run/innd\\.pid" = "-- gen_context(system_u:object_r:innd_runtime_t,s0)";
-        "/run/news(/.*)?" = "gen_context(system_u:object_r:innd_runtime_t,s0)";
-        "/run/news\\.pid" = "-- gen_context(system_u:object_r:innd_runtime_t,s0)";
+        "/run/innd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:innd_runtime_t,s0)";
+        "/run/innd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:innd_runtime_t,s0)";
+        "/run/news(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:innd_runtime_t,s0)";
+        "/run/news\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:innd_runtime_t,s0)";
 
-        "/var/spool/news(/.*)?" = "gen_context(system_u:object_r:news_spool_t,s0)";
+        "/var/spool/news(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:news_spool_t,s0)";
       };
     };
   };

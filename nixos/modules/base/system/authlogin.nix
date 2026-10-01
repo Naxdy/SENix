@@ -2458,65 +2458,79 @@
     '';
     fileContext = {
       rules = {
-        "/etc/\\.pwd\\.lock" = "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
-        "/etc/group\\.lock" = "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
-        "/etc/passwd\\.lock" = "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
-        "/etc/gshadow.*" = "-- gen_context(system_u:object_r:shadow_t,s0)";
-        "/etc/shadow.*" = "-- gen_context(system_u:object_r:shadow_t,s0)";
-        "/etc/tcb/.+/shadow.*" = "-- gen_context(system_u:object_r:shadow_t,s0)";
-        "/etc/security/opasswd" = "-- gen_context(system_u:object_r:shadow_history_t,s0)";
-        "/etc/security/opasswd\\.old" = "-- gen_context(system_u:object_r:shadow_history_t,s0)";
+        "/etc/\\.pwd\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
+        "/etc/group\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
+        "/etc/passwd\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_lock_t,s0)";
+        "/etc/gshadow.*" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_t,s0)";
+        "/etc/shadow.*" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_t,s0)";
+        "/etc/tcb/.+/shadow.*" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_t,s0)";
+        "/etc/security/opasswd" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_history_t,s0)";
+        "/etc/security/opasswd\\.old" =
+          lib.mkDefault "-- gen_context(system_u:object_r:shadow_history_t,s0)";
 
-        "/nix/store/[^/]+/bin/login" = "-- gen_context(system_u:object_r:login_exec_t,s0)";
+        "/nix/store/[^/]+/bin/login" = lib.mkDefault "-- gen_context(system_u:object_r:login_exec_t,s0)";
         "/nix/store/[^/]+/bin/pam_console_apply" =
-          "-- gen_context(system_u:object_r:pam_console_exec_t,s0)";
-        "/nix/store/[^/]+/bin/pam_timestamp_check" = "-- gen_context(system_u:object_r:pam_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcb_convert" = "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/tcb_unconvert" = "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unix_chkpwd" = "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unix_update" = "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unix_verify" = "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/utempter" = "-- gen_context(system_u:object_r:utempter_exec_t,s0)";
-        "/nix/store/[^/]+/bin/validate" = "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:pam_console_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pam_timestamp_check" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pam_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcb_convert" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tcb_unconvert" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unix_chkpwd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unix_update" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unix_verify" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/utempter" =
+          lib.mkDefault "-- gen_context(system_u:object_r:utempter_exec_t,s0)";
+        "/nix/store/[^/]+/bin/validate" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
 
-        "/nix/store/[^/]+/kerberos/sbin/login\\.krb5" = "-- gen_context(system_u:object_r:login_exec_t,s0)";
+        "/nix/store/[^/]+/kerberos/sbin/login\\.krb5" =
+          lib.mkDefault "-- gen_context(system_u:object_r:login_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/([^/]+/)?utempter/utempter" =
-          "-- gen_context(system_u:object_r:utempter_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:utempter_exec_t,s0)";
 
-        "/nix/store/[^/]+/libexec/chkpwd/tcb_chkpwd" = "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
-        "/nix/store/[^/]+/libexec/chkpwd/tcb_updpwd" = "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/chkpwd/tcb_chkpwd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:chkpwd_exec_t,s0)";
+        "/nix/store/[^/]+/libexec/chkpwd/tcb_updpwd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pwhistory_helper" = "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pwhistory_helper" =
+          lib.mkDefault "-- gen_context(system_u:object_r:updpwd_exec_t,s0)";
 
-        "/var/cache/coolkey(/.*)?" = "gen_context(system_u:object_r:auth_cache_t,s0)";
+        "/var/cache/coolkey(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:auth_cache_t,s0)";
 
-        "/var/db/shadow.*" = "-- gen_context(system_u:object_r:shadow_t,s0)";
+        "/var/db/shadow.*" = lib.mkDefault "-- gen_context(system_u:object_r:shadow_t,s0)";
 
-        "/var/lib/abl(/.*)?" = "gen_context(system_u:object_r:var_auth_t,s0)";
-        "/var/lib/lastlog(/.*)?" = "gen_context(system_u:object_r:lastlog_t,s0)";
-        "/var/lib/pam_ssh(/.*)?" = "gen_context(system_u:object_r:var_auth_t,s0)";
-        "/var/lib/wtmpdb(/.*)?" = "gen_context(system_u:object_r:faillog_t,s0)";
+        "/var/lib/abl(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_auth_t,s0)";
+        "/var/lib/lastlog(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:lastlog_t,s0)";
+        "/var/lib/pam_ssh(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_auth_t,s0)";
+        "/var/lib/wtmpdb(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:faillog_t,s0)";
 
-        "/var/log/btmp.*" = "-- gen_context(system_u:object_r:faillog_t,s0)";
-        "/var/log/faillog" = "-- gen_context(system_u:object_r:faillog_t,s0)";
-        "/var/log/lastlog" = "-- gen_context(system_u:object_r:lastlog_t,s0)";
-        "/var/log/tallylog" = "-- gen_context(system_u:object_r:faillog_t,s0)";
-        "/var/log/wtmp.*" = "-- gen_context(system_u:object_r:wtmp_t,s0)";
+        "/var/log/btmp.*" = lib.mkDefault "-- gen_context(system_u:object_r:faillog_t,s0)";
+        "/var/log/faillog" = lib.mkDefault "-- gen_context(system_u:object_r:faillog_t,s0)";
+        "/var/log/lastlog" = lib.mkDefault "-- gen_context(system_u:object_r:lastlog_t,s0)";
+        "/var/log/tallylog" = lib.mkDefault "-- gen_context(system_u:object_r:faillog_t,s0)";
+        "/var/log/wtmp.*" = lib.mkDefault "-- gen_context(system_u:object_r:wtmp_t,s0)";
 
-        "/run/console(/.*)?" = "gen_context(system_u:object_r:pam_var_console_t,s0)";
-        "/run/faillock(/.*)?" = "gen_context(system_u:object_r:faillog_t,s0)";
-        "/run/motd" = "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
-        "/run/motd\\.dynamic" = "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
-        "/run/motd\\.dynamic\\.new" = "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
-        "/run/motd\\.d(/.*)?" = "gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
-        "/run/pam_mount(/.*)?" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
-        "/run/pam_ssh(/.*)?" = "gen_context(system_u:object_r:var_auth_t,s0)";
-        "/run/sepermit(/.*)?" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
-        "/run/sudo(/.*)?" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
-        "/run/sudo/ts/%{USERNAME}" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
-        "/var/(db|adm)/sudo(/.*)?" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
-        "/var/lib/sudo(/.*)?" = "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/run/console(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_var_console_t,s0)";
+        "/run/faillock(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:faillog_t,s0)";
+        "/run/motd" = lib.mkDefault "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
+        "/run/motd\\.dynamic" = lib.mkDefault "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
+        "/run/motd\\.dynamic\\.new" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
+        "/run/motd\\.d(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_motd_runtime_t,s0)";
+        "/run/pam_mount(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/run/pam_ssh(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:var_auth_t,s0)";
+        "/run/sepermit(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/run/sudo(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/run/sudo/ts/%{USERNAME}" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/var/(db|adm)/sudo(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
+        "/var/lib/sudo(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pam_runtime_t,s0)";
       };
     };
   };

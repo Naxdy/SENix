@@ -247,17 +247,20 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.xscreensaver" = "-- gen_context(system_u:object_r:xscreensaver_config_t,s0)";
-        "HOME_DIR/XScreenSaver" = "-- gen_context(system_u:object_r:xscreensaver_config_t,s0)";
+        "HOME_DIR/\\.xscreensaver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_config_t,s0)";
+        "HOME_DIR/XScreenSaver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_config_t,s0)";
 
-        "/nix/store/[^/]+/bin/xscreensaver" = "-- gen_context(system_u:object_r:xscreensaver_exec_t,s0)";
+        "/nix/store/[^/]+/bin/xscreensaver" =
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_exec_t,s0)";
         "/nix/store/[^/]+/bin/xscreensaver-getimage.*" =
-          "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
         "/nix/store/[^/]+/bin/xscreensaver-gl-helper" =
-          "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/xscreensaver(/.*)?" =
-          "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:xscreensaver_helper_exec_t,s0)";
       };
     };
   };

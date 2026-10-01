@@ -271,26 +271,31 @@
     '';
     fileContext = {
       rules = {
-        "/etc/tor(/.*)?" = "gen_context(system_u:object_r:tor_etc_t,s0)";
+        "/etc/tor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tor_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/tor" = "-- gen_context(system_u:object_r:tor_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/tor" = lib.mkDefault "-- gen_context(system_u:object_r:tor_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/tor" = "-- gen_context(system_u:object_r:tor_exec_t,s0)";
-        "/nix/store/[^/]+/bin/snowflake-proxy" = "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/webtunnel-client" = "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/webtunnel-server" = "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/lyrebird" = "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/tor" = lib.mkDefault "-- gen_context(system_u:object_r:tor_exec_t,s0)";
+        "/nix/store/[^/]+/bin/snowflake-proxy" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/webtunnel-client" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/webtunnel-server" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lyrebird" =
+          lib.mkDefault "-- gen_context(system_u:object_r:tor_pt_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/tor.*\\.service" =
-          "-- gen_context(system_u:object_r:tor_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:tor_unit_t,s0)";
 
-        "/var/lib/tor(/.*)?" = "gen_context(system_u:object_r:tor_var_lib_t,s0)";
-        "/var/lib/tor/data/pt_state(/.*)?" = "gen_context(system_u:object_r:tor_pt_state_var_lib_t,s0)";
-        "/var/lib/tor-data(/.*)?" = "gen_context(system_u:object_r:tor_var_lib_t,s0)";
+        "/var/lib/tor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tor_var_lib_t,s0)";
+        "/var/lib/tor/data/pt_state(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:tor_pt_state_var_lib_t,s0)";
+        "/var/lib/tor-data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tor_var_lib_t,s0)";
 
-        "/var/log/tor(/.*)?" = "gen_context(system_u:object_r:tor_var_log_t,s0)";
+        "/var/log/tor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tor_var_log_t,s0)";
 
-        "/run/tor(/.*)?" = "gen_context(system_u:object_r:tor_runtime_t,s0)";
+        "/run/tor(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:tor_runtime_t,s0)";
       };
     };
   };

@@ -206,13 +206,15 @@
     '';
     fileContext = {
       rules = {
-        "/nix/store/[^/]+/bin/certbot" = "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
-        "/nix/store/[^/]+/bin/letsencrypt" = "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
+        "/nix/store/[^/]+/bin/certbot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
+        "/nix/store/[^/]+/bin/letsencrypt" =
+          lib.mkDefault "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
         "/nix/store/[^/]+/share/acme\\.sh/acme\\.sh" =
-          "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
-        "/var/lib/letsencrypt(/.*)?" = "gen_context(system_u:object_r:certbot_lib_t,s0)";
-        "/var/log/letsencrypt(/.*)?" = "gen_context(system_u:object_r:certbot_log_t,s0)";
-        "/var/lib/acme\\.sh(/.*)?" = "gen_context(system_u:object_r:certbot_lib_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:certbot_exec_t,s0)";
+        "/var/lib/letsencrypt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:certbot_lib_t,s0)";
+        "/var/log/letsencrypt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:certbot_log_t,s0)";
+        "/var/lib/acme\\.sh(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:certbot_lib_t,s0)";
       };
     };
   };

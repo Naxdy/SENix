@@ -732,44 +732,49 @@
     '';
     fileContext = {
       rules = {
-        "/etc/abrt(/.*)?" = "gen_context(system_u:object_r:abrt_etc_t,s0)";
-        "/etc/rc\\.d/init\\.d/abrt" = "-- gen_context(system_u:object_r:abrt_initrc_exec_t,s0)";
+        "/etc/abrt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:abrt_etc_t,s0)";
+        "/etc/rc\\.d/init\\.d/abrt" =
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/abrtd" = "-- gen_context(system_u:object_r:abrt_exec_t,s0)";
-        "/nix/store/[^/]+/bin/abrt-dbus" = "-- gen_context(system_u:object_r:abrt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/abrtd" = lib.mkDefault "-- gen_context(system_u:object_r:abrt_exec_t,s0)";
+        "/nix/store/[^/]+/bin/abrt-dbus" = lib.mkDefault "-- gen_context(system_u:object_r:abrt_exec_t,s0)";
         "/nix/store/[^/]+/bin/abrt-pyhook-helper" =
-          "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
         "/nix/store/[^/]+/bin/abrt-retrace-worker" =
-          "-- gen_context(system_u:object_r:abrt_retrace_worker_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_retrace_worker_exec_t,s0)";
         "/nix/store/[^/]+/bin/abrt-upload-watch" =
-          "-- gen_context(system_u:object_r:abrt_upload_watch_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_upload_watch_exec_t,s0)";
         "/nix/store/[^/]+/bin/coredump2packages" =
-          "-- gen_context(system_u:object_r:abrt_retrace_coredump_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_retrace_coredump_exec_t,s0)";
         "/nix/store/[^/]+/bin/retrace-server-worker" =
-          "-- gen_context(system_u:object_r:abrt_retrace_worker_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_retrace_worker_exec_t,s0)";
 
         "/nix/store/[^/]+/libexec/abrt-pyhook-helper" =
-          "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
         "/nix/store/[^/]+/libexec/abrt-handle-event" =
-          "-- gen_context(system_u:object_r:abrt_handle_event_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_handle_event_exec_t,s0)";
         "/nix/store/[^/]+/libexec/abrt-hook-python" =
-          "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:abrt_helper_exec_t,s0)";
 
-        "/var/cache/abrt(/.*)?" = "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
-        "/var/cache/abrt-di(/.*)?" = "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
-        "/var/cache/abrt-retrace(/.*)?" = "gen_context(system_u:object_r:abrt_retrace_cache_t,s0)";
-        "/var/cache/retrace-server(/.*)?" = "gen_context(system_u:object_r:abrt_retrace_cache_t,s0)";
+        "/var/cache/abrt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
+        "/var/cache/abrt-di(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
+        "/var/cache/abrt-retrace(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:abrt_retrace_cache_t,s0)";
+        "/var/cache/retrace-server(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:abrt_retrace_cache_t,s0)";
 
-        "/var/log/abrt-logger.*" = "-- gen_context(system_u:object_r:abrt_var_log_t,s0)";
+        "/var/log/abrt-logger.*" = lib.mkDefault "-- gen_context(system_u:object_r:abrt_var_log_t,s0)";
 
-        "/run/abrt\\.pid" = "-- gen_context(system_u:object_r:abrt_runtime_t,s0)";
-        "/run/abrtd?\\.lock" = "-- gen_context(system_u:object_r:abrt_runtime_t,s0)";
-        "/run/abrtd?\\.socket" = "-s gen_context(system_u:object_r:abrt_runtime_t,s0)";
-        "/run/abrt(/.*)?" = "gen_context(system_u:object_r:abrt_runtime_t,s0)";
+        "/run/abrt\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:abrt_runtime_t,s0)";
+        "/run/abrtd?\\.lock" = lib.mkDefault "-- gen_context(system_u:object_r:abrt_runtime_t,s0)";
+        "/run/abrtd?\\.socket" = lib.mkDefault "-s gen_context(system_u:object_r:abrt_runtime_t,s0)";
+        "/run/abrt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:abrt_runtime_t,s0)";
 
-        "/var/spool/abrt(/.*)?" = "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
-        "/var/spool/abrt-retrace(/.*)?" = "gen_context(system_u:object_r:abrt_retrace_spool_t,s0)";
-        "/var/spool/retrace-server(/.*)?" = "gen_context(system_u:object_r:abrt_retrace_spool_t,s0)";
+        "/var/spool/abrt(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:abrt_var_cache_t,s0)";
+        "/var/spool/abrt-retrace(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:abrt_retrace_spool_t,s0)";
+        "/var/spool/retrace-server(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:abrt_retrace_spool_t,s0)";
       };
     };
   };

@@ -252,19 +252,23 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/pacemaker" = "-- gen_context(system_u:object_r:pacemaker_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/pacemaker" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pacemaker_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/pacemakerd" = "-- gen_context(system_u:object_r:pacemaker_exec_t,s0)";
+        "/nix/store/[^/]+/bin/pacemakerd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:pacemaker_exec_t,s0)";
 
-        "/var/lib/heartbeat/crm(/.*)?" = "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
-        "/var/lib/pacemaker(/.*)?" = "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
-        "/var/lib/pengine(/.*)?" = "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
+        "/var/lib/heartbeat/crm(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
+        "/var/lib/pacemaker(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
+        "/var/lib/pengine(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pacemaker_var_lib_t,s0)";
 
-        "/run/crm(/.*)?" = "gen_context(system_u:object_r:pacemaker_runtime_t,s0)";
-        "/run/resource-agents(/.*)?" = "gen_context(system_u:object_r:pacemaker_runtime_t,s0)";
+        "/run/crm(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:pacemaker_runtime_t,s0)";
+        "/run/resource-agents(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:pacemaker_runtime_t,s0)";
 
         "/nix/store/[^/]+/lib/pcs/pcs_snmp_agent" =
-          "-- gen_context(system_u:object_r:pcs_snmp_agent_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:pcs_snmp_agent_exec_t,s0)";
       };
     };
   };

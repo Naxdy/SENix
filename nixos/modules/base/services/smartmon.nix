@@ -270,16 +270,18 @@
     fileContext = {
       rules = {
         "/etc/rc\\.d/init\\.d/(smartd|smartmontools)" =
-          "-- gen_context(system_u:object_r:fsdaemon_initrc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:fsdaemon_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/smartd" = "-- gen_context(system_u:object_r:fsdaemon_exec_t,s0)";
+        "/nix/store/[^/]+/bin/smartd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:fsdaemon_exec_t,s0)";
 
         "/nix/store/[^/]+/bin/update-smart-drivedb" =
-          "-- gen_context(system_u:object_r:smartmon_update_drivedb_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:smartmon_update_drivedb_exec_t,s0)";
 
-        "/run/smartd\\.pid" = "-- gen_context(system_u:object_r:fsdaemon_runtime_t,s0)";
+        "/run/smartd\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:fsdaemon_runtime_t,s0)";
 
-        "/var/lib/smartmontools(/.*)?" = "gen_context(system_u:object_r:fsdaemon_var_lib_t,s0)";
+        "/var/lib/smartmontools(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:fsdaemon_var_lib_t,s0)";
       };
     };
   };

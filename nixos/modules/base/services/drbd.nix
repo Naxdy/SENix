@@ -120,17 +120,18 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/drbd" = "-- gen_context(system_u:object_r:drbd_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/drbd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:drbd_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/drbdadm" = "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
-        "/nix/store/[^/]+/bin/drbdsetup" = "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/drbdadm" = lib.mkDefault "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
+        "/nix/store/[^/]+/bin/drbdsetup" = lib.mkDefault "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/ocf/resource\\.d/linbit/drbd" =
-          "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:drbd_exec_t,s0)";
 
-        "/var/lib/drbd(/.*)?" = "gen_context(system_u:object_r:drbd_var_lib_t,s0)";
+        "/var/lib/drbd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:drbd_var_lib_t,s0)";
 
-        "/var/lock/subsys/drbd" = "-- gen_context(system_u:object_r:drbd_lock_t,s0)";
+        "/var/lock/subsys/drbd" = lib.mkDefault "-- gen_context(system_u:object_r:drbd_lock_t,s0)";
       };
     };
   };

@@ -644,77 +644,92 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/named" = "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/bind" = "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
-        "/etc/rc\\.d/init\\.d/unbound" = "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/named" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/bind" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/unbound" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_initrc_exec_t,s0)";
 
-        "/etc/bind(/.*)?" = "gen_context(system_u:object_r:named_zone_t,s0)";
-        "/etc/bind/named\\.conf.*" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/bind/rndc\\.conf.*" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/bind/rndc\\.key" = "-- gen_context(system_u:object_r:dnssec_t,s0)";
-        "/etc/dnssec-trigger/dnssec_trigger_server\\.key" = "-- gen_context(system_u:object_r:dnssec_t,s0)";
-        "/etc/named\\.rfc1912\\.zones" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/named\\.root\\.hints" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/named\\.conf" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/named\\.caching-nameserver\\.conf" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/rndc.*" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/rndc\\.key" = "-- gen_context(system_u:object_r:dnssec_t,s0)";
-        "/etc/unbound(/.*)?" = "gen_context(system_u:object_r:named_conf_t,s0)";
-        "/etc/unbound/.*\\.key" = "-- gen_context(system_u:object_r:dnssec_t,s0)";
-        "/etc/unbound/cache(/.*)?" = "gen_context(system_u:object_r:dnssec_t,s0)";
+        "/etc/bind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_zone_t,s0)";
+        "/etc/bind/named\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/bind/rndc\\.conf.*" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/bind/rndc\\.key" = lib.mkDefault "-- gen_context(system_u:object_r:dnssec_t,s0)";
+        "/etc/dnssec-trigger/dnssec_trigger_server\\.key" =
+          lib.mkDefault "-- gen_context(system_u:object_r:dnssec_t,s0)";
+        "/etc/named\\.rfc1912\\.zones" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/named\\.root\\.hints" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/named\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/named\\.caching-nameserver\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/rndc.*" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/rndc\\.key" = lib.mkDefault "-- gen_context(system_u:object_r:dnssec_t,s0)";
+        "/etc/unbound(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_conf_t,s0)";
+        "/etc/unbound/.*\\.key" = lib.mkDefault "-- gen_context(system_u:object_r:dnssec_t,s0)";
+        "/etc/unbound/cache(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:dnssec_t,s0)";
 
-        "/nix/store/[^/]+/bin/lwresd" = "-- gen_context(system_u:object_r:named_exec_t,s0)";
-        "/nix/store/[^/]+/bin/named" = "-- gen_context(system_u:object_r:named_exec_t,s0)";
+        "/nix/store/[^/]+/bin/lwresd" = lib.mkDefault "-- gen_context(system_u:object_r:named_exec_t,s0)";
+        "/nix/store/[^/]+/bin/named" = lib.mkDefault "-- gen_context(system_u:object_r:named_exec_t,s0)";
         "/nix/store/[^/]+/bin/named-checkconf" =
-          "-- gen_context(system_u:object_r:named_checkconf_exec_t,s0)";
-        "/nix/store/[^/]+/bin/r?ndc" = "-- gen_context(system_u:object_r:ndc_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unbound" = "-- gen_context(system_u:object_r:named_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_checkconf_exec_t,s0)";
+        "/nix/store/[^/]+/bin/r?ndc" = lib.mkDefault "-- gen_context(system_u:object_r:ndc_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unbound" = lib.mkDefault "-- gen_context(system_u:object_r:named_exec_t,s0)";
         "/nix/store/[^/]+/bin/unbound-checkconf" =
-          "-- gen_context(system_u:object_r:named_checkconf_exec_t,s0)";
-        "/nix/store/[^/]+/bin/unbound-control" = "-- gen_context(system_u:object_r:ndc_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_checkconf_exec_t,s0)";
+        "/nix/store/[^/]+/bin/unbound-control" =
+          lib.mkDefault "-- gen_context(system_u:object_r:ndc_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/named.*\\.service" =
-          "-- gen_context(system_u:object_r:named_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_unit_t,s0)";
         "/nix/store/[^/]+/lib/systemd/system/unbound.*\\.service" =
-          "-- gen_context(system_u:object_r:named_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_unit_t,s0)";
 
-        "/var/bind(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/bind/pri(/.*)?" = "gen_context(system_u:object_r:named_zone_t,s0)";
+        "/var/bind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/bind/pri(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_zone_t,s0)";
 
-        "/var/cache/bind(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/cache/bind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
 
-        "/var/lib/unbound(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/lib/unbound(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
 
-        "/var/log/named.*" = "-- gen_context(system_u:object_r:named_log_t,s0)";
+        "/var/log/named.*" = lib.mkDefault "-- gen_context(system_u:object_r:named_log_t,s0)";
 
-        "/var/named(/.*)?" = "gen_context(system_u:object_r:named_zone_t,s0)";
-        "/var/named/slaves(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/data(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/named\\.ca" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/var/named/chroot(/.*)?" = "gen_context(system_u:object_r:named_conf_t,s0)";
-        "/var/named/chroot/etc/rndc\\.key" = "-- gen_context(system_u:object_r:dnssec_t,s0)";
-        "/var/named/chroot/etc/named\\.conf" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_zone_t,s0)";
+        "/var/named/slaves(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/data(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/named\\.ca" = lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named/chroot(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named/chroot/etc/rndc\\.key" = lib.mkDefault "-- gen_context(system_u:object_r:dnssec_t,s0)";
+        "/var/named/chroot/etc/named\\.conf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
         "/var/named/chroot/etc/named\\.rfc1912\\.zones" =
-          "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/var/named/chroot/etc/named\\.root\\.hints" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named/chroot/etc/named\\.root\\.hints" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
         "/var/named/chroot/etc/named\\.caching-nameserver\\.conf" =
-          "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/var/named/chroot/proc(/.*)?" = "<<none>>";
-        "/var/named/chroot/var/run/named.*" = "gen_context(system_u:object_r:named_runtime_t,s0)";
-        "/var/named/chroot/var/tmp(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/chroot/var/named(/.*)?" = "gen_context(system_u:object_r:named_zone_t,s0)";
-        "/var/named/chroot/var/named/slaves(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/chroot/var/named/data(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/chroot/var/named/dynamic(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
-        "/var/named/chroot/var/named/named\\.ca" = "-- gen_context(system_u:object_r:named_conf_t,s0)";
-        "/var/named/chroot/var/log/named.*" = "-- gen_context(system_u:object_r:named_log_t,s0)";
-        "/var/named/dynamic(/.*)?" = "gen_context(system_u:object_r:named_cache_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named/chroot/proc(/.*)?" = lib.mkDefault "<<none>>";
+        "/var/named/chroot/var/run/named.*" =
+          lib.mkDefault "gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/var/named/chroot/var/tmp(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/chroot/var/named(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:named_zone_t,s0)";
+        "/var/named/chroot/var/named/slaves(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/chroot/var/named/data(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/chroot/var/named/dynamic(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
+        "/var/named/chroot/var/named/named\\.ca" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_conf_t,s0)";
+        "/var/named/chroot/var/log/named.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:named_log_t,s0)";
+        "/var/named/dynamic(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_cache_t,s0)";
 
-        "/run/ndc" = "-s gen_context(system_u:object_r:named_runtime_t,s0)";
-        "/run/bind(/.*)?" = "gen_context(system_u:object_r:named_runtime_t,s0)";
-        "/run/lwresd/lwresd\\.pid" = "-s gen_context(system_u:object_r:named_runtime_t,s0)";
-        "/run/named(/.*)?" = "gen_context(system_u:object_r:named_runtime_t,s0)";
-        "/run/unbound(/.*)?" = "gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/run/ndc" = lib.mkDefault "-s gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/run/bind(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/run/lwresd/lwresd\\.pid" = lib.mkDefault "-s gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/run/named(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_runtime_t,s0)";
+        "/run/unbound(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:named_runtime_t,s0)";
       };
     };
   };

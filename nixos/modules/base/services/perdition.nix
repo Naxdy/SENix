@@ -123,13 +123,15 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/perdition" = "-- gen_context(system_u:object_r:perdition_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/perdition" =
+          lib.mkDefault "-- gen_context(system_u:object_r:perdition_initrc_exec_t,s0)";
 
-        "/etc/perdition(/.*)?" = "gen_context(system_u:object_r:perdition_etc_t,s0)";
+        "/etc/perdition(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:perdition_etc_t,s0)";
 
-        "/nix/store/[^/]+/bin/perdition.*" = "-- gen_context(system_u:object_r:perdition_exec_t,s0)";
+        "/nix/store/[^/]+/bin/perdition.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:perdition_exec_t,s0)";
 
-        "/run/perdition\\.pid" = "-- gen_context(system_u:object_r:perdition_runtime_t,s0)";
+        "/run/perdition\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:perdition_runtime_t,s0)";
       };
     };
   };

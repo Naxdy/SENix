@@ -97,14 +97,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/svnserve" = "-- gen_context(system_u:object_r:svnserve_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/svnserve" =
+          lib.mkDefault "-- gen_context(system_u:object_r:svnserve_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/svnserve" = "-- gen_context(system_u:object_r:svnserve_exec_t,s0)";
+        "/nix/store/[^/]+/bin/svnserve" =
+          lib.mkDefault "-- gen_context(system_u:object_r:svnserve_exec_t,s0)";
 
-        "/var/lib/subversion/repo(/.*)?" = "gen_context(system_u:object_r:svnserve_content_t,s0)";
+        "/var/lib/subversion/repo(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:svnserve_content_t,s0)";
 
-        "/run/svnserve(/.*)?" = "gen_context(system_u:object_r:svnserve_runtime_t,s0)";
-        "/run/svnserve\\.pid" = "-- gen_context(system_u:object_r:svnserve_runtime_t,s0)";
+        "/run/svnserve(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:svnserve_runtime_t,s0)";
+        "/run/svnserve\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:svnserve_runtime_t,s0)";
       };
     };
   };

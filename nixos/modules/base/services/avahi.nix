@@ -403,18 +403,22 @@
     '';
     fileContext = {
       rules = {
-        "/etc/rc\\.d/init\\.d/avahi.*" = "-- gen_context(system_u:object_r:avahi_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/avahi.*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:avahi_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/avahi-daemon" = "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
-        "/nix/store/[^/]+/bin/avahi-dnsconfd" = "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
-        "/nix/store/[^/]+/bin/avahi-autoipd" = "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
+        "/nix/store/[^/]+/bin/avahi-daemon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
+        "/nix/store/[^/]+/bin/avahi-dnsconfd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
+        "/nix/store/[^/]+/bin/avahi-autoipd" =
+          lib.mkDefault "-- gen_context(system_u:object_r:avahi_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/systemd/system/avahi.*\\.service" =
-          "-- gen_context(system_u:object_r:avahi_unit_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:avahi_unit_t,s0)";
 
-        "/run/avahi-daemon(/.*)?" = "gen_context(system_u:object_r:avahi_runtime_t,s0)";
+        "/run/avahi-daemon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:avahi_runtime_t,s0)";
 
-        "/var/lib/avahi-autoipd(/.*)?" = "gen_context(system_u:object_r:avahi_var_lib_t,s0)";
+        "/var/lib/avahi-autoipd(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:avahi_var_lib_t,s0)";
       };
     };
   };

@@ -117,15 +117,17 @@
     '';
     fileContext = {
       rules = {
-        "/etc/uptimed\\.conf" = "-- gen_context(system_u:object_r:uptimed_etc_t,s0)";
+        "/etc/uptimed\\.conf" = lib.mkDefault "-- gen_context(system_u:object_r:uptimed_etc_t,s0)";
 
-        "/etc/rc\\.d/init\\.d/uptimed" = "-- gen_context(system_u:object_r:uptimed_initrc_exec_t,s0)";
+        "/etc/rc\\.d/init\\.d/uptimed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:uptimed_initrc_exec_t,s0)";
 
-        "/nix/store/[^/]+/bin/uptimed" = "-- gen_context(system_u:object_r:uptimed_exec_t,s0)";
+        "/nix/store/[^/]+/bin/uptimed" =
+          lib.mkDefault "-- gen_context(system_u:object_r:uptimed_exec_t,s0)";
 
-        "/run/uptimed\\.pid" = "-- gen_context(system_u:object_r:uptimed_runtime_t,s0)";
+        "/run/uptimed\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:uptimed_runtime_t,s0)";
 
-        "/var/spool/uptimed(/.*)?" = "gen_context(system_u:object_r:uptimed_spool_t,s0)";
+        "/var/spool/uptimed(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:uptimed_spool_t,s0)";
       };
     };
   };

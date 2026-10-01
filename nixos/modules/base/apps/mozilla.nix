@@ -1294,71 +1294,95 @@
     '';
     fileContext = {
       rules = {
-        "HOME_DIR/\\.cache/librewolf(/.*)?" = "gen_context(system_u:object_r:mozilla_xdg_cache_t,s0)";
-        "HOME_DIR/\\.cache/mozilla(/.*)?" = "gen_context(system_u:object_r:mozilla_xdg_cache_t,s0)";
-        "HOME_DIR/\\.config/librewolf(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.config/mozilla(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.galeon(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.librewolf(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.mozilla(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.mozilla/plugins(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.netscape(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.phoenix(/.*)?" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
-        "HOME_DIR/\\.vimperator.*" = "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.cache/librewolf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_xdg_cache_t,s0)";
+        "HOME_DIR/\\.cache/mozilla(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_xdg_cache_t,s0)";
+        "HOME_DIR/\\.config/librewolf(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.config/mozilla(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.galeon(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.librewolf(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.mozilla(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.mozilla/plugins(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.netscape(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.phoenix(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
+        "HOME_DIR/\\.vimperator.*" = lib.mkDefault "gen_context(system_u:object_r:mozilla_home_t,s0)";
 
-        "HOME_DIR/\\.adobe(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.macromedia(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.gnash(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.gcjwebplugin(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.icedteaplugin(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.spicec(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/\\.ICAClient(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
-        "HOME_DIR/zimbrauserdata(/.*)?" = "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.adobe(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.macromedia(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.gnash(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.gcjwebplugin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.icedteaplugin(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.spicec(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/\\.ICAClient(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
+        "HOME_DIR/zimbrauserdata(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_home_t,s0)";
 
-        "/nix/store/[^/]+/bin/epiphany" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/epiphany-bin" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/librewolf" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/librewolf-bin" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mozilla" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mozilla-snapshot" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mozilla-[0-9].*" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/mozilla-bin-[0-9].*" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/netscape" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/bin/nspluginscan" = "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
+        "/nix/store/[^/]+/bin/epiphany" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/epiphany-bin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/librewolf" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/librewolf-bin" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mozilla" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mozilla-snapshot" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mozilla-[0-9].*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/mozilla-bin-[0-9].*" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/netscape" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/bin/nspluginscan" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
         "/nix/store/[^/]+/bin/nspluginviewer" =
-          "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
 
         "/nix/store/[^/]+/lib/[^/]*firefox[^/]*/firefox" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*firefox[^/]*/firefox-bin" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*librewolf[^/]*/librewolf" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/[^/]*librewolf[^/]*/librewolf-bin" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/firefox[^/]*/firefox-.*" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/firefox[^/]*/mozilla-.*" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/lib/galeon/galeon" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
-        "/nix/store/[^/]+/lib/iceweasel/iceweasel" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/lib/galeon/galeon" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+        "/nix/store/[^/]+/lib/iceweasel/iceweasel" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/iceweasel/plugin-container" =
-          "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
-        "/nix/store/[^/]+/lib/mozilla[^/]*/reg.+" = "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
+        "/nix/store/[^/]+/lib/mozilla[^/]*/reg.+" =
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/mozilla[^/]*/mozilla-.*" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/mozilla/plugins-wrapped(/.*)?" =
-          "gen_context(system_u:object_r:mozilla_plugin_rw_t,s0)";
+          lib.mkDefault "gen_context(system_u:object_r:mozilla_plugin_rw_t,s0)";
         "/nix/store/[^/]+/lib/netscape/base-4/wrapper" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/netscape/.+/communicator/communicator-smotif\\.real" =
-          "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_exec_t,s0)";
         "/nix/store/[^/]+/lib/nspluginwrapper/npviewer\\.bin" =
-          "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
         "/nix/store/[^/]+/lib/nspluginwrapper/plugin-config" =
-          "-- gen_context(system_u:object_r:mozilla_plugin_config_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_config_exec_t,s0)";
         "/nix/store/[^/]+/lib/xulrunner[^/]*/plugin-container" =
-          "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
+          lib.mkDefault "-- gen_context(system_u:object_r:mozilla_plugin_exec_t,s0)";
       };
     };
   };
