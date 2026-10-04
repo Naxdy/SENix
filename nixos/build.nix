@@ -229,6 +229,30 @@ let
     ]
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_POLICY=${toString cfg.policyVersion}"
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_MODULE=${toString cfg.policyVersion}";
+
+    # The Reference Policy's `make install` provisions the appconfig for the
+    # selected policy type (`seusers`, `default_contexts`, `default_type`,
+    # the per-user context files, ...) into the live policy tree; the build
+    # here only runs `make conf`, whose output carries a subset without
+    # `seusers`. Provision the appconfig for `TYPE` explicitly: libselinux's
+    # `get_default_context()` (used by SELinux-aware login programs, e.g.
+    # sshd, to place sessions in `sysadm_r:sysadm_t`) reads exactly these
+    # files, and without them the context lookup fails under enforcing.
+    postInstall = ''
+      appconfig=${policySrc}/config/appconfig-mcs
+      cp -r $appconfig/. $out/etc/selinux/refpolicy/contexts/
+      # libselinux reads per-SELinux-user context orderings from
+      # `contexts/users/<user>`; the appconfig ships those as
+      # `<user>_default_contexts` (the REF's Makefile renames them on
+      # install).
+      for f in $appconfig/*_default_contexts; do
+        name=$(basename "$f" _default_contexts)
+        [ "$name" = root ] && name=root
+        mv $out/etc/selinux/refpolicy/contexts/$(basename "$f") \
+          $out/etc/selinux/refpolicy/contexts/users/"$name"
+      done
+      mv $out/etc/selinux/refpolicy/contexts/seusers $out/etc/selinux/refpolicy/seusers
+    '';
   };
 in
 {

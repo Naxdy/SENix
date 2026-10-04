@@ -15,6 +15,7 @@
           ')
 
           allow nscd_t self:process getsched;
+          kernel_read_net_sysctls(nscd_t);
         '';
         fileContext = {
           storePaths = {

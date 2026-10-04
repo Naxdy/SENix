@@ -2,6 +2,11 @@
   config.security.selinux = {
     exclusions.etc = [
       "selinux/config"
+      "selinux/targeted/seusers"
+      "selinux/targeted/contexts/default_contexts"
+      "selinux/targeted/contexts/default_type"
+      "selinux/targeted/contexts/failsafe_context"
+      "selinux/targeted/contexts/users"
     ];
 
     modules.files = {

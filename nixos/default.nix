@@ -379,6 +379,18 @@ in
               }
             ) overridePkgs
           )
+          // {
+            # OpenSSH has no SELinux toggle in this nixpkgs revision; wire the
+            # upstream support directly so sshd performs the standard
+            # login-context transition (`get_default_context` ->
+            # `default_contexts`), placing root's ssh sessions in
+            # `sysadm_r:sysadm_t` instead of leaving every session stuck in
+            # `sshd_t`.
+            openssh = prev.openssh.overrideAttrs (old: {
+              buildInputs = (old.buildInputs or [ ]) ++ [ final.libselinux ];
+              configureFlags = (old.configureFlags or [ ]) ++ [ "--with-selinux" ];
+            });
+          }
         )
       ]
       ++ [
@@ -446,6 +458,26 @@ in
             args = -r $@
             [end]
           '';
+
+        # Appconfig for the login-context machinery: SELinux-aware login
+        # programs (`sshd` via `get_default_context`) read the
+        # user→SELinux-user mapping (`seusers`), the context orderings
+        # (`default_contexts`, `contexts/users/*`) and the role→type
+        # defaults (`default_type`) from `/etc/selinux/<type>`. The
+        # initrd provisions `/etc/selinux` in its ephemeral rootfs only,
+        # so link these into the live tree on every activation (plain
+        # store-path references; these files are immutable policy
+        # artifacts, never customized per machine). Without them
+        # `ssh_selinux_getctxbyname` fails and every ssh session dies in
+        # enforcing mode.
+        "selinux/targeted/seusers".source = "${cfg.build.policy}/etc/selinux/refpolicy/seusers";
+        "selinux/targeted/contexts/default_contexts".source =
+          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/default_contexts";
+        "selinux/targeted/contexts/default_type".source =
+          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/default_type";
+        "selinux/targeted/contexts/failsafe_context".source =
+          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/failsafe_context";
+        "selinux/targeted/contexts/users".source = "${cfg.build.policy}/selinux/refpolicy/contexts/users";
       };
 
       systemPackages = [
