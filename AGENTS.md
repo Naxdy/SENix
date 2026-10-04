@@ -53,6 +53,24 @@
 - `senix_store` (`kernel` layer, marked `<required>`) is built into the **base** module, because `fs_use_xattr fuse` is only legal in the base — checkmodule rejects it in a loadable module. `senix_store` is the only place `fs_use` is declared.
 - Policy handling on `nixos-rebuild switch` is driven by the `selinux-policy` activation script: `semodule -i` over the built `.pp` set, removal of stale modules absent from the new build, `setsebool`, then — on a switch only (`NIXOS_ACTION` is set; a boot relabels from the initrd anyway) — a store relabel that recomputes the labels those modules left behind, in a transient unit with `PrivateMounts=` so the rw store remount stays namespace-local; guarded by `/var/lib/selinux/activate-check` so it only re-runs when the command set changed.
 
+### Adding new rules
+
+When adding new rules to SENix modules, always follow these guidelines:
+
+- NEVER add new permissions to `unlabeled_t` or `default_t`
+- When adding new rules that grant permissions, make sure to only grant the **absolute minimum** of permissions necessary for an app to function properly
+- Ideally, look to the refpolicy or Fedora's SELinux policy as a guideline for common use cases and best practices
+- ALWAYS see what other distributions are doing to solve a problem you have before going at it on your own
+- Only when that's not possible, or when NixOS' unique setup necessitates bespoke rules, should you implement custom logic
+- When adding rules, always prefer using existing macros / interfaces over writing raw `allow` (or similar) statements.
+  Keep in mind to also consider SENix-native modules' interfaces here, not just the refpolicy.
+- Before extending the permissions of certain apps, consider alternative less impactful approaches.
+  For example, some apps (such as OpenSSH) support building against SELinux, which allows them to interface with it directly, negating the necessity for many custom rules.
+- When adding new rules, include comments / documentation about:
+  - Why the rule(s) is/are necessary
+  - How you came to add these rules (did you take them from Fedora's policy? did you come up with them yourself? what did you base them on? etc.)
+  - Alternatives considered (if any)
+
 ## NixOS integration notes
 
 - `boot.nixStoreMountOpts = lib.mkForce [ ]` — NixOS default (`ro nodev nosuid`) is deliberately dropped; metafs' ro remount replaces the stock `stage-2-init.sh` store bind mount for immutability. Guarded by an assertion.
