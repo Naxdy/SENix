@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/staging-next";
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -99,12 +99,9 @@
         }
       );
 
-      overlays.default =
-        final: prev:
-        {
-          inherit (self.packages.${final.stdenv.hostPlatform.system}) metafs;
-        }
-        // (import ./overlay.nix final prev);
+      overlays.default = final: prev: {
+        inherit (self.packages.${final.stdenv.hostPlatform.system}) metafs;
+      };
 
       formatter = forEachSupportedSystem ({ treefmt, ... }: treefmt);
 

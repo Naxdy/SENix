@@ -7,8 +7,6 @@ in
   programs = {
     nixfmt.enable = true;
 
-    black.enable = true;
-
     rustfmt = {
       enable = true;
       package = rustToolchain;
