@@ -81,6 +81,7 @@ IGNORED_MODULES = [
 #: reference lines instead of being substituted or dropped.
 STRIP_USR = [
     "dbus",
+    "docportal",
     "fail2ban",
     "init",
     "logging",
