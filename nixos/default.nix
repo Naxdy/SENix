@@ -676,6 +676,7 @@ in
             # ensure that systemd's post-initrd transition to `init_t` works.
             setfiles -F "$fc" /nix/store
             setfiles -r /sysroot -F "$fc" /sysroot${config.systemd.package}
+            setfiles -r /sysroot -F "$fc" /sysroot${config.boot.kernelPackages.kernel.modules}
             setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store
 
             echo "seeding cgroup labels..."
