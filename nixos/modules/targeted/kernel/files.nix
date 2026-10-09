@@ -22,6 +22,16 @@
           "/nix" = "-d	gen_context(system_u:object_r:usr_t,s0)";
           "/nix/store" = "-d	gen_context(system_u:object_r:usr_t,s0)";
 
+          # Root-level store entries (every store path basename is
+          # `<hash>-<name>`), which the base module's rules cover only with a
+          # directory flag plus a slashed-content glob. Files that a
+          # derivation emits directly at the store root — e.g. the NixOS
+          # fontconfig module's generated `fc-*.conf` and `fonts.conf` —
+          # would otherwise fall through to the `/.* → default_t` catch-all
+          # and be unreadable by anything (keepassxc's fontconfig setup was
+          # the first manifestation).
+          "/nix/store/[^/]+" = "gen_context(system_u:object_r:usr_t,s0)";
+
           "/usr" = "-d	gen_context(system_u:object_r:usr_t,s0)";
 
           # NixOS keeps a real `/lib64` directory (holding the binary-compat
