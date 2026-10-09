@@ -31,12 +31,26 @@
       policy_module(senix_logging)
 
       gen_require(`
+        type init_exec_t;
         type kernel_t;
         type syslogd_t;
         type systemd_unit_t;
+        type user_systemd_t;
+        type user_t;
         type var_t;
         type var_log_t;
       ')
+
+      # The user manager (`systemd --user`) is started in the plain `user_t`
+      # domain on NixOS, but the reference policy types it `user_systemd_t`
+      # (member of `systemd_user_session_type`), which is what its file
+      # transitions and the `default_contexts` are keyed on. Without the
+      # transition it stays `user_t`, so `/run/user/<uid>/systemd` is born
+      # `user_runtime_t` and never corrected. Transition the manager into it (and
+      # let `user_t` execute the systemd binary) so the tree is typed correctly
+      # at creation — no access grant, no relabel.
+      type_transition user_t init_exec_t:process user_systemd_t;
+      allow user_t init_exec_t:file { read execute };
 
       # Systemd hands the listening sockets it opened for a unit (its socket
       # units and the `FileDescriptorStore`) on to the service it starts, and
@@ -103,6 +117,7 @@
       allow syslogd_t systemd_unit_t:dir list_dir_perms;
       allow syslogd_t systemd_unit_t:file read_file_perms;
       allow syslogd_t systemd_unit_t:lnk_file read_lnk_file_perms;
+
     '';
   };
 }

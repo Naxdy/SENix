@@ -177,6 +177,8 @@
             "--	gen_context(system_u:object_r:systemd_user_manager_unit_t,s0)";
 
           "@systemd@/share/factory(/.*)?" = "gen_context(system_u:object_r:systemd_factory_conf_t,s0)";
+
+          "/run/user/%{USERID}/systemd/units(/.*)?" = "gen_context(system_u:object_r:systemd_user_unit_t,s0)";
         };
       };
     };
