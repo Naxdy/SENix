@@ -183,4 +183,8 @@
       };
     };
   };
+
+  config.security.selinux.modules.systemd.typeEnforcement = lib.mkAfter ''
+    auth_use_nsswitch(systemd_user_runtime_dir_t)
+  '';
 }
