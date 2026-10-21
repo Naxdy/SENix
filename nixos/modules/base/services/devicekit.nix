@@ -581,6 +581,17 @@
       files_read_usr_files(devicekit_power_t)
       files_dontaudit_list_mnt(devicekit_power_t)
 
+      # upowerd (`libupower-glib`, hence GIO/libmount) ends up linked against
+      # libselinux. Its library constructor probes
+      # `access("/etc/selinux/config", F_OK)`. On NixOS that file entry is a
+      # symlink into the store, so following it needs lnk_file read on
+      # selinux_config_t (plus search through /etc and /etc/selinux).
+      # Fedora routes such config consultations through `seutil_read_config`
+      # (e.g. nscd_t, NetworkManager_t); the libselinux-linked variant would
+      # add `selinux_get_fs_mount`, but those perms are already covered here by
+      # `fs_getattr_all_fs` and `kernel_read_system_state` (devicekit_power_t).
+      seutil_read_config(devicekit_power_t)
+
       fs_getattr_all_fs(devicekit_power_t)
       fs_list_inotifyfs(devicekit_power_t)
 
@@ -657,7 +668,18 @@
       	systemd_write_inherited_logind_inhibit_pipes(devicekit_power_t)
       ')
 
+      # systemd v262 replaced the udev control socket with a varlink socket and
+      # publishes `/run/udev/control` as a symlink to it
+      # (`Symlinks=/run/udev/control` in systemd-udevd-varlink.socket, and
+      # `udev-varlink.c` recreates it for PID1-less boots). libudev's
+      # `device_monitor_new_full()` reports udevd as active via
+      # `access("/run/udev/control", F_OK)`, which follows that symlink and so
+      # needs lnk_file read on udev_runtime_t. Fedora grants devicekit_power_t
+      # `udev_read_db` (an alias of read_pid_files) besides
+      # `udev_manage_pid_files`; here the same split is `udev_read_runtime_files`
+      # next to the existing manage grant.
       optional_policy(`
+      	udev_read_runtime_files(devicekit_power_t)
       	udev_manage_runtime_files(devicekit_power_t)
       ')
 
