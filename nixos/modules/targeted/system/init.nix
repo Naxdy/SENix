@@ -10,6 +10,46 @@ let
 in
 {
   security.selinux.modules.init = {
+    # Fedora adds both `nnp_transition` and `nosuid_transition` to
+    # `init_domain()`, but carries this narrower interface for the case where
+    # only the nosuid half is needed. It is exactly the transition the
+    # reference policy's `auth_domtrans_chk_passwd()` leaves out on a
+    # `nosuid` entry point.
+    interface = {
+      exports = {
+        "init_nosuid_domain" = {
+          summary = "Allow nosuid_transition from systemd into a confined domain.";
+          desc = ''
+            <p>
+              Allow `init_t` to transition to the specified domain when the
+              entry point lives on a mount that does not allow suid — the
+              kernel's `check_nnp_nosuid()` then checks
+              `process2 nosuid_transition` in addition to the ordinary
+              `process transition`.
+            </p>
+            <p>
+              Ported from Fedora's `policy/modules/system/init.if`; the
+              reference policy provides the same permission only through the
+              `nosuid_domtrans_pattern()` support macro, which also re-emits
+              the ordinary transition. The metafs store is mounted
+              `nosuid,nodev`, so SENix needs this half explicitly.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type init_t;
+          '';
+          content = ''
+            allow init_t $1:process2 nosuid_transition;
+          '';
+        };
+      };
+    };
     fileContext = {
       storePaths = {
         systemd = [
