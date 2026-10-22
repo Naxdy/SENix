@@ -3,82 +3,78 @@
 { lib, ... }: {
   config.security.selinux.modules.ksmtuned = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Kernel Samepage Merging Tuning Daemon.</summary>
+    interface = {
+      summary = "Kernel Samepage Merging Tuning Daemon.";
+      exports = {
+        "ksmtuned_domtrans" = {
+          summary = "Execute a domain transition to run ksmtuned.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ksmtuned_t, ksmtuned_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ksmtuned_exec_t, ksmtuned_t)
+          '';
+        };
+        "ksmtuned_initrc_domtrans" = {
+          summary = ''
+            Execute ksmtuned server in
+            the ksmtuned domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ksmtuned_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, ksmtuned_initrc_exec_t)
+          '';
+        };
+        "ksmtuned_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ksmtuned environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ksmtuned_t, ksmtuned_runtime_t;
+            type ksmtuned_initrc_exec_t, ksmtuned_log_t;
+          '';
+          content = ''
+            init_startstop_service($1, $2, ksmtuned_t, ksmtuned_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run ksmtuned.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ksmtuned_domtrans',`
-      	gen_require(`
-      		type ksmtuned_t, ksmtuned_exec_t;
-      	')
+            allow $1 ksmtuned_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ksmtuned_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ksmtuned_exec_t, ksmtuned_t)
-      ')
+            files_list_runtime($1)
+            admin_pattern($1, ksmtuned_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute ksmtuned server in
-      ##	the ksmtuned domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ksmtuned_initrc_domtrans',`
-      	gen_require(`
-      		type ksmtuned_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, ksmtuned_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ksmtuned environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ksmtuned_admin',`
-      	gen_require(`
-      		type ksmtuned_t, ksmtuned_runtime_t;
-      		type ksmtuned_initrc_exec_t, ksmtuned_log_t;
-      	')
-
-      	init_startstop_service($1, $2, ksmtuned_t, ksmtuned_initrc_exec_t)
-
-      	allow $1 ksmtuned_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ksmtuned_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, ksmtuned_runtime_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, ksmtuned_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, ksmtuned_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ksmtuned)
 

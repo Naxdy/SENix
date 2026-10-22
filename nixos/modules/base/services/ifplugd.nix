@@ -3,121 +3,111 @@
 { lib, ... }: {
   config.security.selinux.modules.ifplugd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Bring up/down ethernet interfaces based on cable detection.</summary>
+    interface = {
+      summary = "Bring up/down ethernet interfaces based on cable detection.";
+      exports = {
+        "ifplugd_domtrans" = {
+          summary = "Execute a domain transition to run ifplugd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ifplugd_t, ifplugd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ifplugd_exec_t, ifplugd_t)
+          '';
+        };
+        "ifplugd_signal" = {
+          summary = "Send generic signals to ifplugd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ifplugd_t;
+          '';
+          content = ''
+            allow $1 ifplugd_t:process signal;
+          '';
+        };
+        "ifplugd_read_config" = {
+          summary = "Read ifplugd configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ifplugd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
+          '';
+        };
+        "ifplugd_manage_config" = {
+          summary = ''
+            Create, read, write, and delete
+            ifplugd configuration content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ifplugd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            manage_dirs_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
+            manage_files_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
+          '';
+        };
+        "ifplugd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ifplugd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ifplugd_t, ifplugd_etc_t, ifplugd_runtime_t;
+            type ifplugd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 ifplugd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ifplugd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run ifplugd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ifplugd_domtrans',`
-      	gen_require(`
-      		type ifplugd_t, ifplugd_exec_t;
-      	')
+            init_startstop_service($1, $2, ifplugd_t, ifplugd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ifplugd_exec_t, ifplugd_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, ifplugd_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to ifplugd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ifplugd_signal',`
-      	gen_require(`
-      		type ifplugd_t;
-      	')
-
-      	allow $1 ifplugd_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read ifplugd configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ifplugd_read_config',`
-      	gen_require(`
-      		type ifplugd_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	ifplugd configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ifplugd_manage_config',`
-      	gen_require(`
-      		type ifplugd_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	manage_dirs_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
-      	manage_files_pattern($1, ifplugd_etc_t, ifplugd_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ifplugd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ifplugd_admin',`
-      	gen_require(`
-      		type ifplugd_t, ifplugd_etc_t, ifplugd_runtime_t;
-      		type ifplugd_initrc_exec_t;
-      	')
-
-      	allow $1 ifplugd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ifplugd_t)
-
-      	init_startstop_service($1, $2, ifplugd_t, ifplugd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, ifplugd_etc_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, ifplugd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, ifplugd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ifplugd)
 

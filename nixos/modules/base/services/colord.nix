@@ -3,68 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.colord = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>GNOME color manager.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run colord.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`colord_domtrans',`
-      	gen_require(`
-      		type colord_t, colord_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, colord_exec_t, colord_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	colord over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`colord_dbus_chat',`
-      	gen_require(`
-      		type colord_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 colord_t:dbus send_msg;
-      	allow colord_t $1:dbus send_msg;
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Read colord lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`colord_read_lib_files',`
-      	gen_require(`
-      		type colord_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, colord_var_lib_t, colord_var_lib_t)
-      ')
-    '';
+    interface = {
+      summary = "GNOME color manager.";
+      exports = {
+        "colord_domtrans" = {
+          summary = "Execute a domain transition to run colord.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type colord_t, colord_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, colord_exec_t, colord_t)
+          '';
+        };
+        "colord_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            colord over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type colord_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 colord_t:dbus send_msg;
+            allow colord_t $1:dbus send_msg;
+          '';
+        };
+        "colord_read_lib_files" = {
+          summary = "Read colord lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type colord_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, colord_var_lib_t, colord_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(colord)
 

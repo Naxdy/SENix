@@ -3,66 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.mcelog = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Linux hardware error daemon.</summary>
+    interface = {
+      summary = "Linux hardware error daemon.";
+      exports = {
+        "mcelog_domtrans" = {
+          summary = "Execute a domain transition to run mcelog.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mcelog_t, mcelog_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mcelog_exec_t, mcelog_t)
+          '';
+        };
+        "mcelog_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an mcelog environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type mcelog_t, mcelog_initrc_exec_t, mcelog_log_t;
+            type mcelog_runtime_t, mcelog_etc_t;
+          '';
+          content = ''
+            allow $1 mcelog_t:process { ptrace signal_perms };
+            ps_process_pattern($1, mcelog_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run mcelog.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mcelog_domtrans',`
-      	gen_require(`
-      		type mcelog_t, mcelog_exec_t;
-      	')
+            init_startstop_service($1, $2, mcelog_t, mcelog_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mcelog_exec_t, mcelog_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, mcelog_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an mcelog environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mcelog_admin',`
-      	gen_require(`
-      		type mcelog_t, mcelog_initrc_exec_t, mcelog_log_t;
-      		type mcelog_runtime_t, mcelog_etc_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, mcelog_log_t)
 
-      	allow $1 mcelog_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, mcelog_t)
-
-      	init_startstop_service($1, $2, mcelog_t, mcelog_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, mcelog_etc_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, mcelog_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, mcelog_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, mcelog_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mcelog)
 

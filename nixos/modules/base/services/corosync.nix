@@ -3,206 +3,186 @@
 { lib, ... }: {
   config.security.selinux.modules.corosync = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Corosync Cluster Engine.</summary>
+    interface = {
+      summary = "Corosync Cluster Engine.";
+      exports = {
+        "corosync_domtrans" = {
+          summary = "Execute a domain transition to run corosync.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type corosync_t, corosync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, corosync_exec_t, corosync_t)
+          '';
+        };
+        "corosync_initrc_domtrans" = {
+          summary = ''
+            Execute corosync init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type corosync_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, corosync_initrc_exec_t)
+          '';
+        };
+        "corosync_exec" = {
+          summary = "Execute corosync in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, corosync_exec_t)
+          '';
+        };
+        "corosync_read_log" = {
+          summary = "Read corosync log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_var_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            list_dirs_pattern($1, corosync_var_log_t, corosync_var_log_t)
+            read_files_pattern($1, corosync_var_log_t, corosync_var_log_t)
+          '';
+        };
+        "corosync_stream_connect" = {
+          summary = ''
+            Connect to corosync over a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_t, corosync_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, corosync_runtime_t, corosync_runtime_t, corosync_t)
+          '';
+        };
+        "corosync_mmap_rw_tmpfs" = {
+          summary = "Memmap, read and write corosync tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_tmpfs_t;
+          '';
+          content = ''
+            fs_search_tmpfs($1)
+            mmap_rw_files_pattern($1, corosync_tmpfs_t, corosync_tmpfs_t)
+          '';
+        };
+        "corosync_rw_tmpfs" = {
+          summary = "Read and write corosync tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_tmpfs_t;
+          '';
+          content = ''
+            fs_search_tmpfs($1)
+            rw_files_pattern($1, corosync_tmpfs_t, corosync_tmpfs_t)
+          '';
+        };
+        "corosync_read_state" = {
+          summary = "Read process state of corosync.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_t;
+          '';
+          content = ''
+            ps_process_pattern($1, corosync_t)
+          '';
+        };
+        "corosync_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an corosync environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type corosync_t, corosync_var_lib_t, corosync_var_log_t;
+            type corosync_runtime_t, corosync_tmp_t, corosync_tmpfs_t;
+            type corosync_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 corosync_t:process { ptrace signal_perms };
+            ps_process_pattern($1, corosync_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run corosync.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_domtrans',`
-      	gen_require(`
-      		type corosync_t, corosync_exec_t;
-      	')
+            init_startstop_service($1, $2, corosync_t, corosync_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, corosync_exec_t, corosync_t)
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, corosync_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute corosync init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_initrc_domtrans',`
-      	gen_require(`
-      		type corosync_initrc_exec_t;
-      	')
+            admin_pattern($1, corosync_tmpfs_t)
 
-      	init_labeled_script_domtrans($1, corosync_initrc_exec_t)
-      ')
+            files_list_var_lib($1)
+            admin_pattern($1, corosync_var_lib_t)
 
-      ######################################
-      ## <summary>
-      ##	Execute corosync in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_exec',`
-      	gen_require(`
-      		type corosync_exec_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, corosync_var_log_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, corosync_exec_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read corosync log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_read_log',`
-      	gen_require(`
-      		type corosync_var_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	list_dirs_pattern($1, corosync_var_log_t, corosync_var_log_t)
-      	read_files_pattern($1, corosync_var_log_t, corosync_var_log_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Connect to corosync over a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_stream_connect',`
-      	gen_require(`
-      		type corosync_t, corosync_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, corosync_runtime_t, corosync_runtime_t, corosync_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Memmap, read and write corosync tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_mmap_rw_tmpfs',`
-      	gen_require(`
-      		type corosync_tmpfs_t;
-      	')
-
-      	fs_search_tmpfs($1)
-      	mmap_rw_files_pattern($1, corosync_tmpfs_t, corosync_tmpfs_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Read and write corosync tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_rw_tmpfs',`
-      	gen_require(`
-      		type corosync_tmpfs_t;
-      	')
-
-      	fs_search_tmpfs($1)
-      	rw_files_pattern($1, corosync_tmpfs_t, corosync_tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read process state of corosync.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`corosync_read_state',`
-      	gen_require(`
-      		type corosync_t;
-      	')
-
-      	ps_process_pattern($1, corosync_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an corosync environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`corosync_admin',`
-      	gen_require(`
-      		type corosync_t, corosync_var_lib_t, corosync_var_log_t;
-      		type corosync_runtime_t, corosync_tmp_t, corosync_tmpfs_t;
-      		type corosync_initrc_exec_t;
-      	')
-
-      	allow $1 corosync_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, corosync_t)
-
-      	init_startstop_service($1, $2, corosync_t, corosync_initrc_exec_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, corosync_tmp_t)
-
-      	admin_pattern($1, corosync_tmpfs_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, corosync_var_lib_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, corosync_var_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, corosync_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, corosync_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(corosync)
 

@@ -3,93 +3,89 @@
 { lib, ... }: {
   config.security.selinux.modules.zebra = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Zebra border gateway protocol network routing service.</summary>
+    interface = {
+      summary = "Zebra border gateway protocol network routing service.";
+      exports = {
+        "zebra_read_config" = {
+          summary = "Read zebra configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zebra_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 zebra_conf_t:dir list_dir_perms;
+            allow $1 zebra_conf_t:file read_file_perms;
+            allow $1 zebra_conf_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "zebra_stream_connect" = {
+          summary = ''
+            Connect to zebra with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zebra_t, zebra_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, zebra_runtime_t, zebra_runtime_t, zebra_t)
+          '';
+        };
+        "zebra_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an zebra environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type zebra_t, zebra_tmp_t, zebra_log_t;
+            type zebra_conf_t, zebra_runtime_t;
+            type zebra_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 zebra_t:process { ptrace signal_perms };
+            ps_process_pattern($1, zebra_t)
 
-      ########################################
-      ## <summary>
-      ##	Read zebra configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`zebra_read_config',`
-      	gen_require(`
-      		type zebra_conf_t;
-      	')
+            init_startstop_service($1, $2, zebra_t, zebra_initrc_exec_t)
 
-      	files_search_etc($1)
-      	allow $1 zebra_conf_t:dir list_dir_perms;
-      	allow $1 zebra_conf_t:file read_file_perms;
-      	allow $1 zebra_conf_t:lnk_file read_lnk_file_perms;
-      ')
+            files_list_etc($1)
+            admin_pattern($1, zebra_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to zebra with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zebra_stream_connect',`
-      	gen_require(`
-      		type zebra_t, zebra_runtime_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, zebra_log_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, zebra_runtime_t, zebra_runtime_t, zebra_t)
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, zebra_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an zebra environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`zebra_admin',`
-      	gen_require(`
-      		type zebra_t, zebra_tmp_t, zebra_log_t;
-      		type zebra_conf_t, zebra_runtime_t;
-      		type zebra_initrc_exec_t;
-      	')
-
-      	allow $1 zebra_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, zebra_t)
-
-      	init_startstop_service($1, $2, zebra_t, zebra_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, zebra_conf_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, zebra_log_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, zebra_tmp_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, zebra_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, zebra_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(zebra)
 

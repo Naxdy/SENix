@@ -3,13 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.switcheroo = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>switcheroo daemon</summary>
-      ##
-      ## <desc>
-      ## Daemon to control which apps use a integrated GPU and which use discrete
-      ## </desc>
-    '';
+    interface = {
+      summary = "switcheroo daemon";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(switcheroo)
 

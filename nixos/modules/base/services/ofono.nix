@@ -3,37 +3,34 @@
 { lib, ... }: {
   config.security.selinux.modules.ofono = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>ofono</summary>
-      ##
-      ## <desc>
-      ## oFono is a stack for mobile telephony devices on Linux.
-      ## oFono supports speaking to telephony devices through specific drivers,
-      ## or with generic AT commands.
-      ##
-      ## https://git.kernel.org/pub/scm/network/ofono/ofono.git
-      ## </desc>
-
-      ########################################
-      ## <summary>
-      ##	Allow D-Bus communication with oFono.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ofono_dbus_chat',`
-      	gen_require(`
-      		type ofono_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 ofono_t:dbus send_msg;
-      	allow ofono_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "ofono";
+      exports = {
+        "ofono_dbus_chat" = {
+          summary = "Allow D-Bus communication with oFono.";
+          desc = ''
+            oFono is a stack for mobile telephony devices on Linux.
+            oFono supports speaking to telephony devices through specific drivers,
+            or with generic AT commands.
+            https://git.kernel.org/pub/scm/network/ofono/ofono.git
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ofono_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 ofono_t:dbus send_msg;
+            allow ofono_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ofono, 1.0)
 

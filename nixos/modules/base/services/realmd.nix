@@ -3,49 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.realmd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Dbus system service which manages discovery and enrollment in realms and domains like Active Directory or IPA.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute realmd in the realmd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`realmd_domtrans',`
-      	gen_require(`
-      		type realmd_t, realmd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, realmd_exec_t, realmd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	realmd over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`realmd_dbus_chat',`
-      	gen_require(`
-      		type realmd_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 realmd_t:dbus send_msg;
-      	allow realmd_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "Dbus system service which manages discovery and enrollment in realms and domains like Active Directory or IPA.";
+      exports = {
+        "realmd_domtrans" = {
+          summary = "Execute realmd in the realmd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type realmd_t, realmd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, realmd_exec_t, realmd_t)
+          '';
+        };
+        "realmd_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            realmd over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type realmd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 realmd_t:dbus send_msg;
+            allow realmd_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(realmd)
 

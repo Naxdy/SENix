@@ -3,198 +3,184 @@
 { lib, ... }: {
   config.security.selinux.modules.courier = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Courier IMAP and POP3 email servers.</summary>
+    interface = {
+      summary = "Courier IMAP and POP3 email servers.";
+      exports = {
+        "courier_domain_template" = {
+          type = "template";
+          summary = "The template to define a courier domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute courier_domain;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a courier domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`courier_domain_template',`
-      	gen_require(`
-      		attribute courier_domain;
-      	')
+            type courier_$1_t, courier_domain;
+            type courier_$1_exec_t;
+            init_daemon_domain(courier_$1_t, courier_$1_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	type courier_$1_t, courier_domain;
-      	type courier_$1_exec_t;
-      	init_daemon_domain(courier_$1_t, courier_$1_exec_t)
-
-      	########################################
-      	#
-      	# Policy
-      	#
-
-      	can_exec(courier_$1_t, courier_$1_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the courier authentication
-      ##	daemon with a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_domtrans_authdaemon',`
-      	gen_require(`
-      		type courier_authdaemon_t, courier_authdaemon_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, courier_authdaemon_exec_t, courier_authdaemon_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Connect to courier-authdaemon over
-      ##	a unix stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_stream_connect_authdaemon',`
-      	gen_require(`
-      		type courier_authdaemon_t, courier_runtime_t;
-      	')
-
-      	files_search_spool($1)
-      	stream_connect_pattern($1, courier_runtime_t, courier_runtime_t, courier_authdaemon_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the courier POP3 and IMAP
-      ##	server with a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_domtrans_pop',`
-      	gen_require(`
-      		type courier_pop_t, courier_pop_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, courier_pop_exec_t, courier_pop_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read courier config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_read_config',`
-      	gen_require(`
-      		type courier_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, courier_etc_t, courier_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete courier
-      ##	spool directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_manage_spool_dirs',`
-      	gen_require(`
-      		type courier_spool_t;
-      	')
-
-      	files_search_var($1)
-      	manage_dirs_pattern($1, courier_spool_t, courier_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete courier
-      ##	spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_manage_spool_files',`
-      	gen_require(`
-      		type courier_spool_t;
-      	')
-
-      	files_search_var($1)
-      	manage_files_pattern($1, courier_spool_t, courier_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read courier spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_read_spool',`
-      	gen_require(`
-      		type courier_spool_t;
-      	')
-
-      	files_search_var($1)
-      	read_files_pattern($1, courier_spool_t, courier_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write courier spool pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`courier_rw_spool_pipes',`
-      	gen_require(`
-      		type courier_spool_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 courier_spool_t:fifo_file rw_fifo_file_perms;
-      ')
-    '';
+            can_exec(courier_$1_t, courier_$1_exec_t)
+          '';
+        };
+        "courier_domtrans_authdaemon" = {
+          summary = ''
+            Execute the courier authentication
+            daemon with a domain transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type courier_authdaemon_t, courier_authdaemon_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, courier_authdaemon_exec_t, courier_authdaemon_t)
+          '';
+        };
+        "courier_stream_connect_authdaemon" = {
+          summary = ''
+            Connect to courier-authdaemon over
+            a unix stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_authdaemon_t, courier_runtime_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            stream_connect_pattern($1, courier_runtime_t, courier_runtime_t, courier_authdaemon_t)
+          '';
+        };
+        "courier_domtrans_pop" = {
+          summary = ''
+            Execute the courier POP3 and IMAP
+            server with a domain transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type courier_pop_t, courier_pop_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, courier_pop_exec_t, courier_pop_t)
+          '';
+        };
+        "courier_read_config" = {
+          summary = "Read courier config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, courier_etc_t, courier_etc_t)
+          '';
+        };
+        "courier_manage_spool_dirs" = {
+          summary = ''
+            Create, read, write, and delete courier
+            spool directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_spool_t;
+          '';
+          content = ''
+            files_search_var($1)
+            manage_dirs_pattern($1, courier_spool_t, courier_spool_t)
+          '';
+        };
+        "courier_manage_spool_files" = {
+          summary = ''
+            Create, read, write, and delete courier
+            spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_spool_t;
+          '';
+          content = ''
+            files_search_var($1)
+            manage_files_pattern($1, courier_spool_t, courier_spool_t)
+          '';
+        };
+        "courier_read_spool" = {
+          summary = "Read courier spool files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_spool_t;
+          '';
+          content = ''
+            files_search_var($1)
+            read_files_pattern($1, courier_spool_t, courier_spool_t)
+          '';
+        };
+        "courier_rw_spool_pipes" = {
+          summary = "Read and write courier spool pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type courier_spool_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 courier_spool_t:fifo_file rw_fifo_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(courier)
 

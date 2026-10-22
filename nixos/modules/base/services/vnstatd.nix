@@ -3,90 +3,85 @@
 { lib, ... }: {
   config.security.selinux.modules.vnstatd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Console network traffic monitor.</summary>
+    interface = {
+      summary = "Console network traffic monitor.";
+      exports = {
+        "vnstatd_domtrans_vnstat" = {
+          summary = "Execute a domain transition to run vnstat.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type vnstat_t, vnstat_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, vnstat_exec_t, vnstat_t)
+          '';
+        };
+        "vnstatd_run_vnstat" = {
+          summary = ''
+            Execute vnstat in the vnstat domain,
+            and allow the specified role
+            the vnstat domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role vnstat_roles;
+          '';
+          content = ''
+            vnstatd_domtrans_vnstat($1)
+            roleattribute $2 vnstat_roles;
+          '';
+        };
+        "vnstatd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an vnstatd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type vnstatd_t, vnstatd_initrc_exec_t;
+            type vnstatd_pid_t, vnstatd_unit_t, vnstatd_var_lib_t;
+          '';
+          content = ''
+            admin_process_pattern($1, vnstatd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run vnstat.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vnstatd_domtrans_vnstat',`
-      	gen_require(`
-      		type vnstat_t, vnstat_exec_t;
-      	')
+            init_startstop_service($1, $2, vnstatd_t, vnstatd_initrc_exec_t, vnstatd_unit_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, vnstat_exec_t, vnstat_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, vnstatd_pid_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute vnstat in the vnstat domain,
-      ##	and allow the specified role
-      ##	the vnstat domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vnstatd_run_vnstat',`
-      	gen_require(`
-      		attribute_role vnstat_roles;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, vnstatd_var_lib_t)
 
-      	vnstatd_domtrans_vnstat($1)
-      	roleattribute $2 vnstat_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an vnstatd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`vnstatd_admin',`
-      	gen_require(`
-      		type vnstatd_t, vnstatd_initrc_exec_t;
-      		type vnstatd_pid_t, vnstatd_unit_t, vnstatd_var_lib_t;
-      	')
-
-      	admin_process_pattern($1, vnstatd_t)
-
-      	init_startstop_service($1, $2, vnstatd_t, vnstatd_initrc_exec_t, vnstatd_unit_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, vnstatd_pid_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, vnstatd_var_lib_t)
-
-      	vnstatd_run_vnstat($1, $2)
-      ')
-    '';
+            vnstatd_run_vnstat($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vnstatd)
 

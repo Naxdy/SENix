@@ -3,279 +3,245 @@
 { lib, ... }: {
   config.security.selinux.modules.lvm = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for logical volume management programs.</summary>
+    interface = {
+      summary = "Policy for logical volume management programs.";
+      exports = {
+        "lvm_domtrans" = {
+          summary = "Execute lvm programs in the lvm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type lvm_t, lvm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, lvm_exec_t, lvm_t)
+          '';
+        };
+        "lvm_exec" = {
+          summary = "Execute lvm programs in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, lvm_exec_t)
+          '';
+        };
+        "lvm_run" = {
+          summary = "Execute lvm programs in the lvm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to allow the LVM domain.";
+            };
+          };
+          gen_require = ''
+            type lvm_t;
+          '';
+          content = ''
+            lvm_domtrans($1)
+            role $2 types lvm_t;
+            allow $1 lvm_t:sem rw_sem_perms;
+          '';
+          rolecap = true;
+        };
+        "lvm_signull" = {
+          summary = "Send lvm a null signal.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_t;
+          '';
+          content = ''
+            allow $1 lvm_t:process signull;
+          '';
+        };
+        "lvm_read_config" = {
+          summary = "Read LVM configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 lvm_etc_t:dir list_dir_perms;
+            read_files_pattern($1, lvm_etc_t, lvm_etc_t)
+          '';
+          rolecap = true;
+        };
+        "lvm_map_config" = {
+          summary = "Map lvm config files.";
+          desc = ''
+            <p>
+            Allow the specified domain to map lvm config files.
+            </p>
+            <p>
+            Related interfaces:
+            </p>
+            <ul>
+            <li>lvm_read_config()</li>
+            </ul>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_etc_t;
+          '';
+          content = ''
+            allow $1 lvm_etc_t:file map;
+          '';
+        };
+        "lvm_manage_config" = {
+          summary = "Manage LVM configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            manage_dirs_pattern($1, lvm_etc_t, lvm_etc_t)
+            manage_files_pattern($1, lvm_etc_t, lvm_etc_t)
+          '';
+          rolecap = true;
+        };
+        "lvm_create_lock_dirs" = {
+          summary = "Create lvm_lock_t directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_lock_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, lvm_lock_t, lvm_lock_t)
+            files_add_entry_lock_dirs($1)
+          '';
+          rolecap = true;
+        };
+        "lvm_manage_lock_files" = {
+          summary = "Manage lvm_lock_t files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_lock_t;
+          '';
+          content = ''
+            manage_files_pattern($1, lvm_lock_t, lvm_lock_t)
+          '';
+          rolecap = true;
+        };
+        "lvm_manage_runtime_files" = {
+          summary = "Manage LVM runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_runtime_t;
+          '';
+          content = ''
+            manage_files_pattern($1, lvm_runtime_t, lvm_runtime_t)
+          '';
+          rolecap = true;
+        };
+        "lvm_manage_runtime_dirs" = {
+          summary = "Manage LVM runtime dirs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_runtime_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, lvm_runtime_t, lvm_runtime_t)
+          '';
+          rolecap = true;
+        };
+        "lvm_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an lvm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type lvm_t, lvm_etc_t, lvm_lock_t, lvm_metadata_t;
+            type lvm_var_lib_t, lvm_runtime_t, lvm_tmp_t;
+          '';
+          content = ''
+            admin_process_pattern($1, lvm_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute lvm programs in the lvm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lvm_domtrans',`
-      	gen_require(`
-      		type lvm_t, lvm_exec_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, { lvm_etc_t lvm_metadata_t })
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, lvm_exec_t, lvm_t)
-      ')
+            files_search_locks($1)
+            admin_pattern($1, lvm_lock_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute lvm programs in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lvm_exec',`
-      	gen_require(`
-      		type lvm_exec_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, lvm_var_lib_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, lvm_exec_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, lvm_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute lvm programs in the lvm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to allow the LVM domain.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_run',`
-      	gen_require(`
-      		type lvm_t;
-      	')
-
-      	lvm_domtrans($1)
-      	role $2 types lvm_t;
-      	allow $1 lvm_t:sem rw_sem_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Send lvm a null signal.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lvm_signull',`
-      	gen_require(`
-      		type lvm_t;
-      	')
-
-      	allow $1 lvm_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read LVM configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_read_config',`
-      	gen_require(`
-      		type lvm_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 lvm_etc_t:dir list_dir_perms;
-      	read_files_pattern($1, lvm_etc_t, lvm_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Map lvm config files.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Allow the specified domain to map lvm config files.
-      ##	</p>
-      ##	<p>
-      ##	Related interfaces:
-      ##	</p>
-      ##	<ul>
-      ##		<li>lvm_read_config()</li>
-      ##	</ul>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lvm_map_config',`
-      	gen_require(`
-      		type lvm_etc_t;
-      	')
-
-      	allow $1 lvm_etc_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage LVM configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_manage_config',`
-      	gen_require(`
-      		type lvm_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	manage_dirs_pattern($1, lvm_etc_t, lvm_etc_t)
-      	manage_files_pattern($1, lvm_etc_t, lvm_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create lvm_lock_t directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_create_lock_dirs',`
-      	gen_require(`
-      		type lvm_lock_t;
-      	')
-
-      	create_dirs_pattern($1, lvm_lock_t, lvm_lock_t)
-      	files_add_entry_lock_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage lvm_lock_t files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_manage_lock_files',`
-      	gen_require(`
-      		type lvm_lock_t;
-      	')
-
-      	manage_files_pattern($1, lvm_lock_t, lvm_lock_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage LVM runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_manage_runtime_files',`
-      	gen_require(`
-      		type lvm_runtime_t;
-      	')
-
-      	manage_files_pattern($1, lvm_runtime_t, lvm_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage LVM runtime dirs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lvm_manage_runtime_dirs',`
-      	gen_require(`
-      		type lvm_runtime_t;
-      	')
-
-      	manage_dirs_pattern($1, lvm_runtime_t, lvm_runtime_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an lvm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lvm_admin',`
-      	gen_require(`
-      		type lvm_t, lvm_etc_t, lvm_lock_t, lvm_metadata_t;
-      		type lvm_var_lib_t, lvm_runtime_t, lvm_tmp_t;
-      	')
-
-      	admin_process_pattern($1, lvm_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, { lvm_etc_t lvm_metadata_t })
-
-      	files_search_locks($1)
-      	admin_pattern($1, lvm_lock_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, lvm_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, lvm_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, lvm_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, lvm_tmp_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(lvm)
 

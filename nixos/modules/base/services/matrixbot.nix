@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.matrixbot = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Matrix bot</summary>
-    '';
+    interface = {
+      summary = "Matrix bot";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(matrixbot)
 

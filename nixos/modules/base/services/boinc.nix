@@ -3,49 +3,49 @@
 { lib, ... }: {
   config.security.selinux.modules.boinc = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Platform for computing using volunteered resources.</summary>
+    interface = {
+      summary = "Platform for computing using volunteered resources.";
+      exports = {
+        "boinc_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an boinc environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an boinc environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`boinc_admin',`
-      	gen_require(`
+            type boinc_t, boinc_project_t, boinc_log_t;
+            type boinc_var_lib_t, boinc_tmp_t, boinc_initrc_exec_t;
+            type boinc_project_var_lib_t, boinc_project_tmp_t;
+          '';
+          content = ''
+            allow $1 { boinc_t boinc_project_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { boinc_t boinc_project_t })
 
-      		type boinc_t, boinc_project_t, boinc_log_t;
-      		type boinc_var_lib_t, boinc_tmp_t, boinc_initrc_exec_t;
-      		type boinc_project_var_lib_t, boinc_project_tmp_t;
-      	')
+            init_startstop_service($1, $2, boinc_t, boinc_initrc_exec_t)
 
-      	allow $1 { boinc_t boinc_project_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { boinc_t boinc_project_t })
+            logging_search_logs($1)
+            admin_pattern($1, boinc_log_t)
 
-      	init_startstop_service($1, $2, boinc_t, boinc_initrc_exec_t)
+            files_search_tmp($1)
+            admin_pattern($1, { boinc_project_tmp_t boinc_tmp_t })
 
-      	logging_search_logs($1)
-      	admin_pattern($1, boinc_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, { boinc_project_tmp_t boinc_tmp_t })
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, { boinc_project_var_lib_t boinc_var_lib_t })
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, { boinc_project_var_lib_t boinc_var_lib_t })
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(boinc)
 

@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.webadm = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Web administrator role.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the web administrator role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`webadm_role_change',`
-      	gen_require(`
-      		role webadm_r;
-      	')
-
-      	allow $1 webadm_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the web administrator role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the web administrator role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`webadm_role_change_to',`
-      	gen_require(`
-      		role webadm_r;
-      	')
-
-      	allow webadm_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Web administrator role.";
+      exports = {
+        "webadm_role_change" = {
+          summary = "Change to the web administrator role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role webadm_r;
+          '';
+          content = ''
+            allow $1 webadm_r;
+          '';
+          rolecap = true;
+        };
+        "webadm_role_change_to" = {
+          summary = "Change from the web administrator role.";
+          desc = ''
+            <p>
+            Change from the web administrator role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role webadm_r;
+          '';
+          content = ''
+            allow webadm_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(webadm)
 

@@ -3,50 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.fetchmail = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Remote-mail retrieval and forwarding utility.</summary>
+    interface = {
+      summary = "Remote-mail retrieval and forwarding utility.";
+      exports = {
+        "fetchmail_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an fetchmail environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fetchmail_t, fetchmail_etc_t, fetchmail_uidl_cache_t;
+            type fetchmail_runtime_t, fetchmail_initrc_exec_t, fetchmail_log_t;
+          '';
+          content = ''
+            init_startstop_service($1, $2, fetchmail_t, fetchmail_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an fetchmail environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fetchmail_admin',`
-      	gen_require(`
-      		type fetchmail_t, fetchmail_etc_t, fetchmail_uidl_cache_t;
-      		type fetchmail_runtime_t, fetchmail_initrc_exec_t, fetchmail_log_t;
-      	')
+            allow $1 fetchmail_t:process { ptrace signal_perms };
+            ps_process_pattern($1, fetchmail_t)
 
-      	init_startstop_service($1, $2, fetchmail_t, fetchmail_initrc_exec_t)
+            files_list_etc($1)
+            admin_pattern($1, fetchmail_etc_t)
 
-      	allow $1 fetchmail_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, fetchmail_t)
+            files_search_var_lib($1)
+            admin_pattern($1, fetchmail_uidl_cache_t)
 
-      	files_list_etc($1)
-      	admin_pattern($1, fetchmail_etc_t)
+            files_list_runtime($1)
+            admin_pattern($1, fetchmail_runtime_t)
 
-      	files_search_var_lib($1)
-      	admin_pattern($1, fetchmail_uidl_cache_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, fetchmail_runtime_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, fetchmail_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, fetchmail_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fetchmail)
 

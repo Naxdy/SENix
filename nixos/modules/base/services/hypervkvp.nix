@@ -3,37 +3,37 @@
 { lib, ... }: {
   config.security.selinux.modules.hypervkvp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>HyperV key value pair (KVP).</summary>
+    interface = {
+      summary = "HyperV key value pair (KVP).";
+      exports = {
+        "hypervkvp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an hypervkvp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type hypervkvpd_t, hypervkvpd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 hypervkvpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, hypervkvpd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an hypervkvp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hypervkvp_admin',`
-      	gen_require(`
-      		type hypervkvpd_t, hypervkvpd_initrc_exec_t;
-      	')
-
-      	allow $1 hypervkvpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, hypervkvpd_t)
-
-      	init_startstop_service($1, $2, hypervkvpd_t, hypervkvpd_initrc_exec_t)
-      ')
-    '';
+            init_startstop_service($1, $2, hypervkvpd_t, hypervkvpd_initrc_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(hypervkvp, 1.0.0)
 

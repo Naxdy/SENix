@@ -3,61 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.sysstat = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Reports on various system states.</summary>
+    interface = {
+      summary = "Reports on various system states.";
+      exports = {
+        "sysstat_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            sysstat log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sysstat_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_files_pattern($1, sysstat_log_t, sysstat_log_t)
+          '';
+          rolecap = true;
+        };
+        "sysstat_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an sysstat environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type sysstat_t, sysstat_initrc_exec_t, sysstat_log_t;
+          '';
+          content = ''
+            allow $1 sysstat_t:process { ptrace signal_perms };
+            ps_process_pattern($1, sysstat_t)
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	sysstat log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sysstat_manage_log',`
-      	gen_require(`
-      		type sysstat_log_t;
-      	')
+            init_startstop_service($1, $2, sysstat_t, sysstat_initrc_exec_t)
 
-      	logging_search_logs($1)
-      	manage_files_pattern($1, sysstat_log_t, sysstat_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an sysstat environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sysstat_admin',`
-      	gen_require(`
-      		type sysstat_t, sysstat_initrc_exec_t, sysstat_log_t;
-      	')
-
-      	allow $1 sysstat_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, sysstat_t)
-
-      	init_startstop_service($1, $2, sysstat_t, sysstat_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, sysstat_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, sysstat_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sysstat)
 

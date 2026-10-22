@@ -3,103 +3,96 @@
 { lib, ... }: {
   config.security.selinux.modules.lircd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Linux infrared remote control daemon.</summary>
+    interface = {
+      summary = "Linux infrared remote control daemon.";
+      exports = {
+        "lircd_domtrans" = {
+          summary = "Execute a domain transition to run lircd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type lircd_t, lircd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domain_auto_transition_pattern($1, lircd_exec_t, lircd_t)
+          '';
+        };
+        "lircd_stream_connect" = {
+          summary = ''
+            Connect to lircd over a unix domain
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lircd_runtime_t, lircd_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, lircd_runtime_t, lircd_runtime_t, lircd_t)
+          '';
+        };
+        "lircd_read_config" = {
+          summary = "Read lircd etc files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lircd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, lircd_etc_t, lircd_etc_t)
+          '';
+        };
+        "lircd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a lircd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type lircd_t, lircd_runtime_t;
+            type lircd_initrc_exec_t, lircd_etc_t;
+          '';
+          content = ''
+            allow $1 lircd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, lircd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run lircd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lircd_domtrans',`
-      	gen_require(`
-      		type lircd_t, lircd_exec_t;
-      	')
+            init_startstop_service($1, $2, lircd_t, lircd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domain_auto_transition_pattern($1, lircd_exec_t, lircd_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, lircd_etc_t)
 
-      ######################################
-      ## <summary>
-      ##	Connect to lircd over a unix domain
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lircd_stream_connect',`
-      	gen_require(`
-      		type lircd_runtime_t, lircd_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, lircd_runtime_t, lircd_runtime_t, lircd_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read lircd etc files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lircd_read_config',`
-      	gen_require(`
-      		type lircd_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, lircd_etc_t, lircd_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a lircd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lircd_admin',`
-      	gen_require(`
-      		type lircd_t, lircd_runtime_t;
-      		type lircd_initrc_exec_t, lircd_etc_t;
-      	')
-
-      	allow $1 lircd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, lircd_t)
-
-      	init_startstop_service($1, $2, lircd_t, lircd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, lircd_etc_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, lircd_runtime_t)
-      	dev_list_all_dev_nodes($1)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, lircd_runtime_t)
+            dev_list_all_dev_nodes($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(lircd)
 

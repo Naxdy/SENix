@@ -3,116 +3,108 @@
 { lib, ... }: {
   config.security.selinux.modules.knot = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>high-performance authoritative-only DNS server.</summary>
+    interface = {
+      summary = "high-performance authoritative-only DNS server.";
+      exports = {
+        "knot_domtrans_client" = {
+          summary = "Execute knotc in the knotc domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type knotc_t, knotc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, knotc_exec_t, knotc_t)
+          '';
+        };
+        "knot_run_client" = {
+          summary = ''
+            Execute knotc in the knotc domain, and
+            allow the specified role the knotc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role knot_roles;
+          '';
+          content = ''
+            knot_domtrans_client($1)
+            roleattribute $2 knot_roles;
+          '';
+          rolecap = true;
+        };
+        "knot_read_config_files" = {
+          summary = "Read knot config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type knot_conf_t;
+          '';
+          content = ''
+            read_files_pattern($1, knot_conf_t, knot_conf_t)
+            files_search_etc($1)
+          '';
+        };
+        "knot_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an knot environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type knotc_t, knotd_t, knot_conf_t, knot_initrc_exec_t;
+            type knot_runtime_t, knot_tmp_t, knot_var_lib_t;
+          '';
+          content = ''
+            allow $1 knotc_t:process signal_perms;
+            allow $1 knotd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, knotc_t)
+            ps_process_pattern($1, knotd_t)
 
-      ########################################
-      ## <summary>
-      ##      Execute knotc in the knotc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`knot_domtrans_client',`
-      	gen_require(`
-      		type knotc_t, knotc_exec_t;
-      	')
+            init_startstop_service($1, $2, knotd_t, knot_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, knotc_exec_t, knotc_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, knot_conf_t)
 
-      ########################################
-      ## <summary>
-      ##      Execute knotc in the knotc domain, and
-      ##      allow the specified role the knotc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`knot_run_client',`
-      	gen_require(`
-      		attribute_role knot_roles;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, knot_runtime_t)
 
-      	knot_domtrans_client($1)
-      	roleattribute $2 knot_roles;
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, knot_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##      Read knot config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`knot_read_config_files',`
-      	gen_require(`
-      		type knot_conf_t;
-      	')
-
-      	read_files_pattern($1, knot_conf_t, knot_conf_t)
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      All of the rules required to
-      ##      administrate an knot environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`knot_admin',`
-      	gen_require(`
-      		type knotc_t, knotd_t, knot_conf_t, knot_initrc_exec_t;
-      		type knot_runtime_t, knot_tmp_t, knot_var_lib_t;
-      	')
-
-      	allow $1 knotc_t:process signal_perms;
-      	allow $1 knotd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, knotc_t)
-      	ps_process_pattern($1, knotd_t)
-
-      	init_startstop_service($1, $2, knotd_t, knot_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, knot_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, knot_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, knot_tmp_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, knot_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, knot_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(knot)
 

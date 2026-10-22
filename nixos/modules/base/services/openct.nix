@@ -3,135 +3,122 @@
 { lib, ... }: {
   config.security.selinux.modules.openct = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Service for handling smart card readers.</summary>
+    interface = {
+      summary = "Service for handling smart card readers.";
+      exports = {
+        "openct_signull" = {
+          summary = "Send null signals to openct.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openct_t;
+          '';
+          content = ''
+            allow $1 openct_t:process signull;
+          '';
+        };
+        "openct_exec" = {
+          summary = "Execute openct in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openct_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, openct_exec_t)
+          '';
+        };
+        "openct_domtrans" = {
+          summary = "Execute a domain transition to run openct.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type openct_t, openct_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, openct_exec_t, openct_t)
+          '';
+        };
+        "openct_read_runtime_files" = {
+          summary = "Read openct runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openct_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, openct_runtime_t, openct_runtime_t)
+          '';
+        };
+        "openct_stream_connect" = {
+          summary = ''
+            Connect to openct over an unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openct_t, openct_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, openct_runtime_t, openct_runtime_t, openct_t)
+          '';
+        };
+        "openct_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an openct environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type openct_t, openct_initrc_exec_t, openct_runtime_t;
+          '';
+          content = ''
+            allow $1 openct_t:process { ptrace signal_perms };
+            ps_process_pattern($1, openct_t)
 
-      ########################################
-      ## <summary>
-      ##	Send null signals to openct.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openct_signull',`
-      	gen_require(`
-      		type openct_t;
-      	')
+            init_startstop_service($1, $2, openct_t, openct_initrc_exec_t)
 
-      	allow $1 openct_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute openct in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openct_exec',`
-      	gen_require(`
-      		type openct_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, openct_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run openct.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openct_domtrans',`
-      	gen_require(`
-      		type openct_t, openct_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, openct_exec_t, openct_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read openct runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openct_read_runtime_files',`
-      	gen_require(`
-      		type openct_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, openct_runtime_t, openct_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to openct over an unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openct_stream_connect',`
-      	gen_require(`
-      		type openct_t, openct_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, openct_runtime_t, openct_runtime_t, openct_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an openct environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openct_admin',`
-      	gen_require(`
-      		type openct_t, openct_initrc_exec_t, openct_runtime_t;
-      	')
-
-      	allow $1 openct_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, openct_t)
-
-      	init_startstop_service($1, $2, openct_t, openct_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, openct_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, openct_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openct)
 

@@ -3,67 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.dmesg = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for dmesg.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute dmesg in the dmesg domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dmesg_domtrans',`
-      	gen_require(`
-      		type dmesg_t, dmesg_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dmesg_exec_t, dmesg_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transition to dmesg_t when NNP has been set
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dmesg_nnp_domtrans',`
-      	gen_require(`
-      		type dmesg_t;
-      	')
-
-      	dmesg_domtrans($1)
-      	allow $1 dmesg_t:process2 nnp_transition;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute dmesg in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dmesg_exec',`
-      	gen_require(`
-      		type dmesg_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, dmesg_exec_t)
-      ')
-    '';
+    interface = {
+      summary = "Policy for dmesg.";
+      exports = {
+        "dmesg_domtrans" = {
+          summary = "Execute dmesg in the dmesg domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dmesg_t, dmesg_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dmesg_exec_t, dmesg_t)
+          '';
+        };
+        "dmesg_nnp_domtrans" = {
+          summary = "Transition to dmesg_t when NNP has been set";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dmesg_t;
+          '';
+          content = ''
+            dmesg_domtrans($1)
+            allow $1 dmesg_t:process2 nnp_transition;
+          '';
+        };
+        "dmesg_exec" = {
+          summary = "Execute dmesg in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dmesg_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, dmesg_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dmesg)
 

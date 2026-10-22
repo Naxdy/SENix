@@ -3,53 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.tboot = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Utilities for the tboot TXT module.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute txt-stat in the txtstat domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tboot_domtrans_txtstat',`
-      	gen_require(`
-      		type txtstat_t, txtstat_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, txtstat_exec_t, txtstat_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute txt-stat in the txtstat domain, and
-      ##	allow the specified role the txtstat domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the txtstat domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tboot_run_txtstat',`
-      	gen_require(`
-      		attribute_role txtstat_roles;
-      	')
-
-      	tboot_domtrans_txtstat($1)
-      	roleattribute $2 txtstat_roles;
-      ')
-    '';
+    interface = {
+      summary = "Utilities for the tboot TXT module.";
+      exports = {
+        "tboot_domtrans_txtstat" = {
+          summary = "Execute txt-stat in the txtstat domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type txtstat_t, txtstat_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, txtstat_exec_t, txtstat_t)
+          '';
+        };
+        "tboot_run_txtstat" = {
+          summary = ''
+            Execute txt-stat in the txtstat domain, and
+            allow the specified role the txtstat domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the txtstat domain.";
+            };
+          };
+          gen_require = ''
+            attribute_role txtstat_roles;
+          '';
+          content = ''
+            tboot_domtrans_txtstat($1)
+            roleattribute $2 txtstat_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tboot)
 

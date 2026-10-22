@@ -3,44 +3,43 @@
 { lib, ... }: {
   config.security.selinux.modules.fwupd = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for firmwate update daemon and utility.</summary>
-      ##
-      ## <desc>
-      ## You can either use a GUI software manager like GNOME Software to view and
-      ## apply updates, the command-line tool or the system D-Bus interface directly.
-      ## Firmware updates are supported for a variety of technologies.
-      ## See https://github.com/fwupd/fwupd for details
-      ## </desc>
-
-      ########################################
-      ## <summary>
-      ##      Execute fwupd in the user role
-      ##      the kmod domain, and use the caller's terminal.
-      ##      Has a sigchld backchannel.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed to transition.
-      ##      </summary>
-      ## </param>
-      ## <param name="role">
-      ##      <summary>
-      ##      Role allowed access.
-      ##      </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fwupd_run',`
-      	gen_require(`
-      		attribute_role fwupdmgr_roles;
-      		type fwupdmgr_exec_t, fwupdmgr_t;
-      	')
-
-      	domtrans_pattern($1, fwupdmgr_exec_t, fwupdmgr_t)
-      	roleattribute $2 fwupdmgr_roles;
-      ')
-    '';
+    interface = {
+      summary = "Policy for firmwate update daemon and utility.";
+      exports = {
+        "fwupd_run" = {
+          summary = ''
+            Execute fwupd in the user role
+            the kmod domain, and use the caller's terminal.
+            Has a sigchld backchannel.
+          '';
+          desc = ''
+            You can either use a GUI software manager like GNOME Software to view and
+            apply updates, the command-line tool or the system D-Bus interface directly.
+            Firmware updates are supported for a variety of technologies.
+            See https://github.com/fwupd/fwupd for details
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role fwupdmgr_roles;
+            type fwupdmgr_exec_t, fwupdmgr_t;
+          '';
+          content = ''
+            domtrans_pattern($1, fwupdmgr_exec_t, fwupdmgr_t)
+            roleattribute $2 fwupdmgr_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fwupd)
 

@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.privoxy = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Privacy enhancing web proxy.</summary>
+    interface = {
+      summary = "Privacy enhancing web proxy.";
+      exports = {
+        "privoxy_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an privoxy environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type privoxy_t, privoxy_log_t, privoxy_initrc_exec_t;
+            type privoxy_etc_rw_t, privoxy_runtime_t;
+          '';
+          content = ''
+            allow $1 privoxy_t:process { ptrace signal_perms };
+            ps_process_pattern($1, privoxy_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an privoxy environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`privoxy_admin',`
-      	gen_require(`
-      		type privoxy_t, privoxy_log_t, privoxy_initrc_exec_t;
-      		type privoxy_etc_rw_t, privoxy_runtime_t;
-      	')
+            init_startstop_service($1, $2, privoxy_t, privoxy_initrc_exec_t)
 
-      	allow $1 privoxy_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, privoxy_t)
+            logging_list_logs($1)
+            admin_pattern($1, privoxy_log_t)
 
-      	init_startstop_service($1, $2, privoxy_t, privoxy_initrc_exec_t)
+            files_list_etc($1)
+            admin_pattern($1, privoxy_etc_rw_t)
 
-      	logging_list_logs($1)
-      	admin_pattern($1, privoxy_log_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, privoxy_etc_rw_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, privoxy_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, privoxy_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(privoxy)
 

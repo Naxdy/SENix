@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.telnet = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Telnet daemon.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Read and write telnetd pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`telnet_use_ptys',`
-      	gen_require(`
-      		type telnetd_devpts_t;
-      	')
-
-      	term_list_ptys($1)
-      	allow $1 telnetd_devpts_t:chr_file rw_term_perms;
-      ')
-    '';
+    interface = {
+      summary = "Telnet daemon.";
+      exports = {
+        "telnet_use_ptys" = {
+          summary = "Read and write telnetd pty devices.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type telnetd_devpts_t;
+          '';
+          content = ''
+            term_list_ptys($1)
+            allow $1 telnetd_devpts_t:chr_file rw_term_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(telnet)
 

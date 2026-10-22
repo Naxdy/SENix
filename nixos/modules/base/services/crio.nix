@@ -3,109 +3,103 @@
 { lib, ... }: {
   config.security.selinux.modules.crio = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>policy for cri-o</summary>
+    interface = {
+      summary = "policy for cri-o";
+      exports = {
+        "crio_domtrans" = {
+          summary = "Execute CRI-O in the crio domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type crio_t, crio_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, crio_exec_t, crio_t)
+          '';
+        };
+        "crio_run" = {
+          summary = ''
+            Execute CRI-O in the crio domain,
+            and allow the specified role the
+            kubelet domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the crio domain.";
+            };
+          };
+          gen_require = ''
+            type crio_t;
+          '';
+          content = ''
+            role $2 types crio_t;
 
-      #######################################
-      ## <summary>
-      ##	Execute CRI-O in the crio domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`crio_domtrans',`
-      	gen_require(`
-      		type crio_t, crio_exec_t;
-      	')
+            crio_domtrans($1)
+          '';
+        };
+        "crio_read_conmon_state" = {
+          summary = ''
+            Read the process state (/proc/pid)
+            of CRI-O conmon.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type crio_conmon_t;
+          '';
+          content = ''
+            ps_process_pattern($1, crio_conmon_t)
+          '';
+        };
+        "crio_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            a CRI-O environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type crio_t;
+            type crio_conmon_t;
+          '';
+          content = ''
+            allow $1 crio_t:process { ptrace signal_perms };
+            ps_process_pattern($1, crio_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, crio_exec_t, crio_t)
-      ')
+            allow $1 crio_conmon_t:process { ptrace signal_perms };
+            ps_process_pattern($1, crio_conmon_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute CRI-O in the crio domain,
-      ##	and allow the specified role the
-      ##	kubelet domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the crio domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`crio_run',`
-      	gen_require(`
-      		type crio_t;
-      	')
+            crio_run($1, $2)
 
-      	role $2 types crio_t;
-
-      	crio_domtrans($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the process state (/proc/pid)
-      ##	of CRI-O conmon.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`crio_read_conmon_state',`
-      	gen_require(`
-      		type crio_conmon_t;
-      	')
-
-      	ps_process_pattern($1, crio_conmon_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##  All of the rules required to administrate
-      ##  a CRI-O environment.
-      ## </summary>
-      ## <param name="domain">
-      ##  <summary>
-      ##  Domain allowed access.
-      ##  </summary>
-      ## </param>
-      ## <param name="role">
-      ##  <summary>
-      ##  Role allowed access.
-      ##  </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`crio_admin',`
-      	gen_require(`
-      		type crio_t;
-      		type crio_conmon_t;
-      	')
-
-      	allow $1 crio_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, crio_t)
-
-      	allow $1 crio_conmon_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, crio_conmon_t)
-
-      	crio_run($1, $2)
-
-      	# no private type for crictl, so connect directly
-      	container_stream_connect_system_engine($1)
-      ')
-    '';
+            # no private type for crictl, so connect directly
+            container_stream_connect_system_engine($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(crio)
 

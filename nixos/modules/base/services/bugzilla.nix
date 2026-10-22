@@ -3,88 +3,85 @@
 { lib, ... }: {
   config.security.selinux.modules.bugzilla = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Bugtracker.</summary>
+    interface = {
+      summary = "Bugtracker.";
+      exports = {
+        "bugzilla_search_content" = {
+          summary = "Search bugzilla directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type httpd_bugzilla_content_t;
+          '';
+          content = ''
+            allow $1 httpd_bugzilla_content_t:dir search_dir_perms;
+          '';
+        };
+        "bugzilla_dontaudit_rw_stream_sockets" = {
+          summary = ''
+            Do not audit attempts to read and
+            write bugzilla script unix domain
+            stream sockets.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type httpd_bugzilla_script_t;
+          '';
+          content = ''
+            dontaudit $1 httpd_bugzilla_script_t:unix_stream_socket { read write };
+          '';
+        };
+        "bugzilla_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an bugzilla environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type httpd_bugzilla_script_t, httpd_bugzilla_content_t, httpd_bugzilla_ra_content_t;
+            type httpd_bugzilla_rw_content_t, httpd_bugzilla_script_exec_t;
+            type httpd_bugzilla_htaccess_t;
+          '';
+          content = ''
+            allow $1 httpd_bugzilla_script_t:process { ptrace signal_perms };
+            ps_process_pattern($1, httpd_bugzilla_script_t)
 
-      ########################################
-      ## <summary>
-      ##	Search bugzilla directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bugzilla_search_content',`
-      	gen_require(`
-      		type httpd_bugzilla_content_t;
-      	')
+            files_search_usr($1)
+            admin_pattern($1, httpd_bugzilla_script_exec_t)
+            admin_pattern($1, httpd_bugzilla_script_t)
+            admin_pattern($1, httpd_bugzilla_content_t)
+            admin_pattern($1, httpd_bugzilla_htaccess_t)
+            admin_pattern($1, httpd_bugzilla_ra_content_t)
 
-      	allow $1 httpd_bugzilla_content_t:dir search_dir_perms;
-      ')
+            files_search_tmp($1)
+            files_search_var_lib($1)
+            admin_pattern($1, httpd_bugzilla_rw_content_t)
 
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and
-      ##	write bugzilla script unix domain
-      ##	stream sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bugzilla_dontaudit_rw_stream_sockets',`
-      	gen_require(`
-      		type httpd_bugzilla_script_t;
-      	')
-
-      	dontaudit $1 httpd_bugzilla_script_t:unix_stream_socket { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an bugzilla environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bugzilla_admin',`
-      	gen_require(`
-      		type httpd_bugzilla_script_t, httpd_bugzilla_content_t, httpd_bugzilla_ra_content_t;
-      		type httpd_bugzilla_rw_content_t, httpd_bugzilla_script_exec_t;
-      		type httpd_bugzilla_htaccess_t;
-      	')
-
-      	allow $1 httpd_bugzilla_script_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, httpd_bugzilla_script_t)
-
-      	files_search_usr($1)
-      	admin_pattern($1, httpd_bugzilla_script_exec_t)
-      	admin_pattern($1, httpd_bugzilla_script_t)
-      	admin_pattern($1, httpd_bugzilla_content_t)
-      	admin_pattern($1, httpd_bugzilla_htaccess_t)
-      	admin_pattern($1, httpd_bugzilla_ra_content_t)
-
-      	files_search_tmp($1)
-      	files_search_var_lib($1)
-      	admin_pattern($1, httpd_bugzilla_rw_content_t)
-
-      	apache_list_sys_content($1)
-      ')
-    '';
+            apache_list_sys_content($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(bugzilla)
 

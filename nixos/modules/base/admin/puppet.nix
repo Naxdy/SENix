@@ -3,241 +3,219 @@
 { lib, ... }: {
   config.security.selinux.modules.puppet = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Configuration management system.</summary>
+    interface = {
+      summary = "Configuration management system.";
+      exports = {
+        "puppet_domtrans_puppetca" = {
+          summary = ''
+            Execute puppetca in the puppetca
+            domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type puppetca_t, puppetca_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, puppetca_exec_t, puppetca_t)
+          '';
+        };
+        "puppet_run_puppetca" = {
+          summary = ''
+            Execute puppetca in the puppetca
+            domain and allow the specified
+            role the puppetca domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role puppetca_roles;
+          '';
+          content = ''
+            puppet_domtrans_puppetca($1)
+            roleattribute $2 puppetca_roles;
+          '';
+          rolecap = true;
+        };
+        "puppet_read_config" = {
+          summary = "Read puppet configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 puppet_etc_t:dir list_dir_perms;
+            allow $1 puppet_etc_t:file read_file_perms;
+            allow $1 puppet_etc_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "puppet_read_lib_files" = {
+          summary = "Read Puppet lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, puppet_var_lib_t, puppet_var_lib_t)
+          '';
+        };
+        "puppet_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            puppet lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, puppet_var_lib_t, puppet_var_lib_t)
+          '';
+        };
+        "puppet_append_log_files" = {
+          summary = "Append puppet log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, puppet_log_t, puppet_log_t)
+          '';
+        };
+        "puppet_create_log_files" = {
+          summary = "Create puppet log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            create_files_pattern($1, puppet_log_t, puppet_log_t)
+          '';
+        };
+        "puppet_read_log_files" = {
+          summary = "Read puppet log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            read_files_pattern($1, puppet_log_t, puppet_log_t)
+          '';
+        };
+        "puppet_rw_tmp" = {
+          summary = "Read and write to puppet tempoprary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 puppet_tmp_t:file rw_file_perms;
+          '';
+        };
+        "puppet_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an puppet environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type puppet_initrc_exec_t, puppetmaster_initrc_exec_t, puppet_log_t;
+            type puppet_var_lib_t, puppet_tmp_t, puppet_etc_t;
+            type puppet_runtime_t, puppetmaster_tmp_t;
+            type puppet_t, puppetca_t, puppetmaster_t;
+          '';
+          content = ''
+            allow $1 { puppet_t puppetca_t puppetmaster_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { puppet_t puppetca_t puppetmaster_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute puppetca in the puppetca
-      ##	domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_domtrans_puppetca',`
-      	gen_require(`
-      		type puppetca_t, puppetca_exec_t;
-      	')
+            init_startstop_service($1, $2, puppet_t, puppet_initrc_exec_t)
+            init_startstop_service($1, $2, puppetmaster_t, puppetmaster_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, puppetca_exec_t, puppetca_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, puppet_etc_t)
 
-      #####################################
-      ## <summary>
-      ##	Execute puppetca in the puppetca
-      ##	domain and allow the specified
-      ##	role the puppetca domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`puppet_run_puppetca',`
-      	gen_require(`
-      		attribute_role puppetca_roles;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, puppet_log_t)
 
-      	puppet_domtrans_puppetca($1)
-      	roleattribute $2 puppetca_roles;
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, puppet_var_lib_t)
 
-      ####################################
-      ## <summary>
-      ##	Read puppet configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_read_config',`
-      	gen_require(`
-      		type puppet_etc_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, puppet_runtime_t)
 
-      	files_search_etc($1)
-      	allow $1 puppet_etc_t:dir list_dir_perms;
-      	allow $1 puppet_etc_t:file read_file_perms;
-      	allow $1 puppet_etc_t:lnk_file read_lnk_file_perms;
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, { puppet_tmp_t puppetmaster_tmp_t })
 
-      ################################################
-      ## <summary>
-      ##	Read Puppet lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_read_lib_files',`
-      	gen_require(`
-      		type puppet_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, puppet_var_lib_t, puppet_var_lib_t)
-      ')
-
-      ###############################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	puppet lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_manage_lib_files',`
-      	gen_require(`
-      		type puppet_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, puppet_var_lib_t, puppet_var_lib_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Append puppet log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_append_log_files',`
-      	gen_require(`
-      		type puppet_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, puppet_log_t, puppet_log_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Create puppet log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_create_log_files',`
-      	gen_require(`
-      		type puppet_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	create_files_pattern($1, puppet_log_t, puppet_log_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Read puppet log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_read_log_files',`
-      	gen_require(`
-      		type puppet_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	read_files_pattern($1, puppet_log_t, puppet_log_t)
-      ')
-
-      ################################################
-      ## <summary>
-      ##	Read and write to puppet tempoprary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`puppet_rw_tmp', `
-      	gen_require(`
-      		type puppet_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 puppet_tmp_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an puppet environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`puppet_admin',`
-      	gen_require(`
-      		type puppet_initrc_exec_t, puppetmaster_initrc_exec_t, puppet_log_t;
-      		type puppet_var_lib_t, puppet_tmp_t, puppet_etc_t;
-      		type puppet_runtime_t, puppetmaster_tmp_t;
-      		type puppet_t, puppetca_t, puppetmaster_t;
-      	')
-
-      	allow $1 { puppet_t puppetca_t puppetmaster_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { puppet_t puppetca_t puppetmaster_t })
-
-      	init_startstop_service($1, $2, puppet_t, puppet_initrc_exec_t)
-      	init_startstop_service($1, $2, puppetmaster_t, puppetmaster_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, puppet_etc_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, puppet_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, puppet_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, puppet_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, { puppet_tmp_t puppetmaster_tmp_t })
-
-      	puppet_run_puppetca($1, $2)
-      ')
-    '';
+            puppet_run_puppetca($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(puppet)
 

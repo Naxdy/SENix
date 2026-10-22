@@ -3,57 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.urm = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary> Policy for the URM (Username Resource Manager) service.</summary>
-      ## <desc>
-      ##      <p>
-      ##              URM (Username Resource Manager) is a system service
-      ##              that manages CPU, IRQ, and cgroup resources per
-      ##              username for optimizing system performance.
-      ##      </p>
-      ## </desc>
-      #
-
-      ########################################
-      ## <summary>
-      ##      Read the URM configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`urm_read_config',`
-              gen_require(`
-                      type urm_config_t;
-              ')
-
-              files_search_etc($1)
-              allow $1 urm_config_t:dir list_dir_perms;
-              read_files_pattern($1, urm_config_t, urm_config_t)
-              read_lnk_files_pattern($1, urm_config_t, urm_config_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Connect to urm with a unix stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`urm_stream_connect',`
-              gen_require(`
-                      type urm_t, urm_runtime_t;
-              ')
-              
-              allow $1 urm_runtime_t:sock_file rw_sock_file_perms;
-              stream_connect_pattern($1, urm_runtime_t, urm_runtime_t, urm_t)
-      ')
-    '';
+    interface = {
+      summary = " Policy for the URM (Username Resource Manager) service.";
+      desc = ''
+        <p>
+        URM (Username Resource Manager) is a system service
+        that manages CPU, IRQ, and cgroup resources per
+        username for optimizing system performance.
+        </p>
+      '';
+      exports = {
+        "urm_read_config" = {
+          summary = "Read the URM configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type urm_config_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 urm_config_t:dir list_dir_perms;
+            read_files_pattern($1, urm_config_t, urm_config_t)
+            read_lnk_files_pattern($1, urm_config_t, urm_config_t)
+          '';
+        };
+        "urm_stream_connect" = {
+          summary = "Connect to urm with a unix stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type urm_t, urm_runtime_t;
+          '';
+          content = ''
+            allow $1 urm_runtime_t:sock_file rw_sock_file_perms;
+            stream_connect_pattern($1, urm_runtime_t, urm_runtime_t, urm_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(urm)
 

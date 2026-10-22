@@ -3,171 +3,156 @@
 { lib, ... }: {
   config.security.selinux.modules.openvpn = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>full-featured SSL VPN solution.</summary>
+    interface = {
+      summary = "full-featured SSL VPN solution.";
+      exports = {
+        "openvpn_domtrans" = {
+          summary = ''
+            Execute openvpn clients in the
+            openvpn domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type openvpn_t, openvpn_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, openvpn_exec_t, openvpn_t)
+          '';
+        };
+        "openvpn_run" = {
+          summary = ''
+            Execute openvpn clients in the
+            openvpn domain, and allow the
+            specified role the openvpn domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role openvpn_roles;
+          '';
+          content = ''
+            openvpn_domtrans($1)
+            roleattribute $2 openvpn_roles;
+          '';
+          rolecap = true;
+        };
+        "openvpn_kill" = {
+          summary = "Send kill signals to openvpn.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvpn_t;
+          '';
+          content = ''
+            allow $1 openvpn_t:process sigkill;
+          '';
+        };
+        "openvpn_signal" = {
+          summary = "Send generic signals to openvpn.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvpn_t;
+          '';
+          content = ''
+            allow $1 openvpn_t:process signal;
+          '';
+        };
+        "openvpn_signull" = {
+          summary = "Send null signals to openvpn.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvpn_t;
+          '';
+          content = ''
+            allow $1 openvpn_t:process signull;
+          '';
+        };
+        "openvpn_read_config" = {
+          summary = "Read openvpn configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvpn_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 openvpn_etc_t:dir list_dir_perms;
+            allow $1 openvpn_etc_t:file read_file_perms;
+            allow $1 openvpn_etc_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "openvpn_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an openvpn environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvpn_t, openvpn_etc_t, openvpn_var_log_t;
+            type openvpn_runtime_t, openvpn_initrc_exec_t, openvpn_etc_rw_t;
+            type openvpn_status_t;
+          '';
+          content = ''
+            allow $1 openvpn_t:process { ptrace signal_perms };
+            ps_process_pattern($1, openvpn_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute openvpn clients in the
-      ##	openvpn domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvpn_domtrans',`
-      	gen_require(`
-      		type openvpn_t, openvpn_exec_t;
-      	')
+            init_startstop_service($1, $2, openvpn_t, openvpn_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, openvpn_exec_t, openvpn_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { openvpn_etc_t openvpn_etc_rw_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute openvpn clients in the
-      ##	openvpn domain, and allow the
-      ##	specified role the openvpn domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openvpn_run',`
-      	gen_require(`
-      		attribute_role openvpn_roles;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, { openvpn_status_t openvpn_var_log_t })
 
-      	openvpn_domtrans($1)
-      	roleattribute $2 openvpn_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to openvpn.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvpn_kill',`
-      	gen_require(`
-      		type openvpn_t;
-      	')
-
-      	allow $1 openvpn_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to openvpn.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvpn_signal',`
-      	gen_require(`
-      		type openvpn_t;
-      	')
-
-      	allow $1 openvpn_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to openvpn.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvpn_signull',`
-      	gen_require(`
-      		type openvpn_t;
-      	')
-
-      	allow $1 openvpn_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read openvpn configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openvpn_read_config',`
-      	gen_require(`
-      		type openvpn_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 openvpn_etc_t:dir list_dir_perms;
-      	allow $1 openvpn_etc_t:file read_file_perms;
-      	allow $1 openvpn_etc_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an openvpn environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openvpn_admin',`
-      	gen_require(`
-      		type openvpn_t, openvpn_etc_t, openvpn_var_log_t;
-      		type openvpn_runtime_t, openvpn_initrc_exec_t, openvpn_etc_rw_t;
-      		type openvpn_status_t;
-      	')
-
-      	allow $1 openvpn_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, openvpn_t)
-
-      	init_startstop_service($1, $2, openvpn_t, openvpn_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { openvpn_etc_t openvpn_etc_rw_t })
-
-      	logging_list_logs($1)
-      	admin_pattern($1, { openvpn_status_t openvpn_var_log_t })
-
-      	files_list_runtime($1)
-      	admin_pattern($1, openvpn_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, openvpn_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openvpn)
 

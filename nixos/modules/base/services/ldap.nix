@@ -3,137 +3,127 @@
 { lib, ... }: {
   config.security.selinux.modules.ldap = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>OpenLDAP directory server.</summary>
+    interface = {
+      summary = "OpenLDAP directory server.";
+      exports = {
+        "ldap_list_db" = {
+          summary = "List ldap database directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slapd_db_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 slapd_db_t:dir list_dir_perms;
+          '';
+        };
+        "ldap_read_config" = {
+          summary = "Read ldap configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slapd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 slapd_etc_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "ldap_stream_connect" = {
+          summary = ''
+            Connect to slapd over an unix
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slapd_t, slapd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, slapd_runtime_t, slapd_runtime_t, slapd_t)
+          '';
+        };
+        "ldap_tcp_connect" = {
+          summary = "Connect to ldap over the network.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slapd_t;
+          '';
+          content = ''
+            corenet_sendrecv_ldap_client_packets($1)
+            corenet_tcp_connect_ldap_port($1)
+            corenet_tcp_recvfrom_labeled($1, slapd_t)
+          '';
+        };
+        "ldap_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ldap environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type slapd_t, slapd_tmp_t, slapd_replog_t;
+            type slapd_lock_t, slapd_etc_t, slapd_runtime_t;
+            type slapd_initrc_exec_t, slapd_log_t, slapd_cert_t;
+            type slapd_db_t, slapd_keytab_t;
+          '';
+          content = ''
+            allow $1 slapd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, slapd_t)
 
-      ########################################
-      ## <summary>
-      ##	List ldap database directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ldap_list_db',`
-      	gen_require(`
-      		type slapd_db_t;
-      	')
+            init_startstop_service($1, $2, slapd_t, slapd_initrc_exec_t)
 
-      	files_search_etc($1)
-      	allow $1 slapd_db_t:dir list_dir_perms;
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { slapd_etc_t slapd_db_t slapd_cert_t slapd_keytab_t })
 
-      ########################################
-      ## <summary>
-      ##	Read ldap configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ldap_read_config',`
-      	gen_require(`
-      		type slapd_etc_t;
-      	')
+            files_list_locks($1)
+            admin_pattern($1, slapd_lock_t)
 
-      	files_search_etc($1)
-      	allow $1 slapd_etc_t:file read_file_perms;
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, slapd_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to slapd over an unix
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ldap_stream_connect',`
-      	gen_require(`
-      		type slapd_t, slapd_runtime_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, slapd_replog_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, slapd_runtime_t, slapd_runtime_t, slapd_t)
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, slapd_tmp_t)
 
-      ########################################
-      ## <summary>
-      ## 	Connect to ldap over the network.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ldap_tcp_connect',`
-      	gen_require(`
-      		type slapd_t;
-      	')
-
-      	corenet_sendrecv_ldap_client_packets($1)
-      	corenet_tcp_connect_ldap_port($1)
-      	corenet_tcp_recvfrom_labeled($1, slapd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ldap environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ldap_admin',`
-      	gen_require(`
-      		type slapd_t, slapd_tmp_t, slapd_replog_t;
-      		type slapd_lock_t, slapd_etc_t, slapd_runtime_t;
-      		type slapd_initrc_exec_t, slapd_log_t, slapd_cert_t;
-      		type slapd_db_t, slapd_keytab_t;
-      	')
-
-      	allow $1 slapd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, slapd_t)
-
-      	init_startstop_service($1, $2, slapd_t, slapd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { slapd_etc_t slapd_db_t slapd_cert_t slapd_keytab_t })
-
-      	files_list_locks($1)
-      	admin_pattern($1, slapd_lock_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, slapd_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, slapd_replog_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, slapd_tmp_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, slapd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, slapd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ldap)
 

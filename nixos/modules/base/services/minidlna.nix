@@ -3,69 +3,68 @@
 { lib, ... }: {
   config.security.selinux.modules.minidlna = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>MiniDLNA lightweight DLNA/UPnP media server</summary>
+    interface = {
+      summary = "MiniDLNA lightweight DLNA/UPnP media server";
+      exports = {
+        "minidlna_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an minidlna environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type minidlna_t, minidlna_runtime_t, minidlna_initrc_exec_t;
+            type minidlna_conf_t, minidlna_log_t, minidlna_db_t;
+          '';
+          content = ''
+            allow $1 minidlna_t:process { ptrace signal_perms };
+            ps_process_pattern($1, minidlna_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an minidlna environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`minidlna_admin',`
-      	gen_require(`
-      		type minidlna_t, minidlna_runtime_t, minidlna_initrc_exec_t;
-      		type minidlna_conf_t, minidlna_log_t, minidlna_db_t;
-      	')
+            init_startstop_service($1, $2, minidlna_t, minidlna_initrc_exec_t)
 
-      	allow $1 minidlna_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, minidlna_t)
+            files_search_etc($1)
+            admin_pattern($1, minidlna_conf_t)
 
-      	init_startstop_service($1, $2, minidlna_t, minidlna_initrc_exec_t)
+            logging_search_logs($1)
+            admin_pattern($1, minidlna_log_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, minidlna_conf_t)
+            files_search_var_lib($1)
+            admin_pattern($1, minidlna_db_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, minidlna_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, minidlna_db_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, minidlna_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute minidlna init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`minidlna_initrc_domtrans',`
-      	gen_require(`
-      		type minidlna_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, minidlna_initrc_exec_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, minidlna_runtime_t)
+          '';
+          rolecap = true;
+        };
+        "minidlna_initrc_domtrans" = {
+          summary = ''
+            Execute minidlna init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type minidlna_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, minidlna_initrc_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(minidlna)
 

@@ -3,192 +3,176 @@
 { lib, ... }: {
   config.security.selinux.modules.zfs = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Tools for the Zettabyte File System.</summary>
+    interface = {
+      summary = "Tools for the Zettabyte File System.";
+      exports = {
+        "zfs_domtrans" = {
+          summary = ''
+            Execute ZFS tools in the
+            ZFS domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type zfs_t, zfs_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, zfs_exec_t, zfs_t)
+          '';
+        };
+        "zfs_exec" = {
+          summary = "Execute ZFS tools in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, zfs_exec_t)
+          '';
+        };
+        "zfs_run" = {
+          summary = ''
+            Execute ZFS tools in the ZFS domain, and
+            allow the specified role the ZFS domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_t;
+          '';
+          content = ''
+            zfs_domtrans($1)
+            role $2 types zfs_t;
+          '';
+          rolecap = true;
+        };
+        "zfs_search_config" = {
+          summary = "Search ZFS config directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_config_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            search_dirs_pattern($1, zfs_config_t, zfs_config_t)
+          '';
+        };
+        "zfs_read_config" = {
+          summary = "Read ZFS config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_config_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, zfs_config_t, zfs_config_t)
+            read_lnk_files_pattern($1, zfs_config_t, zfs_config_t)
+          '';
+        };
+        "zfs_filetrans_zpool_cache" = {
+          summary = ''
+            Create the zpool cache with an
+            automatic transition to the zpool
+            cache type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_config_t, zfs_zpool_cache_t;
+          '';
+          content = ''
+            filetrans_pattern($1, zfs_config_t, zfs_zpool_cache_t, file, "zpool.cache")
+          '';
+        };
+        "zfs_rw_zpool_cache" = {
+          summary = "Read and write zpool cache files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_zpool_cache_t;
+          '';
+          content = ''
+            zfs_search_config($1)
+            allow $1 zfs_zpool_cache_t:file rw_file_perms;
+          '';
+        };
+        "zfs_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a ZFS environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type zfs_t, zed_t;
+            type zfs_config_t, zfs_zpool_cache_t;
+            type zfs_runtime_t;
+          '';
+          content = ''
+            zfs_run($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Execute ZFS tools in the
-      ##	ZFS domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_domtrans',`
-      	gen_require(`
-      		type zfs_t, zfs_exec_t;
-      	')
+            allow $1 zfs_t:process { ptrace signal_perms };
+            ps_process_pattern($1, zfs_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, zfs_exec_t, zfs_t)
-      ')
+            allow $1 zed_t:process { ptrace signal_perms };
+            ps_process_pattern($1, zed_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute ZFS tools in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_exec',`
-      	gen_require(`
-      		type zfs_exec_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, zfs_config_t)
+            admin_pattern($1, zfs_zpool_cache_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, zfs_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute ZFS tools in the ZFS domain, and
-      ##	allow the specified role the ZFS domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`zfs_run',`
-      	gen_require(`
-      		type zfs_t;
-      	')
-
-      	zfs_domtrans($1)
-      	role $2 types zfs_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search ZFS config directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_search_config',`
-      	gen_require(`
-      		type zfs_config_t;
-      	')
-
-      	files_search_etc($1)
-      	search_dirs_pattern($1, zfs_config_t, zfs_config_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read ZFS config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_read_config',`
-      	gen_require(`
-      		type zfs_config_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, zfs_config_t, zfs_config_t)
-      	read_lnk_files_pattern($1, zfs_config_t, zfs_config_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create the zpool cache with an
-      ##	automatic transition to the zpool
-      ##	cache type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_filetrans_zpool_cache',`
-      	gen_require(`
-      		type zfs_config_t, zfs_zpool_cache_t;
-      	')
-
-      	filetrans_pattern($1, zfs_config_t, zfs_zpool_cache_t, file, "zpool.cache")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write zpool cache files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zfs_rw_zpool_cache',`
-      	gen_require(`
-      		type zfs_zpool_cache_t;
-      	')
-
-      	zfs_search_config($1)
-      	allow $1 zfs_zpool_cache_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a ZFS environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`zfs_admin',`
-      	gen_require(`
-      		type zfs_t, zed_t;
-      		type zfs_config_t, zfs_zpool_cache_t;
-      		type zfs_runtime_t;
-      	')
-
-      	zfs_run($1, $2)
-
-      	allow $1 zfs_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, zfs_t)
-
-      	allow $1 zed_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, zed_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, zfs_config_t)
-      	admin_pattern($1, zfs_zpool_cache_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, zfs_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, zfs_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(zfs)
 

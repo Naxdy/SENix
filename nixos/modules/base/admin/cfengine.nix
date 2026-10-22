@@ -3,111 +3,105 @@
 { lib, ... }: {
   config.security.selinux.modules.cfengine = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>System administration tool for networks.</summary>
+    interface = {
+      summary = "System administration tool for networks.";
+      exports = {
+        "cfengine_domain_template" = {
+          type = "template";
+          summary = "The template to define a cfengine domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute cfengine_domain;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a cfengine domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`cfengine_domain_template',`
-      	gen_require(`
-      		attribute cfengine_domain;
-      	')
+            type cfengine_$1_t, cfengine_domain;
+            type cfengine_$1_exec_t;
+            init_daemon_domain(cfengine_$1_t, cfengine_$1_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	type cfengine_$1_t, cfengine_domain;
-      	type cfengine_$1_exec_t;
-      	init_daemon_domain(cfengine_$1_t, cfengine_$1_exec_t)
+            auth_use_nsswitch(cfengine_$1_t)
+          '';
+        };
+        "cfengine_read_lib_files" = {
+          summary = "Read cfengine lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cfengine_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, cfengine_var_lib_t, cfengine_var_lib_t)
+          '';
+        };
+        "cfengine_dontaudit_write_log_files" = {
+          summary = ''
+            Do not audit attempts to write
+            cfengine log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cfengine_log_t;
+          '';
+          content = ''
+            dontaudit $1 cfengine_log_t:file write_file_perms;
+          '';
+        };
+        "cfengine_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an cfengine environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cfengine_domain;
+            type cfengine_initrc_exec_t, cfengine_log_t, cfengine_var_lib_t;
+          '';
+          content = ''
+            allow $1 cfengine_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, cfengine_domain)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            init_startstop_service($1, $2, cfengine_domain, cfengine_initrc_exec_t)
 
-      	auth_use_nsswitch(cfengine_$1_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read cfengine lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cfengine_read_lib_files',`
-      	gen_require(`
-      		type cfengine_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, cfengine_var_lib_t, cfengine_var_lib_t)
-      ')
-
-      ####################################
-      ## <summary>
-      ##	Do not audit attempts to write
-      ##	cfengine log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cfengine_dontaudit_write_log_files',`
-      	gen_require(`
-      		type cfengine_log_t;
-      	')
-
-      	dontaudit $1 cfengine_log_t:file write_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an cfengine environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cfengine_admin',`
-      	gen_require(`
-      		attribute cfengine_domain;
-      		type cfengine_initrc_exec_t, cfengine_log_t, cfengine_var_lib_t;
-      	')
-
-      	allow $1 cfengine_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, cfengine_domain)
-
-      	init_startstop_service($1, $2, cfengine_domain, cfengine_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, { cfengine_log_t cfengine_var_lib_t })
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, { cfengine_log_t cfengine_var_lib_t })
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cfengine)
 

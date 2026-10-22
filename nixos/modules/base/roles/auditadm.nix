@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.auditadm = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Audit administrator role</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the audit administrator role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`auditadm_role_change',`
-      	gen_require(`
-      		role auditadm_r;
-      	')
-
-      	allow $1 auditadm_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the audit administrator role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the audit administrator role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`auditadm_role_change_to',`
-      	gen_require(`
-      		role auditadm_r;
-      	')
-
-      	allow auditadm_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Audit administrator role";
+      exports = {
+        "auditadm_role_change" = {
+          summary = "Change to the audit administrator role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role auditadm_r;
+          '';
+          content = ''
+            allow $1 auditadm_r;
+          '';
+          rolecap = true;
+        };
+        "auditadm_role_change_to" = {
+          summary = "Change from the audit administrator role.";
+          desc = ''
+            <p>
+            Change from the audit administrator role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role auditadm_r;
+          '';
+          content = ''
+            allow auditadm_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(auditadm)
 

@@ -3,195 +3,187 @@
 { lib, ... }: {
   config.security.selinux.modules.cgroup = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>libcg is a library that abstracts the control group file system in Linux.</summary>
+    interface = {
+      summary = "libcg is a library that abstracts the control group file system in Linux.";
+      exports = {
+        "cgroup_domtrans_cgclear" = {
+          summary = ''
+            Execute a domain transition to run
+            CG Clear.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cgclear_t, cgclear_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, cgclear_exec_t, cgclear_t)
+            corecmd_search_bin($1)
+          '';
+        };
+        "cgroup_domtrans_cgconfig" = {
+          summary = ''
+            Execute a domain transition to run
+            CG config parser.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cgconfig_t, cgconfig_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, cgconfig_exec_t, cgconfig_t)
+            corecmd_search_bin($1)
+          '';
+        };
+        "cgroup_initrc_domtrans_cgconfig" = {
+          summary = ''
+            Execute CG config init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cgconfig_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, cgconfig_initrc_exec_t)
+          '';
+        };
+        "cgroup_domtrans_cgred" = {
+          summary = ''
+            Execute a domain transition to run
+            CG rules engine daemon.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cgred_t, cgred_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, cgred_exec_t, cgred_t)
+            corecmd_search_bin($1)
+          '';
+        };
+        "cgroup_initrc_domtrans_cgred" = {
+          summary = ''
+            Execute a domain transition to run
+            CG rules engine daemon.
+            domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cgred_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, cgred_initrc_exec_t)
+          '';
+        };
+        "cgroup_run_cgclear" = {
+          summary = ''
+            Execute a domain transition to
+            run CG Clear and allow the
+            specified role the CG Clear
+            domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgclear_t;
+          '';
+          content = ''
+            cgroup_domtrans_cgclear($1)
+            role $2 types cgclear_t;
+          '';
+          rolecap = true;
+        };
+        "cgroup_stream_connect_cgred" = {
+          summary = ''
+            Connect to CG rules engine daemon
+            over unix stream sockets.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgred_runtime_t, cgred_t;
+          '';
+          content = ''
+            stream_connect_pattern($1, cgred_runtime_t, cgred_runtime_t, cgred_t)
+            files_search_runtime($1)
+          '';
+        };
+        "cgroup_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            an cgroup environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgred_t, cgconfig_t, cgred_runtime_t;
+            type cgconfig_etc_t, cgconfig_initrc_exec_t, cgred_initrc_exec_t;
+            type cgrules_etc_t, cgclear_t;
+          '';
+          content = ''
+            allow $1 { cgclear_t cgconfig_t cgred_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { cgclear_t cgconfig_t cgred_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	CG Clear.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_domtrans_cgclear',`
-      	gen_require(`
-      		type cgclear_t, cgclear_exec_t;
-      	')
+            admin_pattern($1, { cgconfig_etc_t cgrules_etc_t })
+            files_list_etc($1)
 
-      	domtrans_pattern($1, cgclear_exec_t, cgclear_t)
-      	corecmd_search_bin($1)
-      ')
+            admin_pattern($1, cgred_runtime_t)
+            files_list_runtime($1)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	CG config parser.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_domtrans_cgconfig',`
-      	gen_require(`
-      		type cgconfig_t, cgconfig_exec_t;
-      	')
+            init_startstop_service($1, $2, cgred_t, cgred_initrc_exec_t)
+            init_startstop_service($1, $2, cgconfig_t, cgconfig_initrc_exec_t)
 
-      	domtrans_pattern($1, cgconfig_exec_t, cgconfig_t)
-      	corecmd_search_bin($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute CG config init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_initrc_domtrans_cgconfig',`
-      	gen_require(`
-      		type cgconfig_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, cgconfig_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	CG rules engine daemon.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_domtrans_cgred',`
-      	gen_require(`
-      		type cgred_t, cgred_exec_t;
-      	')
-
-      	domtrans_pattern($1, cgred_exec_t, cgred_t)
-      	corecmd_search_bin($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ## 	CG rules engine daemon.
-      ##	domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_initrc_domtrans_cgred',`
-      	gen_require(`
-      		type cgred_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, cgred_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run CG Clear and allow the
-      ##	specified role the CG Clear
-      ##	domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cgroup_run_cgclear',`
-      	gen_require(`
-      		type cgclear_t;
-      	')
-
-      	cgroup_domtrans_cgclear($1)
-      	role $2 types cgclear_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to CG rules engine daemon
-      ##	over unix stream sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgroup_stream_connect_cgred', `
-      	gen_require(`
-      		type cgred_runtime_t, cgred_t;
-      	')
-
-      	stream_connect_pattern($1, cgred_runtime_t, cgred_runtime_t, cgred_t)
-      	files_search_runtime($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to administrate
-      ##	an cgroup environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cgroup_admin',`
-      	gen_require(`
-      		type cgred_t, cgconfig_t, cgred_runtime_t;
-      		type cgconfig_etc_t, cgconfig_initrc_exec_t, cgred_initrc_exec_t;
-      		type cgrules_etc_t, cgclear_t;
-      	')
-
-      	allow $1 { cgclear_t cgconfig_t cgred_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { cgclear_t cgconfig_t cgred_t })
-
-      	admin_pattern($1, { cgconfig_etc_t cgrules_etc_t })
-      	files_list_etc($1)
-
-      	admin_pattern($1, cgred_runtime_t)
-      	files_list_runtime($1)
-
-      	init_startstop_service($1, $2, cgred_t, cgred_initrc_exec_t)
-      	init_startstop_service($1, $2, cgconfig_t, cgconfig_initrc_exec_t)
-
-      	cgroup_run_cgclear($1, $2)
-      ')
-    '';
+            cgroup_run_cgclear($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cgroup)
 

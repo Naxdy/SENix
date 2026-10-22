@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.matrixd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>matrix.org synapse reference server.</summary>
-    '';
+    interface = {
+      summary = "matrix.org synapse reference server.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(matrixd)
 

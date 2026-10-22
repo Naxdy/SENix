@@ -3,122 +3,114 @@
 { lib, ... }: {
   config.security.selinux.modules.games = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Various games.</summary>
+    interface = {
+      summary = "Various games.";
+      exports = {
+        "games_role" = {
+          type = "template";
+          summary = "Role access for games.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role games_roles;
+            type games_t, games_exec_t, games_tmp_t;
+            type games_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 games_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for games.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`games_role',`
-      	gen_require(`
-      		attribute_role games_roles;
-      		type games_t, games_exec_t, games_tmp_t;
-      		type games_tmpfs_t;
-      	')
+            domtrans_pattern($3, games_exec_t, games_t)
 
-      	roleattribute $4 games_roles;
+            allow $2 games_tmp_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { games_tmp_t games_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 games_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 games_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	domtrans_pattern($3, games_exec_t, games_t)
+            allow $3 games_t:process { ptrace signal_perms };
+            ps_process_pattern($3, games_t)
 
-      	allow $2 games_tmp_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { games_tmp_t games_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 games_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 games_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            stream_connect_pattern($3, games_tmpfs_t, games_tmpfs_t, games_t)
 
-      	allow $3 games_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, games_t)
+            allow games_t $3:unix_stream_socket connectto;
 
-      	stream_connect_pattern($3, games_tmpfs_t, games_tmpfs_t, games_t)
-
-      	allow games_t $3:unix_stream_socket connectto;
-
-      	optional_policy(`
-      		systemd_user_app_status($1, games_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write games data files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`games_rw_data',`
-      	gen_require(`
-      		type games_data_t;
-      	')
-
-      	files_search_var_lib($1)
-      	rw_files_pattern($1, games_data_t, games_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Run a game in the game domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`games_domtrans',`
-      	gen_require(`
-      		type games_t, games_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, games_exec_t, games_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	games over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`games_dbus_chat',`
-      	gen_require(`
-      		type games_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 games_t:dbus send_msg;
-      	allow games_t $1:dbus send_msg;
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, games_t)
+            ')
+          '';
+        };
+        "games_rw_data" = {
+          summary = "Read and write games data files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type games_data_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            rw_files_pattern($1, games_data_t, games_data_t)
+          '';
+        };
+        "games_domtrans" = {
+          summary = "Run a game in the game domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type games_t, games_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, games_exec_t, games_t)
+          '';
+        };
+        "games_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            games over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type games_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 games_t:dbus send_msg;
+            allow games_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(games)
 

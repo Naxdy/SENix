@@ -3,13 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.thunderbolt = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>thunderbolt daemon</summary>
-      ##
-      ## <desc>
-      ## Daemon to control authentication for Thunderbolt.
-      ## </desc>
-    '';
+    interface = {
+      summary = "thunderbolt daemon";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(thunderbolt)
 

@@ -3,121 +3,111 @@
 { lib, ... }: {
   config.security.selinux.modules.xfs = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>X Windows Font Server.</summary>
+    interface = {
+      summary = "X Windows Font Server.";
+      exports = {
+        "xfs_read_sockets" = {
+          summary = "Read xfs temporary sock files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xfs_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_sock_files_pattern($1, xfs_tmp_t, xfs_tmp_t)
+          '';
+        };
+        "xfs_stream_connect" = {
+          summary = ''
+            Connect to xfs with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xfs_tmp_t, xfs_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            stream_connect_pattern($1, xfs_tmp_t, xfs_tmp_t, xfs_t)
+          '';
+        };
+        "xfs_exec" = {
+          summary = "Execute xfs in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xfs_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, xfs_exec_t)
+          '';
+        };
+        "xfs_create_tmp_dirs" = {
+          summary = "Create xfs temporary dirs";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xfs_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 xfs_tmp_t:dir create;
+          '';
+        };
+        "xfs_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an xfs environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type xfs_t, xfs_initrc_exec_t, xfs_runtime_t;
+            type xfs_tmp_t;
+          '';
+          content = ''
+            allow $1 xfs_t:process { ptrace signal_perms };
+            ps_process_pattern($1, xfs_t)
 
-      ########################################
-      ## <summary>
-      ##	Read xfs temporary sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xfs_read_sockets',`
-      	gen_require(`
-      		type xfs_tmp_t;
-      	')
+            init_startstop_service($1, $2, xfs_t, xfs_initrc_exec_t)
 
-      	files_search_tmp($1)
-      	read_sock_files_pattern($1, xfs_tmp_t, xfs_tmp_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, xfs_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to xfs with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xfs_stream_connect',`
-      	gen_require(`
-      		type xfs_tmp_t, xfs_t;
-      	')
-
-      	files_search_tmp($1)
-      	stream_connect_pattern($1, xfs_tmp_t, xfs_tmp_t, xfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute xfs in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xfs_exec',`
-      	gen_require(`
-      		type xfs_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, xfs_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create xfs temporary dirs
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xfs_create_tmp_dirs',`
-      	gen_require(`
-      		type xfs_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 xfs_tmp_t:dir create;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an xfs environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`xfs_admin',`
-      	gen_require(`
-      		type xfs_t, xfs_initrc_exec_t, xfs_runtime_t;
-      		type xfs_tmp_t;
-      	')
-
-      	allow $1 xfs_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, xfs_t)
-
-      	init_startstop_service($1, $2, xfs_t, xfs_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, xfs_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, xfs_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, xfs_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xfs)
 

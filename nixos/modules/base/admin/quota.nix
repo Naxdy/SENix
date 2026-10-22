@@ -3,199 +3,185 @@
 { lib, ... }: {
   config.security.selinux.modules.quota = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>File system quota management.</summary>
+    interface = {
+      summary = "File system quota management.";
+      exports = {
+        "quota_domtrans" = {
+          summary = "Execute quota management tools in the quota domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type quota_t, quota_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, quota_exec_t, quota_t)
+          '';
+        };
+        "quota_run" = {
+          summary = ''
+            Execute quota management tools in
+            the quota domain, and allow the
+            specified role the quota domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role quota_roles;
+          '';
+          content = ''
+            quota_domtrans($1)
+            roleattribute $2 quota_roles;
+          '';
+          rolecap = true;
+        };
+        "quota_domtrans_nld" = {
+          summary = "Execute quota nld in the quota nld domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type quota_nld_t, quota_nld_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, quota_nld_exec_t, quota_nld_t)
+          '';
+        };
+        "quota_manage_db_files" = {
+          summary = ''
+            Create, read, write, and delete
+            quota db files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type quota_db_t;
+          '';
+          content = ''
+            allow $1 quota_db_t:file manage_file_perms;
+          '';
+        };
+        "quota_spec_filetrans_db" = {
+          summary = ''
+            Create specified objects in specified
+            directories with a type transition to
+            the quota db file type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "file_type";
+              description = "Directory to transition on.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type quota_db_t;
+          '';
+          content = ''
+            filetrans_pattern($1, $2, quota_db_t, $3, $4)
+          '';
+        };
+        "quota_dontaudit_getattr_db" = {
+          summary = ''
+            Do not audit attempts to get attributes
+            of filesystem quota data files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type quota_db_t;
+          '';
+          content = ''
+            dontaudit $1 quota_db_t:file getattr_file_perms;
+          '';
+        };
+        "quota_manage_flags" = {
+          summary = ''
+            Create, read, write, and delete
+            quota flag files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type quota_flag_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, quota_flag_t, quota_flag_t)
+          '';
+        };
+        "quota_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an quota environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type quota_nld_t, quota_t, quota_db_t;
+            type quota_nld_initrc_exec_t, quota_flag_t, quota_nld_runtime_t;
+          '';
+          content = ''
+            allow $1 { quota_nld_t quota_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { quota_nld_t quota_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute quota management tools in the quota domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_domtrans',`
-      	gen_require(`
-      		type quota_t, quota_exec_t;
-      	')
+            init_startstop_service($1, $2, quota_nld_t, quota_nld_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, quota_exec_t, quota_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute quota management tools in
-      ##	the quota domain, and allow the
-      ##	specified role the quota domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`quota_run',`
-      	gen_require(`
-      		attribute_role quota_roles;
-      	')
-
-      	quota_domtrans($1)
-      	roleattribute $2 quota_roles;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute quota nld in the quota nld domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_domtrans_nld',`
-      	gen_require(`
-      		type quota_nld_t, quota_nld_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, quota_nld_exec_t, quota_nld_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	quota db files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_manage_db_files',`
-      	gen_require(`
-      		type quota_db_t;
-      	')
-
-      	allow $1 quota_db_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in specified
-      ##	directories with a type transition to
-      ##	the quota db file type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	Directory to transition on.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_spec_filetrans_db',`
-      	gen_require(`
-      		type quota_db_t;
-      	')
-
-      	filetrans_pattern($1, $2, quota_db_t, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get attributes
-      ##	of filesystem quota data files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_dontaudit_getattr_db',`
-      	gen_require(`
-      		type quota_db_t;
-      	')
-
-      	dontaudit $1 quota_db_t:file getattr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	quota flag files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`quota_manage_flags',`
-      	gen_require(`
-      		type quota_flag_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, quota_flag_t, quota_flag_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an quota environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`quota_admin',`
-      	gen_require(`
-      		type quota_nld_t, quota_t, quota_db_t;
-      		type quota_nld_initrc_exec_t, quota_flag_t, quota_nld_runtime_t;
-      	')
-
-      	allow $1 { quota_nld_t quota_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { quota_nld_t quota_t })
-
-      	init_startstop_service($1, $2, quota_nld_t, quota_nld_initrc_exec_t)
-
-      	files_list_all($1)
-      	admin_pattern($1, { quota_db_t quota_flag_t quota_nld_runtime_t })
-      ')
-    '';
+            files_list_all($1)
+            admin_pattern($1, { quota_db_t quota_flag_t quota_nld_runtime_t })
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(quota)
 

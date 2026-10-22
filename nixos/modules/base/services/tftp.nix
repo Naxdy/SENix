@@ -3,191 +3,179 @@
 { lib, ... }: {
   config.security.selinux.modules.tftp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Trivial file transfer protocol daemon.</summary>
+    interface = {
+      summary = "Trivial file transfer protocol daemon.";
+      exports = {
+        "tftp_read_content" = {
+          summary = "Read tftp content files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tftpdir_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 tftpdir_t:dir list_dir_perms;
+            allow $1 tftpdir_t:file read_file_perms;
+            allow $1 tftpdir_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "tftp_manage_rw_content" = {
+          summary = ''
+            Create, read, write, and delete
+            tftp rw content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tftpdir_rw_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 tftpdir_rw_t:dir manage_dir_perms;
+            allow $1 tftpdir_rw_t:file manage_file_perms;
+            allow $1 tftpdir_rw_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "tftp_read_config_files" = {
+          summary = "Read tftpd configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tftpd_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 tftpd_conf_t:file read_file_perms;
+          '';
+        };
+        "tftp_manage_config_files" = {
+          summary = ''
+            Create, read, write, and delete
+            tftpd configuration files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tftpd_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 tftpd_conf_t:file manage_file_perms;
+          '';
+        };
+        "tftp_etc_filetrans_config" = {
+          summary = ''
+            Create objects in etc directories
+            with tftp conf type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type tftpd_conf_t;
+          '';
+          content = ''
+            files_etc_filetrans($1, tftpd_conf_t, $2, $3)
+          '';
+        };
+        "tftp_filetrans_tftpdir" = {
+          summary = ''
+            Create objects in tftpdir directories
+            with a private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "Private file type.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type tftpdir_rw_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            filetrans_pattern($1, tftpdir_rw_t, $2, $3, $4)
+          '';
+        };
+        "tftp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an tftp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type tftpd_t, tftpdir_t, tftpdir_rw_t, tftpd_runtime_t;
+            type tftpd_conf_t;
+          '';
+          content = ''
+            allow $1 tftpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, tftpd_t)
 
-      ########################################
-      ## <summary>
-      ##	Read tftp content files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_read_content',`
-      	gen_require(`
-      		type tftpdir_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, tftpd_conf_t)
 
-      	files_search_var_lib($1)
-      	allow $1 tftpdir_t:dir list_dir_perms;
-      	allow $1 tftpdir_t:file read_file_perms;
-      	allow $1 tftpdir_t:lnk_file read_lnk_file_perms;
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, { tftpdir_t tftpdir_rw_t })
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tftp rw content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_manage_rw_content',`
-      	gen_require(`
-      		type tftpdir_rw_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 tftpdir_rw_t:dir manage_dir_perms;
-      	allow $1 tftpdir_rw_t:file manage_file_perms;
-      	allow $1 tftpdir_rw_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read tftpd configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_read_config_files',`
-      	gen_require(`
-      		type tftpd_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 tftpd_conf_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tftpd configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_manage_config_files',`
-      	gen_require(`
-      		type tftpd_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 tftpd_conf_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in etc directories
-      ##	with tftp conf type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_etc_filetrans_config',`
-      	gen_require(`
-      		type tftpd_conf_t;
-      	')
-
-      	files_etc_filetrans($1, tftpd_conf_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in tftpdir directories
-      ##	with a private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	Private file type.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tftp_filetrans_tftpdir',`
-      	gen_require(`
-      		type tftpdir_rw_t;
-      	')
-
-      	files_search_var_lib($1)
-      	filetrans_pattern($1, tftpdir_rw_t, $2, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an tftp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`tftp_admin',`
-      	gen_require(`
-      		type tftpd_t, tftpdir_t, tftpdir_rw_t, tftpd_runtime_t;
-      		type tftpd_conf_t;
-      	')
-
-      	allow $1 tftpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, tftpd_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, tftpd_conf_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, { tftpdir_t tftpdir_rw_t })
-
-      	files_list_runtime($1)
-      	admin_pattern($1, tftpd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, tftpd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tftp)
 

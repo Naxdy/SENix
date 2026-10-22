@@ -3,143 +3,132 @@
 { lib, ... }: {
   config.security.selinux.modules.milter = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Milter mail filters.</summary>
+    interface = {
+      summary = "Milter mail filters.";
+      exports = {
+        "milter_template" = {
+          type = "template";
+          summary = "The template to define a milter domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute milter_data_type, milter_domains;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a milter domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`milter_template',`
-      	gen_require(`
-      		attribute milter_data_type, milter_domains;
-      	')
+            type $1_milter_t, milter_domains;
+            type $1_milter_exec_t;
+            init_daemon_domain($1_milter_t, $1_milter_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            type $1_milter_data_t, milter_data_type;
+            files_runtime_file($1_milter_data_t)
 
-      	type $1_milter_t, milter_domains;
-      	type $1_milter_exec_t;
-      	init_daemon_domain($1_milter_t, $1_milter_exec_t)
+            ########################################
+            #
+            # Policy
+            #
 
-      	type $1_milter_data_t, milter_data_type;
-      	files_runtime_file($1_milter_data_t)
+            manage_files_pattern($1_milter_t, $1_milter_data_t, $1_milter_data_t)
+            manage_sock_files_pattern($1_milter_t, $1_milter_data_t, $1_milter_data_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
-
-      	manage_files_pattern($1_milter_t, $1_milter_data_t, $1_milter_data_t)
-      	manage_sock_files_pattern($1_milter_t, $1_milter_data_t, $1_milter_data_t)
-
-      	auth_use_nsswitch($1_milter_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	connect to all milter domains using
-      ##	a unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`milter_stream_connect_all',`
-      	gen_require(`
-      		attribute milter_data_type, milter_domains;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, milter_data_type, milter_data_type, milter_domains)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of all  milter sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`milter_getattr_all_sockets',`
-      	gen_require(`
-      		attribute milter_data_type;
-      	')
-
-      	getattr_sock_files_pattern($1, milter_data_type, milter_data_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	spamassissin milter data content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`milter_manage_spamass_state',`
-      	gen_require(`
-      		type spamass_milter_state_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
-      	manage_dirs_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
-      	manage_lnk_files_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create spamass milter state dir
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`milter_var_lib_filetrans_spamass_state',`
-      	gen_require(`
-      		type spamass_milter_state_t;
-      	')
-
-      	files_var_lib_filetrans($1, spamass_milter_state_t, dir, "spamass-milter")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of the spamassissin milter data dir.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`milter_getattr_data_dir',`
-      	gen_require(`
-      		type spamass_milter_data_t;
-      	')
-
-      	allow $1 spamass_milter_data_t:dir getattr;
-      ')
-    '';
+            auth_use_nsswitch($1_milter_t)
+          '';
+        };
+        "milter_stream_connect_all" = {
+          summary = ''
+            connect to all milter domains using
+            a unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute milter_data_type, milter_domains;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, milter_data_type, milter_data_type, milter_domains)
+          '';
+        };
+        "milter_getattr_all_sockets" = {
+          summary = "Get attributes of all  milter sock files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute milter_data_type;
+          '';
+          content = ''
+            getattr_sock_files_pattern($1, milter_data_type, milter_data_type)
+          '';
+        };
+        "milter_manage_spamass_state" = {
+          summary = ''
+            Create, read, write, and delete
+            spamassissin milter data content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type spamass_milter_state_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
+            manage_dirs_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
+            manage_lnk_files_pattern($1, spamass_milter_state_t, spamass_milter_state_t)
+          '';
+        };
+        "milter_var_lib_filetrans_spamass_state" = {
+          summary = "create spamass milter state dir";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type spamass_milter_state_t;
+          '';
+          content = ''
+            files_var_lib_filetrans($1, spamass_milter_state_t, dir, "spamass-milter")
+          '';
+        };
+        "milter_getattr_data_dir" = {
+          summary = "Get the attributes of the spamassissin milter data dir.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type spamass_milter_data_t;
+          '';
+          content = ''
+            allow $1 spamass_milter_data_t:dir getattr;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(milter)
 

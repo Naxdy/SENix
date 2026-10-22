@@ -3,188 +3,173 @@
 { lib, ... }: {
   config.security.selinux.modules.cobbler = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Cobbler installation server.</summary>
+    interface = {
+      summary = "Cobbler installation server.";
+      exports = {
+        "cobblerd_domtrans" = {
+          summary = "Execute a domain transition to run cobblerd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cobblerd_t, cobblerd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, cobblerd_exec_t, cobblerd_t)
+          '';
+        };
+        "cobblerd_initrc_domtrans" = {
+          summary = ''
+            Execute cobblerd init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cobblerd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, cobblerd_initrc_exec_t)
+          '';
+        };
+        "cobbler_read_config" = {
+          summary = "Read cobbler configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cobbler_etc_t;
+          '';
+          content = ''
+            read_files_pattern($1, cobbler_etc_t, cobbler_etc_t)
+            files_search_etc($1)
+          '';
+        };
+        "cobbler_dontaudit_rw_log" = {
+          summary = ''
+            Do not audit attempts to read and write
+            cobbler log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cobbler_var_log_t;
+          '';
+          content = ''
+            dontaudit $1 cobbler_var_log_t:file rw_file_perms;
+          '';
+        };
+        "cobbler_search_lib" = {
+          summary = "Search cobbler lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cobbler_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            search_dirs_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
+          '';
+        };
+        "cobbler_read_lib_files" = {
+          summary = "Read cobbler lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cobbler_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
+          '';
+        };
+        "cobbler_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            cobbler lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cobbler_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
+          '';
+        };
+        "cobbler_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an cobbler environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type cobblerd_t, cobbler_var_lib_t, cobbler_var_log_t;
+            type cobbler_etc_t, cobblerd_initrc_exec_t, cobbler_content_t;
+            type cobbler_tmp_t;
+          '';
+          content = ''
+            allow $1 cobblerd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, cobblerd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run cobblerd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobblerd_domtrans',`
-      	gen_require(`
-      		type cobblerd_t, cobblerd_exec_t;
-      	')
+            init_startstop_service($1, $2, cobblerd_t, cobblerd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, cobblerd_exec_t, cobblerd_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, cobbler_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute cobblerd init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobblerd_initrc_domtrans',`
-      	gen_require(`
-      		type cobblerd_initrc_exec_t;
-      	')
+            files_search_tmp($1)
+            admin_pattern($1, cobbler_tmp_t)
 
-      	init_labeled_script_domtrans($1, cobblerd_initrc_exec_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, cobbler_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Read cobbler configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobbler_read_config',`
-      	gen_require(`
-      		type cobbler_etc_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, cobbler_var_log_t)
 
-      	read_files_pattern($1, cobbler_etc_t, cobbler_etc_t)
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and write
-      ##	cobbler log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobbler_dontaudit_rw_log',`
-      	gen_require(`
-      		type cobbler_var_log_t;
-      	')
-
-      	dontaudit $1 cobbler_var_log_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search cobbler lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobbler_search_lib',`
-      	gen_require(`
-      		type cobbler_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	search_dirs_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read cobbler lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobbler_read_lib_files',`
-      	gen_require(`
-      		type cobbler_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	cobbler lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cobbler_manage_lib_files',`
-      	gen_require(`
-      		type cobbler_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, cobbler_var_lib_t, cobbler_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an cobbler environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cobbler_admin',`
-      	gen_require(`
-      		type cobblerd_t, cobbler_var_lib_t, cobbler_var_log_t;
-      		type cobbler_etc_t, cobblerd_initrc_exec_t, cobbler_content_t;
-      		type cobbler_tmp_t;
-      	')
-
-      	allow $1 cobblerd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, cobblerd_t)
-
-      	init_startstop_service($1, $2, cobblerd_t, cobblerd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, cobbler_etc_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, cobbler_tmp_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, cobbler_var_lib_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, cobbler_var_log_t)
-
-      	apache_search_sys_content($1)
-      	admin_pattern($1, cobbler_content_t)
-      ')
-    '';
+            apache_search_sys_content($1)
+            admin_pattern($1, cobbler_content_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cobbler)
 

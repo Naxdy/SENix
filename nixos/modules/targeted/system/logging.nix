@@ -27,6 +27,9 @@
   # same problem, its solution is mirrored.
   security.selinux.modules.senix_logging = {
     layer = "system";
+    interface = {
+      summary = "SENix journald and syslogd policy additions.";
+    };
     typeEnforcement = ''
       policy_module(senix_logging)
 

@@ -3,62 +3,59 @@
 { lib, ... }: {
   config.security.selinux.modules.dkim = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>DomainKeys Identified Mail milter.</summary>
+    interface = {
+      summary = "DomainKeys Identified Mail milter.";
+      exports = {
+        "dkim_stream_connect" = {
+          summary = "Allow a domain to talk to dkim via Unix domain socket";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dkim_milter_data_t, dkim_milter_t;
+          '';
+          content = ''
+            stream_connect_pattern($1, dkim_milter_data_t, dkim_milter_data_t, dkim_milter_t)
+          '';
+        };
+        "dkim_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dkim environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dkim_milter_t, dkim_milter_initrc_exec_t, dkim_milter_private_key_t;
+            type dkim_milter_data_t;
+          '';
+          content = ''
+            allow $1 dkim_milter_t:process { ptrace signal_perms };
+            ps_process_pattern($1, dkim_milter_t)
 
-      ########################################
-      ## <summary>
-      ##	Allow a domain to talk to dkim via Unix domain socket
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dkim_stream_connect',`
-      	gen_require(`
-      		type dkim_milter_data_t, dkim_milter_t;
-      	')
+            init_startstop_service($1, $2, dkim_milter_t, dkim_milter_initrc_exec_t)
 
-      	stream_connect_pattern($1, dkim_milter_data_t, dkim_milter_data_t, dkim_milter_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, dkim_milter_private_key_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dkim environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dkim_admin',`
-      	gen_require(`
-      		type dkim_milter_t, dkim_milter_initrc_exec_t, dkim_milter_private_key_t;
-      		type dkim_milter_data_t;
-      	')
-
-      	allow $1 dkim_milter_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, dkim_milter_t)
-
-      	init_startstop_service($1, $2, dkim_milter_t, dkim_milter_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, dkim_milter_private_key_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, dkim_milter_data_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, dkim_milter_data_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dkim)
 

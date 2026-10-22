@@ -3,110 +3,98 @@
 { lib, ... }: {
   config.security.selinux.modules.livecd = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Tool for building alternate livecd for different os and policy versions.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run livecd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`livecd_domtrans',`
-      	gen_require(`
-      		type livecd_t, livecd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, livecd_exec_t, livecd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute livecd in the livecd
-      ##	domain, and allow the specified
-      ##	role the livecd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`livecd_run',`
-      	gen_require(`
-      		attribute_role livecd_roles;
-      	')
-
-      	livecd_domtrans($1)
-      	roleattribute $2 livecd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read livecd temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`livecd_read_tmp_files',`
-      	gen_require(`
-      		type livecd_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	read_files_pattern($1, livecd_tmp_t, livecd_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write livecd temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`livecd_rw_tmp_files',`
-      	gen_require(`
-      		type livecd_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	rw_files_pattern($1, livecd_tmp_t, livecd_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write livecd semaphores.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`livecd_rw_semaphores',`
-      	gen_require(`
-      		type livecd_t;
-      	')
-
-      	allow $1 livecd_t:sem rw_sem_perms;
-      ')
-    '';
+    interface = {
+      summary = "Tool for building alternate livecd for different os and policy versions.";
+      exports = {
+        "livecd_domtrans" = {
+          summary = "Execute a domain transition to run livecd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type livecd_t, livecd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, livecd_exec_t, livecd_t)
+          '';
+        };
+        "livecd_run" = {
+          summary = ''
+            Execute livecd in the livecd
+            domain, and allow the specified
+            role the livecd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role livecd_roles;
+          '';
+          content = ''
+            livecd_domtrans($1)
+            roleattribute $2 livecd_roles;
+          '';
+        };
+        "livecd_read_tmp_files" = {
+          summary = "Read livecd temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type livecd_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_files_pattern($1, livecd_tmp_t, livecd_tmp_t)
+          '';
+        };
+        "livecd_rw_tmp_files" = {
+          summary = "Read and write livecd temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type livecd_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            rw_files_pattern($1, livecd_tmp_t, livecd_tmp_t)
+          '';
+        };
+        "livecd_rw_semaphores" = {
+          summary = "Read and write livecd semaphores.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type livecd_t;
+          '';
+          content = ''
+            allow $1 livecd_t:sem rw_sem_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(livecd)
 

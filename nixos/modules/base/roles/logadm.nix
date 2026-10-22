@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.logadm = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Log administrator role</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the log administrator role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`logadm_role_change',`
-      	gen_require(`
-      		role logadm_r;
-      	')
-
-      	allow $1 logadm_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the log administrator role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the log administrator role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`logadm_role_change_to',`
-      	gen_require(`
-      		role logadm_r;
-      	')
-
-      	allow logadm_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Log administrator role";
+      exports = {
+        "logadm_role_change" = {
+          summary = "Change to the log administrator role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role logadm_r;
+          '';
+          content = ''
+            allow $1 logadm_r;
+          '';
+          rolecap = true;
+        };
+        "logadm_role_change_to" = {
+          summary = "Change from the log administrator role.";
+          desc = ''
+            <p>
+            Change from the log administrator role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role logadm_r;
+          '';
+          content = ''
+            allow logadm_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(logadm)
 

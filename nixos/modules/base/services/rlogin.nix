@@ -3,158 +3,144 @@
 { lib, ... }: {
   config.security.selinux.modules.rlogin = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Remote login daemon.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute rlogind in the rlogin domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_domtrans',`
-      	gen_require(`
-      		type rlogind_t, rlogind_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rlogind_exec_t, rlogind_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rlogin user home content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_read_home_content',`
-      	gen_require(`
-      		type rlogind_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	list_dirs_pattern($1, rlogind_home_t, rlogind_home_t)
-      	read_files_pattern($1, rlogind_home_t, rlogind_home_t)
-      	read_lnk_files_pattern($1, rlogind_home_t, rlogind_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rlogind home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_manage_rlogind_home_files',`
-      	gen_require(`
-      		type rlogind_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 rlogind_home_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel rlogind home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_relabel_rlogind_home_files',`
-      	gen_require(`
-      		type rlogind_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 rlogind_home_t:file relabel_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in user home
-      ##	directories with the rlogind home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_home_filetrans_logind_home',`
-      	gen_require(`
-      		type rlogind_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, rlogind_home_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rlogind temporary content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_manage_rlogind_tmp_content',`
-      	gen_require(`
-      		type rlogind_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 rlogind_tmp_t:dir manage_dir_perms;
-      	allow $1 rlogind_tmp_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel rlogind temporary content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rlogin_relabel_rlogind_tmp_content',`
-      	gen_require(`
-      		type rlogind_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 rlogind_tmp_t:dir relabel_dir_perms;
-      	allow $1 rlogind_tmp_t:file relabel_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "Remote login daemon.";
+      exports = {
+        "rlogin_domtrans" = {
+          summary = "Execute rlogind in the rlogin domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rlogind_t, rlogind_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rlogind_exec_t, rlogind_t)
+          '';
+        };
+        "rlogin_read_home_content" = {
+          summary = "Read rlogin user home content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rlogind_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            list_dirs_pattern($1, rlogind_home_t, rlogind_home_t)
+            read_files_pattern($1, rlogind_home_t, rlogind_home_t)
+            read_lnk_files_pattern($1, rlogind_home_t, rlogind_home_t)
+          '';
+        };
+        "rlogin_manage_rlogind_home_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rlogind home files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rlogind_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 rlogind_home_t:file manage_file_perms;
+          '';
+        };
+        "rlogin_relabel_rlogind_home_files" = {
+          summary = "Relabel rlogind home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rlogind_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 rlogind_home_t:file relabel_file_perms;
+          '';
+        };
+        "rlogin_home_filetrans_logind_home" = {
+          summary = ''
+            Create objects in user home
+            directories with the rlogind home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type rlogind_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, rlogind_home_t, $2, $3)
+          '';
+        };
+        "rlogin_manage_rlogind_tmp_content" = {
+          summary = ''
+            Create, read, write, and delete
+            rlogind temporary content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rlogind_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 rlogind_tmp_t:dir manage_dir_perms;
+            allow $1 rlogind_tmp_t:file manage_file_perms;
+          '';
+        };
+        "rlogin_relabel_rlogind_tmp_content" = {
+          summary = "Relabel rlogind temporary content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rlogind_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 rlogind_tmp_t:dir relabel_dir_perms;
+            allow $1 rlogind_tmp_t:file relabel_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rlogin)
 

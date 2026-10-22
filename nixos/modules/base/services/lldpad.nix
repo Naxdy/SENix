@@ -3,63 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.lldpad = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Intel LLDP Agent.</summary>
+    interface = {
+      summary = "Intel LLDP Agent.";
+      exports = {
+        "lldpad_dgram_send" = {
+          summary = "Send to lldpad with a unix dgram socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type lldpad_t, lldpad_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            dgram_send_pattern($1, lldpad_runtime_t, lldpad_runtime_t, lldpad_t)
+          '';
+        };
+        "lldpad_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an lldpad environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type lldpad_t, lldpad_initrc_exec_t, lldpad_var_lib_t;
+            type lldpad_runtime_t;
+          '';
+          content = ''
+            allow $1 lldpad_t:process { ptrace signal_perms };
+            ps_process_pattern($1, lldpad_t)
 
-      #######################################
-      ## <summary>
-      ##	Send to lldpad with a unix dgram socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lldpad_dgram_send',`
-      	gen_require(`
-      		type lldpad_t, lldpad_runtime_t;
-      	')
+            init_startstop_service($1, $2, lldpad_t, lldpad_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	dgram_send_pattern($1, lldpad_runtime_t, lldpad_runtime_t, lldpad_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, lldpad_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an lldpad environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lldpad_admin',`
-      	gen_require(`
-      		type lldpad_t, lldpad_initrc_exec_t, lldpad_var_lib_t;
-      		type lldpad_runtime_t;
-      	')
-
-      	allow $1 lldpad_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, lldpad_t)
-
-      	init_startstop_service($1, $2, lldpad_t, lldpad_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, lldpad_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, lldpad_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, lldpad_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(lldpad)
 

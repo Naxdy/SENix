@@ -3,42 +3,42 @@
 { lib, ... }: {
   config.security.selinux.modules.dphysswapfile = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Set up, mount/unmount, and delete an swap file.</summary>
+    interface = {
+      summary = "Set up, mount/unmount, and delete an swap file.";
+      exports = {
+        "dphysswapfile_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dphys-swapfile environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dphysswapfile_t, dphysswapfile_conf_t;
+            type dphysswapfile_initrc_exec_t, dphysswapfile_unit_t;
+          '';
+          content = ''
+            admin_process_pattern($1, dphysswapfile_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dphys-swapfile environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dphysswapfile_admin',`
-      	gen_require(`
-      		type dphysswapfile_t, dphysswapfile_conf_t;
-      		type dphysswapfile_initrc_exec_t, dphysswapfile_unit_t;
-      	')
+            init_startstop_service($1, $2, dphysswapfile_t, dphysswapfile_initrc_exec_t, dphysswapfile_unit_t)
 
-      	admin_process_pattern($1, dphysswapfile_t)
+            files_search_etc($1)
+            admin_pattern($1, dphysswapfile_conf_t)
 
-      	init_startstop_service($1, $2, dphysswapfile_t, dphysswapfile_initrc_exec_t, dphysswapfile_unit_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, dphysswapfile_conf_t)
-
-      	# do not grant access to swap file for now
-      ')
-    '';
+            # do not grant access to swap file for now
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dphysswapfile)
 

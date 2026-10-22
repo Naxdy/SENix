@@ -3,30 +3,31 @@
 { lib, ... }: {
   config.security.selinux.modules.cgmanager = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Control Group manager daemon.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Connect to cgmanager with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cgmanager_stream_connect',`
-      	gen_require(`
-      		type cgmanager_t, cgmanager_cgroup_t;
-      	')
-
-      	fs_search_cgroup_dirs($1)
-      	list_dirs_pattern($1, cgmanager_cgroup_t, cgmanager_cgroup_t)
-      	stream_connect_pattern($1, cgmanager_cgroup_t, cgmanager_cgroup_t, cgmanager_t)
-      ')
-    '';
+    interface = {
+      summary = "Control Group manager daemon.";
+      exports = {
+        "cgmanager_stream_connect" = {
+          summary = ''
+            Connect to cgmanager with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgmanager_t, cgmanager_cgroup_t;
+          '';
+          content = ''
+            fs_search_cgroup_dirs($1)
+            list_dirs_pattern($1, cgmanager_cgroup_t, cgmanager_cgroup_t)
+            stream_connect_pattern($1, cgmanager_cgroup_t, cgmanager_cgroup_t, cgmanager_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cgmanager)
 

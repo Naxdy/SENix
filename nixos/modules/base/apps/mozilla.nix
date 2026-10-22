@@ -3,584 +3,540 @@
 { lib, ... }: {
   config.security.selinux.modules.mozilla = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for Mozilla and related web browsers.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Role access for mozilla.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`mozilla_role',`
-      	gen_require(`
-      		type mozilla_t, mozilla_exec_t, mozilla_home_t;
-      		type mozilla_tmp_t, mozilla_tmpfs_t, mozilla_plugin_tmp_t;
-      		type mozilla_plugin_tmpfs_t, mozilla_plugin_home_t;
-      		attribute_role mozilla_roles;
-      	')
-
-      	########################################
-      	#
-      	# Declarations
-      	#
-
-      	roleattribute $4 mozilla_roles;
-
-      	########################################
-      	#
-      	# Policy
-      	#
-
-      	domtrans_pattern($3, mozilla_exec_t, mozilla_t)
-
-      	allow $3 mozilla_t:process { noatsecure ptrace rlimitinh siginh signal_perms };
-      	ps_process_pattern($3, mozilla_t)
-
-      	allow mozilla_t $3:process signull;
-      	allow mozilla_t $3:unix_stream_socket connectto;
-
-      	allow $3 mozilla_t:fd use;
-      	allow $3 mozilla_t:shm rw_shm_perms;
-
-      	stream_connect_pattern($3, mozilla_tmpfs_t, mozilla_tmpfs_t, mozilla_t)
-
-      	allow $2 { mozilla_home_t mozilla_plugin_home_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { mozilla_home_t mozilla_plugin_home_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 mozilla_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".galeon")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".mozilla")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".netscape")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".phoenix")
-
-      	filetrans_pattern($2, mozilla_home_t, mozilla_plugin_home_t, dir, "plugins")
-
-      	allow $2 { mozilla_tmp_t mozilla_plugin_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { mozilla_tmp_t mozilla_plugin_tmp_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 mozilla_plugin_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-
-      	allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-
-      	optional_policy(`
-      		mozilla_dbus_chat($3)
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, mozilla_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Role access for mozilla plugin.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_role_plugin',`
-      	gen_require(`
-      		type mozilla_plugin_t, mozilla_plugin_tmp_t, mozilla_plugin_tmpfs_t;
-      		type mozilla_plugin_rw_t, mozilla_plugin_config_t, mozilla_home_t;
-      	')
-
-      	mozilla_run_plugin($2, $1)
-      	mozilla_run_plugin_config($2, $1)
-
-      	allow $2 { mozilla_plugin_t mozilla_plugin_config_t }:process { ptrace signal_perms };
-      	ps_process_pattern($2, { mozilla_plugin_t mozilla_plugin_config_t })
-
-      	allow $2 mozilla_plugin_t:unix_stream_socket rw_socket_perms;
-      	allow $2 mozilla_plugin_t:fd use;
-
-      	stream_connect_pattern($2, mozilla_plugin_tmpfs_t, mozilla_plugin_tmpfs_t, mozilla_plugin_t)
-
-      	allow mozilla_plugin_t $2:process signull;
-      	allow mozilla_plugin_t $2:unix_stream_socket { connectto rw_socket_perms };
-      	allow mozilla_plugin_t $2:unix_dgram_socket { rw_socket_perms sendto };
-      	allow mozilla_plugin_t $2:shm { destroy rw_shm_perms };
-      	allow mozilla_plugin_t $2:sem create_sem_perms;
-
-      	allow $2 mozilla_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 mozilla_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 mozilla_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".galeon")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".mozilla")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".netscape")
-      	userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".phoenix")
-
-      	allow $2 mozilla_plugin_tmp_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 mozilla_plugin_tmp_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 mozilla_plugin_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-
-      	allow $2 mozilla_plugin_tmpfs_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 mozilla_plugin_tmpfs_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 mozilla_plugin_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 mozilla_plugin_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-
-      	allow $2 mozilla_plugin_rw_t:dir list_dir_perms;
-      	allow $2 mozilla_plugin_rw_t:file read_file_perms;
-      	allow $2 mozilla_plugin_rw_t:lnk_file read_lnk_file_perms;
-
-      	can_exec($2, mozilla_plugin_rw_t)
-
-      	optional_policy(`
-      		mozilla_dbus_chat_plugin($2)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read mozilla home directory content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_read_user_home_files',`
-      	gen_require(`
-      		type mozilla_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 mozilla_home_t:dir list_dir_perms;
-      	allow $1 mozilla_home_t:file read_file_perms;
-      	allow $1 mozilla_home_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write mozilla home directory files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_write_user_home_files',`
-      	gen_require(`
-      		type mozilla_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	write_files_pattern($1, mozilla_home_t, mozilla_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and
-      ##	write mozilla home directory files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_dontaudit_rw_user_home_files',`
-      	gen_require(`
-      		type mozilla_home_t;
-      	')
-
-      	dontaudit $1 mozilla_home_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempt to Create,
-      ##	read, write, and delete mozilla
-      ##	home directory content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_dontaudit_manage_user_home_files',`
-      	gen_require(`
-      		type mozilla_home_t;
-      	')
-
-      	dontaudit $1 mozilla_home_t:dir manage_dir_perms;
-      	dontaudit $1 mozilla_home_t:file manage_file_perms;
-      	dontaudit $1 mozilla_home_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mozilla plugin home directory files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_exec_user_plugin_home_files',`
-      	gen_require(`
-      		type mozilla_home_t, mozilla_plugin_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	exec_files_pattern($1, { mozilla_home_t mozilla_plugin_home_t }, mozilla_plugin_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mozilla plugin home directory file
-      ##	text relocation.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_execmod_user_plugin_home_files',`
-      	gen_require(`
-      		type mozilla_plugin_home_t;
-      	')
-
-      	allow $1 mozilla_plugin_home_t:file execmod;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read temporary mozilla files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_read_tmp_files',`
-      	gen_require(`
-      		type mozilla_tmp_t;
-      	')
-
-      	read_files_pattern($1, mozilla_tmp_t, mozilla_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Run mozilla in the mozilla domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_domtrans',`
-      	gen_require(`
-      		type mozilla_t, mozilla_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mozilla_exec_t, mozilla_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run mozilla plugin.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_domtrans_plugin',`
-      	gen_require(`
-      		type mozilla_plugin_t, mozilla_plugin_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mozilla_plugin_exec_t, mozilla_plugin_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mozilla plugin in the
-      ##	mozilla plugin domain, and allow
-      ##	the specified role the mozilla
-      ##	plugin domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_run_plugin',`
-      	gen_require(`
-      		attribute_role mozilla_plugin_roles;
-      	')
-
-      	mozilla_domtrans_plugin($1)
-      	roleattribute $2 mozilla_plugin_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run mozilla plugin config.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_domtrans_plugin_config',`
-      	gen_require(`
-      		type mozilla_plugin_config_t, mozilla_plugin_config_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mozilla_plugin_config_exec_t, mozilla_plugin_config_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mozilla plugin config in
-      ##	the mozilla plugin config domain,
-      ##	and allow the specified role the
-      ##	mozilla plugin config domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_run_plugin_config',`
-      	gen_require(`
-      		attribute_role mozilla_plugin_config_roles;
-      	')
-
-      	mozilla_domtrans_plugin_config($1)
-      	roleattribute $2 mozilla_plugin_config_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	mozilla over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_dbus_chat',`
-      	gen_require(`
-      		type mozilla_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 mozilla_t:dbus send_msg;
-      	allow mozilla_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	mozilla plugin over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_dbus_chat_plugin',`
-      	gen_require(`
-      		type mozilla_plugin_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 mozilla_plugin_t:dbus send_msg;
-      	allow mozilla_plugin_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write mozilla TCP sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_rw_tcp_sockets',`
-      	gen_require(`
-      		type mozilla_t;
-      	')
-
-      	allow $1 mozilla_t:tcp_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	mozilla plugin rw files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_manage_plugin_rw_files',`
-      	gen_require(`
-      		type mozilla_plugin_rw_t;
-      	')
-
-      	libs_search_lib($1)
-      	manage_files_pattern($1, mozilla_plugin_rw_t, mozilla_plugin_rw_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read mozilla_plugin tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_plugin_read_tmpfs_files',`
-      	gen_require(`
-      		type mozilla_plugin_tmpfs_t;
-      	')
-
-      	fs_search_tmpfs($1)
-      	allow $1 mozilla_plugin_tmpfs_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete mozilla_plugin tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_plugin_delete_tmpfs_files',`
-      	gen_require(`
-      		type mozilla_plugin_tmpfs_t;
-      	')
-
-      	fs_search_tmpfs($1)
-      	allow $1 mozilla_plugin_tmpfs_t:file delete_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	generic mozilla plugin home content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_manage_generic_plugin_home_content',`
-      	gen_require(`
-      		type mozilla_plugin_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 mozilla_plugin_home_t:dir manage_dir_perms;
-      	allow $1 mozilla_plugin_home_t:file manage_file_perms;
-      	allow $1 mozilla_plugin_home_t:fifo_file manage_fifo_file_perms;
-      	allow $1 mozilla_plugin_home_t:lnk_file manage_lnk_file_perms;
-      	allow $1 mozilla_plugin_home_t:sock_file manage_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in user home
-      ##	directories with the generic mozilla
-      ##	plugin home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mozilla_home_filetrans_plugin_home',`
-      	gen_require(`
-      		type mozilla_plugin_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, mozilla_plugin_home_t, $2, $3)
-      ')
-    '';
+    interface = {
+      summary = "Policy for Mozilla and related web browsers.";
+      exports = {
+        "mozilla_role" = {
+          type = "template";
+          summary = "Role access for mozilla.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type mozilla_t, mozilla_exec_t, mozilla_home_t;
+            type mozilla_tmp_t, mozilla_tmpfs_t, mozilla_plugin_tmp_t;
+            type mozilla_plugin_tmpfs_t, mozilla_plugin_home_t;
+            attribute_role mozilla_roles;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
+
+            roleattribute $4 mozilla_roles;
+
+            ########################################
+            #
+            # Policy
+            #
+
+            domtrans_pattern($3, mozilla_exec_t, mozilla_t)
+
+            allow $3 mozilla_t:process { noatsecure ptrace rlimitinh siginh signal_perms };
+            ps_process_pattern($3, mozilla_t)
+
+            allow mozilla_t $3:process signull;
+            allow mozilla_t $3:unix_stream_socket connectto;
+
+            allow $3 mozilla_t:fd use;
+            allow $3 mozilla_t:shm rw_shm_perms;
+
+            stream_connect_pattern($3, mozilla_tmpfs_t, mozilla_tmpfs_t, mozilla_t)
+
+            allow $2 { mozilla_home_t mozilla_plugin_home_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { mozilla_home_t mozilla_plugin_home_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 mozilla_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".galeon")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".mozilla")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".netscape")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".phoenix")
+
+            filetrans_pattern($2, mozilla_home_t, mozilla_plugin_home_t, dir, "plugins")
+
+            allow $2 { mozilla_tmp_t mozilla_plugin_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { mozilla_tmp_t mozilla_plugin_tmp_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 mozilla_plugin_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+
+            allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 { mozilla_tmpfs_t mozilla_plugin_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+
+            optional_policy(`
+                    mozilla_dbus_chat($3)
+            ')
+
+            optional_policy(`
+                    systemd_user_app_status($1, mozilla_t)
+            ')
+          '';
+        };
+        "mozilla_role_plugin" = {
+          summary = "Role access for mozilla plugin.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "User domain for the role.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_t, mozilla_plugin_tmp_t, mozilla_plugin_tmpfs_t;
+            type mozilla_plugin_rw_t, mozilla_plugin_config_t, mozilla_home_t;
+          '';
+          content = ''
+            mozilla_run_plugin($2, $1)
+            mozilla_run_plugin_config($2, $1)
+
+            allow $2 { mozilla_plugin_t mozilla_plugin_config_t }:process { ptrace signal_perms };
+            ps_process_pattern($2, { mozilla_plugin_t mozilla_plugin_config_t })
+
+            allow $2 mozilla_plugin_t:unix_stream_socket rw_socket_perms;
+            allow $2 mozilla_plugin_t:fd use;
+
+            stream_connect_pattern($2, mozilla_plugin_tmpfs_t, mozilla_plugin_tmpfs_t, mozilla_plugin_t)
+
+            allow mozilla_plugin_t $2:process signull;
+            allow mozilla_plugin_t $2:unix_stream_socket { connectto rw_socket_perms };
+            allow mozilla_plugin_t $2:unix_dgram_socket { rw_socket_perms sendto };
+            allow mozilla_plugin_t $2:shm { destroy rw_shm_perms };
+            allow mozilla_plugin_t $2:sem create_sem_perms;
+
+            allow $2 mozilla_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 mozilla_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 mozilla_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".galeon")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".mozilla")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".netscape")
+            userdom_user_home_dir_filetrans($2, mozilla_home_t, dir, ".phoenix")
+
+            allow $2 mozilla_plugin_tmp_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 mozilla_plugin_tmp_t:file { manage_file_perms relabel_file_perms };
+            allow $2 mozilla_plugin_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+
+            allow $2 mozilla_plugin_tmpfs_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 mozilla_plugin_tmpfs_t:file { manage_file_perms relabel_file_perms };
+            allow $2 mozilla_plugin_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 mozilla_plugin_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+
+            allow $2 mozilla_plugin_rw_t:dir list_dir_perms;
+            allow $2 mozilla_plugin_rw_t:file read_file_perms;
+            allow $2 mozilla_plugin_rw_t:lnk_file read_lnk_file_perms;
+
+            can_exec($2, mozilla_plugin_rw_t)
+
+            optional_policy(`
+                    mozilla_dbus_chat_plugin($2)
+            ')
+          '';
+        };
+        "mozilla_read_user_home_files" = {
+          summary = "Read mozilla home directory content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 mozilla_home_t:dir list_dir_perms;
+            allow $1 mozilla_home_t:file read_file_perms;
+            allow $1 mozilla_home_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "mozilla_write_user_home_files" = {
+          summary = "Write mozilla home directory files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            write_files_pattern($1, mozilla_home_t, mozilla_home_t)
+          '';
+        };
+        "mozilla_dontaudit_rw_user_home_files" = {
+          summary = ''
+            Do not audit attempts to read and
+            write mozilla home directory files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type mozilla_home_t;
+          '';
+          content = ''
+            dontaudit $1 mozilla_home_t:file rw_file_perms;
+          '';
+        };
+        "mozilla_dontaudit_manage_user_home_files" = {
+          summary = ''
+            Do not audit attempt to Create,
+            read, write, and delete mozilla
+            home directory content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type mozilla_home_t;
+          '';
+          content = ''
+            dontaudit $1 mozilla_home_t:dir manage_dir_perms;
+            dontaudit $1 mozilla_home_t:file manage_file_perms;
+            dontaudit $1 mozilla_home_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "mozilla_exec_user_plugin_home_files" = {
+          summary = "Execute mozilla plugin home directory files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_home_t, mozilla_plugin_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            exec_files_pattern($1, { mozilla_home_t mozilla_plugin_home_t }, mozilla_plugin_home_t)
+          '';
+        };
+        "mozilla_execmod_user_plugin_home_files" = {
+          summary = ''
+            Mozilla plugin home directory file
+            text relocation.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_home_t;
+          '';
+          content = ''
+            allow $1 mozilla_plugin_home_t:file execmod;
+          '';
+        };
+        "mozilla_read_tmp_files" = {
+          summary = "Read temporary mozilla files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_tmp_t;
+          '';
+          content = ''
+            read_files_pattern($1, mozilla_tmp_t, mozilla_tmp_t)
+          '';
+        };
+        "mozilla_domtrans" = {
+          summary = "Run mozilla in the mozilla domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mozilla_t, mozilla_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mozilla_exec_t, mozilla_t)
+          '';
+        };
+        "mozilla_domtrans_plugin" = {
+          summary = ''
+            Execute a domain transition to
+            run mozilla plugin.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_t, mozilla_plugin_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mozilla_plugin_exec_t, mozilla_plugin_t)
+          '';
+        };
+        "mozilla_run_plugin" = {
+          summary = ''
+            Execute mozilla plugin in the
+            mozilla plugin domain, and allow
+            the specified role the mozilla
+            plugin domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role mozilla_plugin_roles;
+          '';
+          content = ''
+            mozilla_domtrans_plugin($1)
+            roleattribute $2 mozilla_plugin_roles;
+          '';
+        };
+        "mozilla_domtrans_plugin_config" = {
+          summary = ''
+            Execute a domain transition to
+            run mozilla plugin config.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_config_t, mozilla_plugin_config_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mozilla_plugin_config_exec_t, mozilla_plugin_config_t)
+          '';
+        };
+        "mozilla_run_plugin_config" = {
+          summary = ''
+            Execute mozilla plugin config in
+            the mozilla plugin config domain,
+            and allow the specified role the
+            mozilla plugin config domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role mozilla_plugin_config_roles;
+          '';
+          content = ''
+            mozilla_domtrans_plugin_config($1)
+            roleattribute $2 mozilla_plugin_config_roles;
+          '';
+        };
+        "mozilla_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            mozilla over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 mozilla_t:dbus send_msg;
+            allow mozilla_t $1:dbus send_msg;
+          '';
+        };
+        "mozilla_dbus_chat_plugin" = {
+          summary = ''
+            Send and receive messages from
+            mozilla plugin over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 mozilla_plugin_t:dbus send_msg;
+            allow mozilla_plugin_t $1:dbus send_msg;
+          '';
+        };
+        "mozilla_rw_tcp_sockets" = {
+          summary = "Read and write mozilla TCP sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_t;
+          '';
+          content = ''
+            allow $1 mozilla_t:tcp_socket rw_socket_perms;
+          '';
+        };
+        "mozilla_manage_plugin_rw_files" = {
+          summary = ''
+            Create, read, write, and delete
+            mozilla plugin rw files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_rw_t;
+          '';
+          content = ''
+            libs_search_lib($1)
+            manage_files_pattern($1, mozilla_plugin_rw_t, mozilla_plugin_rw_t)
+          '';
+        };
+        "mozilla_plugin_read_tmpfs_files" = {
+          summary = "Read mozilla_plugin tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_tmpfs_t;
+          '';
+          content = ''
+            fs_search_tmpfs($1)
+            allow $1 mozilla_plugin_tmpfs_t:file read_file_perms;
+          '';
+        };
+        "mozilla_plugin_delete_tmpfs_files" = {
+          summary = "Delete mozilla_plugin tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_tmpfs_t;
+          '';
+          content = ''
+            fs_search_tmpfs($1)
+            allow $1 mozilla_plugin_tmpfs_t:file delete_file_perms;
+          '';
+        };
+        "mozilla_manage_generic_plugin_home_content" = {
+          summary = ''
+            Create, read, write, and delete
+            generic mozilla plugin home content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 mozilla_plugin_home_t:dir manage_dir_perms;
+            allow $1 mozilla_plugin_home_t:file manage_file_perms;
+            allow $1 mozilla_plugin_home_t:fifo_file manage_fifo_file_perms;
+            allow $1 mozilla_plugin_home_t:lnk_file manage_lnk_file_perms;
+            allow $1 mozilla_plugin_home_t:sock_file manage_sock_file_perms;
+          '';
+        };
+        "mozilla_home_filetrans_plugin_home" = {
+          summary = ''
+            Create objects in user home
+            directories with the generic mozilla
+            plugin home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type mozilla_plugin_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, mozilla_plugin_home_t, $2, $3)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mozilla)
 

@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.collectd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Statistics collection daemon for filling RRD files.</summary>
+    interface = {
+      summary = "Statistics collection daemon for filling RRD files.";
+      exports = {
+        "collectd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an collectd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type collectd_t, collectd_initrc_exec_t, collectd_runtime_t;
+            type collectd_var_lib_t;
+          '';
+          content = ''
+            allow $1 collectd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, collectd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an collectd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`collectd_admin',`
-      	gen_require(`
-      		type collectd_t, collectd_initrc_exec_t, collectd_runtime_t;
-      		type collectd_var_lib_t;
-      	')
+            init_startstop_service($1, $2, collectd_t, collectd_initrc_exec_t)
 
-      	allow $1 collectd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, collectd_t)
+            files_search_runtime($1)
+            admin_pattern($1, collectd_runtime_t)
 
-      	init_startstop_service($1, $2, collectd_t, collectd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, collectd_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, collectd_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, collectd_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(collectd)
 

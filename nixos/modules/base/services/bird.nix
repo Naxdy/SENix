@@ -3,49 +3,49 @@
 { lib, ... }: {
   config.security.selinux.modules.bird = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>BIRD Internet Routing Daemon.</summary>
+    interface = {
+      summary = "BIRD Internet Routing Daemon.";
+      exports = {
+        "bird_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an bird environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type bird_t, bird_etc_t, bird_log_t;
+            type bird_runtime_t, bird_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 bird_t:process { ptrace signal_perms };
+            ps_process_pattern($1, bird_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an bird environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bird_admin',`
-      	gen_require(`
-      		type bird_t, bird_etc_t, bird_log_t;
-      		type bird_runtime_t, bird_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, bird_t, bird_initrc_exec_t)
 
-      	allow $1 bird_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, bird_t)
+            files_list_etc($1)
+            admin_pattern($1, bird_etc_t)
 
-      	init_startstop_service($1, $2, bird_t, bird_initrc_exec_t)
+            logging_list_logs($1)
+            admin_pattern($1, bird_log_t)
 
-      	files_list_etc($1)
-      	admin_pattern($1, bird_etc_t)
+            files_list_runtime($1)
+            admin_pattern($1, bird_runtime_t)
 
-      	logging_list_logs($1)
-      	admin_pattern($1, bird_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, bird_runtime_t)
-
-      	stream_connect_pattern($1, bird_runtime_t, bird_runtime_t, bird_t)
-      ')
-    '';
+            stream_connect_pattern($1, bird_runtime_t, bird_runtime_t, bird_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(bird)
 

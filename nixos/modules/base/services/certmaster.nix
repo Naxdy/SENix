@@ -3,151 +3,138 @@
 { lib, ... }: {
   config.security.selinux.modules.certmaster = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Remote certificate distribution framework.</summary>
+    interface = {
+      summary = "Remote certificate distribution framework.";
+      exports = {
+        "certmaster_domtrans" = {
+          summary = "Execute a domain transition to run certmaster.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type certmaster_t, certmaster_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, certmaster_exec_t, certmaster_t)
+          '';
+        };
+        "certmaster_exec" = {
+          summary = "Execute certmaster in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type certmaster_exec_t;
+          '';
+          content = ''
+            can_exec($1, certmaster_exec_t)
+            corecmd_search_bin($1)
+          '';
+        };
+        "certmaster_read_log" = {
+          summary = "read certmaster logs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type certmaster_var_log_t;
+          '';
+          content = ''
+            read_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
+            logging_search_logs($1)
+          '';
+        };
+        "certmaster_append_log" = {
+          summary = "Append certmaster log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type certmaster_var_log_t;
+          '';
+          content = ''
+            append_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
+            logging_search_logs($1)
+          '';
+        };
+        "certmaster_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            certmaster log content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type certmaster_var_log_t;
+          '';
+          content = ''
+            manage_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
+            manage_lnk_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
+            logging_search_logs($1)
+          '';
+        };
+        "certmaster_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an certmaster environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type certmaster_t, certmaster_runtime_t, certmaster_var_lib_t;
+            type certmaster_etc_rw_t, certmaster_var_log_t;
+            type certmaster_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 certmaster_t:process { ptrace signal_perms };
+            ps_process_pattern($1, certmaster_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run certmaster.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certmaster_domtrans',`
-      	gen_require(`
-      		type certmaster_t, certmaster_exec_t;
-      	')
+            init_startstop_service($1, $2, certmaster_t, certmaster_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, certmaster_exec_t, certmaster_t)
-      ')
+            files_list_etc($1)
+            miscfiles_manage_generic_cert_dirs($1)
+            miscfiles_manage_generic_cert_files($1)
 
-      ####################################
-      ## <summary>
-      ##	Execute certmaster in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certmaster_exec',`
-      	gen_require(`
-      		type certmaster_exec_t;
-      	')
+            admin_pattern($1, certmaster_etc_rw_t)
 
-      	can_exec($1, certmaster_exec_t)
-      	corecmd_search_bin($1)
-      ')
+            files_list_runtime($1)
+            admin_pattern($1, certmaster_runtime_t)
 
-      #######################################
-      ## <summary>
-      ##	read certmaster logs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certmaster_read_log',`
-      	gen_require(`
-      		type certmaster_var_log_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, certmaster_var_log_t)
 
-      	read_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
-      	logging_search_logs($1)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Append certmaster log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certmaster_append_log',`
-      	gen_require(`
-      		type certmaster_var_log_t;
-      	')
-
-      	append_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
-      	logging_search_logs($1)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	certmaster log content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certmaster_manage_log',`
-      	gen_require(`
-      		type certmaster_var_log_t;
-      	')
-
-      	manage_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
-      	manage_lnk_files_pattern($1, certmaster_var_log_t, certmaster_var_log_t)
-      	logging_search_logs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an certmaster environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`certmaster_admin',`
-      	gen_require(`
-      		type certmaster_t, certmaster_runtime_t, certmaster_var_lib_t;
-      		type certmaster_etc_rw_t, certmaster_var_log_t;
-      		type certmaster_initrc_exec_t;
-      	')
-
-      	allow $1 certmaster_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, certmaster_t)
-
-      	init_startstop_service($1, $2, certmaster_t, certmaster_initrc_exec_t)
-
-      	files_list_etc($1)
-      	miscfiles_manage_generic_cert_dirs($1)
-      	miscfiles_manage_generic_cert_files($1)
-
-      	admin_pattern($1, certmaster_etc_rw_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, certmaster_runtime_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, certmaster_var_log_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, certmaster_var_lib_t)
-      ')
-    '';
+            files_list_var_lib($1)
+            admin_pattern($1, certmaster_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(certmaster)
 

@@ -3,168 +3,163 @@
 { lib, ... }: {
   config.security.selinux.modules.screen = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>GNU terminal multiplexer.</summary>
+    interface = {
+      summary = "GNU terminal multiplexer.";
+      exports = {
+        "screen_role_template" = {
+          type = "template";
+          summary = "The role template for the screen module.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "The type of the user domain.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "user_role";
+              description = "The role associated with the user domain.";
+            };
+          };
+          gen_require = ''
+            attribute screen_domain;
+            attribute_role screen_roles;
+            type screen_exec_t, screen_tmp_t;
+            type screen_home_t, screen_runtime_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The role template for the screen module.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	The type of the user domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_role">
-      ##	<summary>
-      ##	The role associated with the user domain.
-      ##	</summary>
-      ## </param>
-      #
-      template(`screen_role_template',`
-      	gen_require(`
-      		attribute screen_domain;
-      		attribute_role screen_roles;
-      		type screen_exec_t, screen_tmp_t;
-      		type screen_home_t, screen_runtime_t;
-      	')
+            type $1_screen_t, screen_domain;
+            userdom_user_application_domain($1_screen_t, screen_exec_t)
+            domain_interactive_fd($1_screen_t)
+            role screen_roles types $1_screen_t;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            roleattribute $4 screen_roles;
 
-      	type $1_screen_t, screen_domain;
-      	userdom_user_application_domain($1_screen_t, screen_exec_t)
-      	domain_interactive_fd($1_screen_t)
-      	role screen_roles types $1_screen_t;
+            ########################################
+            #
+            # Local policy
+            #
 
-      	roleattribute $4 screen_roles;
+            dontaudit $1_screen_t self:capability sys_tty_config;
+            allow $1_screen_t self:capability { chown dac_read_search fowner };
 
-      	########################################
-      	#
-      	# Local policy
-      	#
+            dontaudit $1_screen_t self:cap_userns sys_ptrace;
 
-      	dontaudit $1_screen_t self:capability sys_tty_config;
-      	allow $1_screen_t self:capability { chown dac_read_search fowner };
+            domtrans_pattern($3, screen_exec_t, $1_screen_t)
 
-      	dontaudit $1_screen_t self:cap_userns sys_ptrace;
+            ps_process_pattern($3, $1_screen_t)
+            allow $3 $1_screen_t:process { ptrace signal_perms };
 
-      	domtrans_pattern($3, screen_exec_t, $1_screen_t)
+            dontaudit $3 $1_screen_t:unix_stream_socket { read write };
+            allow $1_screen_t $3:process signal;
 
-      	ps_process_pattern($3, $1_screen_t)
-      	allow $3 $1_screen_t:process { ptrace signal_perms };
+            allow $2 screen_tmp_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 screen_tmp_t:file { manage_file_perms relabel_file_perms };
+            allow $2 screen_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
 
-      	dontaudit $3 $1_screen_t:unix_stream_socket { read write };
-      	allow $1_screen_t $3:process signal;
+            manage_sock_files_pattern($1_screen_t, screen_home_t, screen_home_t)
 
-      	allow $2 screen_tmp_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 screen_tmp_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 screen_tmp_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 screen_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 screen_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 screen_home_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 screen_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-              manage_sock_files_pattern($1_screen_t, screen_home_t, screen_home_t)
+            userdom_user_home_dir_filetrans($2, screen_home_t, dir, ".screen")
+            userdom_user_home_dir_filetrans($2, screen_home_t, file, ".screenrc")
+            userdom_user_home_dir_filetrans($2, screen_home_t, file, ".tmux.conf")
 
-      	allow $2 screen_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 screen_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 screen_home_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 screen_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            manage_dirs_pattern($2, screen_runtime_t, screen_runtime_t)
+            manage_files_pattern($2, screen_runtime_t, screen_runtime_t)
+            manage_lnk_files_pattern($2, screen_runtime_t, screen_runtime_t)
+            manage_fifo_files_pattern($2, screen_runtime_t, screen_runtime_t)
 
-      	userdom_user_home_dir_filetrans($2, screen_home_t, dir, ".screen")
-      	userdom_user_home_dir_filetrans($2, screen_home_t, file, ".screenrc")
-      	userdom_user_home_dir_filetrans($2, screen_home_t, file, ".tmux.conf")
+            corecmd_bin_domtrans($1_screen_t, $2)
+            corecmd_shell_domtrans($1_screen_t, $2)
 
-      	manage_dirs_pattern($2, screen_runtime_t, screen_runtime_t)
-      	manage_files_pattern($2, screen_runtime_t, screen_runtime_t)
-      	manage_lnk_files_pattern($2, screen_runtime_t, screen_runtime_t)
-      	manage_fifo_files_pattern($2, screen_runtime_t, screen_runtime_t)
+            auth_domtrans_chk_passwd($1_screen_t)
+            auth_use_nsswitch($1_screen_t)
 
-      	corecmd_bin_domtrans($1_screen_t, $2)
-      	corecmd_shell_domtrans($1_screen_t, $2)
+            userdom_user_home_domtrans($1_screen_t, $2)
 
-      	auth_domtrans_chk_passwd($1_screen_t)
-      	auth_use_nsswitch($1_screen_t)
+            tunable_policy(`use_samba_home_dirs',`
+                    fs_cifs_domtrans($1_screen_t, $2)
+            ')
 
-      	userdom_user_home_domtrans($1_screen_t, $2)
+            tunable_policy(`use_nfs_home_dirs',`
+                    fs_nfs_domtrans($1_screen_t, $2)
+            ')
 
-      	tunable_policy(`use_samba_home_dirs',`
-      		fs_cifs_domtrans($1_screen_t, $2)
-      	')
-
-      	tunable_policy(`use_nfs_home_dirs',`
-      		fs_nfs_domtrans($1_screen_t, $2)
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, $1_screen_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Execute the screen runtime sock file.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      interface(`screen_execute_sock_file',`
-      	gen_require(`
-      		type screen_tmp_t;
-      		type screen_runtime_t;
-      	')
-
-      	allow $1 screen_runtime_t:sock_file execute;
-      	allow $1 screen_tmp_t:dir search;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of the screen runtime named socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      interface(`screen_dontaudit_getattr_sock_file',`
-      	gen_require(`
-      		type screen_runtime_t;
-      	')
-
-      	dontaudit $1 screen_runtime_t:sock_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Permit running screen
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      interface(`screen_exec',`
-      	gen_require(`
-      		type screen_exec_t;
-      	')
-
-      	allow $1 screen_exec_t:file mmap_exec_file_perms;
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, $1_screen_t)
+            ')
+          '';
+        };
+        "screen_execute_sock_file" = {
+          summary = "Execute the screen runtime sock file.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type screen_tmp_t;
+            type screen_runtime_t;
+          '';
+          content = ''
+            allow $1 screen_runtime_t:sock_file execute;
+            allow $1 screen_tmp_t:dir search;
+          '';
+        };
+        "screen_dontaudit_getattr_sock_file" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of the screen runtime named socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type screen_runtime_t;
+          '';
+          content = ''
+            dontaudit $1 screen_runtime_t:sock_file getattr;
+          '';
+        };
+        "screen_exec" = {
+          summary = "Permit running screen";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type screen_exec_t;
+          '';
+          content = ''
+            allow $1 screen_exec_t:file mmap_exec_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(screen)
 

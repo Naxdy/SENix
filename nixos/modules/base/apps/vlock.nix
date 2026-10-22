@@ -3,55 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.vlock = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Lock one or more sessions on the Linux console.</summary>
-
-      #######################################
-      ## <summary>
-      ## 	Execute vlock in the vlock domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vlock_domtrans',`
-      	gen_require(`
-      		type vlock_t, vlock_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, vlock_exec_t, vlock_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute vlock in the vlock domain,
-      ##	and allow the specified role
-      ##	the vlock domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed to access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`vlock_run',`
-      	gen_require(`
-      		attribute_role vlock_roles;
-      	')
-
-      	vlock_domtrans($1)
-      	roleattribute $2 vlock_roles;
-      ')
-    '';
+    interface = {
+      summary = "Lock one or more sessions on the Linux console.";
+      exports = {
+        "vlock_domtrans" = {
+          summary = "Execute vlock in the vlock domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type vlock_t, vlock_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, vlock_exec_t, vlock_t)
+          '';
+        };
+        "vlock_run" = {
+          summary = ''
+            Execute vlock in the vlock domain,
+            and allow the specified role
+            the vlock domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed to access.";
+            };
+          };
+          gen_require = ''
+            attribute_role vlock_roles;
+          '';
+          content = ''
+            vlock_domtrans($1)
+            roleattribute $2 vlock_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vlock)
 

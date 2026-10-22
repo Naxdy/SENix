@@ -3,84 +3,76 @@
 { lib, ... }: {
   config.security.selinux.modules.openca = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Open Certificate Authority.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute the openca with
-      ##	a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openca_domtrans',`
-      	gen_require(`
-      		type openca_ca_t, openca_ca_exec_t, openca_usr_share_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 openca_usr_share_t:dir search_dir_perms;
-      	domtrans_pattern($1, openca_ca_exec_t, openca_ca_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to openca.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openca_signal',`
-      	gen_require(`
-      		type openca_ca_t;
-      	')
-
-      	allow $1 openca_ca_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send stop signals to openca.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openca_sigstop',`
-      	gen_require(`
-      		type openca_ca_t;
-      	')
-
-      	allow $1 openca_ca_t:process sigstop;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to openca.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openca_kill',`
-      	gen_require(`
-      		type openca_ca_t;
-      	')
-
-      	allow $1 openca_ca_t:process sigkill;
-      ')
-    '';
+    interface = {
+      summary = "Open Certificate Authority.";
+      exports = {
+        "openca_domtrans" = {
+          summary = ''
+            Execute the openca with
+            a domain transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type openca_ca_t, openca_ca_exec_t, openca_usr_share_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 openca_usr_share_t:dir search_dir_perms;
+            domtrans_pattern($1, openca_ca_exec_t, openca_ca_t)
+          '';
+        };
+        "openca_signal" = {
+          summary = "Send generic signals to openca.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openca_ca_t;
+          '';
+          content = ''
+            allow $1 openca_ca_t:process signal;
+          '';
+        };
+        "openca_sigstop" = {
+          summary = "Send stop signals to openca.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openca_ca_t;
+          '';
+          content = ''
+            allow $1 openca_ca_t:process sigstop;
+          '';
+        };
+        "openca_kill" = {
+          summary = "Send kill signals to openca.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openca_ca_t;
+          '';
+          content = ''
+            allow $1 openca_ca_t:process sigkill;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openca)
 

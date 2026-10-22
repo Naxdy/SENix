@@ -3,211 +3,184 @@
 { lib, ... }: {
   config.security.selinux.modules.cloudinit = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Init scripts for cloud VMs</summary>
-
-      ########################################
-      ## <summary>
-      ##	Read and write inherited cloud-init pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_rw_inherited_pipes',`
-      	gen_require(`
-      		type cloud_init_t;
-      	')
-
-      	allow $1 cloud_init_t:fifo_file rw_inherited_fifo_file_perms;
-      	allow $1 cloud_init_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create cloud-init runtime directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_create_runtime_dirs',`
-      	gen_require(`
-      		type cloud_init_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 cloud_init_runtime_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write cloud-init runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_write_runtime_files',`
-      	gen_require(`
-      		type cloud_init_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	write_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write cloud-init runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_rw_runtime_files',`
-      	gen_require(`
-      		type cloud_init_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	rw_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create cloud-init runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_create_runtime_files',`
-      	gen_require(`
-      		type cloud_init_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	create_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create files in /run with the type used for
-      ##	cloud-init runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_filetrans_runtime',`
-      	gen_require(`
-      		type cloud_init_runtime_t;
-      	')
-
-      	files_runtime_filetrans($1, cloud_init_runtime_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attribute of cloud-init state files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_getattr_state_files',`
-      	gen_require(`
-      		type cloud_init_state_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 cloud_init_state_t:dir list_dir_perms;
-      	allow $1 cloud_init_state_t:lnk_file read_lnk_file_perms;
-      	allow $1 cloud_init_state_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write inherited cloud-init temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_write_inherited_tmp_files',`
-      	gen_require(`
-      		type cloud_init_t, cloud_init_tmp_t;
-      	')
-
-      	allow $1 cloud_init_t:fd use;
-      	allow $1 cloud_init_tmp_t:file write_inherited_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write cloud-init temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_rw_tmp_files',`
-      	gen_require(`
-      		type cloud_init_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	rw_files_pattern($1, cloud_init_tmp_t, cloud_init_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create cloud-init temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cloudinit_create_tmp_files',`
-      	gen_require(`
-      		type cloud_init_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	create_files_pattern($1, cloud_init_tmp_t, cloud_init_tmp_t)
-      ')
-    '';
+    interface = {
+      summary = "Init scripts for cloud VMs";
+      exports = {
+        "cloudinit_rw_inherited_pipes" = {
+          summary = "Read and write inherited cloud-init pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_t;
+          '';
+          content = ''
+            allow $1 cloud_init_t:fifo_file rw_inherited_fifo_file_perms;
+            allow $1 cloud_init_t:fd use;
+          '';
+        };
+        "cloudinit_create_runtime_dirs" = {
+          summary = "Create cloud-init runtime directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 cloud_init_runtime_t:dir create_dir_perms;
+          '';
+        };
+        "cloudinit_write_runtime_files" = {
+          summary = "Write cloud-init runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            write_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
+          '';
+        };
+        "cloudinit_rw_runtime_files" = {
+          summary = "Read and write cloud-init runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            rw_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
+          '';
+        };
+        "cloudinit_create_runtime_files" = {
+          summary = "Create cloud-init runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            create_files_pattern($1, cloud_init_runtime_t, cloud_init_runtime_t)
+          '';
+        };
+        "cloudinit_filetrans_runtime" = {
+          summary = ''
+            Create files in /run with the type used for
+            cloud-init runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type cloud_init_runtime_t;
+          '';
+          content = ''
+            files_runtime_filetrans($1, cloud_init_runtime_t, $2, $3)
+          '';
+        };
+        "cloudinit_getattr_state_files" = {
+          summary = "Get the attribute of cloud-init state files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_state_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 cloud_init_state_t:dir list_dir_perms;
+            allow $1 cloud_init_state_t:lnk_file read_lnk_file_perms;
+            allow $1 cloud_init_state_t:file getattr;
+          '';
+        };
+        "cloudinit_write_inherited_tmp_files" = {
+          summary = "Write inherited cloud-init temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_t, cloud_init_tmp_t;
+          '';
+          content = ''
+            allow $1 cloud_init_t:fd use;
+            allow $1 cloud_init_tmp_t:file write_inherited_file_perms;
+          '';
+        };
+        "cloudinit_rw_tmp_files" = {
+          summary = "Read and write cloud-init temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            rw_files_pattern($1, cloud_init_tmp_t, cloud_init_tmp_t)
+          '';
+        };
+        "cloudinit_create_tmp_files" = {
+          summary = "Create cloud-init temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cloud_init_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            create_files_pattern($1, cloud_init_tmp_t, cloud_init_tmp_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cloudinit)
 

@@ -3,39 +3,39 @@
 { lib, ... }: {
   config.security.selinux.modules.fakehwclock = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>fake-hwclock - Control fake hardware clock.</summary>
+    interface = {
+      summary = "fake-hwclock - Control fake hardware clock.";
+      exports = {
+        "fakehwclock_admin" = {
+          summary = ''
+            All the rules required to
+            administrate an fake-hwclock environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fakehwclock_t, fakehwclock_backup_t, fakehwclock_initrc_exec_t;
+            type fakehwclock_unit_t;
+          '';
+          content = ''
+            admin_process_pattern($1, fakehwclock_t)
 
-      ########################################
-      ## <summary>
-      ##	All the rules required to
-      ##	administrate an fake-hwclock environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fakehwclock_admin',`
-      	gen_require(`
-      		type fakehwclock_t, fakehwclock_backup_t, fakehwclock_initrc_exec_t;
-      		type fakehwclock_unit_t;
-      	')
+            init_startstop_service($1, $2, fakehwclock_t, fakehwclock_initrc_exec_t, fakehwclock_unit_t)
 
-      	admin_process_pattern($1, fakehwclock_t)
-
-      	init_startstop_service($1, $2, fakehwclock_t, fakehwclock_initrc_exec_t, fakehwclock_unit_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, fakehwclock_backup_t)
-      ')
-    '';
+            files_search_etc($1)
+            admin_pattern($1, fakehwclock_backup_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fakehwclock)
 

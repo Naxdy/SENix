@@ -3,1628 +3,1426 @@
 { lib, ... }: {
   config.security.selinux.modules.xdg = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>
-      ##	Freedesktop standard locations (formerly known as X Desktop Group)
-      ## </summary>
-
-
-      ########################################
-      ## <summary>
-      ##	Mark the selected type as an xdg_cache_type
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to give the xdg_cache_type attribute to
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_cache_content',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	typeattribute $1 xdg_cache_type;
-
-      	userdom_user_home_content($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mark the selected type as an xdg_config_type
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to give the xdg_config_type attribute to
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_config_content',`
-      	gen_require(`
-      		attribute xdg_config_type;
-      	')
-
-      	typeattribute $1 xdg_config_type;
-
-      	userdom_user_home_content($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mark the selected type as an xdg_data_type
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to give the xdg_data_type attribute to
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_data_content',`
-      	gen_require(`
-      		attribute xdg_data_type;
-      	')
-
-      	typeattribute $1 xdg_data_type;
-
-      	userdom_user_home_content($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search through the xdg cache home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_search_cache_dirs',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	search_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg cache home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_cache_dirs',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	allow $1 xdg_cache_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg cache home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_cache_files',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	allow $1 xdg_cache_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch all the xdg cache home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_all_cache_dirs',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	allow $1 xdg_cache_type:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch all the xdg cache home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_all_cache_files',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	allow $1 xdg_cache_type:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the xdg cache home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_cache_files',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	read_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	allow $1 xdg_cache_t:file map;
-      	list_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
-      	read_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all xdg_cache_type files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_all_cache_files',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	read_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	allow $1 xdg_cache_type:file map;
-      	list_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
-      	read_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in an xdg_cache directory
-      ##	with an automatic type transition to
-      ##	a specified private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	The type of the object to create.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the file or directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_cache_filetrans',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-
-      	filetrans_pattern($1, xdg_cache_t, $2, $3, $4)
-
-      	xdg_create_cache_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_cache_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_cache',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_cache_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create xdg cache home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_create_cache_dirs',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	allow $1 xdg_cache_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage the xdg cache home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_cache',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
-      	manage_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	allow $1 xdg_cache_t:file map;
-      	manage_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	manage_fifo_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	manage_sock_files_pattern($1, xdg_cache_t, xdg_cache_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage all the xdg cache home files regardless of their specific type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_all_cache',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	manage_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
-      	manage_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	allow $1 xdg_cache_type:file map;
-      	manage_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	manage_fifo_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	manage_sock_files_pattern($1, xdg_cache_type, xdg_cache_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg cache home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_cache',`
-      	gen_require(`
-      		type xdg_cache_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
-      	relabel_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	relabel_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	relabel_fifo_files_pattern($1, xdg_cache_t, xdg_cache_t)
-      	relabel_sock_files_pattern($1, xdg_cache_t, xdg_cache_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg cache home files, regardless of their specific type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_all_cache',`
-      	gen_require(`
-      		attribute xdg_cache_type;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
-      	relabel_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	relabel_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	relabel_fifo_files_pattern($1, xdg_cache_type, xdg_cache_type)
-      	relabel_sock_files_pattern($1, xdg_cache_type, xdg_cache_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search through the xdg config home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_search_config_dirs',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	search_dirs_pattern($1, xdg_config_t, xdg_config_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search through the
-      ##	xdg config home directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_dontaudit_search_config_dirs',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	dontaudit $1 xdg_config_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg config home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_config_dirs',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	allow $1 xdg_config_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg config home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_config_files',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	allow $1 xdg_config_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch all the xdg config home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_all_config_dirs',`
-      	gen_require(`
-      		attribute xdg_config_type;
-      	')
-
-      	allow $1 xdg_config_type:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the xdg config home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_config_files',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	read_files_pattern($1, xdg_config_t, xdg_config_t)
-      	allow $1 xdg_config_t:file map;
-      	list_dirs_pattern($1, xdg_config_t, xdg_config_t)
-      	read_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all xdg_config_type files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_all_config_files',`
-      	gen_require(`
-      		attribute xdg_config_type;
-      	')
-
-      	read_files_pattern($1, xdg_config_type, xdg_config_type)
-      	allow $1 xdg_config_type:file map;
-      	list_dirs_pattern($1, xdg_config_type, xdg_config_type)
-      	read_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in an xdg_config directory
-      ##	with an automatic type transition to
-      ##	a specified private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	The type of the object to create.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the file or directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_config_filetrans',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-
-      	filetrans_pattern($1, xdg_config_t, $2, $3, $4)
-
-      	xdg_create_config_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_config_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_config',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_config_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create xdg config home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_create_config_dirs',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	allow $1 xdg_config_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage the xdg config home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_config',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_config_t, xdg_config_t)
-      	manage_files_pattern($1, xdg_config_t, xdg_config_t)
-      	allow $1 xdg_config_t:file map;
-      	manage_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
-      	manage_fifo_files_pattern($1, xdg_config_t, xdg_config_t)
-      	manage_sock_files_pattern($1, xdg_config_t, xdg_config_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage all the xdg config home files regardless of their specific type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_all_config',`
-      	gen_require(`
-      		attribute xdg_config_type;
-      	')
-
-      	manage_dirs_pattern($1, xdg_config_type, xdg_config_type)
-      	manage_files_pattern($1, xdg_config_type, xdg_config_type)
-      	allow $1 xdg_config_type:file map;
-      	manage_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
-      	manage_fifo_files_pattern($1, xdg_config_type, xdg_config_type)
-      	manage_sock_files_pattern($1, xdg_config_type, xdg_config_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg config home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_config',`
-      	gen_require(`
-      		type xdg_config_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_config_t, xdg_config_t)
-      	relabel_files_pattern($1, xdg_config_t, xdg_config_t)
-      	relabel_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
-      	relabel_fifo_files_pattern($1, xdg_config_t, xdg_config_t)
-      	relabel_sock_files_pattern($1, xdg_config_t, xdg_config_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg config home files, regardless of their specific type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_all_config',`
-      	gen_require(`
-      		attribute xdg_config_type;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_config_type, xdg_config_type)
-      	relabel_files_pattern($1, xdg_config_type, xdg_config_type)
-      	relabel_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
-      	relabel_fifo_files_pattern($1, xdg_config_type, xdg_config_type)
-      	relabel_sock_files_pattern($1, xdg_config_type, xdg_config_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search through the xdg data home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_search_data_dirs',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	allow $1 xdg_data_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search through the
-      ##	xdg data home directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_dontaudit_search_data_dirs',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	dontaudit $1 xdg_data_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg data home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_data_dirs',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	allow $1 xdg_data_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch all the xdg data home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_all_data_dirs',`
-      	gen_require(`
-      		attribute xdg_data_type;
-      	')
-
-      	allow $1 xdg_data_type:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the xdg data home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_data_files',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	read_files_pattern($1, xdg_data_t, xdg_data_t)
-      	allow $1 xdg_data_t:file map;
-      	list_dirs_pattern($1, xdg_data_t, xdg_data_t)
-      	read_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all xdg_data_type files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_all_data_files',`
-      	gen_require(`
-      		attribute xdg_data_type;
-      	')
-
-      	read_files_pattern($1, xdg_data_type, xdg_data_type)
-      	allow $1 xdg_data_type:file map;
-      	list_dirs_pattern($1, xdg_data_type, xdg_data_type)
-      	read_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in an xdg_data directory
-      ##	with an automatic type transition to
-      ##	a specified private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	The type of the object to create.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Optional name of the file or directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_data_filetrans',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-
-      	filetrans_pattern($1, xdg_data_t, $2, $3, $4)
-
-      	xdg_create_data_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_data_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_data',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_data_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create xdg data home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_create_data_dirs',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	allow $1 xdg_data_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage the xdg data home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_data',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_data_t, xdg_data_t)
-      	manage_files_pattern($1, xdg_data_t, xdg_data_t)
-      	allow $1 xdg_data_t:file map;
-      	manage_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
-      	manage_fifo_files_pattern($1, xdg_data_t, xdg_data_t)
-      	manage_sock_files_pattern($1, xdg_data_t, xdg_data_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage all the xdg data home files, regardless of their specific type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_all_data',`
-      	gen_require(`
-      		attribute xdg_data_type;
-      	')
-
-      	manage_dirs_pattern($1, xdg_data_type, xdg_data_type)
-      	manage_files_pattern($1, xdg_data_type, xdg_data_type)
-      	allow $1 xdg_data_type:file map;
-      	manage_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
-      	manage_fifo_files_pattern($1, xdg_data_type, xdg_data_type)
-      	manage_sock_files_pattern($1, xdg_data_type, xdg_data_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg data home files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_data',`
-      	gen_require(`
-      		type xdg_data_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_data_t, xdg_data_t)
-      	relabel_files_pattern($1, xdg_data_t, xdg_data_t)
-      	relabel_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
-      	relabel_fifo_files_pattern($1, xdg_data_t, xdg_data_t)
-      	relabel_sock_files_pattern($1, xdg_data_t, xdg_data_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the xdg data home files, regardless of their type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_all_data',`
-      	gen_require(`
-      		attribute xdg_data_type;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_data_type, xdg_data_type)
-      	relabel_files_pattern($1, xdg_data_type, xdg_data_type)
-      	relabel_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
-      	relabel_fifo_files_pattern($1, xdg_data_type, xdg_data_type)
-      	relabel_sock_files_pattern($1, xdg_data_type, xdg_data_type)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg documents home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_documents_dirs',`
-      	gen_require(`
-      		type xdg_documents_t;
-      	')
-
-      	allow $1 xdg_documents_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_documents_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_documents',`
-      	gen_require(`
-      		type xdg_documents_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_documents_t, $2, $3)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Manage documents content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_documents',`
-      	gen_require(`
-      		type xdg_documents_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_documents_t, xdg_documents_t)
-      	manage_files_pattern($1, xdg_documents_t, xdg_documents_t)
-      	allow $1 xdg_documents_t:file map;
-      	manage_lnk_files_pattern($1, xdg_documents_t, xdg_documents_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the documents resources
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_documents',`
-      	gen_require(`
-      		type xdg_documents_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_documents_t, xdg_documents_t)
-      	relabel_files_pattern($1, xdg_documents_t, xdg_documents_t)
-      	relabel_lnk_files_pattern($1, xdg_documents_t, xdg_documents_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg downloads home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_downloads_dirs',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	allow $1 xdg_downloads_t:dir watch;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read downloaded content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	read_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	allow $1 xdg_downloads_t:file map;
-      	list_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	read_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Create downloaded content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_create_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	create_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	allow $1 xdg_downloads_t:file map;
-      	create_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	create_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Write downloaded content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_write_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	write_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	allow $1 xdg_downloads_t:file map;
-      	list_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	read_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_downloads_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_downloads_t, $2, $3)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Manage downloaded content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	manage_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	allow $1 xdg_downloads_t:file map;
-      	manage_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the downloads resources
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	relabel_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-      	relabel_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow mounting on the xdg downloads directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_mounton_downloads',`
-      	gen_require(`
-      		type xdg_downloads_t;
-      	')
-
-      	allow $1 xdg_downloads_t:dir { search_dir_perms mounton_dir_perms };
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg pictures home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_pictures_dirs',`
-      	gen_require(`
-      		type xdg_pictures_t;
-      	')
-
-      	allow $1 xdg_pictures_t:dir watch;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read user pictures content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_pictures',`
-      	gen_require(`
-      		type xdg_pictures_t;
-      	')
-
-      	read_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	allow $1 xdg_pictures_t:file map;
-      	list_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	read_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_pictures_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_pictures',`
-      	gen_require(`
-      		type xdg_pictures_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_pictures_t, $2, $3)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Manage pictures content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_pictures',`
-      	gen_require(`
-      		type xdg_pictures_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	manage_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	allow $1 xdg_pictures_t:file map;
-      	manage_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the pictures resources
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_pictures',`
-      	gen_require(`
-      		type xdg_pictures_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	relabel_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-      	relabel_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg music home directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_music_dirs',`
-      	gen_require(`
-      		type xdg_music_t;
-      	')
-
-      	allow $1 xdg_music_t:dir watch;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read user music content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_music',`
-      	gen_require(`
-      		type xdg_music_t;
-      	')
-
-      	read_files_pattern($1, xdg_music_t, xdg_music_t)
-      	allow $1 xdg_music_t:file map;
-      	list_dirs_pattern($1, xdg_music_t, xdg_music_t)
-      	read_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_pictures_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_music',`
-      	gen_require(`
-      		type xdg_music_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_music_t, $2, $3)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Manage music content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_music',`
-      	gen_require(`
-      		type xdg_music_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_music_t, xdg_music_t)
-      	manage_files_pattern($1, xdg_music_t, xdg_music_t)
-      	allow $1 xdg_music_t:file map;
-      	manage_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the music resources
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_music',`
-      	gen_require(`
-      		type xdg_music_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_music_t, xdg_music_t)
-      	relabel_files_pattern($1, xdg_music_t, xdg_music_t)
-      	relabel_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch the xdg video content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_watch_videos_dirs',`
-      	gen_require(`
-      		type xdg_videos_t;
-      	')
-
-      	allow $1 xdg_videos_t:dir watch;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read user video content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_read_videos',`
-      	gen_require(`
-      		type xdg_videos_t;
-      	')
-
-      	read_files_pattern($1, xdg_videos_t, xdg_videos_t)
-      	allow $1 xdg_videos_t:file map;
-      	list_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
-      	read_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the user home dir with an automatic type transition to
-      ##	the xdg_videos_t type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	The class of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	Name of the directory created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_generic_user_home_dir_filetrans_videos',`
-      	gen_require(`
-      		type xdg_videos_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, xdg_videos_t, $2, $3)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Manage video content
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_manage_videos',`
-      	gen_require(`
-      		type xdg_videos_t;
-      	')
-
-      	manage_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
-      	manage_files_pattern($1, xdg_videos_t, xdg_videos_t)
-      	allow $1 xdg_videos_t:file map;
-      	manage_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow relabeling the videos resources
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xdg_relabel_videos',`
-      	gen_require(`
-      		type xdg_videos_t;
-      	')
-
-      	relabel_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
-      	relabel_files_pattern($1, xdg_videos_t, xdg_videos_t)
-      	relabel_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
-
-      	userdom_search_user_home_dirs($1)
-      ')
-    '';
+    interface = {
+      summary = "Freedesktop standard locations (formerly known as X Desktop Group)";
+      exports = {
+        "xdg_cache_content" = {
+          summary = "Mark the selected type as an xdg_cache_type";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to give the xdg_cache_type attribute to";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            typeattribute $1 xdg_cache_type;
+
+            userdom_user_home_content($1)
+          '';
+        };
+        "xdg_config_content" = {
+          summary = "Mark the selected type as an xdg_config_type";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to give the xdg_config_type attribute to";
+            };
+          };
+          gen_require = ''
+            attribute xdg_config_type;
+          '';
+          content = ''
+            typeattribute $1 xdg_config_type;
+
+            userdom_user_home_content($1)
+          '';
+        };
+        "xdg_data_content" = {
+          summary = "Mark the selected type as an xdg_data_type";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to give the xdg_data_type attribute to";
+            };
+          };
+          gen_require = ''
+            attribute xdg_data_type;
+          '';
+          content = ''
+            typeattribute $1 xdg_data_type;
+
+            userdom_user_home_content($1)
+          '';
+        };
+        "xdg_search_cache_dirs" = {
+          summary = "Search through the xdg cache home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            search_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_cache_dirs" = {
+          summary = "Watch the xdg cache home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            allow $1 xdg_cache_t:dir watch;
+          '';
+        };
+        "xdg_watch_cache_files" = {
+          summary = "Watch the xdg cache home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            allow $1 xdg_cache_t:file watch;
+          '';
+        };
+        "xdg_watch_all_cache_dirs" = {
+          summary = "Watch all the xdg cache home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            allow $1 xdg_cache_type:dir watch;
+          '';
+        };
+        "xdg_watch_all_cache_files" = {
+          summary = "Watch all the xdg cache home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            allow $1 xdg_cache_type:file watch;
+          '';
+        };
+        "xdg_read_cache_files" = {
+          summary = "Read the xdg cache home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            allow $1 xdg_cache_t:file map;
+            list_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
+            read_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_read_all_cache_files" = {
+          summary = "Read all xdg_cache_type files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            allow $1 xdg_cache_type:file map;
+            list_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
+            read_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_cache_filetrans" = {
+          summary = ''
+            Create objects in an xdg_cache directory
+            with an automatic type transition to
+            a specified private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "The type of the object to create.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$4" = {
+              name = "filename";
+              description = "Name of the file or directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+
+            filetrans_pattern($1, xdg_cache_t, $2, $3, $4)
+
+            xdg_create_cache_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_cache" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_cache_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_cache_t, $2, $3)
+          '';
+        };
+        "xdg_create_cache_dirs" = {
+          summary = "Create xdg cache home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            allow $1 xdg_cache_t:dir create_dir_perms;
+          '';
+        };
+        "xdg_manage_cache" = {
+          summary = "Manage the xdg cache home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
+            manage_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            allow $1 xdg_cache_t:file map;
+            manage_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            manage_fifo_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            manage_sock_files_pattern($1, xdg_cache_t, xdg_cache_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_manage_all_cache" = {
+          summary = "Manage all the xdg cache home files regardless of their specific type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
+            manage_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            allow $1 xdg_cache_type:file map;
+            manage_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            manage_fifo_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            manage_sock_files_pattern($1, xdg_cache_type, xdg_cache_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_cache" = {
+          summary = "Allow relabeling the xdg cache home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_cache_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_cache_t, xdg_cache_t)
+            relabel_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            relabel_lnk_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            relabel_fifo_files_pattern($1, xdg_cache_t, xdg_cache_t)
+            relabel_sock_files_pattern($1, xdg_cache_t, xdg_cache_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_all_cache" = {
+          summary = "Allow relabeling the xdg cache home files, regardless of their specific type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_cache_type;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_cache_type, xdg_cache_type)
+            relabel_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            relabel_lnk_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            relabel_fifo_files_pattern($1, xdg_cache_type, xdg_cache_type)
+            relabel_sock_files_pattern($1, xdg_cache_type, xdg_cache_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_search_config_dirs" = {
+          summary = "Search through the xdg config home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            search_dirs_pattern($1, xdg_config_t, xdg_config_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_dontaudit_search_config_dirs" = {
+          summary = ''
+            Do not audit attempts to search through the
+            xdg config home directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            dontaudit $1 xdg_config_t:dir search_dir_perms;
+          '';
+        };
+        "xdg_watch_config_dirs" = {
+          summary = "Watch the xdg config home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            allow $1 xdg_config_t:dir watch;
+          '';
+        };
+        "xdg_watch_config_files" = {
+          summary = "Watch the xdg config home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            allow $1 xdg_config_t:file watch;
+          '';
+        };
+        "xdg_watch_all_config_dirs" = {
+          summary = "Watch all the xdg config home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_config_type;
+          '';
+          content = ''
+            allow $1 xdg_config_type:dir watch;
+          '';
+        };
+        "xdg_read_config_files" = {
+          summary = "Read the xdg config home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_config_t, xdg_config_t)
+            allow $1 xdg_config_t:file map;
+            list_dirs_pattern($1, xdg_config_t, xdg_config_t)
+            read_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_read_all_config_files" = {
+          summary = "Read all xdg_config_type files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_config_type;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_config_type, xdg_config_type)
+            allow $1 xdg_config_type:file map;
+            list_dirs_pattern($1, xdg_config_type, xdg_config_type)
+            read_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_config_filetrans" = {
+          summary = ''
+            Create objects in an xdg_config directory
+            with an automatic type transition to
+            a specified private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "The type of the object to create.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$4" = {
+              name = "filename";
+              description = "Name of the file or directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+
+            filetrans_pattern($1, xdg_config_t, $2, $3, $4)
+
+            xdg_create_config_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_config" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_config_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_config_t, $2, $3)
+          '';
+        };
+        "xdg_create_config_dirs" = {
+          summary = "Create xdg config home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            allow $1 xdg_config_t:dir create_dir_perms;
+          '';
+        };
+        "xdg_manage_config" = {
+          summary = "Manage the xdg config home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_config_t, xdg_config_t)
+            manage_files_pattern($1, xdg_config_t, xdg_config_t)
+            allow $1 xdg_config_t:file map;
+            manage_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
+            manage_fifo_files_pattern($1, xdg_config_t, xdg_config_t)
+            manage_sock_files_pattern($1, xdg_config_t, xdg_config_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_manage_all_config" = {
+          summary = "Manage all the xdg config home files regardless of their specific type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_config_type;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_config_type, xdg_config_type)
+            manage_files_pattern($1, xdg_config_type, xdg_config_type)
+            allow $1 xdg_config_type:file map;
+            manage_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
+            manage_fifo_files_pattern($1, xdg_config_type, xdg_config_type)
+            manage_sock_files_pattern($1, xdg_config_type, xdg_config_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_config" = {
+          summary = "Allow relabeling the xdg config home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_config_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_config_t, xdg_config_t)
+            relabel_files_pattern($1, xdg_config_t, xdg_config_t)
+            relabel_lnk_files_pattern($1, xdg_config_t, xdg_config_t)
+            relabel_fifo_files_pattern($1, xdg_config_t, xdg_config_t)
+            relabel_sock_files_pattern($1, xdg_config_t, xdg_config_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_all_config" = {
+          summary = "Allow relabeling the xdg config home files, regardless of their specific type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_config_type;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_config_type, xdg_config_type)
+            relabel_files_pattern($1, xdg_config_type, xdg_config_type)
+            relabel_lnk_files_pattern($1, xdg_config_type, xdg_config_type)
+            relabel_fifo_files_pattern($1, xdg_config_type, xdg_config_type)
+            relabel_sock_files_pattern($1, xdg_config_type, xdg_config_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_search_data_dirs" = {
+          summary = "Search through the xdg data home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            allow $1 xdg_data_t:dir search_dir_perms;
+          '';
+        };
+        "xdg_dontaudit_search_data_dirs" = {
+          summary = ''
+            Do not audit attempts to search through the
+            xdg data home directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            dontaudit $1 xdg_data_t:dir search_dir_perms;
+          '';
+        };
+        "xdg_watch_data_dirs" = {
+          summary = "Watch the xdg data home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            allow $1 xdg_data_t:dir watch;
+          '';
+        };
+        "xdg_watch_all_data_dirs" = {
+          summary = "Watch all the xdg data home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_data_type;
+          '';
+          content = ''
+            allow $1 xdg_data_type:dir watch;
+          '';
+        };
+        "xdg_read_data_files" = {
+          summary = "Read the xdg data home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_data_t, xdg_data_t)
+            allow $1 xdg_data_t:file map;
+            list_dirs_pattern($1, xdg_data_t, xdg_data_t)
+            read_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_read_all_data_files" = {
+          summary = "Read all xdg_data_type files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_data_type;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_data_type, xdg_data_type)
+            allow $1 xdg_data_type:file map;
+            list_dirs_pattern($1, xdg_data_type, xdg_data_type)
+            read_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_data_filetrans" = {
+          summary = ''
+            Create objects in an xdg_data directory
+            with an automatic type transition to
+            a specified private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "The type of the object to create.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$4" = {
+              name = "filename";
+              description = "Optional name of the file or directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+
+            filetrans_pattern($1, xdg_data_t, $2, $3, $4)
+
+            xdg_create_data_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_data" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_data_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_data_t, $2, $3)
+          '';
+        };
+        "xdg_create_data_dirs" = {
+          summary = "Create xdg data home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            allow $1 xdg_data_t:dir create_dir_perms;
+          '';
+        };
+        "xdg_manage_data" = {
+          summary = "Manage the xdg data home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_data_t, xdg_data_t)
+            manage_files_pattern($1, xdg_data_t, xdg_data_t)
+            allow $1 xdg_data_t:file map;
+            manage_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
+            manage_fifo_files_pattern($1, xdg_data_t, xdg_data_t)
+            manage_sock_files_pattern($1, xdg_data_t, xdg_data_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_manage_all_data" = {
+          summary = "Manage all the xdg data home files, regardless of their specific type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_data_type;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_data_type, xdg_data_type)
+            manage_files_pattern($1, xdg_data_type, xdg_data_type)
+            allow $1 xdg_data_type:file map;
+            manage_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
+            manage_fifo_files_pattern($1, xdg_data_type, xdg_data_type)
+            manage_sock_files_pattern($1, xdg_data_type, xdg_data_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_data" = {
+          summary = "Allow relabeling the xdg data home files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_data_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_data_t, xdg_data_t)
+            relabel_files_pattern($1, xdg_data_t, xdg_data_t)
+            relabel_lnk_files_pattern($1, xdg_data_t, xdg_data_t)
+            relabel_fifo_files_pattern($1, xdg_data_t, xdg_data_t)
+            relabel_sock_files_pattern($1, xdg_data_t, xdg_data_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_relabel_all_data" = {
+          summary = "Allow relabeling the xdg data home files, regardless of their type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xdg_data_type;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_data_type, xdg_data_type)
+            relabel_files_pattern($1, xdg_data_type, xdg_data_type)
+            relabel_lnk_files_pattern($1, xdg_data_type, xdg_data_type)
+            relabel_fifo_files_pattern($1, xdg_data_type, xdg_data_type)
+            relabel_sock_files_pattern($1, xdg_data_type, xdg_data_type)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_documents_dirs" = {
+          summary = "Watch the xdg documents home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_documents_t;
+          '';
+          content = ''
+            allow $1 xdg_documents_t:dir watch;
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_documents" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_documents_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_documents_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_documents_t, $2, $3)
+          '';
+        };
+        "xdg_manage_documents" = {
+          summary = "Manage documents content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_documents_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_documents_t, xdg_documents_t)
+            manage_files_pattern($1, xdg_documents_t, xdg_documents_t)
+            allow $1 xdg_documents_t:file map;
+            manage_lnk_files_pattern($1, xdg_documents_t, xdg_documents_t)
+          '';
+        };
+        "xdg_relabel_documents" = {
+          summary = "Allow relabeling the documents resources";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_documents_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_documents_t, xdg_documents_t)
+            relabel_files_pattern($1, xdg_documents_t, xdg_documents_t)
+            relabel_lnk_files_pattern($1, xdg_documents_t, xdg_documents_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_downloads_dirs" = {
+          summary = "Watch the xdg downloads home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            allow $1 xdg_downloads_t:dir watch;
+          '';
+        };
+        "xdg_read_downloads" = {
+          summary = "Read downloaded content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            allow $1 xdg_downloads_t:file map;
+            list_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            read_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_create_downloads" = {
+          summary = "Create downloaded content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            create_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            allow $1 xdg_downloads_t:file map;
+            create_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            create_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_write_downloads" = {
+          summary = "Write downloaded content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            write_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            allow $1 xdg_downloads_t:file map;
+            list_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            read_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_downloads" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_downloads_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_downloads_t, $2, $3)
+          '';
+        };
+        "xdg_manage_downloads" = {
+          summary = "Manage downloaded content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            manage_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            allow $1 xdg_downloads_t:file map;
+            manage_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+          '';
+        };
+        "xdg_relabel_downloads" = {
+          summary = "Allow relabeling the downloads resources";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            relabel_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+            relabel_lnk_files_pattern($1, xdg_downloads_t, xdg_downloads_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_mounton_downloads" = {
+          summary = "Allow mounting on the xdg downloads directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_downloads_t;
+          '';
+          content = ''
+            allow $1 xdg_downloads_t:dir { search_dir_perms mounton_dir_perms };
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_pictures_dirs" = {
+          summary = "Watch the xdg pictures home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_pictures_t;
+          '';
+          content = ''
+            allow $1 xdg_pictures_t:dir watch;
+          '';
+        };
+        "xdg_read_pictures" = {
+          summary = "Read user pictures content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_pictures_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            allow $1 xdg_pictures_t:file map;
+            list_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            read_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_pictures" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_pictures_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_pictures_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_pictures_t, $2, $3)
+          '';
+        };
+        "xdg_manage_pictures" = {
+          summary = "Manage pictures content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_pictures_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            manage_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            allow $1 xdg_pictures_t:file map;
+            manage_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+          '';
+        };
+        "xdg_relabel_pictures" = {
+          summary = "Allow relabeling the pictures resources";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_pictures_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            relabel_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+            relabel_lnk_files_pattern($1, xdg_pictures_t, xdg_pictures_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_music_dirs" = {
+          summary = "Watch the xdg music home directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_music_t;
+          '';
+          content = ''
+            allow $1 xdg_music_t:dir watch;
+          '';
+        };
+        "xdg_read_music" = {
+          summary = "Read user music content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_music_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_music_t, xdg_music_t)
+            allow $1 xdg_music_t:file map;
+            list_dirs_pattern($1, xdg_music_t, xdg_music_t)
+            read_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_music" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_pictures_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_music_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_music_t, $2, $3)
+          '';
+        };
+        "xdg_manage_music" = {
+          summary = "Manage music content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_music_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_music_t, xdg_music_t)
+            manage_files_pattern($1, xdg_music_t, xdg_music_t)
+            allow $1 xdg_music_t:file map;
+            manage_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
+          '';
+        };
+        "xdg_relabel_music" = {
+          summary = "Allow relabeling the music resources";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_music_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_music_t, xdg_music_t)
+            relabel_files_pattern($1, xdg_music_t, xdg_music_t)
+            relabel_lnk_files_pattern($1, xdg_music_t, xdg_music_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_watch_videos_dirs" = {
+          summary = "Watch the xdg video content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_videos_t;
+          '';
+          content = ''
+            allow $1 xdg_videos_t:dir watch;
+          '';
+        };
+        "xdg_read_videos" = {
+          summary = "Read user video content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_videos_t;
+          '';
+          content = ''
+            read_files_pattern($1, xdg_videos_t, xdg_videos_t)
+            allow $1 xdg_videos_t:file map;
+            list_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
+            read_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "xdg_generic_user_home_dir_filetrans_videos" = {
+          summary = ''
+            Create objects in the user home dir with an automatic type transition to
+            the xdg_videos_t type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "The class of the object to be created.";
+            };
+            "$3" = {
+              name = "filename";
+              description = "Name of the directory created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type xdg_videos_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, xdg_videos_t, $2, $3)
+          '';
+        };
+        "xdg_manage_videos" = {
+          summary = "Manage video content";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type xdg_videos_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
+            manage_files_pattern($1, xdg_videos_t, xdg_videos_t)
+            allow $1 xdg_videos_t:file map;
+            manage_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
+          '';
+        };
+        "xdg_relabel_videos" = {
+          summary = "Allow relabeling the videos resources";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xdg_videos_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, xdg_videos_t, xdg_videos_t)
+            relabel_files_pattern($1, xdg_videos_t, xdg_videos_t)
+            relabel_lnk_files_pattern($1, xdg_videos_t, xdg_videos_t)
+
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xdg)
 

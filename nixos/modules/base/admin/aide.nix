@@ -3,88 +3,83 @@
 { lib, ... }: {
   config.security.selinux.modules.aide = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Aide filesystem integrity checker.</summary>
+    interface = {
+      summary = "Aide filesystem integrity checker.";
+      exports = {
+        "aide_domtrans" = {
+          summary = "Execute aide in the aide domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type aide_t, aide_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, aide_exec_t, aide_t)
+          '';
+        };
+        "aide_run" = {
+          summary = ''
+            Execute aide programs in the AIDE
+            domain and allow the specified role
+            the AIDE domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role aide_roles;
+          '';
+          content = ''
+            aide_domtrans($1)
+            roleattribute $2 aide_roles;
+          '';
+        };
+        "aide_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an aide environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type aide_t, aide_db_t, aide_log_t;
+          '';
+          content = ''
+            allow $1 aide_t:process { ptrace signal_perms };
+            ps_process_pattern($1, aide_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute aide in the aide domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aide_domtrans',`
-      	gen_require(`
-      		type aide_t, aide_exec_t;
-      	')
+            aide_run($1, $2)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, aide_exec_t, aide_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, aide_db_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute aide programs in the AIDE
-      ##	domain and allow the specified role
-      ##	the AIDE domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aide_run',`
-      	gen_require(`
-      		attribute_role aide_roles;
-      	')
-
-      	aide_domtrans($1)
-      	roleattribute $2 aide_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an aide environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`aide_admin',`
-      	gen_require(`
-      		type aide_t, aide_db_t, aide_log_t;
-      	')
-
-      	allow $1 aide_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, aide_t)
-
-      	aide_run($1, $2)
-
-      	files_list_etc($1)
-      	admin_pattern($1, aide_db_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, aide_log_t)
-      ')
-    '';
+            logging_list_logs($1)
+            admin_pattern($1, aide_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(aide)
 

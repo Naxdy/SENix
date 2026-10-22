@@ -3,190 +3,180 @@
 { lib, ... }: {
   config.security.selinux.modules.wine = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Run Windows programs in Linux.</summary>
+    interface = {
+      summary = "Run Windows programs in Linux.";
+      exports = {
+        "wine_role" = {
+          type = "template";
+          summary = "Role access for wine.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role wine_roles;
+            type wine_exec_t, wine_t, wine_tmp_t;
+            type wine_home_t;
+          '';
+          content = ''
+            roleattribute $4 wine_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for wine.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`wine_role',`
-      	gen_require(`
-      		attribute_role wine_roles;
-      		type wine_exec_t, wine_t, wine_tmp_t;
-      		type wine_home_t;
-      	')
+            domtrans_pattern($3, wine_exec_t, wine_t)
 
-      	roleattribute $4 wine_roles;
+            allow wine_t $3:unix_stream_socket connectto;
+            allow wine_t $3:process signull;
 
-      	domtrans_pattern($3, wine_exec_t, wine_t)
+            ps_process_pattern($3, wine_t)
+            allow $3 wine_t:process { ptrace signal_perms };
 
-      	allow wine_t $3:unix_stream_socket connectto;
-      	allow wine_t $3:process signull;
+            allow $3 wine_t:fd use;
+            allow $3 wine_t:shm { associate getattr };
+            allow $3 wine_t:shm rw_shm_perms;
+            allow $3 wine_t:unix_stream_socket connectto;
 
-      	ps_process_pattern($3, wine_t)
-      	allow $3 wine_t:process { ptrace signal_perms };
+            allow $2 { wine_tmp_t wine_home_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { wine_tmp_t wine_home_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 wine_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, wine_home_t, dir, ".wine")
+          '';
+        };
+        "wine_role_template" = {
+          type = "template";
+          summary = "The role template for the wine module.";
+          desc = ''
+            <p>
+            This template creates a derived domains which are used
+            for wine applications.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type wine_exec_t;
+          '';
+          content = ''
+            type $1_wine_t;
+            userdom_user_application_domain($1_wine_t, wine_exec_t)
+            role $2 types $1_wine_t;
 
-      	allow $3 wine_t:fd use;
-      	allow $3 wine_t:shm { associate getattr };
-      	allow $3 wine_t:shm rw_shm_perms;
-      	allow $3 wine_t:unix_stream_socket connectto;
+            allow $1_wine_t self:process { execmem execstack };
 
-      	allow $2 { wine_tmp_t wine_home_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { wine_tmp_t wine_home_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 wine_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, wine_home_t, dir, ".wine")
-      ')
+            allow $3 $1_wine_t:process { noatsecure ptrace signal_perms };
+            ps_process_pattern($3, $1_wine_t)
 
-      #######################################
-      ## <summary>
-      ##	The role template for the wine module.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	This template creates a derived domains which are used
-      ##	for wine applications.
-      ##	</p>
-      ## </desc>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`wine_role_template',`
-      	gen_require(`
-      		type wine_exec_t;
-      	')
+            domtrans_pattern($3, wine_exec_t, $1_wine_t)
 
-      	type $1_wine_t;
-      	userdom_user_application_domain($1_wine_t, wine_exec_t)
-      	role $2 types $1_wine_t;
+            corecmd_bin_domtrans($1_wine_t, $2)
 
-      	allow $1_wine_t self:process { execmem execstack };
+            userdom_manage_user_tmpfs_files($1_wine_t)
 
-      	allow $3 $1_wine_t:process { noatsecure ptrace signal_perms };
-      	ps_process_pattern($3, $1_wine_t)
+            domain_mmap_low($1_wine_t)
 
-      	domtrans_pattern($3, wine_exec_t, $1_wine_t)
+            tunable_policy(`wine_mmap_zero_ignore',`
+                    dontaudit $1_wine_t self:memprotect mmap_zero;
+            ')
 
-      	corecmd_bin_domtrans($1_wine_t, $2)
-
-      	userdom_manage_user_tmpfs_files($1_wine_t)
-
-      	domain_mmap_low($1_wine_t)
-
-      	tunable_policy(`wine_mmap_zero_ignore',`
-      		dontaudit $1_wine_t self:memprotect mmap_zero;
-      	')
-
-      	optional_policy(`
-      		xserver_role($1, $1_wine_t, $3, $4)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the wine program in the wine domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wine_domtrans',`
-      	gen_require(`
-      		type wine_t, wine_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, wine_exec_t, wine_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute wine in the wine domain,
-      ##	and allow the specified role
-      ##	the wine domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wine_run',`
-      	gen_require(`
-      		attribute_role wine_roles;
-      	')
-
-      	wine_domtrans($1)
-      	roleattribute $2 wine_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write wine Shared
-      ##	memory segments.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wine_rw_shm',`
-      	gen_require(`
-      		type wine_t;
-      	')
-
-      	allow $1 wine_t:shm rw_shm_perms;
-      ')
-    '';
+            optional_policy(`
+                    xserver_role($1, $1_wine_t, $3, $4)
+            ')
+          '';
+        };
+        "wine_domtrans" = {
+          summary = "Execute the wine program in the wine domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type wine_t, wine_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, wine_exec_t, wine_t)
+          '';
+        };
+        "wine_run" = {
+          summary = ''
+            Execute wine in the wine domain,
+            and allow the specified role
+            the wine domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role wine_roles;
+          '';
+          content = ''
+            wine_domtrans($1)
+            roleattribute $2 wine_roles;
+          '';
+        };
+        "wine_rw_shm" = {
+          summary = ''
+            Read and write wine Shared
+            memory segments.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type wine_t;
+          '';
+          content = ''
+            allow $1 wine_t:shm rw_shm_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(wine)
 

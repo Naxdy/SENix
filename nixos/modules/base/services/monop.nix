@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.monop = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Monopoly daemon.</summary>
+    interface = {
+      summary = "Monopoly daemon.";
+      exports = {
+        "monop_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an monop environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type monopd_t, monopd_initrc_exec_t, monopd_share_t;
+            type monopd_etc_t, monopd_runtime_t;
+          '';
+          content = ''
+            allow $1 monopd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, monopd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an monop environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`monop_admin',`
-      	gen_require(`
-      		type monopd_t, monopd_initrc_exec_t, monopd_share_t;
-      		type monopd_etc_t, monopd_runtime_t;
-      	')
+            init_startstop_service($1, $2, monopd_t, monopd_initrc_exec_t)
 
-      	allow $1 monopd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, monopd_t)
+            files_search_etc($1)
+            admin_pattern($1, monopd_etc_t)
 
-      	init_startstop_service($1, $2, monopd_t, monopd_initrc_exec_t)
+            files_search_runtime($1)
+            admin_pattern($1, monopd_runtime_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, monopd_etc_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, monopd_runtime_t)
-
-      	files_search_usr($1)
-      	admin_pattern($1, monopd_share_t)
-      ')
-    '';
+            files_search_usr($1)
+            admin_pattern($1, monopd_share_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(monop)
 

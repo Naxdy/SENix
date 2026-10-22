@@ -3,54 +3,53 @@
 { lib, ... }: {
   config.security.selinux.modules.syncthing = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Application that lets you synchronize your files across multiple devices.</summary>
+    interface = {
+      summary = "Application that lets you synchronize your files across multiple devices.";
+      exports = {
+        "syncthing_role" = {
+          type = "template";
+          summary = "Role access for Syncthing";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role syncthing_roles;
+            type syncthing_t, syncthing_exec_t, syncthing_xdg_config_t;
+          '';
+          content = ''
+            roleattribute $4 syncthing_roles;
 
-      ########################################
-      ## <summary>
-      ##  Role access for Syncthing
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`syncthing_role', `
-      	gen_require(`
-      		attribute_role syncthing_roles;
-      		type syncthing_t, syncthing_exec_t, syncthing_xdg_config_t;
-      	')
+            domtrans_pattern($3, syncthing_exec_t, syncthing_t)
 
-      	roleattribute $4 syncthing_roles;
+            allow $2 syncthing_xdg_config_t:file { manage_file_perms relabel_file_perms };
+            allow $2 syncthing_xdg_config_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 syncthing_xdg_config_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-      	domtrans_pattern($3, syncthing_exec_t, syncthing_t)
-
-      	allow $2 syncthing_xdg_config_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 syncthing_xdg_config_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 syncthing_xdg_config_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-
-      	optional_policy(`
-      		systemd_user_app_status($1, syncthing_t)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, syncthing_t)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(syncthing)
 

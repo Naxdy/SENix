@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.node_exporter = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Prometheus Node Exporter</summary>
-    '';
+    interface = {
+      summary = "Prometheus Node Exporter";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(node_exporter)
 

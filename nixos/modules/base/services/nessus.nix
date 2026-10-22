@@ -3,50 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.nessus = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Network scanning daemon.</summary>
+    interface = {
+      summary = "Network scanning daemon.";
+      exports = {
+        "nessus_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an nessus environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type nessusd_t, nessusd_db_t, nessusd_initrc_exec_t;
+            type nessusd_etc_t, nessusd_log_t, nessusd_runtime_t;
+          '';
+          content = ''
+            allow $1 nessusd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, nessusd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an nessus environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`nessus_admin',`
-      	gen_require(`
-      		type nessusd_t, nessusd_db_t, nessusd_initrc_exec_t;
-      		type nessusd_etc_t, nessusd_log_t, nessusd_runtime_t;
-      	')
+            init_startstop_service($1, $2, nessusd_t, nessusd_initrc_exec_t)
 
-      	allow $1 nessusd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, nessusd_t)
+            logging_search_logs($1)
+            admin_pattern($1, nessusd_log_t)
 
-      	init_startstop_service($1, $2, nessusd_t, nessusd_initrc_exec_t)
+            files_search_etc($1)
+            admin_pattern($1, nessusd_etc_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, nessusd_log_t)
+            files_search_runtime($1)
+            admin_pattern($1, nessusd_runtime_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, nessusd_etc_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, nessusd_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, nessusd_db_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, nessusd_db_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(nessus)
 

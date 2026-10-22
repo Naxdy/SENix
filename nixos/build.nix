@@ -80,6 +80,100 @@ let
       lib.flatten (lib.mapAttrsToList (expandRule fileContext) fileContext.rules)
     );
 
+  # Render a module's exported macros (`exports`) as the `.if` that
+  # `segenxml.py` turns into policy.xml docs: the module's `<summary>`,
+  # `<desc>` and `<required>` header, then every interface/template with its
+  # own documentation, `gen_require` block and body.
+  # Nix indented strings keep a trailing newline; split them without the
+  # resulting empty doc-comment line.
+  docSplit =
+    value:
+    let
+      lines = lib.splitString "\n" value;
+    in
+    if lines != [ ] && lib.last lines == "" then lib.init lines else lines;
+  docLines = value: map (line: "## ${line}") (docSplit value);
+  indentLine = line: if line == "" then "" else "\t${line}";
+
+  moduleDoc =
+    e:
+    lib.concatStringsSep "\n" (
+      [ "## <summary>" ]
+      ++ docLines e.summary
+      ++ [ "## </summary>" ]
+      ++ lib.optionals (e.desc != null) ([ "## <desc>" ] ++ docLines e.desc ++ [ "## </desc>" ])
+      ++ lib.optionals (e.required != null) (
+        [
+          "## <required val=\"true\">"
+        ]
+        ++ docLines e.required
+        ++ [ "## </required>" ]
+      )
+    );
+
+  paramDoc =
+    param:
+    lib.concatStringsSep "\n" (
+      [
+        "## <param name=\"${param.name}\"${lib.optionalString param.optional " optional=\"true\""}${lib.optionalString param.unused " unused=\"true\""}>"
+      ]
+      ++ [ "## <summary>" ]
+      ++ docLines param.description
+      ++ [
+        "## </summary>"
+        "## </param>"
+      ]
+    );
+
+  interfaceDoc =
+    i:
+    lib.concatStringsSep "\n" (
+      [ "########################################" ]
+      ++ [ "## <summary>" ]
+      ++ docLines i.summary
+      ++ [ "## </summary>" ]
+      ++ lib.optionals (i.desc != null) ([ "## <desc>" ] ++ docLines i.desc ++ [ "## </desc>" ])
+      ++ lib.flatten (lib.mapAttrsToList (_: param: paramDoc param) i.params)
+      ++ lib.optionals (i.infoflow != null) ([
+        "## <infoflow type=\"${i.infoflow.type}\"${
+          lib.optionalString (
+            i.infoflow.type != "none" && i.infoflow.weight != null
+          ) " weight=\"${i.infoflow.weight}\""
+        }/>"
+      ])
+      ++ lib.optionals i.rolecap [ "## <rolecap/>" ]
+      ++ lib.optionals i.rolebase [ "## <rolebase/>" ]
+      ++ [ "#" ]
+    );
+
+  interfaceBody =
+    name: i:
+    lib.concatStringsSep "\n" (
+      [ "${i.type}(`${name}',`" ]
+      ++ lib.optionals (i.gen_require != null) (
+        [
+          "\tgen_require(`"
+        ]
+        ++ map indentLine (lib.splitString "\n" i.gen_require)
+        ++ [ "\t')" ]
+      )
+      ++ lib.optionals (i.content != "") ([ "" ] ++ map indentLine (lib.splitString "\n" i.content))
+      ++ [ "')" ]
+    );
+
+  genIf =
+    e:
+    lib.concatStringsSep "\n\n" (
+      [ (moduleDoc e) ]
+      ++ map (
+        name:
+        lib.concatStringsSep "\n" [
+          (interfaceDoc e.exports.${name})
+          (interfaceBody name e.exports.${name})
+        ]
+      ) (lib.attrNames e.exports)
+    );
+
   # Materialize a module source to a store path, passing paths through and
   # writing raw declarations to a `writeText` file.
   materializeSource = content: filename: pkgs.writeText filename content;
@@ -120,7 +214,7 @@ let
                   {
                     inherit dir;
                     name = "${dir}/${name}.if";
-                    path = materializeSource m.interface "${name}.if";
+                    path = materializeSource (genIf m.interface + "\n") "${name}.if";
                   }
                 ]
               else if isCustom then
@@ -128,9 +222,11 @@ let
                 # the build requires one anyway. It must also be *documented*:
                 # sedoctool.py only registers a module in modules.conf if its
                 # XML carries a module-level `<summary>`, so an empty stub would
-                # silently drop the module from the build. Provide a documented
-                # stub, which the `all_layers` pipeline turns into a registered
-                # (loadable) module with no manual modules.conf editing.
+                # silently drop the module from the build. When the module itself
+                # declares `exports`, `genIf` above renders its header; otherwise
+                # provide this documented stub, which the `all_layers` pipeline
+                # turns into a registered (loadable) module with no manual
+                # modules.conf editing.
                 [
                   {
                     inherit dir;

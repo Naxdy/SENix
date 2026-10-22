@@ -3,101 +3,98 @@
 { lib, ... }: {
   config.security.selinux.modules.bacula = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Cross platform network backup.</summary>
+    interface = {
+      summary = "Cross platform network backup.";
+      exports = {
+        "bacula_domtrans_admin" = {
+          summary = ''
+            Execute bacula admin bacula
+            admin domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type bacula_admin_t, bacula_admin_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, bacula_admin_exec_t, bacula_admin_t)
+          '';
+        };
+        "bacula_run_admin" = {
+          summary = ''
+            Execute user interfaces in the
+            bacula admin domain, and allow the
+            specified role the bacula admin domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role bacula_admin_roles;
+          '';
+          content = ''
+            bacula_domtrans_admin($1)
+            roleattribute $2 bacula_admin_roles;
+          '';
+          rolecap = true;
+        };
+        "bacula_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an bacula environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type bacula_t, bacula_etc_t, bacula_log_t;
+            type bacula_spool_t, bacula_var_lib_t;
+            type bacula_runtime_t, bacula_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 bacula_t:process { ptrace signal_perms };
+            ps_process_pattern($1, bacula_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute bacula admin bacula
-      ##	admin domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bacula_domtrans_admin',`
-      	gen_require(`
-      		type bacula_admin_t, bacula_admin_exec_t;
-      	')
+            init_startstop_service($1, $2, bacula_t, bacula_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, bacula_admin_exec_t, bacula_admin_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, bacula_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute user interfaces in the
-      ##	bacula admin domain, and allow the
-      ##	specified role the bacula admin domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bacula_run_admin',`
-      	gen_require(`
-      		attribute_role bacula_admin_roles;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, bacula_log_t)
 
-      	bacula_domtrans_admin($1)
-      	roleattribute $2 bacula_admin_roles;
-      ')
+            files_search_var($1)
+            admin_pattern($1, bacula_spool_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an bacula environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bacula_admin',`
-      	gen_require(`
-      		type bacula_t, bacula_etc_t, bacula_log_t;
-      		type bacula_spool_t, bacula_var_lib_t;
-      		type bacula_runtime_t, bacula_initrc_exec_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, bacula_var_lib_t)
 
-      	allow $1 bacula_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, bacula_t)
-
-      	init_startstop_service($1, $2, bacula_t, bacula_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, bacula_etc_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, bacula_log_t)
-
-      	files_search_var($1)
-      	admin_pattern($1, bacula_spool_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, bacula_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, bacula_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, bacula_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(bacula)
 

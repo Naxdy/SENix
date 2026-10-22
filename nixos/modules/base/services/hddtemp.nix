@@ -3,107 +3,98 @@
 { lib, ... }: {
   config.security.selinux.modules.hddtemp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Hard disk temperature tool running as a daemon.</summary>
+    interface = {
+      summary = "Hard disk temperature tool running as a daemon.";
+      exports = {
+        "hddtemp_domtrans" = {
+          summary = "Execute a domain transition to run hddtemp.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type hddtemp_t, hddtemp_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, hddtemp_exec_t, hddtemp_t)
+          '';
+        };
+        "hddtemp_run" = {
+          summary = ''
+            Execute hddtemp in the hddtemp domain, and
+            allow the specified role the hdd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type hddtemp_t;
+          '';
+          content = ''
+            hddtemp_domtrans($1)
+            role $2 types hddtemp_t;
+          '';
+          rolecap = true;
+        };
+        "hddtemp_exec" = {
+          summary = "Execute hddtemp in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hddtemp_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, hddtemp_exec_t)
+          '';
+        };
+        "hddtemp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an hddtemp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type hddtemp_t, hddtemp_etc_t, hddtemp_initrc_exec_t;
+          '';
+          content = ''
+            hddtemp_run($1, $2)
 
-      #######################################
-      ## <summary>
-      ##	Execute a domain transition to run hddtemp.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hddtemp_domtrans',`
-      	gen_require(`
-      		type hddtemp_t, hddtemp_exec_t;
-      	')
+            allow $1 hddtemp_t:process { ptrace signal_perms };
+            ps_process_pattern($1, hddtemp_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, hddtemp_exec_t, hddtemp_t)
-      ')
+            init_startstop_service($1, $2, hddtemp_t, hddtemp_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute hddtemp in the hddtemp domain, and
-      ##	allow the specified role the hdd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hddtemp_run',`
-      	gen_require(`
-      		type hddtemp_t;
-      	')
-
-      	hddtemp_domtrans($1)
-      	role $2 types hddtemp_t;
-      ')
-
-
-      ######################################
-      ## <summary>
-      ##	Execute hddtemp in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hddtemp_exec',`
-      	gen_require(`
-      		type hddtemp_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, hddtemp_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an hddtemp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hddtemp_admin',`
-      	gen_require(`
-      		type hddtemp_t, hddtemp_etc_t, hddtemp_initrc_exec_t;
-      	')
-
-      	hddtemp_run($1, $2)
-
-      	allow $1 hddtemp_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, hddtemp_t)
-
-      	init_startstop_service($1, $2, hddtemp_t, hddtemp_initrc_exec_t)
-
-      	admin_pattern($1, hddtemp_etc_t)
-      	files_search_etc($1)
-      ')
-    '';
+            admin_pattern($1, hddtemp_etc_t)
+            files_search_etc($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(hddtemp)
 

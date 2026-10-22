@@ -3,30 +3,31 @@
 { lib, ... }: {
   config.security.selinux.modules.seatd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Seat management daemon.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to connect
-      ##	to seatd socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow
-      ##	</summary>
-      ## </param>
-      #
-      interface(`seatd_stream_connect',`
-      	gen_require(`
-      		type seatd_t, seatd_runtime_t;
-      	')
-
-      	allow $1 seatd_t:unix_stream_socket connectto;
-      	allow $1 seatd_runtime_t:sock_file write;
-      	files_search_runtime($1)
-      ')
-    '';
+    interface = {
+      summary = "Seat management daemon.";
+      exports = {
+        "seatd_stream_connect" = {
+          summary = ''
+            Allow the specified domain to connect
+            to seatd socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            type seatd_t, seatd_runtime_t;
+          '';
+          content = ''
+            allow $1 seatd_t:unix_stream_socket connectto;
+            allow $1 seatd_runtime_t:sock_file write;
+            files_search_runtime($1)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(seatd)
 

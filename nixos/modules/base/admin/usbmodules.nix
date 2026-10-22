@@ -3,55 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.usbmodules = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>List kernel modules of USB devices.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute usbmodules in the usbmodules domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usbmodules_domtrans',`
-      	gen_require(`
-      		type usbmodules_t, usbmodules_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, usbmodules_exec_t, usbmodules_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute usbmodules in the usbmodules
-      ##	domain, and allow the specified
-      ##	role the usbmodules domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`usbmodules_run',`
-      	gen_require(`
-      		attribute_role usbmodules_roles;
-      	')
-
-      	usbmodules_domtrans($1)
-      	roleattribute $2 usbmodules_roles;
-      ')
-    '';
+    interface = {
+      summary = "List kernel modules of USB devices.";
+      exports = {
+        "usbmodules_domtrans" = {
+          summary = "Execute usbmodules in the usbmodules domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type usbmodules_t, usbmodules_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, usbmodules_exec_t, usbmodules_t)
+          '';
+        };
+        "usbmodules_run" = {
+          summary = ''
+            Execute usbmodules in the usbmodules
+            domain, and allow the specified
+            role the usbmodules domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role usbmodules_roles;
+          '';
+          content = ''
+            usbmodules_domtrans($1)
+            roleattribute $2 usbmodules_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(usbmodules)
 

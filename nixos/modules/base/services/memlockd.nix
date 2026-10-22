@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.memlockd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>memory lock daemon, keeps important files in RAM.</summary>
-    '';
+    interface = {
+      summary = "memory lock daemon, keeps important files in RAM.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(memlockd)
 

@@ -3,289 +3,251 @@
 { lib, ... }: {
   config.security.selinux.modules.dnsmasq = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>DNS forwarder and DHCP server.</summary>
+    interface = {
+      summary = "DNS forwarder and DHCP server.";
+      exports = {
+        "dnsmasq_domtrans" = {
+          summary = "Execute dnsmasq server in the dnsmasq domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_exec_t, dnsmasq_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dnsmasq_exec_t, dnsmasq_t)
+          '';
+        };
+        "dnsmasq_initrc_domtrans" = {
+          summary = ''
+            Execute the dnsmasq init script in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, dnsmasq_initrc_exec_t)
+          '';
+        };
+        "dnsmasq_signal" = {
+          summary = "Send generic signals to dnsmasq.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_t;
+          '';
+          content = ''
+            allow $1 dnsmasq_t:process signal;
+          '';
+        };
+        "dnsmasq_signull" = {
+          summary = "Send null signals to dnsmasq.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_t;
+          '';
+          content = ''
+            allow $1 dnsmasq_t:process signull;
+          '';
+        };
+        "dnsmasq_kill" = {
+          summary = "Send kill signals to dnsmasq.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_t;
+          '';
+          content = ''
+            allow $1 dnsmasq_t:process sigkill;
+          '';
+        };
+        "dnsmasq_read_config" = {
+          summary = "Read dnsmasq config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_etc_t;
+          '';
+          content = ''
+            read_files_pattern($1, dnsmasq_etc_t, dnsmasq_etc_t)
+            files_search_etc($1)
+          '';
+        };
+        "dnsmasq_write_config" = {
+          summary = "Write dnsmasq config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_etc_t;
+          '';
+          content = ''
+            write_files_pattern($1, dnsmasq_etc_t, dnsmasq_etc_t)
+            files_search_etc($1)
+          '';
+        };
+        "dnsmasq_create_runtime_dirs" = {
+          summary = "Create dnsmasq runtime directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 dnsmasq_runtime_t:dir create_dir_perms;
+          '';
+        };
+        "dnsmasq_virt_runtime_filetrans_runtime" = {
+          summary = ''
+            Create specified objects in specified
+            directories with a type transition to
+            the dnsmasq runtime file type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type dnsmasq_runtime_t;
+          '';
+          content = ''
+            virt_runtime_filetrans($1, dnsmasq_runtime_t, $2, $3)
+          '';
+        };
+        "dnsmasq_read_runtime_files" = {
+          summary = "Read dnsmasq runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_runtime_t;
+          '';
+          content = ''
+            read_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
+          '';
+        };
+        "dnsmasq_delete_runtime_files" = {
+          summary = "Delete dnsmasq runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_runtime_t;
+          '';
+          content = ''
+            delete_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
+          '';
+        };
+        "dnsmasq_manage_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete
+            dnsmasq runtime files
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
+          '';
+        };
+        "dnsmasq_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dnsmasq environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dnsmasq_t, dnsmasq_lease_t, dnsmasq_runtime_t;
+            type dnsmasq_initrc_exec_t, dnsmasq_var_log_t;
+          '';
+          content = ''
+            allow $1 dnsmasq_t:process { ptrace signal_perms };
+            ps_process_pattern($1, dnsmasq_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute dnsmasq server in the dnsmasq domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_domtrans',`
-      	gen_require(`
-      		type dnsmasq_exec_t, dnsmasq_t;
-      	')
+            init_startstop_service($1, $2, dnsmasq_t, dnsmasq_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dnsmasq_exec_t, dnsmasq_t)
-      ')
+            files_list_var_lib($1)
+            admin_pattern($1, dnsmasq_lease_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute the dnsmasq init script in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_initrc_domtrans',`
-      	gen_require(`
-      		type dnsmasq_initrc_exec_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, dnsmasq_var_log_t)
 
-      	init_labeled_script_domtrans($1, dnsmasq_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to dnsmasq.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_signal',`
-      	gen_require(`
-      		type dnsmasq_t;
-      	')
-
-      	allow $1 dnsmasq_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to dnsmasq.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_signull',`
-      	gen_require(`
-      		type dnsmasq_t;
-      	')
-
-      	allow $1 dnsmasq_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to dnsmasq.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_kill',`
-      	gen_require(`
-      		type dnsmasq_t;
-      	')
-
-      	allow $1 dnsmasq_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read dnsmasq config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dnsmasq_read_config',`
-      	gen_require(`
-      		type dnsmasq_etc_t;
-      	')
-
-      	read_files_pattern($1, dnsmasq_etc_t, dnsmasq_etc_t)
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write dnsmasq config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dnsmasq_write_config',`
-      	gen_require(`
-      		type dnsmasq_etc_t;
-      	')
-
-      	write_files_pattern($1, dnsmasq_etc_t, dnsmasq_etc_t)
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create dnsmasq runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dnsmasq_create_runtime_dirs',`
-      	gen_require(`
-      		type dnsmasq_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 dnsmasq_runtime_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in specified
-      ##	directories with a type transition to
-      ##	the dnsmasq runtime file type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dnsmasq_virt_runtime_filetrans_runtime',`
-      	gen_require(`
-      		type dnsmasq_runtime_t;
-      	')
-
-      	virt_runtime_filetrans($1, dnsmasq_runtime_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read dnsmasq runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_read_runtime_files',`
-      	gen_require(`
-      		type dnsmasq_runtime_t;
-      	')
-
-      	read_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete dnsmasq runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dnsmasq_delete_runtime_files',`
-      	gen_require(`
-      		type dnsmasq_runtime_t;
-      	')
-
-      	delete_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	dnsmasq runtime files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dnsmasq_manage_runtime_files',`
-      	gen_require(`
-      		type dnsmasq_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, dnsmasq_runtime_t, dnsmasq_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dnsmasq environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dnsmasq_admin',`
-      	gen_require(`
-      		type dnsmasq_t, dnsmasq_lease_t, dnsmasq_runtime_t;
-      		type dnsmasq_initrc_exec_t, dnsmasq_var_log_t;
-      	')
-
-      	allow $1 dnsmasq_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, dnsmasq_t)
-
-      	init_startstop_service($1, $2, dnsmasq_t, dnsmasq_initrc_exec_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, dnsmasq_lease_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, dnsmasq_var_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, dnsmasq_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, dnsmasq_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dnsmasq)
 

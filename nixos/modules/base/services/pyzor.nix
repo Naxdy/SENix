@@ -3,157 +3,145 @@
 { lib, ... }: {
   config.security.selinux.modules.pyzor = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Pyzor is a distributed, collaborative spam detection and filtering network.</summary>
+    interface = {
+      summary = "Pyzor is a distributed, collaborative spam detection and filtering network.";
+      exports = {
+        "pyzor_role" = {
+          type = "template";
+          summary = "Role access for pyzor.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role pyzor_roles;
+            type pyzor_t, pyzor_exec_t, pyzor_home_t;
+            type pyzor_tmp_t;
+          '';
+          content = ''
+            roleattribute $4 pyzor_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for pyzor.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`pyzor_role',`
-      	gen_require(`
-      		attribute_role pyzor_roles;
-      		type pyzor_t, pyzor_exec_t, pyzor_home_t;
-      		type pyzor_tmp_t;
-      	')
+            domtrans_pattern($3, pyzor_exec_t, pyzor_t)
 
-      	roleattribute $4 pyzor_roles;
+            allow $3 pyzor_t:process { ptrace signal_perms };
+            ps_process_pattern($3, pyzor_t)
 
-      	domtrans_pattern($3, pyzor_exec_t, pyzor_t)
+            allow $2 { pyzor_home_t pyzor_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { pyzor_home_t pyzor_tmp_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 pyzor_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-      	allow $3 pyzor_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, pyzor_t)
+            userdom_user_home_dir_filetrans($2, pyzor_home_t, dir, ".pyzor")
 
-      	allow $2 { pyzor_home_t pyzor_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { pyzor_home_t pyzor_tmp_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 pyzor_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            optional_policy(`
+                    systemd_user_app_status($1, pyzor_t)
+            ')
+          '';
+        };
+        "pyzor_signal" = {
+          summary = "Send generic signals to pyzor.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pyzor_t;
+          '';
+          content = ''
+            allow $1 pyzor_t:process signal;
+          '';
+        };
+        "pyzor_domtrans" = {
+          summary = "Execute pyzor with a domain transition.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type pyzor_exec_t, pyzor_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, pyzor_exec_t, pyzor_t)
+          '';
+        };
+        "pyzor_exec" = {
+          summary = "Execute pyzor in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pyzor_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, pyzor_exec_t)
+          '';
+        };
+        "pyzor_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pyzor environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pyzord_t, pyzord_initrc_exec_t, pyzord_log_t;
+            type pyzor_var_lib_t, pyzor_etc_t;
+          '';
+          content = ''
+            allow $1 pyzord_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pyzord_t)
 
-      	userdom_user_home_dir_filetrans($2, pyzor_home_t, dir, ".pyzor")
+            init_startstop_service($1, $2, pyzord_t, pyzord_initrc_exec_t)
 
-      	optional_policy(`
-      		systemd_user_app_status($1, pyzor_t)
-      	')
-      ')
+            files_search_etc($1)
+            admin_pattern($1, pyzor_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to pyzor.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pyzor_signal',`
-      	gen_require(`
-      		type pyzor_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, pyzord_log_t)
 
-      	allow $1 pyzor_t:process signal;
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, pyzor_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute pyzor with a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pyzor_domtrans',`
-      	gen_require(`
-      		type pyzor_exec_t, pyzor_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, pyzor_exec_t, pyzor_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute pyzor in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pyzor_exec',`
-      	gen_require(`
-      		type pyzor_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, pyzor_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pyzor environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pyzor_admin',`
-      	gen_require(`
-      		type pyzord_t, pyzord_initrc_exec_t, pyzord_log_t;
-      		type pyzor_var_lib_t, pyzor_etc_t;
-      	')
-
-      	allow $1 pyzord_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pyzord_t)
-
-      	init_startstop_service($1, $2, pyzord_t, pyzord_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, pyzor_etc_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, pyzord_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, pyzor_var_lib_t)
-
-      	# This makes it impossible to apply _admin if _role has already been applied
-      	#pyzor_role($2, $1)
-      ')
-    '';
+            # This makes it impossible to apply _admin if _role has already been applied
+            #pyzor_role($2, $1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pyzor)
 

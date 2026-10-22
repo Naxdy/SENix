@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.dante = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Dante msproxy and socks4/5 proxy server.</summary>
+    interface = {
+      summary = "Dante msproxy and socks4/5 proxy server.";
+      exports = {
+        "dante_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dante environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dante_t, dante_conf_t, dante_runtime_t;
+            type dante_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 dante_t:process { ptrace signal_perms };
+            ps_process_pattern($1, dante_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dante environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dante_admin',`
-      	gen_require(`
-      		type dante_t, dante_conf_t, dante_runtime_t;
-      		type dante_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, dante_t, dante_initrc_exec_t)
 
-      	allow $1 dante_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, dante_t)
+            files_search_etc($1)
+            admin_pattern($1, dante_conf_t)
 
-      	init_startstop_service($1, $2, dante_t, dante_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, dante_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, dante_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, dante_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dante)
 

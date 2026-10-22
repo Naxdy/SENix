@@ -3,13 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.opensnitch = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for opensnitch service.</summary>
-      ##
-      ## <desc>
-      ## Local application firewall service
-      ## </desc>
-    '';
+    interface = {
+      summary = "Policy for opensnitch service.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(opensnitch)
 

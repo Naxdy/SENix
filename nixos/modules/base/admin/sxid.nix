@@ -3,29 +3,28 @@
 { lib, ... }: {
   config.security.selinux.modules.sxid = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>SUID/SGID program monitoring.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Read sxid log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sxid_read_log',`
-      	gen_require(`
-      		type sxid_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 sxid_log_t:file read_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "SUID/SGID program monitoring.";
+      exports = {
+        "sxid_read_log" = {
+          summary = "Read sxid log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sxid_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 sxid_log_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sxid)
 

@@ -3,138 +3,130 @@
 { lib, ... }: {
   config.security.selinux.modules.asterisk = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Asterisk IP telephony server.</summary>
+    interface = {
+      summary = "Asterisk IP telephony server.";
+      exports = {
+        "asterisk_domtrans" = {
+          summary = "Execute asterisk in the asterisk domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type asterisk_t, asterisk_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, asterisk_exec_t, asterisk_t)
+          '';
+        };
+        "asterisk_exec" = {
+          summary = "Execute asterisk in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type asterisk_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, asterisk_exec_t)
+          '';
+        };
+        "asterisk_stream_connect" = {
+          summary = ''
+            Connect to asterisk over a unix domain.
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type asterisk_t, asterisk_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, asterisk_runtime_t, asterisk_runtime_t, asterisk_t)
+          '';
+        };
+        "asterisk_setattr_logs" = {
+          summary = ''
+            Set attributes of asterisk log
+            files and directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type asterisk_log_t;
+          '';
+          content = ''
+            setattr_files_pattern($1, asterisk_log_t, asterisk_log_t)
+            setattr_dirs_pattern($1, asterisk_log_t, asterisk_log_t)
+            logging_search_logs($1)
+          '';
+        };
+        "asterisk_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an asterisk environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type asterisk_t, asterisk_runtime_t, asterisk_spool_t;
+            type asterisk_etc_t, asterisk_tmp_t, asterisk_log_t;
+            type asterisk_var_lib_t, asterisk_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 asterisk_t:process { ptrace signal_perms };
+            ps_process_pattern($1, asterisk_t)
 
-      ######################################
-      ## <summary>
-      ##	Execute asterisk in the asterisk domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`asterisk_domtrans',`
-      	gen_require(`
-      		type asterisk_t, asterisk_exec_t;
-      	')
+            init_startstop_service($1, $2, asterisk_t, asterisk_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, asterisk_exec_t, asterisk_t)
-      ')
+            asterisk_exec($1)
 
-      ######################################
-      ## <summary>
-      ##	Execute asterisk in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`asterisk_exec',`
-      	gen_require(`
-      		type asterisk_exec_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, asterisk_tmp_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, asterisk_exec_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, asterisk_etc_t)
 
-      #####################################
-      ## <summary>
-      ##	Connect to asterisk over a unix domain.
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`asterisk_stream_connect',`
-      	gen_require(`
-      		type asterisk_t, asterisk_runtime_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, asterisk_log_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, asterisk_runtime_t, asterisk_runtime_t, asterisk_t)
-      ')
+            files_list_spool($1)
+            admin_pattern($1, asterisk_spool_t)
 
-      #######################################
-      ## <summary>
-      ##	Set attributes of asterisk log
-      ##	files and directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`asterisk_setattr_logs',`
-      	gen_require(`
-      		type asterisk_log_t;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, asterisk_var_lib_t)
 
-      	setattr_files_pattern($1, asterisk_log_t, asterisk_log_t)
-      	setattr_dirs_pattern($1, asterisk_log_t, asterisk_log_t)
-      	logging_search_logs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an asterisk environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`asterisk_admin',`
-      	gen_require(`
-      		type asterisk_t, asterisk_runtime_t, asterisk_spool_t;
-      		type asterisk_etc_t, asterisk_tmp_t, asterisk_log_t;
-      		type asterisk_var_lib_t, asterisk_initrc_exec_t;
-      	')
-
-      	allow $1 asterisk_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, asterisk_t)
-
-      	init_startstop_service($1, $2, asterisk_t, asterisk_initrc_exec_t)
-
-      	asterisk_exec($1)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, asterisk_tmp_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, asterisk_etc_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, asterisk_log_t)
-
-      	files_list_spool($1)
-      	admin_pattern($1, asterisk_spool_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, asterisk_var_lib_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, asterisk_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, asterisk_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(asterisk)
 

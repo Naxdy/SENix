@@ -3,60 +3,59 @@
 { lib, ... }: {
   config.security.selinux.modules.wdmd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Watchdog multiplexing daemon.</summary>
+    interface = {
+      summary = "Watchdog multiplexing daemon.";
+      exports = {
+        "wdmd_stream_connect" = {
+          summary = ''
+            Connect to wdmd with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type wdmd_t, wdmd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, wdmd_runtime_t, wdmd_runtime_t, wdmd_t)
+          '';
+        };
+        "wdmd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an wdmd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type wdmd_t, wdmd_initrc_exec_t, wdmd_runtime_t;
+          '';
+          content = ''
+            allow $1 wdmd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, wdmd_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to wdmd with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wdmd_stream_connect',`
-      	gen_require(`
-      		type wdmd_t, wdmd_runtime_t;
-      	')
+            init_startstop_service($1, $2, wdmd_t, wdmd_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, wdmd_runtime_t, wdmd_runtime_t, wdmd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an wdmd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`wdmd_admin',`
-      	gen_require(`
-      		type wdmd_t, wdmd_initrc_exec_t, wdmd_runtime_t;
-      	')
-
-      	allow $1 wdmd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, wdmd_t)
-
-      	init_startstop_service($1, $2, wdmd_t, wdmd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, wdmd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, wdmd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(wdmd)
 

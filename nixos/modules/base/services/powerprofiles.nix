@@ -3,34 +3,34 @@
 { lib, ... }: {
   config.security.selinux.modules.powerprofiles = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>power profiles daemon</summary>
-      ##
-      ## <desc>
-      ## Daemon to control power profiles for laptop
-      ## </desc>
-
-      ########################################
-      ## <summary>
-      ##      Send and receive messages from
-      ##      power-profiles-daemon over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`powerprofiles_dbus_chat',`
-              gen_require(`
-                      type power_profilesd_t;
-                      class dbus send_msg;
-              ')
-
-              allow $1 power_profilesd_t:dbus send_msg;
-              allow power_profilesd_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "power profiles daemon";
+      exports = {
+        "powerprofiles_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            power-profiles-daemon over dbus.
+          '';
+          desc = ''
+            Daemon to control power profiles for laptop
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type power_profilesd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 power_profilesd_t:dbus send_msg;
+            allow power_profilesd_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(powerprofiles)
 

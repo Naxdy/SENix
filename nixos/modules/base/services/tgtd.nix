@@ -3,107 +3,102 @@
 { lib, ... }: {
   config.security.selinux.modules.tgtd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Linux Target Framework Daemon.</summary>
+    interface = {
+      summary = "Linux Target Framework Daemon.";
+      exports = {
+        "tgtd_rw_semaphores" = {
+          summary = "Read and write tgtd semaphores.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tgtd_t;
+          '';
+          content = ''
+            allow $1 tgtd_t:sem rw_sem_perms;
+          '';
+        };
+        "tgtd_manage_semaphores" = {
+          summary = ''
+            Create, read, write, and delete
+            tgtd semaphores.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tgtd_t;
+          '';
+          content = ''
+            allow $1 tgtd_t:sem create_sem_perms;
+          '';
+        };
+        "tgtd_stream_connect" = {
+          summary = ''
+            Connect to tgtd with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tgtd_t, tgtd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, tgtd_runtime_t, tgtd_runtime_t, tgtd_t)
+          '';
+        };
+        "tgtd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an tgtd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type tgtd_t, tgtd_initrc_exec_t, tgtd_var_lib_t;
+            type tgtd_runtime_t, tgtd_tmp_t, tgtd_tmpfs_t;
+          '';
+          content = ''
+            allow $1 tgtd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, tgtd_t)
 
-      #####################################
-      ## <summary>
-      ##	Read and write tgtd semaphores.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tgtd_rw_semaphores',`
-      	gen_require(`
-      		type tgtd_t;
-      	')
+            init_startstop_service($1, $2, tgtd_t, tgtd_initrc_exec_t)
 
-      	allow $1 tgtd_t:sem rw_sem_perms;
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, tgtd_var_lib_t)
 
-      ######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tgtd semaphores.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tgtd_manage_semaphores',`
-      	gen_require(`
-      		type tgtd_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, tgtd_runtime_t)
 
-      	allow $1 tgtd_t:sem create_sem_perms;
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, tgtd_tmp_t)
 
-      ######################################
-      ## <summary>
-      ##	Connect to tgtd with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tgtd_stream_connect',`
-      	gen_require(`
-      		type tgtd_t, tgtd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, tgtd_runtime_t, tgtd_runtime_t, tgtd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an tgtd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`tgtd_admin',`
-      	gen_require(`
-      		type tgtd_t, tgtd_initrc_exec_t, tgtd_var_lib_t;
-      		type tgtd_runtime_t, tgtd_tmp_t, tgtd_tmpfs_t;
-      	')
-
-      	allow $1 tgtd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, tgtd_t)
-
-      	init_startstop_service($1, $2, tgtd_t, tgtd_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, tgtd_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, tgtd_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, tgtd_tmp_t)
-
-      	fs_search_tmpfs($1)
-      	admin_pattern($1, tgtd_tmpfs_t)
-      ')
-    '';
+            fs_search_tmpfs($1)
+            admin_pattern($1, tgtd_tmpfs_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tgtd)
 

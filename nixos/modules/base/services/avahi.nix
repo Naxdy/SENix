@@ -3,282 +3,255 @@
 { lib, ... }: {
   config.security.selinux.modules.avahi = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>mDNS/DNS-SD daemon implementing Apple ZeroConf architecture.</summary>
+    interface = {
+      summary = "mDNS/DNS-SD daemon implementing Apple ZeroConf architecture.";
+      exports = {
+        "avahi_domtrans" = {
+          summary = "Execute avahi server in the avahi domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type avahi_exec_t, avahi_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, avahi_exec_t, avahi_t)
+          '';
+        };
+        "avahi_initrc_domtrans" = {
+          summary = ''
+            Execute avahi init scripts in the
+            init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type avahi_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, avahi_initrc_exec_t)
+          '';
+        };
+        "avahi_signal" = {
+          summary = "Send generic signals to avahi.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t;
+          '';
+          content = ''
+            allow $1 avahi_t:process signal;
+          '';
+        };
+        "avahi_kill" = {
+          summary = "Send kill signals to avahi.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t;
+          '';
+          content = ''
+            allow $1 avahi_t:process sigkill;
+          '';
+        };
+        "avahi_signull" = {
+          summary = "Send null signals to avahi.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t;
+          '';
+          content = ''
+            allow $1 avahi_t:process signull;
+          '';
+        };
+        "avahi_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            avahi over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 avahi_t:dbus send_msg;
+            allow avahi_t $1:dbus send_msg;
+          '';
+        };
+        "avahi_stream_connect" = {
+          summary = ''
+            Connect to avahi using a unix
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t, avahi_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, avahi_runtime_t, avahi_runtime_t, avahi_t)
+          '';
+        };
+        "avahi_setattr_runtime_dirs" = {
+          summary = "Set attributes of avahi runtime directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 avahi_runtime_t:dir setattr_dir_perms;
+          '';
+        };
+        "avahi_create_runtime_dirs" = {
+          summary = "Create avahi runtime directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 avahi_runtime_t:dir create_dir_perms;
+          '';
+        };
+        "avahi_manage_runtime_files" = {
+          summary = "Create, read, and write avahi runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, avahi_runtime_t, avahi_runtime_t)
+          '';
+        };
+        "avahi_dontaudit_search_runtime" = {
+          summary = ''
+            Do not audit attempts to search
+            avahi runtime directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type avahi_runtime_t;
+          '';
+          content = ''
+            dontaudit $1 avahi_runtime_t:dir search_dir_perms;
+          '';
+        };
+        "avahi_filetrans_runtime" = {
+          summary = ''
+            Create specified objects in generic
+            runtime directories with the avahi runtime file type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type avahi_runtime_t;
+          '';
+          content = ''
+            files_runtime_filetrans($1, avahi_runtime_t, $2, $3)
+          '';
+        };
+        "avahi_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an avahi environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type avahi_t, avahi_runtime_t, avahi_initrc_exec_t;
+            type avahi_var_lib_t;
+          '';
+          content = ''
+            allow $1 avahi_t:process { ptrace signal_perms };
+            ps_process_pattern($1, avahi_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute avahi server in the avahi domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_domtrans',`
-      	gen_require(`
-      		type avahi_exec_t, avahi_t;
-      	')
+            init_startstop_service($1, $2, avahi_t, avahi_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, avahi_exec_t, avahi_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, avahi_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute avahi init scripts in the
-      ##	init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_initrc_domtrans',`
-      	gen_require(`
-      		type avahi_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, avahi_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to avahi.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_signal',`
-      	gen_require(`
-      		type avahi_t;
-      	')
-
-      	allow $1 avahi_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to avahi.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_kill',`
-      	gen_require(`
-      		type avahi_t;
-      	')
-
-      	allow $1 avahi_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to avahi.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_signull',`
-      	gen_require(`
-      		type avahi_t;
-      	')
-
-      	allow $1 avahi_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	avahi over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_dbus_chat',`
-      	gen_require(`
-      		type avahi_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 avahi_t:dbus send_msg;
-      	allow avahi_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to avahi using a unix
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_stream_connect',`
-      	gen_require(`
-      		type avahi_t, avahi_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, avahi_runtime_t, avahi_runtime_t, avahi_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set attributes of avahi runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_setattr_runtime_dirs',`
-      	gen_require(`
-      		type avahi_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 avahi_runtime_t:dir setattr_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create avahi runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_create_runtime_dirs',`
-      	gen_require(`
-      		type avahi_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 avahi_runtime_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, and write avahi runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_manage_runtime_files',`
-      	gen_require(`
-      		type avahi_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, avahi_runtime_t, avahi_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search
-      ##	avahi runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_dontaudit_search_runtime',`
-      	gen_require(`
-      		type avahi_runtime_t;
-      	')
-
-      	dontaudit $1 avahi_runtime_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in generic
-      ##	runtime directories with the avahi runtime file type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`avahi_filetrans_runtime',`
-      	gen_require(`
-      		type avahi_runtime_t;
-      	')
-
-      	files_runtime_filetrans($1, avahi_runtime_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an avahi environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`avahi_admin',`
-      	gen_require(`
-      		type avahi_t, avahi_runtime_t, avahi_initrc_exec_t;
-      		type avahi_var_lib_t;
-      	')
-
-      	allow $1 avahi_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, avahi_t)
-
-      	init_startstop_service($1, $2, avahi_t, avahi_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, avahi_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, avahi_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, avahi_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(avahi)
 

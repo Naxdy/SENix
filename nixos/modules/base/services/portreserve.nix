@@ -3,126 +3,118 @@
 { lib, ... }: {
   config.security.selinux.modules.portreserve = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Reserve well-known ports in the RPC port range.</summary>
+    interface = {
+      summary = "Reserve well-known ports in the RPC port range.";
+      exports = {
+        "portreserve_domtrans" = {
+          summary = "Execute a domain transition to run portreserve.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type portreserve_t, portreserve_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, portreserve_exec_t, portreserve_t)
+          '';
+        };
+        "portreserve_read_config" = {
+          summary = "Read portreserve configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type portreserve_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 portreserve_etc_t:dir list_dir_perms;
+            allow $1 portreserve_etc_t:file read_file_perms;
+            allow $1 portreserve_etc_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "portreserve_manage_config" = {
+          summary = ''
+            Create, read, write, and delete
+            portreserve configuration content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type portreserve_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 portreserve_etc_t:dir manage_dir_perms;
+            allow $1 portreserve_etc_t:file manage_file_perms;
+            allow $1 portreserve_etc_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "portreserve_initrc_domtrans" = {
+          summary = ''
+            Execute portreserve init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type portreserve_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, portreserve_initrc_exec_t)
+          '';
+        };
+        "portreserve_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an portreserve environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type portreserve_t, portreserve_etc_t, portreserve_runtime_t;
+            type portreserve_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 portreserve_t:process { ptrace signal_perms };
+            ps_process_pattern($1, portreserve_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run portreserve.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`portreserve_domtrans',`
-      	gen_require(`
-      		type portreserve_t, portreserve_exec_t;
-      	')
+            init_startstop_service($1, $2, portreserve_t, portreserve_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, portreserve_exec_t, portreserve_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, portreserve_etc_t)
 
-      #######################################
-      ## <summary>
-      ##	Read portreserve configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`portreserve_read_config',`
-      	gen_require(`
-      		type portreserve_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 portreserve_etc_t:dir list_dir_perms;
-      	allow $1 portreserve_etc_t:file read_file_perms;
-      	allow $1 portreserve_etc_t:lnk_file read_lnk_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	portreserve configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`portreserve_manage_config',`
-      	gen_require(`
-      		type portreserve_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 portreserve_etc_t:dir manage_dir_perms;
-      	allow $1 portreserve_etc_t:file manage_file_perms;
-      	allow $1 portreserve_etc_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute portreserve init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`portreserve_initrc_domtrans',`
-      	gen_require(`
-      		type portreserve_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, portreserve_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an portreserve environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`portreserve_admin',`
-      	gen_require(`
-      		type portreserve_t, portreserve_etc_t, portreserve_runtime_t;
-      		type portreserve_initrc_exec_t;
-      	')
-
-      	allow $1 portreserve_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, portreserve_t)
-
-      	init_startstop_service($1, $2, portreserve_t, portreserve_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, portreserve_etc_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, portreserve_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, portreserve_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(portreserve)
 

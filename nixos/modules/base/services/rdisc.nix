@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.rdisc = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Network router discovery daemon.</summary>
-
-      ######################################
-      ## <summary>
-      ##	Execute rdisc in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rdisc_exec',`
-      	gen_require(`
-      		type rdisc_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, rdisc_exec_t)
-      ')
-    '';
+    interface = {
+      summary = "Network router discovery daemon.";
+      exports = {
+        "rdisc_exec" = {
+          summary = "Execute rdisc in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rdisc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, rdisc_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rdisc)
 

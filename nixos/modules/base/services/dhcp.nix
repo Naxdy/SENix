@@ -3,105 +3,97 @@
 { lib, ... }: {
   config.security.selinux.modules.dhcp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Dynamic host configuration protocol server.</summary>
+    interface = {
+      summary = "Dynamic host configuration protocol server.";
+      exports = {
+        "dhcpd_domtrans" = {
+          summary = "Execute a domain transition to run dhcpd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dhcpd_t, dhcpd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dhcpd_exec_t, dhcpd_t)
+          '';
+        };
+        "dhcpd_setattr_state_files" = {
+          summary = ''
+            Set attributes of dhcpd server
+            state files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dhcpd_state_t;
+          '';
+          content = ''
+            sysnet_search_dhcp_state($1)
+            allow $1 dhcpd_state_t:file setattr;
+          '';
+        };
+        "dhcpd_initrc_domtrans" = {
+          summary = "Execute dhcp server in the dhcp domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dhcpd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, dhcpd_initrc_exec_t)
+          '';
+        };
+        "dhcpd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dhcpd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dhcpd_t, dhcpd_tmp_t, dhcpd_state_t;
+            type dhcpd_runtime_t, dhcpd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 dhcpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, dhcpd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run dhcpd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dhcpd_domtrans',`
-      	gen_require(`
-      		type dhcpd_t, dhcpd_exec_t;
-      	')
+            init_startstop_service($1, $2, dhcpd_t, dhcpd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dhcpd_exec_t, dhcpd_t)
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, dhcpd_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Set attributes of dhcpd server
-      ##	state files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dhcpd_setattr_state_files',`
-      	gen_require(`
-      		type dhcpd_state_t;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, dhcpd_state_t)
 
-      	sysnet_search_dhcp_state($1)
-      	allow $1 dhcpd_state_t:file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute dhcp server in the dhcp domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`dhcpd_initrc_domtrans',`
-      	gen_require(`
-      		type dhcpd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, dhcpd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dhcpd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dhcpd_admin',`
-      	gen_require(`
-      		type dhcpd_t, dhcpd_tmp_t, dhcpd_state_t;
-      		type dhcpd_runtime_t, dhcpd_initrc_exec_t;
-      	')
-
-      	allow $1 dhcpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, dhcpd_t)
-
-      	init_startstop_service($1, $2, dhcpd_t, dhcpd_initrc_exec_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, dhcpd_tmp_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, dhcpd_state_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, dhcpd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, dhcpd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
 
       policy_module(dhcp)

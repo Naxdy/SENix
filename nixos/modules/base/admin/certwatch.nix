@@ -3,56 +3,53 @@
 { lib, ... }: {
   config.security.selinux.modules.certwatch = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Digital Certificate Tracking.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Domain transition to certwatch.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`certwatch_domtrans',`
-      	gen_require(`
-      		type certwatch_exec_t, certwatch_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, certwatch_exec_t, certwatch_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute certwatch in the certwatch
-      ##	domain, and allow the specified role
-      ##	the certwatch domain.
-      ##	backchannel.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`certwatch_run',`
-      	gen_require(`
-      		attribute_role certwatch_roles;
-      	')
-
-      	certwatch_domtrans($1)
-      	roleattribute $2 certwatch_roles;
-      ')
-    '';
+    interface = {
+      summary = "Digital Certificate Tracking.";
+      exports = {
+        "certwatch_domtrans" = {
+          summary = "Domain transition to certwatch.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type certwatch_exec_t, certwatch_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, certwatch_exec_t, certwatch_t)
+          '';
+        };
+        "certwatch_run" = {
+          summary = ''
+            Execute certwatch in the certwatch
+            domain, and allow the specified role
+            the certwatch domain.
+            backchannel.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role certwatch_roles;
+          '';
+          content = ''
+            certwatch_domtrans($1)
+            roleattribute $2 certwatch_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(certwatch)
 

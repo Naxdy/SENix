@@ -3,55 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.usernetctl = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>User network interface configuration helper.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute usernetctl in the usernetctl domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usernetctl_domtrans',`
-      	gen_require(`
-      		type usernetctl_t, usernetctl_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, usernetctl_exec_t, usernetctl_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute usernetctl in the usernetctl
-      ##	domain, and allow the specified role
-      ##	the usernetctl domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`usernetctl_run',`
-      	gen_require(`
-      		attribute_role usernetctl_roles;
-      	')
-
-      	usernetctl_domtrans($1)
-      	roleattribute $2 usernetctl_roles;
-      ')
-    '';
+    interface = {
+      summary = "User network interface configuration helper.";
+      exports = {
+        "usernetctl_domtrans" = {
+          summary = "Execute usernetctl in the usernetctl domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type usernetctl_t, usernetctl_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, usernetctl_exec_t, usernetctl_t)
+          '';
+        };
+        "usernetctl_run" = {
+          summary = ''
+            Execute usernetctl in the usernetctl
+            domain, and allow the specified role
+            the usernetctl domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role usernetctl_roles;
+          '';
+          content = ''
+            usernetctl_domtrans($1)
+            roleattribute $2 usernetctl_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(usernetctl)
 

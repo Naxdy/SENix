@@ -3,225 +3,215 @@
 { lib, ... }: {
   config.security.selinux.modules.samhain = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Check file integrity.</summary>
+    interface = {
+      summary = "Check file integrity.";
+      exports = {
+        "samhain_service_template" = {
+          type = "template";
+          summary = "The template to define a samhain domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute samhain_domain;
+            type samhain_exec_t;
+          '';
+          content = ''
+            type $1_t, samhain_domain;
+            domain_type($1_t)
+            domain_entry_file($1_t, samhain_exec_t)
 
-      #######################################
-      ## <summary>
-      ##	The template to define a samhain domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`samhain_service_template',`
-      	gen_require(`
-      		attribute samhain_domain;
-      		type samhain_exec_t;
-      	')
+            files_read_all_files($1_t)
 
-      	type $1_t, samhain_domain;
-      	domain_type($1_t)
-      	domain_entry_file($1_t, samhain_exec_t)
+            mls_file_write_all_levels($1_t)
+          '';
+        };
+        "samhain_domtrans" = {
+          summary = "Execute samhain in the samhain domain";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type samhain_t, samhain_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, samhain_exec_t, samhain_t)
+          '';
+        };
+        "samhain_run" = {
+          summary = ''
+            Execute samhain in the samhain
+            domain with the clearance security
+            level and allow the specifiled role
+            the samhain domain.
+          '';
+          desc = ''
+            <p>
+            Execute samhain in the samhain
+            domain with the clearance security
+            level and allow the specifiled role
+            the samhain domain.
+            </p>
+            <p>
+            The range_transition rule used in
+            this interface requires that the
+            calling domain should have the
+            clearance security level otherwise
+            the MLS constraint for process
+            transition would fail.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed to access.";
+            };
+          };
+          gen_require = ''
+            attribute_role samhain_roles;
+            type samhain_exec_t;
+          '';
+          content = ''
+            samhain_domtrans($1)
+            roleattribute $2 samhain_roles;
 
-      	files_read_all_files($1_t)
+            ifdef(`enable_mls', `
+                    range_transition $1 samhain_exec_t:process mls_systemhigh;
+            ')
+          '';
+          rolecap = true;
+        };
+        "samhain_manage_config_files" = {
+          summary = ''
+            Create, read, write, and delete
+            samhain configuration files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type samhain_etc_t;
+          '';
+          content = ''
+            files_rw_etc_dirs($1)
+            allow $1 samhain_etc_t:file manage_file_perms;
+          '';
+        };
+        "samhain_manage_db_files" = {
+          summary = ''
+            Create, read, write, and delete
+            samhain database files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type samhain_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, samhain_db_t, samhain_db_t)
+          '';
+        };
+        "samhain_manage_init_script_files" = {
+          summary = ''
+            Create, read, write, and delete
+            samhain init script files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type samhain_initrc_exec_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            manage_files_pattern($1, samhain_initrc_exec_t, samhain_initrc_exec_t)
+          '';
+        };
+        "samhain_manage_log_files" = {
+          summary = ''
+            Create, read, write, and delete
+            samhain log and log.lock files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type samhain_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_files_pattern($1, samhain_log_t, samhain_log_t)
+          '';
+        };
+        "samhain_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate the samhain environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            attribute samhain_domain;
+            type samhain_db_t, samhain_etc_t;
+            type samhain_initrc_exec_t, samhain_log_t, samhain_runtime_t;
+          '';
+          content = ''
+            allow $1 samhain_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, samhain_domain)
 
-      	mls_file_write_all_levels($1_t)
-      ')
+            # duplicate role transition: remove samhain_admin(sysadm_t, sysadm_r) first
+            # init_startstop_service($1, $2, samhain_domain, samhain_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute samhain in the samhain domain
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`samhain_domtrans',`
-      	gen_require(`
-      		type samhain_t, samhain_exec_t;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, samhain_db_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, samhain_exec_t, samhain_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { samhain_initrc_exec_t samhain_etc_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute samhain in the samhain
-      ##	domain with the clearance security
-      ##	level and allow the specifiled role
-      ##	the samhain domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute samhain in the samhain
-      ##	domain with the clearance security
-      ##	level and allow the specifiled role
-      ##	the samhain domain.
-      ##	</p>
-      ##	<p>
-      ##	The range_transition rule used in
-      ##	this interface requires that the
-      ##	calling domain should have the
-      ##	clearance security level otherwise
-      ##	the MLS constraint for process
-      ##	transition would fail.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed to access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`samhain_run',`
-      	gen_require(`
-      		attribute_role samhain_roles;
-      		type samhain_exec_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, samhain_log_t)
 
-      	samhain_domtrans($1)
-      	roleattribute $2 samhain_roles;
-
-      	ifdef(`enable_mls', `
-      		range_transition $1 samhain_exec_t:process mls_systemhigh;
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	samhain configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`samhain_manage_config_files',`
-      	gen_require(`
-      		type samhain_etc_t;
-      	')
-
-      	files_rw_etc_dirs($1)
-      	allow $1 samhain_etc_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	samhain database files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`samhain_manage_db_files',`
-      	gen_require(`
-      		type samhain_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, samhain_db_t, samhain_db_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	samhain init script files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`samhain_manage_init_script_files',`
-      	gen_require(`
-      		type samhain_initrc_exec_t;
-      	')
-
-      	files_search_etc($1)
-      	manage_files_pattern($1, samhain_initrc_exec_t, samhain_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	samhain log and log.lock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`samhain_manage_log_files',`
-      	gen_require(`
-      		type samhain_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	manage_files_pattern($1, samhain_log_t, samhain_log_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate the samhain environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`samhain_admin',`
-      	gen_require(`
-      		attribute samhain_domain;
-      		type samhain_db_t, samhain_etc_t;
-      		type samhain_initrc_exec_t, samhain_log_t, samhain_runtime_t;
-      	')
-
-      	allow $1 samhain_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, samhain_domain)
-
-      	# duplicate role transition: remove samhain_admin(sysadm_t, sysadm_r) first
-      	# init_startstop_service($1, $2, samhain_domain, samhain_initrc_exec_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, samhain_db_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { samhain_initrc_exec_t samhain_etc_t })
-
-      	logging_list_logs($1)
-      	admin_pattern($1, samhain_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, samhain_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, samhain_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(samhain)
 

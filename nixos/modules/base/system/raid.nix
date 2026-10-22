@@ -3,126 +3,119 @@
 { lib, ... }: {
   config.security.selinux.modules.raid = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>RAID array management tools.</summary>
+    interface = {
+      summary = "RAID array management tools.";
+      exports = {
+        "raid_domtrans_mdadm" = {
+          summary = ''
+            Execute software raid tools in
+            the mdadm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mdadm_t, mdadm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mdadm_exec_t, mdadm_t)
+          '';
+        };
+        "raid_run_mdadm" = {
+          summary = ''
+            Execute mdadm in the mdadm
+            domain, and allow the specified
+            role the mdadm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            attribute_role mdadm_roles;
+          '';
+          content = ''
+            raid_domtrans_mdadm($2)
+            roleattribute $1 mdadm_roles;
+          '';
+        };
+        "raid_read_mdadm_runtime_files" = {
+          summary = "Read mdadm runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mdadm_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 mdadm_runtime_t:dir list_dir_perms;
+            allow $1 mdadm_runtime_t:file read_file_perms;
+          '';
+        };
+        "raid_manage_mdadm_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete
+            mdadm runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mdadm_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 mdadm_runtime_t:file manage_file_perms;
+          '';
+        };
+        "raid_admin_mdadm" = {
+          summary = ''
+            All of the rules required to
+            administrate an mdadm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type mdadm_t, mdadm_initrc_exec_t, mdadm_runtime_t;
+          '';
+          content = ''
+            allow $1 mdadm_t:process { ptrace signal_perms };
+            ps_process_pattern($1, mdadm_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute software raid tools in
-      ##	the mdadm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`raid_domtrans_mdadm',`
-      	gen_require(`
-      		type mdadm_t, mdadm_exec_t;
-      	')
+            init_startstop_service($1, $2, mdadm_t, mdadm_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mdadm_exec_t, mdadm_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Execute mdadm in the mdadm
-      ##	domain, and allow the specified
-      ##	role the mdadm domain.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`raid_run_mdadm',`
-      	gen_require(`
-      		attribute_role mdadm_roles;
-      	')
-
-      	raid_domtrans_mdadm($2)
-      	roleattribute $1 mdadm_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read mdadm runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`raid_read_mdadm_runtime_files',`
-      	gen_require(`
-      		type mdadm_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 mdadm_runtime_t:dir list_dir_perms;
-      	allow $1 mdadm_runtime_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	mdadm runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`raid_manage_mdadm_runtime_files',`
-      	gen_require(`
-      		type mdadm_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 mdadm_runtime_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an mdadm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`raid_admin_mdadm',`
-      	gen_require(`
-      		type mdadm_t, mdadm_initrc_exec_t, mdadm_runtime_t;
-      	')
-
-      	allow $1 mdadm_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, mdadm_t)
-
-      	init_startstop_service($1, $2, mdadm_t, mdadm_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, mdadm_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, mdadm_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(raid)
 

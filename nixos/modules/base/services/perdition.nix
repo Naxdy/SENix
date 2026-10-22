@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.perdition = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Perdition POP and IMAP proxy.</summary>
+    interface = {
+      summary = "Perdition POP and IMAP proxy.";
+      exports = {
+        "perdition_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an perdition environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type perdition_t, perdition_initrc_exec_t, perdition_etc_t;
+            type perdition_runtime_t;
+          '';
+          content = ''
+            allow $1 perdition_t:process { ptrace signal_perms };
+            ps_process_pattern($1, perdition_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an perdition environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`perdition_admin',`
-      	gen_require(`
-      		type perdition_t, perdition_initrc_exec_t, perdition_etc_t;
-      		type perdition_runtime_t;
-      	')
+            init_startstop_service($1, $2, perdition_t, perdition_initrc_exec_t)
 
-      	allow $1 perdition_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, perdition_t)
+            files_search_etc($1)
+            admin_pattern($1, perdition_etc_t)
 
-      	init_startstop_service($1, $2, perdition_t, perdition_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, perdition_etc_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, perdition_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, perdition_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(perdition)
 

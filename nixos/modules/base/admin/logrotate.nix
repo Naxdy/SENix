@@ -3,130 +3,117 @@
 { lib, ... }: {
   config.security.selinux.modules.logrotate = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Rotates, compresses, removes and mails system log files.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute logrotate in the logrotate domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logrotate_domtrans',`
-      	gen_require(`
-      		type logrotate_t, logrotate_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, logrotate_exec_t, logrotate_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute logrotate in the logrotate
-      ##	domain, and allow the specified
-      ##	role the logrotate domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`logrotate_run',`
-      	gen_require(`
-      		attribute_role logrotate_roles;
-      	')
-
-      	logrotate_domtrans($1)
-      	roleattribute $2 logrotate_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute logrotate in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logrotate_exec',`
-      	gen_require(`
-      		type logrotate_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, logrotate_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Inherit and use logrotate file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logrotate_use_fds',`
-      	gen_require(`
-      		type logrotate_t;
-      	')
-
-      	allow $1 logrotate_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to inherit
-      ##	logrotate file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logrotate_dontaudit_use_fds',`
-      	gen_require(`
-      		type logrotate_t;
-      	')
-
-      	dontaudit $1 logrotate_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read logrotate temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logrotate_read_tmp_files',`
-      	gen_require(`
-      		type logrotate_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 logrotate_tmp_t:file read_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "Rotates, compresses, removes and mails system log files.";
+      exports = {
+        "logrotate_domtrans" = {
+          summary = "Execute logrotate in the logrotate domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type logrotate_t, logrotate_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, logrotate_exec_t, logrotate_t)
+          '';
+        };
+        "logrotate_run" = {
+          summary = ''
+            Execute logrotate in the logrotate
+            domain, and allow the specified
+            role the logrotate domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role logrotate_roles;
+          '';
+          content = ''
+            logrotate_domtrans($1)
+            roleattribute $2 logrotate_roles;
+          '';
+          rolecap = true;
+        };
+        "logrotate_exec" = {
+          summary = "Execute logrotate in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type logrotate_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, logrotate_exec_t)
+          '';
+        };
+        "logrotate_use_fds" = {
+          summary = "Inherit and use logrotate file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type logrotate_t;
+          '';
+          content = ''
+            allow $1 logrotate_t:fd use;
+          '';
+        };
+        "logrotate_dontaudit_use_fds" = {
+          summary = ''
+            Do not audit attempts to inherit
+            logrotate file descriptors.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type logrotate_t;
+          '';
+          content = ''
+            dontaudit $1 logrotate_t:fd use;
+          '';
+        };
+        "logrotate_read_tmp_files" = {
+          summary = "Read logrotate temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type logrotate_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 logrotate_tmp_t:file read_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(logrotate)
 

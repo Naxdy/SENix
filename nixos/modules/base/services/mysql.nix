@@ -3,444 +3,396 @@
 { lib, ... }: {
   config.security.selinux.modules.mysql = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Open source database.</summary>
+    interface = {
+      summary = "Open source database.";
+      exports = {
+        "mysql_domtrans" = {
+          summary = "Execute MySQL in the mysql domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mysqld_t, mysqld_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mysqld_exec_t, mysqld_t)
+          '';
+        };
+        "mysql_run_mysqld" = {
+          summary = ''
+            Execute mysqld in the mysqld domain, and
+            allow the specified role the mysqld domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role mysqld_roles;
+          '';
+          content = ''
+            mysql_domtrans($1)
+            roleattribute $2 mysqld_roles;
+          '';
+        };
+        "mysql_signal" = {
+          summary = "Send generic signals to mysqld.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_t;
+          '';
+          content = ''
+            allow $1 mysqld_t:process signal;
+          '';
+        };
+        "mysql_tcp_connect" = {
+          summary = "Connect to mysqld with a tcp socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_t;
+          '';
+          content = ''
+            corenet_tcp_recvfrom_labeled($1, mysqld_t)
+            corenet_tcp_connect_mysqld_port($1)
+            corenet_sendrecv_mysqld_client_packets($1)
+          '';
+        };
+        "mysql_stream_connect" = {
+          summary = "Connect to mysqld with a unix";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_t, mysqld_runtime_t, mysqld_db_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, { mysqld_db_t mysqld_runtime_t }, mysqld_runtime_t, mysqld_t)
+          '';
+          rolecap = true;
+        };
+        "mysql_read_config" = {
+          summary = "Read mysqld configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 mysqld_etc_t:dir list_dir_perms;
+            allow $1 mysqld_etc_t:file read_file_perms;
+            allow $1 mysqld_etc_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "mysql_search_db" = {
+          summary = "Search mysqld db directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 mysqld_db_t:dir search_dir_perms;
+          '';
+        };
+        "mysql_rw_db_dirs" = {
+          summary = "Read and write mysqld database directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 mysqld_db_t:dir rw_dir_perms;
+          '';
+        };
+        "mysql_manage_db_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            mysqld database directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 mysqld_db_t:dir manage_dir_perms;
+          '';
+        };
+        "mysql_append_db_files" = {
+          summary = "Append mysqld database files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            append_files_pattern($1, mysqld_db_t, mysqld_db_t)
+          '';
+        };
+        "mysql_rw_db_files" = {
+          summary = "Read and write mysqld database files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            rw_files_pattern($1, mysqld_db_t, mysqld_db_t)
+          '';
+        };
+        "mysql_manage_db_files" = {
+          summary = ''
+            Create, read, write, and delete
+            mysqld database files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, mysqld_db_t, mysqld_db_t)
+          '';
+        };
+        "mysql_var_lib_filetrans_db_dir" = {
+          summary = "create mysqld db dir.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_db_t;
+          '';
+          content = ''
+            files_var_lib_filetrans($1, mysqld_db_t, dir, "mysql")
+          '';
+        };
+        "mysql_manage_mysqld_home_files" = {
+          summary = ''
+            Create, read, write, and delete
+            mysqld home files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 mysqld_home_t:file manage_file_perms;
+          '';
+        };
+        "mysql_relabel_mysqld_home_files" = {
+          summary = "Relabel mysqld home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 mysqld_home_t:file relabel_file_perms;
+          '';
+        };
+        "mysql_home_filetrans_mysqld_home" = {
+          summary = ''
+            Create objects in user home
+            directories with the mysqld home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type mysqld_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, mysqld_home_t, $2, $3)
+          '';
+        };
+        "mysql_write_log" = {
+          summary = "Write mysqld log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 mysqld_log_t:dir search_dir_perms;
+            allow $1 mysqld_log_t:file write_file_perms;
+          '';
+        };
+        "mysql_log_filetrans_log_dir" = {
+          summary = "create mysqld log dir.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            logging_log_filetrans($1, mysqld_log_t, dir, "mysql")
+          '';
+        };
+        "mysql_domtrans_mysql_safe" = {
+          summary = ''
+            Execute mysqld safe in the
+            mysqld safe domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mysqld_safe_t, mysqld_safe_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mysqld_safe_exec_t, mysqld_safe_t)
+          '';
+        };
+        "mysql_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an mysqld environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type mysqld_t, mysqld_runtime_t, mysqld_etc_t;
+            type mysqld_tmp_t, mysqld_db_t, mysqld_log_t;
+            type mysqld_safe_t, mysqlmanagerd_t, mysqlmanagerd_runtime_t;
+            type mysqld_initrc_exec_t, mysqlmanagerd_initrc_exec_t, mysqld_home_t;
+          '';
+          content = ''
+            allow $1 { mysqld_safe_t mysqld_t mysqlmanagerd_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { mysqld_safe_t mysqld_t mysqlmanagerd_t })
 
-      ######################################
-      ## <summary>
-      ##	Execute MySQL in the mysql domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_domtrans',`
-      	gen_require(`
-      		type mysqld_t, mysqld_exec_t;
-      	')
+            init_startstop_service($1, $2, mysqld_t, mysqld_initrc_exec_t)
+            init_startstop_service($1, $2, mysqlmanagerd_t, mysqlmanagerd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mysqld_exec_t, mysqld_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, { mysqlmanagerd_runtime_t mysqld_runtime_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute mysqld in the mysqld domain, and
-      ##	allow the specified role the mysqld domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_run_mysqld',`
-      	gen_require(`
-      		attribute_role mysqld_roles;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, mysqld_db_t)
 
-      	mysql_domtrans($1)
-      	roleattribute $2 mysqld_roles;
-      ')
+            files_search_etc($1)
+            admin_pattern($1, { mysqld_etc_t mysqld_home_t })
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to mysqld.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_signal',`
-      	gen_require(`
-      		type mysqld_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, mysqld_log_t)
 
-      	allow $1 mysqld_t:process signal;
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, mysqld_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to mysqld with a tcp socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_tcp_connect',`
-      	gen_require(`
-      		type mysqld_t;
-      	')
-
-      	corenet_tcp_recvfrom_labeled($1, mysqld_t)
-      	corenet_tcp_connect_mysqld_port($1)
-      	corenet_sendrecv_mysqld_client_packets($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to mysqld with a unix
-      #	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mysql_stream_connect',`
-      	gen_require(`
-      		type mysqld_t, mysqld_runtime_t, mysqld_db_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, { mysqld_db_t mysqld_runtime_t }, mysqld_runtime_t, mysqld_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read mysqld configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mysql_read_config',`
-      	gen_require(`
-      		type mysqld_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 mysqld_etc_t:dir list_dir_perms;
-      	allow $1 mysqld_etc_t:file read_file_perms;
-      	allow $1 mysqld_etc_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search mysqld db directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_search_db',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 mysqld_db_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write mysqld database directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_rw_db_dirs',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 mysqld_db_t:dir rw_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	mysqld database directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_manage_db_dirs',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 mysqld_db_t:dir manage_dir_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Append mysqld database files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_append_db_files',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	append_files_pattern($1, mysqld_db_t, mysqld_db_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read and write mysqld database files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_rw_db_files',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	rw_files_pattern($1, mysqld_db_t, mysqld_db_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	mysqld database files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_manage_db_files',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, mysqld_db_t, mysqld_db_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create mysqld db dir.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_var_lib_filetrans_db_dir',`
-      	gen_require(`
-      		type mysqld_db_t;
-      	')
-
-      	files_var_lib_filetrans($1, mysqld_db_t, dir, "mysql")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	mysqld home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_manage_mysqld_home_files',`
-      	gen_require(`
-      		type mysqld_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 mysqld_home_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel mysqld home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_relabel_mysqld_home_files',`
-      	gen_require(`
-      		type mysqld_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 mysqld_home_t:file relabel_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in user home
-      ##	directories with the mysqld home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_home_filetrans_mysqld_home',`
-      	gen_require(`
-      		type mysqld_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, mysqld_home_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write mysqld log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_write_log',`
-      	gen_require(`
-      		type mysqld_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 mysqld_log_t:dir search_dir_perms;
-      	allow $1 mysqld_log_t:file write_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create mysqld log dir.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_log_filetrans_log_dir',`
-      	gen_require(`
-      		type mysqld_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	logging_log_filetrans($1, mysqld_log_t, dir, "mysql")
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Execute mysqld safe in the
-      ##	mysqld safe domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mysql_domtrans_mysql_safe',`
-      	gen_require(`
-      		type mysqld_safe_t, mysqld_safe_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mysqld_safe_exec_t, mysqld_safe_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an mysqld environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mysql_admin',`
-      	gen_require(`
-      		type mysqld_t, mysqld_runtime_t, mysqld_etc_t;
-      		type mysqld_tmp_t, mysqld_db_t, mysqld_log_t;
-      		type mysqld_safe_t, mysqlmanagerd_t, mysqlmanagerd_runtime_t;
-      		type mysqld_initrc_exec_t, mysqlmanagerd_initrc_exec_t, mysqld_home_t;
-      	')
-
-      	allow $1 { mysqld_safe_t mysqld_t mysqlmanagerd_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { mysqld_safe_t mysqld_t mysqlmanagerd_t })
-
-      	init_startstop_service($1, $2, mysqld_t, mysqld_initrc_exec_t)
-      	init_startstop_service($1, $2, mysqlmanagerd_t, mysqlmanagerd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, { mysqlmanagerd_runtime_t mysqld_runtime_t })
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, mysqld_db_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, { mysqld_etc_t mysqld_home_t })
-
-      	logging_search_logs($1)
-      	admin_pattern($1, mysqld_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, mysqld_tmp_t)
-
-      	mysql_run_mysqld($1, $2)
-      ')
-    '';
+            mysql_run_mysqld($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mysql)
 

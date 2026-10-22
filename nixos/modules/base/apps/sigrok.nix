@@ -3,34 +3,32 @@
 { lib, ... }: {
   config.security.selinux.modules.sigrok = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>sigrok signal analysis software suite.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute sigrok in its domain.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sigrok_run',`
-      	gen_require(`
-      		type sigrok_t, sigrok_exec_t;
-      		attribute_role sigrok_roles;
-      	')
-
-      	roleattribute $1 sigrok_roles;
-      	domtrans_pattern($2, sigrok_exec_t, sigrok_t)
-      ')
-    '';
+    interface = {
+      summary = "sigrok signal analysis software suite.";
+      exports = {
+        "sigrok_run" = {
+          summary = "Execute sigrok in its domain.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "User domain for the role.";
+            };
+          };
+          gen_require = ''
+            type sigrok_t, sigrok_exec_t;
+            attribute_role sigrok_roles;
+          '';
+          content = ''
+            roleattribute $1 sigrok_roles;
+            domtrans_pattern($2, sigrok_exec_t, sigrok_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sigrok)
 

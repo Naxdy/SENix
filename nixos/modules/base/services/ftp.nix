@@ -3,217 +3,194 @@
 { lib, ... }: {
   config.security.selinux.modules.ftp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>File transfer protocol service.</summary>
+    interface = {
+      summary = "File transfer protocol service.";
+      exports = {
+        "ftp_dyntrans_anon_sftpd" = {
+          summary = "Execute a dyntransition to run anon sftpd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type anon_sftpd_t;
+          '';
+          content = ''
+            dyntrans_pattern($1, anon_sftpd_t)
+          '';
+        };
+        "ftp_read_config" = {
+          summary = "Read ftpd configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ftpd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 ftpd_etc_t:file read_file_perms;
+          '';
+        };
+        "ftp_check_exec" = {
+          summary = "Execute FTP daemon entry point programs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ftpd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            allow $1 ftpd_exec_t:file mmap_exec_file_perms;
+          '';
+        };
+        "ftp_read_log" = {
+          summary = "Read ftpd log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xferlog_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 xferlog_t:file read_file_perms;
+          '';
+        };
+        "ftp_domtrans_ftpdctl" = {
+          summary = "Execute the ftpdctl in the ftpdctl domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ftpdctl_t, ftpdctl_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ftpdctl_exec_t, ftpdctl_t)
+          '';
+        };
+        "ftp_run_ftpdctl" = {
+          summary = ''
+            Execute the ftpdctl in the ftpdctl
+            domain, and allow the specified
+            role the ftpctl domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role ftpdctl_roles;
+          '';
+          content = ''
+            ftp_domtrans_ftpdctl($1)
+            roleattribute $2 ftpdctl_roles;
+          '';
+          rolecap = true;
+        };
+        "ftp_dyntrans_sftpd" = {
+          summary = "Execute a dyntransition to run sftpd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sftpd_t;
+          '';
+          content = ''
+            dyntrans_pattern($1, sftpd_t)
+          '';
+        };
+        "ftp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ftp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ftpd_t, ftpdctl_t, ftpd_tmp_t;
+            type ftpd_etc_t, ftpd_lock_t, sftpd_t;
+            type ftpd_runtime_t, xferlog_t, anon_sftpd_t;
+            type ftpd_initrc_exec_t, ftpdctl_tmp_t;
+            type ftpd_keytab_t;
+          '';
+          content = ''
+            allow $1 { ftpd_t ftpdctl_t sftpd_t anon_sftpd_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { ftpd_t ftpdctl_t sftpd_t anon_sftpd_t })
 
-      #######################################
-      ## <summary>
-      ##	Execute a dyntransition to run anon sftpd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_dyntrans_anon_sftpd',`
-      	gen_require(`
-      		type anon_sftpd_t;
-      	')
+            init_startstop_service($1, $2, ftpd_t, ftpd_initrc_exec_t)
 
-      	dyntrans_pattern($1, anon_sftpd_t)
-      ')
+            miscfiles_manage_public_files($1)
 
-      ########################################
-      ## <summary>
-      ##	Read ftpd configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_read_config',`
-      	gen_require(`
-      		type ftpd_etc_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, { ftpd_tmp_t ftpdctl_tmp_t })
 
-      	files_search_etc($1)
-      	allow $1 ftpd_etc_t:file read_file_perms;
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { ftpd_etc_t ftpd_keytab_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute FTP daemon entry point programs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_check_exec',`
-      	gen_require(`
-      		type ftpd_exec_t;
-      	')
+            files_list_var($1)
+            admin_pattern($1, ftpd_lock_t)
 
-      	corecmd_search_bin($1)
-      	allow $1 ftpd_exec_t:file mmap_exec_file_perms;
-      ')
+            files_list_runtime($1)
+            admin_pattern($1, ftpd_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Read ftpd log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_read_log',`
-      	gen_require(`
-      		type xferlog_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, xferlog_t)
 
-      	logging_search_logs($1)
-      	allow $1 xferlog_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the ftpdctl in the ftpdctl domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_domtrans_ftpdctl',`
-      	gen_require(`
-      		type ftpdctl_t, ftpdctl_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ftpdctl_exec_t, ftpdctl_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the ftpdctl in the ftpdctl
-      ##	domain, and allow the specified
-      ##	role the ftpctl domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ftp_run_ftpdctl',`
-      	gen_require(`
-      		attribute_role ftpdctl_roles;
-      	')
-
-      	ftp_domtrans_ftpdctl($1)
-      	roleattribute $2 ftpdctl_roles;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute a dyntransition to run sftpd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_dyntrans_sftpd',`
-      	gen_require(`
-      		type sftpd_t;
-      	')
-
-      	dyntrans_pattern($1, sftpd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ftp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ftp_admin',`
-      	gen_require(`
-      		type ftpd_t, ftpdctl_t, ftpd_tmp_t;
-      		type ftpd_etc_t, ftpd_lock_t, sftpd_t;
-      		type ftpd_runtime_t, xferlog_t, anon_sftpd_t;
-      		type ftpd_initrc_exec_t, ftpdctl_tmp_t;
-      		type ftpd_keytab_t;
-      	')
-
-      	allow $1 { ftpd_t ftpdctl_t sftpd_t anon_sftpd_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { ftpd_t ftpdctl_t sftpd_t anon_sftpd_t })
-
-      	init_startstop_service($1, $2, ftpd_t, ftpd_initrc_exec_t)
-
-      	miscfiles_manage_public_files($1)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, { ftpd_tmp_t ftpdctl_tmp_t })
-
-      	files_list_etc($1)
-      	admin_pattern($1, { ftpd_etc_t ftpd_keytab_t })
-
-      	files_list_var($1)
-      	admin_pattern($1, ftpd_lock_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, ftpd_runtime_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, xferlog_t)
-
-      	ftp_run_ftpdctl($1, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create /run/pure-ftpd
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ftp_filetrans_pure_ftpd_runtime',`
-      	gen_require(`
-      		type ftpd_runtime_t;
-      	')
-
-      	files_runtime_filetrans($1, ftpd_runtime_t, dir, "pure-ftpd")
-      ')
-    '';
+            ftp_run_ftpdctl($1, $2)
+          '';
+          rolecap = true;
+        };
+        "ftp_filetrans_pure_ftpd_runtime" = {
+          summary = "create /run/pure-ftpd";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ftpd_runtime_t;
+          '';
+          content = ''
+            files_runtime_filetrans($1, ftpd_runtime_t, dir, "pure-ftpd")
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ftp)
 

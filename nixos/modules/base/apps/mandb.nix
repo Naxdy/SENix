@@ -3,82 +3,79 @@
 { lib, ... }: {
   config.security.selinux.modules.mandb = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>On-line manual database.</summary>
+    interface = {
+      summary = "On-line manual database.";
+      exports = {
+        "mandb_domtrans" = {
+          summary = ''
+            Execute the mandb program in
+            the mandb domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mandb_t, mandb_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mandb_exec_t, mandb_t)
+          '';
+        };
+        "mandb_run" = {
+          summary = ''
+            Execute mandb in the mandb
+            domain, and allow the specified
+            role the mandb domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role mandb_roles;
+          '';
+          content = ''
+            mandb_domtrans($1)
+            roleattribute $2 mandb_roles;
+          '';
+        };
+        "mandb_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an mandb environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type mandb_t;
+          '';
+          content = ''
+            admin_process_pattern($1, mandb_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute the mandb program in
-      ##	the mandb domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mandb_domtrans',`
-      	gen_require(`
-      		type mandb_t, mandb_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mandb_exec_t, mandb_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mandb in the mandb
-      ##	domain, and allow the specified
-      ##	role the mandb domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mandb_run',`
-      	gen_require(`
-      		attribute_role mandb_roles;
-      	')
-
-      	mandb_domtrans($1)
-      	roleattribute $2 mandb_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an mandb environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mandb_admin',`
-      	gen_require(`
-      		type mandb_t;
-      	')
-
-      	admin_process_pattern($1, mandb_t)
-
-      	mandb_run($1, $2)
-      ')
-    '';
+            mandb_run($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mandb)
 

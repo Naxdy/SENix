@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.comsat = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Comsat, a biff server.</summary>
-    '';
+    interface = {
+      summary = "Comsat, a biff server.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(comsat)
 

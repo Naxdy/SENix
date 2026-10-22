@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.isns = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Internet Storage Name Service.</summary>
+    interface = {
+      summary = "Internet Storage Name Service.";
+      exports = {
+        "isnsd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an isnsd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type isnsd_t, isnsd_initrc_exec_t, isnsd_var_lib_t;
+            type isnsd_runtime_t;
+          '';
+          content = ''
+            allow $1 isnsd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, isnsd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an isnsd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`isnsd_admin',`
-      	gen_require(`
-      		type isnsd_t, isnsd_initrc_exec_t, isnsd_var_lib_t;
-      		type isnsd_runtime_t;
-      	')
+            init_startstop_service($1, $2, isnsd_t, isnsd_initrc_exec_t)
 
-      	allow $1 isnsd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, isnsd_t)
+            files_search_var_lib($1)
+            admin_pattern($1, isnsd_var_lib_t)
 
-      	init_startstop_service($1, $2, isnsd_t, isnsd_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, isnsd_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, isnsd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, isnsd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(isns)
 

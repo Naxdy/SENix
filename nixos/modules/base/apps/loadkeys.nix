@@ -3,75 +3,71 @@
 { lib, ... }: {
   config.security.selinux.modules.loadkeys = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Load keyboard mappings.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute the loadkeys program in
-      ##	the loadkeys domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`loadkeys_domtrans',`
-      	gen_require(`
-      		type loadkeys_t, loadkeys_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, loadkeys_exec_t, loadkeys_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the loadkeys program in
-      ##	the loadkeys domain, and allow the
-      ##	specified role the loadkeys domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`loadkeys_run',`
-      	gen_require(`
-      		attribute_role loadkeys_roles;
-      	')
-
-      	loadkeys_domtrans($1)
-      	roleattribute $2 loadkeys_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the loadkeys in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`loadkeys_exec',`
-      	gen_require(`
-      		type loadkeys_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, loadkeys_exec_t)
-      ')
-    '';
+    interface = {
+      summary = "Load keyboard mappings.";
+      exports = {
+        "loadkeys_domtrans" = {
+          summary = ''
+            Execute the loadkeys program in
+            the loadkeys domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type loadkeys_t, loadkeys_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, loadkeys_exec_t, loadkeys_t)
+          '';
+        };
+        "loadkeys_run" = {
+          summary = ''
+            Execute the loadkeys program in
+            the loadkeys domain, and allow the
+            specified role the loadkeys domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role loadkeys_roles;
+          '';
+          content = ''
+            loadkeys_domtrans($1)
+            roleattribute $2 loadkeys_roles;
+          '';
+          rolecap = true;
+        };
+        "loadkeys_exec" = {
+          summary = "Execute the loadkeys in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type loadkeys_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, loadkeys_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(loadkeys)
 

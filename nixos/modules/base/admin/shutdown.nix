@@ -3,160 +3,145 @@
 { lib, ... }: {
   config.security.selinux.modules.shutdown = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>System shutdown command.</summary>
+    interface = {
+      summary = "System shutdown command.";
+      exports = {
+        "shutdown_role" = {
+          type = "template";
+          summary = "Role access for shutdown.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role shutdown_roles;
+            type shutdown_t;
+          '';
+          content = ''
+            roleattribute $4 shutdown_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for shutdown.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`shutdown_role',`
-      	gen_require(`
-      		attribute_role shutdown_roles;
-      		type shutdown_t;
-      	')
+            tunable_policy(`shutdown_allow_user_exec_domains',`
+                    shutdown_domtrans($3)
 
-      	roleattribute $4 shutdown_roles;
+                    allow $3 shutdown_t:process { ptrace signal_perms };
+                    ps_process_pattern($3, shutdown_t)
+            ',`
+                    shutdown_domtrans($2)
 
-      	tunable_policy(`shutdown_allow_user_exec_domains',`
-      		shutdown_domtrans($3)
+                    allow $2 shutdown_t:process { ptrace signal_perms };
+                    ps_process_pattern($2, shutdown_t)
+            ')
 
-      		allow $3 shutdown_t:process { ptrace signal_perms };
-      		ps_process_pattern($3, shutdown_t)
-      	',`
-      		shutdown_domtrans($2)
-
-      		allow $2 shutdown_t:process { ptrace signal_perms };
-      		ps_process_pattern($2, shutdown_t)
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, shutdown_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run shutdown.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`shutdown_domtrans',`
-      	gen_require(`
-      		type shutdown_t, shutdown_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, shutdown_exec_t, shutdown_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute shutdown in the shutdown
-      ##	domain, and allow the specified role
-      ##	the shutdown domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`shutdown_run',`
-      	gen_require(`
-      		attribute_role shutdown_roles;
-      	')
-
-      	shutdown_domtrans($1)
-      	roleattribute $2 shutdown_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to shutdown.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`shutdown_signal',`
-      	gen_require(`
-      		type shutdown_t;
-      	')
-
-      	allow shutdown_t $1:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Send SIGCHLD signals to shutdown.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`shutdown_sigchld',`
-      	gen_require(`
-      		type shutdown_t;
-      	')
-
-      	allow $1 shutdown_t:process sigchld;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of shutdown executable files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`shutdown_getattr_exec_files',`
-      	gen_require(`
-      		type shutdown_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	allow $1 shutdown_exec_t:file getattr_file_perms;
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, shutdown_t)
+            ')
+          '';
+        };
+        "shutdown_domtrans" = {
+          summary = "Execute a domain transition to run shutdown.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type shutdown_t, shutdown_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, shutdown_exec_t, shutdown_t)
+          '';
+        };
+        "shutdown_run" = {
+          summary = ''
+            Execute shutdown in the shutdown
+            domain, and allow the specified role
+            the shutdown domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role shutdown_roles;
+          '';
+          content = ''
+            shutdown_domtrans($1)
+            roleattribute $2 shutdown_roles;
+          '';
+        };
+        "shutdown_signal" = {
+          summary = "Send generic signals to shutdown.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type shutdown_t;
+          '';
+          content = ''
+            allow shutdown_t $1:process signal;
+          '';
+        };
+        "shutdown_sigchld" = {
+          summary = "Send SIGCHLD signals to shutdown.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type shutdown_t;
+          '';
+          content = ''
+            allow $1 shutdown_t:process sigchld;
+          '';
+        };
+        "shutdown_getattr_exec_files" = {
+          summary = "Get attributes of shutdown executable files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type shutdown_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            allow $1 shutdown_exec_t:file getattr_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(shutdown)
 

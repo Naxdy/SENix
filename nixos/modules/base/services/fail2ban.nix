@@ -3,273 +3,251 @@
 { lib, ... }: {
   config.security.selinux.modules.fail2ban = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Update firewall filtering to ban IP addresses with too many password failures.</summary>
+    interface = {
+      summary = "Update firewall filtering to ban IP addresses with too many password failures.";
+      exports = {
+        "fail2ban_domtrans" = {
+          summary = "Execute a domain transition to run fail2ban.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t, fail2ban_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fail2ban_exec_t, fail2ban_t)
+          '';
+        };
+        "fail2ban_domtrans_client" = {
+          summary = ''
+            Execute the fail2ban client in
+            the fail2ban client domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_client_t, fail2ban_client_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fail2ban_client_exec_t, fail2ban_client_t)
+          '';
+        };
+        "fail2ban_run_client" = {
+          summary = ''
+            Execute fail2ban client in the
+            fail2ban client domain, and allow
+            the specified role the fail2ban
+            client domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role fail2ban_client_roles;
+          '';
+          content = ''
+            fail2ban_domtrans_client($1)
+            roleattribute $2 fail2ban_client_roles;
+          '';
+        };
+        "fail2ban_stream_connect" = {
+          summary = ''
+            Connect to fail2ban over a
+            unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t, fail2ban_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, fail2ban_runtime_t, fail2ban_runtime_t, fail2ban_t)
+          '';
+        };
+        "fail2ban_rw_inherited_tmp_files" = {
+          summary = "Read and write inherited temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 fail2ban_tmp_t:file rw_inherited_file_perms;
+          '';
+        };
+        "fail2ban_dontaudit_use_fds" = {
+          summary = ''
+            Do not audit attempts to use
+            fail2ban file descriptors.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t;
+          '';
+          content = ''
+            dontaudit $1 fail2ban_t:fd use;
+          '';
+        };
+        "fail2ban_dontaudit_rw_stream_sockets" = {
+          summary = ''
+            Do not audit attempts to read and
+            write fail2ban unix stream sockets
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t;
+          '';
+          content = ''
+            dontaudit $1 fail2ban_t:unix_stream_socket { read write };
+          '';
+        };
+        "fail2ban_rw_stream_sockets" = {
+          summary = ''
+            Read and write fail2ban unix
+            stream sockets.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t;
+          '';
+          content = ''
+            allow $1 fail2ban_t:unix_stream_socket rw_stream_socket_perms;
+          '';
+        };
+        "fail2ban_read_lib_files" = {
+          summary = "Read fail2ban lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 fail2ban_var_lib_t:file read_file_perms;
+          '';
+        };
+        "fail2ban_read_log" = {
+          summary = "Read fail2ban log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 fail2ban_log_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fail2ban_append_log" = {
+          summary = "Append fail2ban log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 fail2ban_log_t:file append_file_perms;
+          '';
+        };
+        "fail2ban_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an fail2ban environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fail2ban_t, fail2ban_log_t, fail2ban_tmp_t;
+            type fail2ban_runtime_t, fail2ban_initrc_exec_t;
+            type fail2ban_var_lib_t, fail2ban_client_t;
+          '';
+          content = ''
+            allow $1 { fail2ban_t fail2ban_client_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { fail2ban_t fail2ban_client_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run fail2ban.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_domtrans',`
-      	gen_require(`
-      		type fail2ban_t, fail2ban_exec_t;
-      	')
+            init_startstop_service($1, $2, fail2ban_t, fail2ban_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fail2ban_exec_t, fail2ban_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, fail2ban_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute the fail2ban client in
-      ##	the fail2ban client domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_domtrans_client',`
-      	gen_require(`
-      		type fail2ban_client_t, fail2ban_client_exec_t;
-      	')
+            files_list_runtime($1)
+            admin_pattern($1, fail2ban_runtime_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fail2ban_client_exec_t, fail2ban_client_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, fail2ban_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute fail2ban client in the
-      ##	fail2ban client domain, and allow
-      ##	the specified role the fail2ban
-      ##	client domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_run_client',`
-      	gen_require(`
-      		attribute_role fail2ban_client_roles;
-      	')
+            files_search_tmp($1)
+            admin_pattern($1, fail2ban_tmp_t)
 
-      	fail2ban_domtrans_client($1)
-      	roleattribute $2 fail2ban_client_roles;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Connect to fail2ban over a
-      ##	unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_stream_connect',`
-      	gen_require(`
-      		type fail2ban_t, fail2ban_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, fail2ban_runtime_t, fail2ban_runtime_t, fail2ban_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write inherited temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_rw_inherited_tmp_files',`
-      	gen_require(`
-      		type fail2ban_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 fail2ban_tmp_t:file rw_inherited_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to use
-      ##	fail2ban file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_dontaudit_use_fds',`
-      	gen_require(`
-      		type fail2ban_t;
-      	')
-
-      	dontaudit $1 fail2ban_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and
-      ##	write fail2ban unix stream sockets
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_dontaudit_rw_stream_sockets',`
-      	gen_require(`
-      		type fail2ban_t;
-      	')
-
-      	dontaudit $1 fail2ban_t:unix_stream_socket { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write fail2ban unix
-      ##	stream sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_rw_stream_sockets',`
-      	gen_require(`
-      		type fail2ban_t;
-      	')
-
-      	allow $1 fail2ban_t:unix_stream_socket rw_stream_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fail2ban lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_read_lib_files',`
-      	gen_require(`
-      		type fail2ban_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 fail2ban_var_lib_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fail2ban log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fail2ban_read_log',`
-      	gen_require(`
-      		type fail2ban_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 fail2ban_log_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append fail2ban log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fail2ban_append_log',`
-      	gen_require(`
-      		type fail2ban_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 fail2ban_log_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an fail2ban environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fail2ban_admin',`
-      	gen_require(`
-      		type fail2ban_t, fail2ban_log_t, fail2ban_tmp_t;
-      		type fail2ban_runtime_t, fail2ban_initrc_exec_t;
-      		type fail2ban_var_lib_t, fail2ban_client_t;
-      	')
-
-      	allow $1 { fail2ban_t fail2ban_client_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { fail2ban_t fail2ban_client_t })
-
-      	init_startstop_service($1, $2, fail2ban_t, fail2ban_initrc_exec_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, fail2ban_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, fail2ban_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, fail2ban_var_lib_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, fail2ban_tmp_t)
-
-      	fail2ban_run_client($1, $2)
-      ')
-    '';
+            fail2ban_run_client($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fail2ban)
 

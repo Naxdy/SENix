@@ -3,109 +3,103 @@
 { lib, ... }: {
   config.security.selinux.modules.calamaris = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Squid log analysis.</summary>
+    interface = {
+      summary = "Squid log analysis.";
+      exports = {
+        "calamaris_domtrans" = {
+          summary = ''
+            Execute the calamaris in
+            the calamaris domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type calamaris_t, calamaris_exec_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            domtrans_pattern($1, calamaris_exec_t, calamaris_t)
+          '';
+        };
+        "calamaris_run" = {
+          summary = ''
+            Execute calamaris in the
+            calamaris domain, and allow the
+            specified role the calamaris domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role calamaris_roles;
+          '';
+          content = ''
+            lightsquid_domtrans($1)
+            roleattribute $2 calamaris_roles;
+          '';
+        };
+        "calamaris_read_www_files" = {
+          summary = "Read calamaris www files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type calamaris_www_t;
+          '';
+          content = ''
+            allow $1 calamaris_www_t:dir list_dir_perms;
+            read_files_pattern($1, calamaris_www_t, calamaris_www_t)
+            read_lnk_files_pattern($1, calamaris_www_t, calamaris_www_t)
+          '';
+        };
+        "calamaris_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an calamaris environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type calamaris_t, calamaris_log_t, calamaris_www_t;
+          '';
+          content = ''
+            allow $1 calamaris_t:process { ptrace signal_perms };
+            ps_process_pattern($1, calamaris_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute the calamaris in
-      ##	the calamaris domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`calamaris_domtrans',`
-      	gen_require(`
-      		type calamaris_t, calamaris_exec_t;
-      	')
+            calamaris_run($1, $2)
 
-      	files_search_etc($1)
-      	domtrans_pattern($1, calamaris_exec_t, calamaris_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, calamaris_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute calamaris in the
-      ##	calamaris domain, and allow the
-      ##	specified role the calamaris domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`calamaris_run',`
-      	gen_require(`
-      		attribute_role calamaris_roles;
-      	')
-
-      	lightsquid_domtrans($1)
-      	roleattribute $2 calamaris_roles;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read calamaris www files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`calamaris_read_www_files',`
-      	gen_require(`
-      		type calamaris_www_t;
-      	')
-
-      	allow $1 calamaris_www_t:dir list_dir_perms;
-      	read_files_pattern($1, calamaris_www_t, calamaris_www_t)
-      	read_lnk_files_pattern($1, calamaris_www_t, calamaris_www_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an calamaris environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`calamaris_admin',`
-      	gen_require(`
-      		type calamaris_t, calamaris_log_t, calamaris_www_t;
-      	')
-
-      	allow $1 calamaris_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, calamaris_t)
-
-      	calamaris_run($1, $2)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, calamaris_log_t)
-
-      	apache_list_sys_content($1)
-      	admin_pattern($1, calamaris_www_t)
-      ')
-    '';
+            apache_list_sys_content($1)
+            admin_pattern($1, calamaris_www_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(calamaris)
 

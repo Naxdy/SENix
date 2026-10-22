@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.slpd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>OpenSLP server daemon to dynamically register services.</summary>
+    interface = {
+      summary = "OpenSLP server daemon to dynamically register services.";
+      exports = {
+        "slpd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an slpd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type slpd_t, slpd_initrc_exec_t, slpd_log_t;
+            type slpd_runtime_t;
+          '';
+          content = ''
+            allow $1 slpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, slpd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an slpd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`slpd_admin',`
-      	gen_require(`
-      		type slpd_t, slpd_initrc_exec_t, slpd_log_t;
-      		type slpd_runtime_t;
-      	')
+            init_startstop_service($1, $2, slpd_t, slpd_initrc_exec_t)
 
-      	allow $1 slpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, slpd_t)
+            logging_search_logs($1)
+            admin_pattern($1, slpd_log_t)
 
-      	init_startstop_service($1, $2, slpd_t, slpd_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, slpd_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, slpd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, slpd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(slpd)
 

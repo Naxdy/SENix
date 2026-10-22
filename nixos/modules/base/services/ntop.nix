@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.ntop = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>A network traffic probe similar to the UNIX top command.</summary>
+    interface = {
+      summary = "A network traffic probe similar to the UNIX top command.";
+      exports = {
+        "ntop_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ntop environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntop_t, ntop_etc_t, ntop_runtime_t;
+            type ntop_initrc_exec_t, ntop_var_lib_t;
+          '';
+          content = ''
+            allow $1 ntop_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ntop_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ntop environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ntop_admin',`
-      	gen_require(`
-      		type ntop_t, ntop_etc_t, ntop_runtime_t;
-      		type ntop_initrc_exec_t, ntop_var_lib_t;
-      	')
+            init_startstop_service($1, $2, ntop_t, ntop_initrc_exec_t)
 
-      	allow $1 ntop_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ntop_t)
+            files_search_etc($1)
+            admin_pattern($1, ntop_etc_t)
 
-      	init_startstop_service($1, $2, ntop_t, ntop_initrc_exec_t)
+            files_search_var_lib($1)
+            admin_pattern($1, ntop_var_lib_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, ntop_etc_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, ntop_var_lib_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, ntop_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, ntop_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ntop)
 

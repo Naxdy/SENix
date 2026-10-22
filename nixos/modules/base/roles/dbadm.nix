@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.dbadm = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Database administrator role.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the database administrator role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dbadm_role_change',`
-      	gen_require(`
-      		role dbadm_r;
-      	')
-
-      	allow $1 dbadm_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the database administrator role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the database administrator role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dbadm_role_change_to',`
-      	gen_require(`
-      		role dbadm_r;
-      	')
-
-      	allow dbadm_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Database administrator role.";
+      exports = {
+        "dbadm_role_change" = {
+          summary = "Change to the database administrator role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role dbadm_r;
+          '';
+          content = ''
+            allow $1 dbadm_r;
+          '';
+          rolecap = true;
+        };
+        "dbadm_role_change_to" = {
+          summary = "Change from the database administrator role.";
+          desc = ''
+            <p>
+            Change from the database administrator role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role dbadm_r;
+          '';
+          content = ''
+            allow dbadm_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dbadm)
 

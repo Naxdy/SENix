@@ -3,54 +3,51 @@
 { lib, ... }: {
   config.security.selinux.modules.ncftool = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Cross-platform network configuration library.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run ncftool.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ncftool_domtrans',`
-      	gen_require(`
-      		type ncftool_t, ncftool_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ncftool_exec_t, ncftool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute ncftool in the ncftool
-      ##	domain, and allow the specified
-      ##	role the ncftool domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ncftool_run',`
-      	gen_require(`
-      		attribute_role ncftool_roles;
-      	')
-
-      	ncftool_domtrans($1)
-      	roleattribute $2 ncftool_roles;
-      ')
-    '';
+    interface = {
+      summary = "Cross-platform network configuration library.";
+      exports = {
+        "ncftool_domtrans" = {
+          summary = "Execute a domain transition to run ncftool.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ncftool_t, ncftool_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ncftool_exec_t, ncftool_t)
+          '';
+        };
+        "ncftool_run" = {
+          summary = ''
+            Execute ncftool in the ncftool
+            domain, and allow the specified
+            role the ncftool domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role ncftool_roles;
+          '';
+          content = ''
+            ncftool_domtrans($1)
+            roleattribute $2 ncftool_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ncftool)
 

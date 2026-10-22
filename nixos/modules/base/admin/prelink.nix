@@ -3,211 +3,188 @@
 { lib, ... }: {
   config.security.selinux.modules.prelink = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Prelink ELF shared library mappings.</summary>
+    interface = {
+      summary = "Prelink ELF shared library mappings.";
+      exports = {
+        "prelink_domtrans" = {
+          summary = "Execute prelink in the prelink domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type prelink_t, prelink_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, prelink_exec_t, prelink_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute prelink in the prelink domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_domtrans',`
-      	gen_require(`
-      		type prelink_t, prelink_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, prelink_exec_t, prelink_t)
-
-              dontaudit prelink_t $1:socket_class_set { read write };
-              dontaudit prelink_t $1:fifo_file setattr_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute prelink in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_exec',`
-      	gen_require(`
-      		type prelink_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, prelink_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute prelink in the prelink
-      ##	domain, and allow the specified role
-      ##	the prelink domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`prelink_run',`
-      	gen_require(`
-      		attribute_role prelink_roles;
-      	')
-
-      	prelink_domtrans($1)
-      	roleattribute $2 prelink_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make the specified file type prelinkable.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	File type to be prelinked.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_object_file',`
-      	gen_require(`
-      		attribute prelink_object;
-      	')
-
-      	typeattribute $1 prelink_object;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read prelink cache files.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_read_cache',`
-      	gen_require(`
-      		type prelink_cache_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 prelink_cache_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete prelink cache files.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_delete_cache',`
-      	gen_require(`
-      		type prelink_cache_t;
-      	')
-
-      	files_rw_etc_dirs($1)
-      	allow $1 prelink_cache_t:file delete_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	prelink log files.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_manage_log',`
-      	gen_require(`
-      		type prelink_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	manage_files_pattern($1, prelink_log_t, prelink_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	prelink var_lib files.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_manage_lib',`
-      	gen_require(`
-      		type prelink_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from prelink lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_relabelfrom_lib',`
-      	gen_require(`
-      		type prelink_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	relabelfrom_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel prelink lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelink_relabel_lib',`
-      	gen_require(`
-      		type prelink_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	relabel_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
-      ')
-    '';
+            dontaudit prelink_t $1:socket_class_set { read write };
+            dontaudit prelink_t $1:fifo_file setattr_fifo_file_perms;
+          '';
+        };
+        "prelink_exec" = {
+          summary = "Execute prelink in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, prelink_exec_t)
+          '';
+        };
+        "prelink_run" = {
+          summary = ''
+            Execute prelink in the prelink
+            domain, and allow the specified role
+            the prelink domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role prelink_roles;
+          '';
+          content = ''
+            prelink_domtrans($1)
+            roleattribute $2 prelink_roles;
+          '';
+          rolecap = true;
+        };
+        "prelink_object_file" = {
+          summary = "Make the specified file type prelinkable.";
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "File type to be prelinked.";
+            };
+          };
+          gen_require = ''
+            attribute prelink_object;
+          '';
+          content = ''
+            typeattribute $1 prelink_object;
+          '';
+        };
+        "prelink_read_cache" = {
+          summary = "Read prelink cache files.";
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_cache_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 prelink_cache_t:file read_file_perms;
+          '';
+        };
+        "prelink_delete_cache" = {
+          summary = "Delete prelink cache files.";
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_cache_t;
+          '';
+          content = ''
+            files_rw_etc_dirs($1)
+            allow $1 prelink_cache_t:file delete_file_perms;
+          '';
+        };
+        "prelink_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            prelink log files.
+          '';
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_files_pattern($1, prelink_log_t, prelink_log_t)
+          '';
+        };
+        "prelink_manage_lib" = {
+          summary = ''
+            Create, read, write, and delete
+            prelink var_lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
+          '';
+        };
+        "prelink_relabelfrom_lib" = {
+          summary = "Relabel from prelink lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            relabelfrom_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
+          '';
+        };
+        "prelink_relabel_lib" = {
+          summary = "Relabel prelink lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelink_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            relabel_files_pattern($1, prelink_var_lib_t, prelink_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(prelink)
 

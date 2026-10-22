@@ -3,25 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.xdsprpcd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Qualcomm DSP FastRPC daemons</summary>
-      ##
-      ## <desc>
-      ## <p>
-      ## Consolidated policy module for Qualcomm DSP FastRPC daemons.
-      ## These daemons establish connections to various DSP processors:
-      ## </p>
-      ## <ul>
-      ## <li>adsprpcd - ADSP daemon</li>
-      ## <li>cdsprpcd - CDSP daemon</li>
-      ## <li>gdsprpcd - GDSP daemon</li>
-      ## <li>sdsprpcd - SDSP daemon</li>
-      ## </ul>
-      ## <p>
-      ## Source: https://github.com/qualcomm/fastrpc.git
-      ## </p>
-      ## </desc>
-    '';
+    interface = {
+      summary = "Qualcomm DSP FastRPC daemons";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xdsprpcd)
 

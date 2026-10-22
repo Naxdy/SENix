@@ -3,161 +3,147 @@
 { lib, ... }: {
   config.security.selinux.modules.rpcbind = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Universal Addresses to RPC Program Number Mapper.</summary>
+    interface = {
+      summary = "Universal Addresses to RPC Program Number Mapper.";
+      exports = {
+        "rpcbind_domtrans" = {
+          summary = "Execute a domain transition to run rpcbind.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_t, rpcbind_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rpcbind_exec_t, rpcbind_t)
+          '';
+        };
+        "rpcbind_stream_connect" = {
+          summary = ''
+            Connect to rpcbind with a
+            unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_t, rpcbind_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, rpcbind_runtime_t, rpcbind_runtime_t, rpcbind_t)
+          '';
+        };
+        "rpcbind_search_lib" = {
+          summary = "Search rpcbind lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 rpcbind_var_lib_t:dir search_dir_perms;
+          '';
+        };
+        "rpcbind_read_lib_files" = {
+          summary = "Read rpcbind lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, rpcbind_var_lib_t, rpcbind_var_lib_t)
+          '';
+        };
+        "rpcbind_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rpcbind lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, rpcbind_var_lib_t, rpcbind_var_lib_t)
+          '';
+        };
+        "rpcbind_signull" = {
+          summary = "Send null signals to rpcbind.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_t;
+          '';
+          content = ''
+            allow $1 rpcbind_t:process signull;
+          '';
+        };
+        "rpcbind_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an rpcbind environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcbind_t, rpcbind_var_lib_t, rpcbind_runtime_t;
+            type rpcbind_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 rpcbind_t:process { ptrace signal_perms };
+            ps_process_pattern($1, rpcbind_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run rpcbind.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_domtrans',`
-      	gen_require(`
-      		type rpcbind_t, rpcbind_exec_t;
-      	')
+            init_startstop_service($1, $2, rpcbind_t, rpcbind_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rpcbind_exec_t, rpcbind_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, rpcbind_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to rpcbind with a
-      ##	unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_stream_connect',`
-      	gen_require(`
-      		type rpcbind_t, rpcbind_runtime_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, rpcbind_var_lib_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, rpcbind_runtime_t, rpcbind_runtime_t, rpcbind_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search rpcbind lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_search_lib',`
-      	gen_require(`
-      		type rpcbind_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 rpcbind_var_lib_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rpcbind lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_read_lib_files',`
-      	gen_require(`
-      		type rpcbind_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, rpcbind_var_lib_t, rpcbind_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpcbind lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_manage_lib_files',`
-      	gen_require(`
-      		type rpcbind_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, rpcbind_var_lib_t, rpcbind_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to rpcbind.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpcbind_signull',`
-      	gen_require(`
-      		type rpcbind_t;
-      	')
-
-      	allow $1 rpcbind_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an rpcbind environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpcbind_admin',`
-      	gen_require(`
-      		type rpcbind_t, rpcbind_var_lib_t, rpcbind_runtime_t;
-      		type rpcbind_initrc_exec_t;
-      	')
-
-      	allow $1 rpcbind_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, rpcbind_t)
-
-      	init_startstop_service($1, $2, rpcbind_t, rpcbind_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, rpcbind_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, rpcbind_var_lib_t)
-
-      	rpcbind_stream_connect($1)
-      ')
-    '';
+            rpcbind_stream_connect($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rpcbind)
 

@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.distcc = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Distributed compiler daemon.</summary>
+    interface = {
+      summary = "Distributed compiler daemon.";
+      exports = {
+        "distcc_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an distcc environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type distccd_t, distccd_t, distccd_log_t;
+            type distccd_runtime_t, distccd_tmp_t, distccd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 distccd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, distccd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an distcc environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`distcc_admin',`
-      	gen_require(`
-      		type distccd_t, distccd_t, distccd_log_t;
-      		type distccd_runtime_t, distccd_tmp_t, distccd_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, distccd_t, distccd_initrc_exec_t)
 
-      	allow $1 distccd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, distccd_t)
+            logging_search_logs($1)
+            admin_pattern($1, distccd_log_t)
 
-      	init_startstop_service($1, $2, distccd_t, distccd_initrc_exec_t)
+            files_search_tmp($1)
+            admin_pattern($1, distccd_tmp_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, distccd_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, distccd_tmp_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, distccd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, distccd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(distcc)
 

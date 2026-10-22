@@ -3,25 +3,25 @@
 { lib, ... }: {
   config.security.selinux.modules.cpucontrol = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Services for loading CPU microcode and CPU frequency scaling.</summary>
-
-      ########################################
-      ## <summary>
-      ##	CPUcontrol stub interface.  No access allowed.
-      ## </summary>
-      ## <param name="domain" unused="true">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cpucontrol_stub',`
-      	gen_require(`
-      		type cpucontrol_t;
-      	')
-      ')
-    '';
+    interface = {
+      summary = "Services for loading CPU microcode and CPU frequency scaling.";
+      exports = {
+        "cpucontrol_stub" = {
+          summary = "CPUcontrol stub interface.  No access allowed.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type cpucontrol_t;
+          '';
+          content = "";
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cpucontrol)
 

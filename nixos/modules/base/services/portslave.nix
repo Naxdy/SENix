@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.portslave = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Portslave terminal server software.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute portslave with a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`portslave_domtrans',`
-      	gen_require(`
-      		type portslave_t, portslave_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, portslave_exec_t, portslave_t)
-      ')
-    '';
+    interface = {
+      summary = "Portslave terminal server software.";
+      exports = {
+        "portslave_domtrans" = {
+          summary = "Execute portslave with a domain transition.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type portslave_t, portslave_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, portslave_exec_t, portslave_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(portslave)
 

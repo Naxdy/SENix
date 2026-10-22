@@ -3,104 +3,99 @@
 { lib, ... }: {
   config.security.selinux.modules.uml = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>User mode linux tools and services.</summary>
+    interface = {
+      summary = "User mode linux tools and services.";
+      exports = {
+        "uml_role" = {
+          type = "template";
+          summary = "Role access for uml.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role uml_roles;
+            type uml_t, uml_exec_t;
+            type uml_ro_t, uml_rw_t, uml_tmp_t;
+            type uml_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 uml_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for uml.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`uml_role',`
-      	gen_require(`
-      		attribute_role uml_roles;
-      		type uml_t, uml_exec_t;
-      		type uml_ro_t, uml_rw_t, uml_tmp_t;
-      		type uml_tmpfs_t;
-      	')
+            domtrans_pattern($3, uml_exec_t, uml_t)
 
-      	roleattribute $4 uml_roles;
+            dgram_send_pattern($3, uml_tmpfs_t, uml_tmpfs_t, uml_t)
 
-      	domtrans_pattern($3, uml_exec_t, uml_t)
+            allow uml_t $3:unix_dgram_socket sendto;
 
-      	dgram_send_pattern($3, uml_tmpfs_t, uml_tmpfs_t, uml_t)
+            ps_process_pattern($3, uml_t)
+            allow $3 uml_t:process { ptrace signal_perms };
 
-      	allow uml_t $3:unix_dgram_socket sendto;
+            allow $2 { uml_ro_t uml_rw_t uml_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { uml_ro_t uml_rw_t uml_tmp_t uml_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            userdom_user_home_dir_filetrans($2, uml_rw_t, dir, ".uml")
 
-      	ps_process_pattern($3, uml_t)
-      	allow $3 uml_t:process { ptrace signal_perms };
-
-      	allow $2 { uml_ro_t uml_rw_t uml_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { uml_ro_t uml_rw_t uml_tmp_t uml_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 { uml_ro_t uml_rw_t uml_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-      	userdom_user_home_dir_filetrans($2, uml_rw_t, dir, ".uml")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, uml_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set attributes of uml pid sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uml_setattr_util_sockets',`
-      	gen_require(`
-      		type uml_switch_runtime_t;
-      	')
-
-      	allow $1 uml_switch_runtime_t:sock_file setattr_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	uml pid files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uml_manage_util_files',`
-      	gen_require(`
-      		type uml_switch_runtime_t;
-      	')
-
-      	manage_files_pattern($1, uml_switch_runtime_t, uml_switch_runtime_t)
-      	manage_lnk_files_pattern($1, uml_switch_runtime_t, uml_switch_runtime_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, uml_t)
+            ')
+          '';
+        };
+        "uml_setattr_util_sockets" = {
+          summary = "Set attributes of uml pid sock files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uml_switch_runtime_t;
+          '';
+          content = ''
+            allow $1 uml_switch_runtime_t:sock_file setattr_sock_file_perms;
+          '';
+        };
+        "uml_manage_util_files" = {
+          summary = ''
+            Create, read, write, and delete
+            uml pid files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uml_switch_runtime_t;
+          '';
+          content = ''
+            manage_files_pattern($1, uml_switch_runtime_t, uml_switch_runtime_t)
+            manage_lnk_files_pattern($1, uml_switch_runtime_t, uml_switch_runtime_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(uml)
 

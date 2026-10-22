@@ -3,50 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.redis = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Advanced key-value store.</summary>
+    interface = {
+      summary = "Advanced key-value store.";
+      exports = {
+        "redis_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an redis environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type redis_t, redis_initrc_exec_t, redis_var_lib_t;
+            type redis_log_t, redis_runtime_t, redis_conf_t;
+          '';
+          content = ''
+            allow $1 redis_t:process { ptrace signal_perms };
+            ps_process_pattern($1, redis_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an redis environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`redis_admin',`
-      	gen_require(`
-      		type redis_t, redis_initrc_exec_t, redis_var_lib_t;
-      		type redis_log_t, redis_runtime_t, redis_conf_t;
-      	')
+            init_startstop_service($1, $2, redis_t, redis_initrc_exec_t)
 
-      	allow $1 redis_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, redis_t)
+            files_search_etc($1)
+            admin_pattern($1, redis_conf_t)
 
-      	init_startstop_service($1, $2, redis_t, redis_initrc_exec_t)
+            logging_search_logs($1)
+            admin_pattern($1, redis_log_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, redis_conf_t)
+            files_search_var_lib($1)
+            admin_pattern($1, redis_var_lib_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, redis_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, redis_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, redis_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, redis_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(redis)
 

@@ -3,129 +3,125 @@
 { lib, ... }: {
   config.security.selinux.modules.gpm = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>General Purpose Mouse driver.</summary>
+    interface = {
+      summary = "General Purpose Mouse driver.";
+      exports = {
+        "gpm_stream_connect" = {
+          summary = ''
+            Connect to GPM over a unix domain
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpmctl_t, gpm_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            stream_connect_pattern($1, gpmctl_t, gpmctl_t, gpm_t)
+          '';
+        };
+        "gpm_getattr_gpmctl" = {
+          summary = ''
+            Get attributes of gpm control
+            channel named sock files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpmctl_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 gpmctl_t:sock_file getattr_sock_file_perms;
+            allow $1 gpmctl_t:fifo_file getattr_fifo_file_perms;
+          '';
+        };
+        "gpm_dontaudit_getattr_gpmctl" = {
+          summary = ''
+            Do not audit attempts to get
+            attributes of gpm control channel
+            named sock files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type gpmctl_t;
+          '';
+          content = ''
+            dontaudit $1 gpmctl_t:sock_file getattr_sock_file_perms;
+            dontaudit $1 gpmctl_t:fifo_file getattr_fifo_file_perms;
+          '';
+        };
+        "gpm_setattr_gpmctl" = {
+          summary = ''
+            Set attributes of gpm control
+            channel named sock files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpmctl_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 gpmctl_t:sock_file setattr_sock_file_perms;
+          '';
+        };
+        "gpm_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an gpm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpm_t, gpm_conf_t, gpm_initrc_exec_t;
+            type gpm_runtime_t, gpmctl_t;
+          '';
+          content = ''
+            allow $1 gpm_t:process { ptrace signal_perms };
+            ps_process_pattern($1, gpm_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to GPM over a unix domain
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpm_stream_connect',`
-      	gen_require(`
-      		type gpmctl_t, gpm_t;
-      	')
+            init_startstop_service($1, $2, gpm_t, gpm_initrc_exec_t)
 
-      	dev_list_all_dev_nodes($1)
-      	stream_connect_pattern($1, gpmctl_t, gpmctl_t, gpm_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, gpm_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Get attributes of gpm control
-      ##	channel named sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpm_getattr_gpmctl',`
-      	gen_require(`
-      		type gpmctl_t;
-      	')
+            dev_list_all_dev_nodes($1)
+            admin_pattern($1, gpmctl_t)
 
-      	dev_list_all_dev_nodes($1)
-      	allow $1 gpmctl_t:sock_file getattr_sock_file_perms;
-      	allow $1 gpmctl_t:fifo_file getattr_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get
-      ##	attributes of gpm control channel
-      ##	named sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpm_dontaudit_getattr_gpmctl',`
-      	gen_require(`
-      		type gpmctl_t;
-      	')
-
-      	dontaudit $1 gpmctl_t:sock_file getattr_sock_file_perms;
-      	dontaudit $1 gpmctl_t:fifo_file getattr_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set attributes of gpm control
-      ##	channel named sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpm_setattr_gpmctl',`
-      	gen_require(`
-      		type gpmctl_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 gpmctl_t:sock_file setattr_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an gpm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`gpm_admin',`
-      	gen_require(`
-      		type gpm_t, gpm_conf_t, gpm_initrc_exec_t;
-      		type gpm_runtime_t, gpmctl_t;
-      	')
-
-      	allow $1 gpm_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, gpm_t)
-
-      	init_startstop_service($1, $2, gpm_t, gpm_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, gpm_conf_t)
-
-      	dev_list_all_dev_nodes($1)
-      	admin_pattern($1, gpmctl_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, gpm_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, gpm_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gpm)
 

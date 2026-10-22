@@ -3,54 +3,51 @@
 { lib, ... }: {
   config.security.selinux.modules.zosremote = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>z/OS Remote-services Audit dispatcher plugin.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run audispd-zos-remote.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zosremote_domtrans',`
-      	gen_require(`
-      		type zos_remote_t, zos_remote_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, zos_remote_exec_t, zos_remote_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute zos remote in the zos remote
-      ##	domain, and allow the specified role
-      ##	the zos remote domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`zosremote_run',`
-      	gen_require(`
-      		attribute_role zos_remote_roles;
-      	')
-
-      	zosremote_domtrans($1)
-      	roleattribute $2 zos_remote_roles;
-      ')
-    '';
+    interface = {
+      summary = "z/OS Remote-services Audit dispatcher plugin.";
+      exports = {
+        "zosremote_domtrans" = {
+          summary = "Execute a domain transition to run audispd-zos-remote.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type zos_remote_t, zos_remote_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, zos_remote_exec_t, zos_remote_t)
+          '';
+        };
+        "zosremote_run" = {
+          summary = ''
+            Execute zos remote in the zos remote
+            domain, and allow the specified role
+            the zos remote domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role zos_remote_roles;
+          '';
+          content = ''
+            zosremote_domtrans($1)
+            roleattribute $2 zos_remote_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(zosremote)
 

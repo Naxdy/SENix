@@ -3,30 +3,28 @@
 { lib, ... }: {
   config.security.selinux.modules.geoclue = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Geoclue is a D-Bus service that provides location information.</summary>
-
-
-      ########################################
-      ## <summary>
-      ##      Send and receive messages from geoclue over dbus
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`geoclue_dbus_chat',`
-      	gen_require(`
-      		type geoclue_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 geoclue_t:dbus send_msg;
-      	allow geoclue_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "Geoclue is a D-Bus service that provides location information.";
+      exports = {
+        "geoclue_dbus_chat" = {
+          summary = "Send and receive messages from geoclue over dbus";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type geoclue_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 geoclue_t:dbus send_msg;
+            allow geoclue_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(geoclue)
 

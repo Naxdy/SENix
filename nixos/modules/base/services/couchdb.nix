@@ -3,130 +3,118 @@
 { lib, ... }: {
   config.security.selinux.modules.couchdb = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Document database server.</summary>
+    interface = {
+      summary = "Document database server.";
+      exports = {
+        "couchdb_read_log_files" = {
+          summary = "Read couchdb log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type couchdb_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            read_files_pattern($1, couchdb_log_t, couchdb_log_t)
+          '';
+        };
+        "couchdb_manage_lib_files" = {
+          summary = "Read, write, and create couchdb lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type couchdb_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, couchdb_var_lib_t, couchdb_var_lib_t)
+          '';
+        };
+        "couchdb_read_conf_files" = {
+          summary = "Read couchdb config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type couchdb_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, couchdb_conf_t, couchdb_conf_t)
+          '';
+        };
+        "couchdb_read_runtime_files" = {
+          summary = "Read couchdb runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type couchdb_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, couchdb_runtime_t, couchdb_runtime_t)
+          '';
+        };
+        "couchdb_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an couchdb environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type couchdb_t, couchdb_conf_t, couchdb_initrc_exec_t;
+            type couchdb_log_t, couchdb_var_lib_t, couchdb_runtime_t;
+            type couchdb_tmp_t;
+          '';
+          content = ''
+            allow $1 couchdb_t:process { ptrace signal_perms };
+            ps_process_pattern($1, couchdb_t)
 
-      ########################################
-      ## <summary>
-      ##	Read couchdb log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`couchdb_read_log_files',`
-      	gen_require(`
-      		type couchdb_log_t;
-      	')
+            init_startstop_service($1, $2, couchdb_t, couchdb_initrc_exec_t)
 
-      	logging_search_logs($1)
-      	read_files_pattern($1, couchdb_log_t, couchdb_log_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, couchdb_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Read, write, and create couchdb lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`couchdb_manage_lib_files',`
-      	gen_require(`
-      		type couchdb_var_lib_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, couchdb_log_t)
 
-      	files_search_var_lib($1)
-      	read_files_pattern($1, couchdb_var_lib_t, couchdb_var_lib_t)
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, couchdb_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Read couchdb config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`couchdb_read_conf_files',`
-      	gen_require(`
-      		type couchdb_conf_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, couchdb_var_lib_t)
 
-      	files_search_etc($1)
-      	read_files_pattern($1, couchdb_conf_t, couchdb_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read couchdb runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`couchdb_read_runtime_files',`
-      	gen_require(`
-      		type couchdb_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, couchdb_runtime_t, couchdb_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an couchdb environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`couchdb_admin',`
-      	gen_require(`
-      		type couchdb_t, couchdb_conf_t, couchdb_initrc_exec_t;
-      		type couchdb_log_t, couchdb_var_lib_t, couchdb_runtime_t;
-      		type couchdb_tmp_t;
-      	')
-
-      	allow $1 couchdb_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, couchdb_t)
-
-      	init_startstop_service($1, $2, couchdb_t, couchdb_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, couchdb_conf_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, couchdb_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, couchdb_tmp_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, couchdb_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, couchdb_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, couchdb_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(couchdb)
 

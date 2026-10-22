@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.tmpreaper = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Manage temporary directory sizes and file ages.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute tmpreaper in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tmpreaper_exec',`
-      	gen_require(`
-      		type tmpreaper_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, tmpreaper_exec_t)
-      ')
-    '';
+    interface = {
+      summary = "Manage temporary directory sizes and file ages.";
+      exports = {
+        "tmpreaper_exec" = {
+          summary = "Execute tmpreaper in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpreaper_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, tmpreaper_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tmpreaper)
 

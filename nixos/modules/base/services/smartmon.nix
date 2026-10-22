@@ -3,85 +3,79 @@
 { lib, ... }: {
   config.security.selinux.modules.smartmon = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Smart disk monitoring daemon.</summary>
+    interface = {
+      summary = "Smart disk monitoring daemon.";
+      exports = {
+        "smartmon_read_tmp_files" = {
+          summary = "Read smartmon temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsdaemon_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 fsdaemon_tmp_t:file read_file_perms;
+          '';
+        };
+        "smartmon_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an smartmon environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsdaemon_t, fsdaemon_tmp_t, fsdaemon_runtime_t;
+            type fsdaemon_var_lib_t, fsdaemon_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 fsdaemon_t:process { ptrace signal_perms };
+            ps_process_pattern($1, fsdaemon_t)
 
-      #######################################
-      ## <summary>
-      ##	Read smartmon temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smartmon_read_tmp_files',`
-      	gen_require(`
-      		type fsdaemon_tmp_t;
-      	')
+            init_startstop_service($1, $2, fsdaemon_t, fsdaemon_initrc_exec_t)
 
-      	files_search_tmp($1)
-      	allow $1 fsdaemon_tmp_t:file read_file_perms;
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, fsdaemon_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an smartmon environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`smartmon_admin',`
-      	gen_require(`
-      		type fsdaemon_t, fsdaemon_tmp_t, fsdaemon_runtime_t;
-      		type fsdaemon_var_lib_t, fsdaemon_initrc_exec_t;
-      	')
+            files_list_runtime($1)
+            admin_pattern($1, fsdaemon_runtime_t)
 
-      	allow $1 fsdaemon_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, fsdaemon_t)
-
-      	init_startstop_service($1, $2, fsdaemon_t, fsdaemon_initrc_exec_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, fsdaemon_tmp_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, fsdaemon_runtime_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, fsdaemon_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fsdaemon /var/lib files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fsdaemon_read_lib',`
-      	gen_require(`
-      		type fsdaemon_var_lib_t;
-      	')
-
-      	read_files_pattern($1, fsdaemon_var_lib_t, fsdaemon_var_lib_t)
-      ')
-    '';
+            files_list_var_lib($1)
+            admin_pattern($1, fsdaemon_var_lib_t)
+          '';
+          rolecap = true;
+        };
+        "fsdaemon_read_lib" = {
+          summary = "Read fsdaemon /var/lib files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsdaemon_var_lib_t;
+          '';
+          content = ''
+            read_files_pattern($1, fsdaemon_var_lib_t, fsdaemon_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(smartmon)
 

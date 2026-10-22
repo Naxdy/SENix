@@ -3,50 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.ircd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>IRC servers.</summary>
+    interface = {
+      summary = "IRC servers.";
+      exports = {
+        "ircd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ircd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ircd_t, ircd_initrc_exec_t, ircd_etc_t;
+            type ircd_log_t, ircd_var_lib_t, ircd_runtime_t;
+          '';
+          content = ''
+            init_startstop_service($1, $2, ircd_t, ircd_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ircd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ircd_admin',`
-      	gen_require(`
-      		type ircd_t, ircd_initrc_exec_t, ircd_etc_t;
-      		type ircd_log_t, ircd_var_lib_t, ircd_runtime_t;
-      	')
+            allow $1 ircd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ircd_t)
 
-      	init_startstop_service($1, $2, ircd_t, ircd_initrc_exec_t)
+            files_search_etc($1)
+            admin_pattern($1, ircd_etc_t)
 
-      	allow $1 ircd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ircd_t)
+            logging_search_logs($1)
+            admin_pattern($1, ircd_log_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, ircd_etc_t)
+            files_search_var_lib($1)
+            admin_pattern($1, ircd_var_lib_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, ircd_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, ircd_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, ircd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, ircd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ircd)
 

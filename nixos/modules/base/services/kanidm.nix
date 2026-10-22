@@ -3,191 +3,179 @@
 { lib, ... }: {
   config.security.selinux.modules.kanidm = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>A simple, secure and fast identity management platform</summary>
+    interface = {
+      summary = "A simple, secure and fast identity management platform";
+      exports = {
+        "kanidm_domtrans" = {
+          summary = "Execute kanidmd in the kanidmd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kanidmd_t, kanidmd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kanidmd_exec_t, kanidmd_t)
+          '';
+        };
+        "kanidm_run" = {
+          summary = ''
+            Execute kanidmd in the kanidmd domain, and
+            allow the specified role the kanidmd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type kanidmd_t;
+          '';
+          content = ''
+            kanidm_domtrans($1)
+            role $2 types kanidmd_t;
+          '';
+          rolecap = true;
+        };
+        "kanidm_domtrans_unixd" = {
+          summary = ''
+            Execute kanidmd-unixd in the
+            kanidmd-unixd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kanidm_unixd_t, kanidm_unixd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kanidm_unixd_exec_t, kanidm_unixd_t)
+          '';
+        };
+        "kanidm_run_unixd" = {
+          summary = ''
+            Execute kanidm-unixd in the kanidm-unixd
+            domain, and allow the specified role the
+            kanidm-unixd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type kanidm_unixd_t;
+          '';
+          content = ''
+            kanidm_domtrans_unixd($1)
+            role $2 types kanidm_unixd_t;
+          '';
+          rolecap = true;
+        };
+        "kanidm_read_config" = {
+          summary = "Read kanidm config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kanidm_config_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, kanidm_config_t, kanidm_config_t)
+          '';
+        };
+        "kanidm_unixd_stream_connect" = {
+          summary = ''
+            Connect to kanidm-unixd with a
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kanidm_unixd_t, kanidm_unixd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, kanidm_unixd_runtime_t, kanidm_unixd_runtime_t, kanidm_unixd_t)
+          '';
+        };
+        "kanidm_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a Kanidm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type kanidmd_t;
+            type kanidm_unixd_t;
+            type kanidm_config_t;
+            type kanidm_unixd_cache_t;
+            type kanidm_unixd_runtime_t;
+            type kanidm_var_lib_t;
+          '';
+          content = ''
+            kanidm_run($1, $2)
+            kanidm_run_unixd($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Execute kanidmd in the kanidmd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kanidm_domtrans',`
-      	gen_require(`
-      		type kanidmd_t, kanidmd_exec_t;
-      	')
+            allow $1 kanidmd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, kanidmd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kanidmd_exec_t, kanidmd_t)
-      ')
+            allow $1 kanidm_unixd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, kanidm_unixd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute kanidmd in the kanidmd domain, and
-      ##	allow the specified role the kanidmd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`kanidm_run',`
-      	gen_require(`
-      		type kanidmd_t;
-      	')
+            stream_connect_pattern($1, kanidm_unixd_runtime_t, kanidm_unixd_runtime_t, kanidm_unixd_t)
 
-      	kanidm_domtrans($1)
-      	role $2 types kanidmd_t;
-      ')
+            files_search_etc($1)
+            admin_pattern($1, kanidm_config_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute kanidmd-unixd in the
-      ##	kanidmd-unixd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kanidm_domtrans_unixd',`
-      	gen_require(`
-      		type kanidm_unixd_t, kanidm_unixd_exec_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, kanidm_unixd_runtime_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kanidm_unixd_exec_t, kanidm_unixd_t)
-      ')
+            files_search_var($1)
+            admin_pattern($1, kanidm_unixd_cache_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute kanidm-unixd in the kanidm-unixd
-      ##	domain, and allow the specified role the
-      ##	kanidm-unixd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`kanidm_run_unixd',`
-      	gen_require(`
-      		type kanidm_unixd_t;
-      	')
-
-      	kanidm_domtrans_unixd($1)
-      	role $2 types kanidm_unixd_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read kanidm config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kanidm_read_config',`
-      	gen_require(`
-      		type kanidm_config_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, kanidm_config_t, kanidm_config_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Connect to kanidm-unixd with a
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kanidm_unixd_stream_connect',`
-      	gen_require(`
-      		type kanidm_unixd_t, kanidm_unixd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, kanidm_unixd_runtime_t, kanidm_unixd_runtime_t, kanidm_unixd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a Kanidm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`kanidm_admin',`
-      	gen_require(`
-      		type kanidmd_t;
-      		type kanidm_unixd_t;
-      		type kanidm_config_t;
-      		type kanidm_unixd_cache_t;
-      		type kanidm_unixd_runtime_t;
-      		type kanidm_var_lib_t;
-      	')
-
-      	kanidm_run($1, $2)
-      	kanidm_run_unixd($1, $2)
-
-      	allow $1 kanidmd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, kanidmd_t)
-
-      	allow $1 kanidm_unixd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, kanidm_unixd_t)
-
-      	stream_connect_pattern($1, kanidm_unixd_runtime_t, kanidm_unixd_runtime_t, kanidm_unixd_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, kanidm_config_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, kanidm_unixd_runtime_t)
-
-      	files_search_var($1)
-      	admin_pattern($1, kanidm_unixd_cache_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, kanidm_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, kanidm_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(kanidm)
 

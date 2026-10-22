@@ -3,148 +3,132 @@
 { lib, ... }: {
   config.security.selinux.modules.vpn = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Virtual Private Networking client.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute vpn clients in the vpnc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_domtrans',`
-      	gen_require(`
-      		type vpnc_t, vpnc_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, vpnc_exec_t, vpnc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute vpn clients in the vpnc
-      ##	domain, and allow the specified
-      ##	role the vpnc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`vpn_run',`
-      	gen_require(`
-      		attribute_role vpnc_roles;
-      	')
-
-      	vpn_domtrans($1)
-      	roleattribute $2 vpnc_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to vpnc.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_kill',`
-      	gen_require(`
-      		type vpnc_t;
-      	')
-
-      	allow $1 vpnc_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to vpnc.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_signal',`
-      	gen_require(`
-      		type vpnc_t;
-      	')
-
-      	allow $1 vpnc_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to vpnc.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_signull',`
-      	gen_require(`
-      		type vpnc_t;
-      	')
-
-      	allow $1 vpnc_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	vpnc over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_dbus_chat',`
-      	gen_require(`
-      		type vpnc_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 vpnc_t:dbus send_msg;
-      	allow vpnc_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabelfrom from vpnc socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vpn_relabelfrom_tun_socket',`
-      	gen_require(`
-      		type vpnc_t;
-      	')
-
-      	allow $1 vpnc_t:tun_socket relabelfrom;
-      ')
-    '';
+    interface = {
+      summary = "Virtual Private Networking client.";
+      exports = {
+        "vpn_domtrans" = {
+          summary = "Execute vpn clients in the vpnc domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t, vpnc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, vpnc_exec_t, vpnc_t)
+          '';
+        };
+        "vpn_run" = {
+          summary = ''
+            Execute vpn clients in the vpnc
+            domain, and allow the specified
+            role the vpnc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role vpnc_roles;
+          '';
+          content = ''
+            vpn_domtrans($1)
+            roleattribute $2 vpnc_roles;
+          '';
+          rolecap = true;
+        };
+        "vpn_kill" = {
+          summary = "Send kill signals to vpnc.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t;
+          '';
+          content = ''
+            allow $1 vpnc_t:process sigkill;
+          '';
+        };
+        "vpn_signal" = {
+          summary = "Send generic signals to vpnc.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t;
+          '';
+          content = ''
+            allow $1 vpnc_t:process signal;
+          '';
+        };
+        "vpn_signull" = {
+          summary = "Send null signals to vpnc.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t;
+          '';
+          content = ''
+            allow $1 vpnc_t:process signull;
+          '';
+        };
+        "vpn_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            vpnc over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 vpnc_t:dbus send_msg;
+            allow vpnc_t $1:dbus send_msg;
+          '';
+        };
+        "vpn_relabelfrom_tun_socket" = {
+          summary = "Relabelfrom from vpnc socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vpnc_t;
+          '';
+          content = ''
+            allow $1 vpnc_t:tun_socket relabelfrom;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vpn)
 

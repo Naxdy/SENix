@@ -3,131 +3,126 @@
 { lib, ... }: {
   config.security.selinux.modules.wayland = {
     layer = "session";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for wayland desktops.</summary>
-
-      #########################################
-      ## <summary>
-      ##	Associate the specified domain with
-      ##	the Wayland compositor attribute.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wayland_compositor_domain',`
-      	gen_require(`
-      		attribute wayland_compositor;
-      	')
-
-      	typeattribute $1 wayland_compositor;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Associate the specified domain with the
-      ##	Wayland compositor tmpfs attribute.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wayland_compositor_tmpfs',`
-      	gen_require(`
-      		attribute wayland_compositor_tmpfs_type;
-      	')
-
-      	typeattribute $1 wayland_compositor_tmpfs_type;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Associate the specified domain with
-      ##	the Wayland client attribute.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ## 	</summary>
-      ## </param>
-      #
-      interface(`wayland_client_domain',`
-      	gen_require(`
-      		attribute wayland_client;
-      	')
-
-      	typeattribute $1 wayland_client;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Associate the specified domain with the
-      ##	Wayland client tmpfs attribute.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ## 	</summary>
-      ## </param>
-      #
-      interface(`wayland_client_tmpfs',`
-      	gen_require(`
-      		attribute wayland_client_tmpfs_type;
-      	')
-
-      	typeattribute $1 wayland_client_tmpfs_type;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Associate the specified domain with
-      ##	the Wayland client sandboxed attribute.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ## 	</summary>
-      ## </param>
-      #
-      interface(`wayland_client_sandboxed_domain',`
-      	gen_require(`
-      		attribute wayland_client_sandboxed;
-      	')
-
-      	typeattribute $1 wayland_client_sandboxed;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Connect to the Wayland compositor
-      ##	using a UNIX domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wayland_stream_connect',`
-      	gen_require(`
-      		type wayland_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	userdom_search_user_runtime($1)
-      	allow $1 wayland_runtime_t:sock_file write_sock_file_perms;
-      	allow $1 wayland_runtime_t:unix_stream_socket connectto;
-      ')
-    '';
+    interface = {
+      summary = "Policy for wayland desktops.";
+      exports = {
+        "wayland_compositor_domain" = {
+          summary = ''
+            Associate the specified domain with
+            the Wayland compositor attribute.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute wayland_compositor;
+          '';
+          content = ''
+            typeattribute $1 wayland_compositor;
+          '';
+        };
+        "wayland_compositor_tmpfs" = {
+          summary = ''
+            Associate the specified domain with the
+            Wayland compositor tmpfs attribute.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute wayland_compositor_tmpfs_type;
+          '';
+          content = ''
+            typeattribute $1 wayland_compositor_tmpfs_type;
+          '';
+        };
+        "wayland_client_domain" = {
+          summary = ''
+            Associate the specified domain with
+            the Wayland client attribute.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute wayland_client;
+          '';
+          content = ''
+            typeattribute $1 wayland_client;
+          '';
+        };
+        "wayland_client_tmpfs" = {
+          summary = ''
+            Associate the specified domain with the
+            Wayland client tmpfs attribute.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute wayland_client_tmpfs_type;
+          '';
+          content = ''
+            typeattribute $1 wayland_client_tmpfs_type;
+          '';
+        };
+        "wayland_client_sandboxed_domain" = {
+          summary = ''
+            Associate the specified domain with
+            the Wayland client sandboxed attribute.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute wayland_client_sandboxed;
+          '';
+          content = ''
+            typeattribute $1 wayland_client_sandboxed;
+          '';
+        };
+        "wayland_stream_connect" = {
+          summary = ''
+            Connect to the Wayland compositor
+            using a UNIX domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type wayland_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            userdom_search_user_runtime($1)
+            allow $1 wayland_runtime_t:sock_file write_sock_file_perms;
+            allow $1 wayland_runtime_t:unix_stream_socket connectto;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(wayland)
 

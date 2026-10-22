@@ -3,82 +3,78 @@
 { lib, ... }: {
   config.security.selinux.modules.thunderbird = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Thunderbird email client.</summary>
+    interface = {
+      summary = "Thunderbird email client.";
+      exports = {
+        "thunderbird_role" = {
+          type = "template";
+          summary = "Role access for thunderbird.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role thunderbird_roles;
+            type thunderbird_t, thunderbird_exec_t, thunderbird_home_t;
+            type thunderbird_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 thunderbird_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for thunderbird.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`thunderbird_role',`
-      	gen_require(`
-      		attribute_role thunderbird_roles;
-      		type thunderbird_t, thunderbird_exec_t, thunderbird_home_t;
-      		type thunderbird_tmpfs_t;
-      	')
+            domtrans_pattern($3, thunderbird_exec_t, thunderbird_t)
 
-      	roleattribute $4 thunderbird_roles;
+            stream_connect_pattern($3, thunderbird_tmpfs_t, thunderbird_tmpfs_t, thunderbird_t)
 
-      	domtrans_pattern($3, thunderbird_exec_t, thunderbird_t)
+            allow thunderbird_t $3:unix_stream_socket connectto;
 
-      	stream_connect_pattern($3, thunderbird_tmpfs_t, thunderbird_tmpfs_t, thunderbird_t)
+            allow $3 thunderbird_t:process { ptrace signal_perms };
+            ps_process_pattern($3, thunderbird_t)
 
-      	allow thunderbird_t $3:unix_stream_socket connectto;
+            allow $2 thunderbird_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 thunderbird_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 thunderbird_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, thunderbird_home_t, dir, ".thunderbird")
 
-      	allow $3 thunderbird_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, thunderbird_t)
-
-      	allow $2 thunderbird_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 thunderbird_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 thunderbird_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, thunderbird_home_t, dir, ".thunderbird")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, thunderbird_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute thunderbird in the thunderbird domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`thunderbird_domtrans',`
-      	gen_require(`
-      		type thunderbird_t, thunderbird_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, thunderbird_exec_t, thunderbird_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, thunderbird_t)
+            ')
+          '';
+        };
+        "thunderbird_domtrans" = {
+          summary = "Execute thunderbird in the thunderbird domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type thunderbird_t, thunderbird_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, thunderbird_exec_t, thunderbird_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(thunderbird)
 

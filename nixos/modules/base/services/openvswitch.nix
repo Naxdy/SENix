@@ -3,88 +3,82 @@
 { lib, ... }: {
   config.security.selinux.modules.openvswitch = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Multilayer virtual switch.</summary>
+    interface = {
+      summary = "Multilayer virtual switch.";
+      exports = {
+        "openvswitch_domtrans" = {
+          summary = "Execute openvswitch in the openvswitch domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type openvswitch_t, openvswitch_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, openvswitch_exec_t, openvswitch_t)
+          '';
+        };
+        "openvswitch_read_runtime_files" = {
+          summary = "Read openvswitch runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvswitch_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, openvswitch_runtime_t, openvswitch_runtime_t)
+          '';
+        };
+        "openvswitch_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an openvswitch environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type openvswitch_t, openvswitch_initrc_exec_t, openvswitch_conf_t;
+            type openvswitch_var_lib_t, openvswitch_log_t, openvswitch_runtime_t;
+          '';
+          content = ''
+            allow $1 openvswitch_t:process { ptrace signal_perms };
+            ps_process_pattern($1, openvswitch_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute openvswitch in the openvswitch domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvswitch_domtrans',`
-      	gen_require(`
-      		type openvswitch_t, openvswitch_exec_t;
-      	')
+            init_startstop_service($1, $2, openvswitch_t, openvswitch_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, openvswitch_exec_t, openvswitch_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, openvswitch_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Read openvswitch runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openvswitch_read_runtime_files',`
-      	gen_require(`
-      		type openvswitch_runtime_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, openvswitch_var_lib_t)
 
-      	files_search_runtime($1)
-      	read_files_pattern($1, openvswitch_runtime_t, openvswitch_runtime_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, openvswitch_log_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an openvswitch environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openvswitch_admin',`
-      	gen_require(`
-      		type openvswitch_t, openvswitch_initrc_exec_t, openvswitch_conf_t;
-      		type openvswitch_var_lib_t, openvswitch_log_t, openvswitch_runtime_t;
-      	')
-
-      	allow $1 openvswitch_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, openvswitch_t)
-
-      	init_startstop_service($1, $2, openvswitch_t, openvswitch_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, openvswitch_conf_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, openvswitch_var_lib_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, openvswitch_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, openvswitch_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, openvswitch_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openvswitch)
 

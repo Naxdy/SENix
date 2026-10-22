@@ -3,156 +3,144 @@
 { lib, ... }: {
   config.security.selinux.modules.tcsd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>TSS Core Services daemon.</summary>
+    interface = {
+      summary = "TSS Core Services daemon.";
+      exports = {
+        "tcsd_domtrans" = {
+          summary = "Execute a domain transition to run tcsd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type tcsd_t, tcsd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, tcsd_exec_t, tcsd_t)
+          '';
+        };
+        "tcsd_initrc_domtrans" = {
+          summary = ''
+            Execute tcsd init scripts in the
+            initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type tcsd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, tcsd_initrc_exec_t)
+          '';
+        };
+        "tcsd_search_lib" = {
+          summary = "Search tcsd lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tcsd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 tcsd_var_lib_t:dir search_dir_perms;
+          '';
+        };
+        "tcsd_manage_lib_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            tcsd lib directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tcsd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
+          '';
+        };
+        "tcsd_read_lib_files" = {
+          summary = "Read tcsd lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tcsd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
+          '';
+        };
+        "tcsd_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            tcsd lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tcsd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
+          '';
+        };
+        "tcsd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an tcsd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type tcsd_t, tcsd_initrc_exec_t, tcsd_var_lib_t;
+          '';
+          content = ''
+            allow $1 tcsd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, tcsd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run tcsd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_domtrans',`
-      	gen_require(`
-      		type tcsd_t, tcsd_exec_t;
-      	')
+            init_startstop_service($1, $2, tcsd_t, tcsd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, tcsd_exec_t, tcsd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute tcsd init scripts in the
-      ##	initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_initrc_domtrans',`
-      	gen_require(`
-      		type tcsd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, tcsd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search tcsd lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_search_lib',`
-      	gen_require(`
-      		type tcsd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 tcsd_var_lib_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tcsd lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_manage_lib_dirs',`
-      	gen_require(`
-      		type tcsd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read tcsd lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_read_lib_files',`
-      	gen_require(`
-      		type tcsd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tcsd lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tcsd_manage_lib_files',`
-      	gen_require(`
-      		type tcsd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, tcsd_var_lib_t, tcsd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an tcsd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`tcsd_admin',`
-      	gen_require(`
-      		type tcsd_t, tcsd_initrc_exec_t, tcsd_var_lib_t;
-      	')
-
-      	allow $1 tcsd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, tcsd_t)
-
-      	init_startstop_service($1, $2, tcsd_t, tcsd_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, tcsd_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, tcsd_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tcsd)
 

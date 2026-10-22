@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.rshd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Remote shell service.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute rshd in the rshd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rshd_domtrans',`
-      	gen_require(`
-      		type rshd_exec_t, rshd_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rshd_exec_t, rshd_t)
-      ')
-    '';
+    interface = {
+      summary = "Remote shell service.";
+      exports = {
+        "rshd_domtrans" = {
+          summary = "Execute rshd in the rshd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rshd_exec_t, rshd_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rshd_exec_t, rshd_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rshd)
 

@@ -3,63 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.minissdpd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Daemon used by MiniUPnPc to speed up device discoveries.</summary>
+    interface = {
+      summary = "Daemon used by MiniUPnPc to speed up device discoveries.";
+      exports = {
+        "minissdpd_read_config" = {
+          summary = "Read minissdpd configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type minissdpd_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 minissdpd_conf_t:file read_file_perms;
+          '';
+        };
+        "minissdpd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an minissdpd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type minissdpd_t, minissdpd_initrc_exec_t, minissdpd_conf_t;
+            type minissdpd_runtime_t;
+          '';
+          content = ''
+            allow $1 minissdpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, minissdpd_t)
 
-      ########################################
-      ## <summary>
-      ##	Read minissdpd configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`minissdpd_read_config',`
-      	gen_require(`
-      		type minissdpd_conf_t;
-      	')
+            init_startstop_service($1, $2, minissdpd_t, minissdpd_initrc_exec_t)
 
-      	files_search_etc($1)
-      	allow $1 minissdpd_conf_t:file read_file_perms;
-      ')
+            files_search_etc($1)
+            admin_pattern($1, minissdpd_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an minissdpd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`minissdpd_admin',`
-      	gen_require(`
-      		type minissdpd_t, minissdpd_initrc_exec_t, minissdpd_conf_t;
-      		type minissdpd_runtime_t;
-      	')
-
-      	allow $1 minissdpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, minissdpd_t)
-
-      	init_startstop_service($1, $2, minissdpd_t, minissdpd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, minissdpd_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, minissdpd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, minissdpd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(minissdpd)
 

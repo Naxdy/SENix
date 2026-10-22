@@ -3,132 +3,124 @@
 { lib, ... }: {
   config.security.selinux.modules.iscsi = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Establish connections to iSCSI devices.</summary>
+    interface = {
+      summary = "Establish connections to iSCSI devices.";
+      exports = {
+        "iscsid_domtrans" = {
+          summary = "Execute a domain transition to run iscsid.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type iscsid_t, iscsid_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, iscsid_exec_t, iscsid_t)
+          '';
+        };
+        "iscsi_manage_semaphores" = {
+          summary = ''
+            Create, read, write, and delete
+            iscsid semaphores.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iscsid_t;
+          '';
+          content = ''
+            allow $1 iscsid_t:sem create_sem_perms;
+          '';
+        };
+        "iscsi_stream_connect" = {
+          summary = ''
+            Connect to iscsid using a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iscsid_t, iscsi_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            stream_connect_pattern($1, iscsi_var_lib_t, iscsi_var_lib_t, iscsid_t)
+          '';
+        };
+        "iscsi_read_lib_files" = {
+          summary = "Read iscsid lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iscsi_var_lib_t;
+          '';
+          content = ''
+            read_files_pattern($1, iscsi_var_lib_t, iscsi_var_lib_t)
+            allow $1 iscsi_var_lib_t:dir list_dir_perms;
+            files_search_var_lib($1)
+          '';
+        };
+        "iscsi_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an iscsi environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type iscsid_t, iscsi_lock_t, iscsi_log_t;
+            type iscsi_var_lib_t, iscsi_runtime_t, iscsi_tmp_t;
+            type iscsi_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 iscsid_t:process { ptrace signal_perms };
+            ps_process_pattern($1, iscsid_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run iscsid.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`iscsid_domtrans',`
-      	gen_require(`
-      		type iscsid_t, iscsid_exec_t;
-      	')
+            init_startstop_service($1, $2, iscsi_t, iscsi_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, iscsid_exec_t, iscsid_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, iscsi_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	iscsid semaphores.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`iscsi_manage_semaphores',`
-      	gen_require(`
-      		type iscsid_t;
-      	')
+            files_search_locks($1)
+            admin_pattern($1, iscsi_lock_t)
 
-      	allow $1 iscsid_t:sem create_sem_perms;
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, iscsi_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to iscsid using a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`iscsi_stream_connect',`
-      	gen_require(`
-      		type iscsid_t, iscsi_var_lib_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, iscsi_runtime_t)
 
-      	files_search_var_lib($1)
-      	stream_connect_pattern($1, iscsi_var_lib_t, iscsi_var_lib_t, iscsid_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read iscsid lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`iscsi_read_lib_files',`
-      	gen_require(`
-      		type iscsi_var_lib_t;
-      	')
-
-      	read_files_pattern($1, iscsi_var_lib_t, iscsi_var_lib_t)
-      	allow $1 iscsi_var_lib_t:dir list_dir_perms;
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an iscsi environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`iscsi_admin',`
-      	gen_require(`
-      		type iscsid_t, iscsi_lock_t, iscsi_log_t;
-      		type iscsi_var_lib_t, iscsi_runtime_t, iscsi_tmp_t;
-      		type iscsi_initrc_exec_t;
-      	')
-
-      	allow $1 iscsid_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, iscsid_t)
-
-      	init_startstop_service($1, $2, iscsi_t, iscsi_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, iscsi_log_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, iscsi_lock_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, iscsi_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, iscsi_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, iscsi_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, iscsi_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(iscsi)
 

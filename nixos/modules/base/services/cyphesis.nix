@@ -3,66 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.cyphesis = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Cyphesis WorldForge game server.</summary>
+    interface = {
+      summary = "Cyphesis WorldForge game server.";
+      exports = {
+        "cyphesis_domtrans" = {
+          summary = "Execute a domain transition to run cyphesis.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type cyphesis_t, cyphesis_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, cyphesis_exec_t, cyphesis_t)
+          '';
+        };
+        "cyphesis_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an cyphesis environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type cyphesis_t, cyphesis_initrc_exec_t, cyphesis_log_t;
+            type cyphesis_runtime_t, cyphesis_tmp_t;
+          '';
+          content = ''
+            allow $1 cyphesis_t:process { ptrace signal_perms };
+            ps_process_pattern($1, cyphesis_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run cyphesis.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cyphesis_domtrans',`
-      	gen_require(`
-      		type cyphesis_t, cyphesis_exec_t;
-      	')
+            init_startstop_service($1, $2, cyphesis_t, cyphesis_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, cyphesis_exec_t, cyphesis_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, cyphesis_log_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an cyphesis environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cyphesis_admin',`
-      	gen_require(`
-      		type cyphesis_t, cyphesis_initrc_exec_t, cyphesis_log_t;
-      		type cyphesis_runtime_t, cyphesis_tmp_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, cyphesis_runtime_t)
 
-      	allow $1 cyphesis_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, cyphesis_t)
-
-      	init_startstop_service($1, $2, cyphesis_t, cyphesis_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, cyphesis_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, cyphesis_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, cyphesis_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, cyphesis_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cyphesis)
 

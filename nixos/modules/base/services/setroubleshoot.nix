@@ -3,168 +3,161 @@
 { lib, ... }: {
   config.security.selinux.modules.setroubleshoot = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>SELinux troubleshooting service.</summary>
+    interface = {
+      summary = "SELinux troubleshooting service.";
+      exports = {
+        "setroubleshoot_stream_connect" = {
+          summary = ''
+            Connect to setroubleshootd with a
+            unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t, setroubleshoot_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, setroubleshoot_runtime_t, setroubleshoot_runtime_t, setroubleshootd_t)
+            allow $1 setroubleshoot_runtime_t:sock_file read;
+          '';
+        };
+        "setroubleshoot_dontaudit_stream_connect" = {
+          summary = ''
+            Do not audit attempts to connect to
+            setroubleshootd with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t, setroubleshoot_runtime_t;
+          '';
+          content = ''
+            dontaudit $1 setroubleshoot_runtime_t:sock_file rw_sock_file_perms;
+            dontaudit $1 setroubleshootd_t:unix_stream_socket connectto;
+          '';
+        };
+        "setroubleshoot_signull" = {
+          summary = "Send null signals to setroubleshoot.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t;
+          '';
+          content = ''
+            allow $1 setroubleshootd_t:process signull;
+          '';
+        };
+        "setroubleshoot_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            setroubleshoot over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 setroubleshootd_t:dbus send_msg;
+            allow setroubleshootd_t $1:dbus send_msg;
+          '';
+        };
+        "setroubleshoot_dontaudit_dbus_chat" = {
+          summary = ''
+            Do not audit send and receive messages from
+            setroubleshoot over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            dontaudit $1 setroubleshootd_t:dbus send_msg;
+            dontaudit setroubleshootd_t $1:dbus send_msg;
+          '';
+        };
+        "setroubleshoot_dbus_chat_fixit" = {
+          summary = ''
+            Send and receive messages from
+            setroubleshoot fixit over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type setroubleshoot_fixit_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 setroubleshoot_fixit_t:dbus send_msg;
+            allow setroubleshoot_fixit_t $1:dbus send_msg;
+          '';
+        };
+        "setroubleshoot_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an setroubleshoot environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type setroubleshootd_t, setroubleshoot_var_log_t, setroubleshoot_fixit_t;
+            type setroubleshoot_var_lib_t, setroubleshoot_runtime_t;
+          '';
+          content = ''
+            allow $1 { setroubleshoot_fixit_t setroubleshootd_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { setroubleshootd_t setroubleshoot_fixit_t })
 
-      ########################################
-      ## <summary>
-      ##	Connect to setroubleshootd with a
-      ##	unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_stream_connect',`
-      	gen_require(`
-      		type setroubleshootd_t, setroubleshoot_runtime_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, setroubleshoot_var_log_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, setroubleshoot_runtime_t, setroubleshoot_runtime_t, setroubleshootd_t)
-      	allow $1 setroubleshoot_runtime_t:sock_file read;
-      ')
+            files_list_var_lib($1)
+            admin_pattern($1, setroubleshoot_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to connect to
-      ##	setroubleshootd with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_dontaudit_stream_connect',`
-      	gen_require(`
-      		type setroubleshootd_t, setroubleshoot_runtime_t;
-      	')
-
-      	dontaudit $1 setroubleshoot_runtime_t:sock_file rw_sock_file_perms;
-      	dontaudit $1 setroubleshootd_t:unix_stream_socket connectto;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Send null signals to setroubleshoot.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_signull',`
-      	gen_require(`
-      		type setroubleshootd_t;
-      	')
-
-      	allow $1 setroubleshootd_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	setroubleshoot over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_dbus_chat',`
-      	gen_require(`
-      		type setroubleshootd_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 setroubleshootd_t:dbus send_msg;
-      	allow setroubleshootd_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit send and receive messages from
-      ##	setroubleshoot over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_dontaudit_dbus_chat',`
-      	gen_require(`
-      		type setroubleshootd_t;
-      		class dbus send_msg;
-      	')
-
-      	dontaudit $1 setroubleshootd_t:dbus send_msg;
-      	dontaudit setroubleshootd_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	setroubleshoot fixit over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`setroubleshoot_dbus_chat_fixit',`
-      	gen_require(`
-      		type setroubleshoot_fixit_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 setroubleshoot_fixit_t:dbus send_msg;
-      	allow setroubleshoot_fixit_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an setroubleshoot environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`setroubleshoot_admin',`
-      	gen_require(`
-      		type setroubleshootd_t, setroubleshoot_var_log_t, setroubleshoot_fixit_t;
-      		type setroubleshoot_var_lib_t, setroubleshoot_runtime_t;
-      	')
-
-      	allow $1 { setroubleshoot_fixit_t setroubleshootd_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { setroubleshootd_t setroubleshoot_fixit_t })
-
-      	logging_list_logs($1)
-      	admin_pattern($1, setroubleshoot_var_log_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, setroubleshoot_var_lib_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, setroubleshoot_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, setroubleshoot_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(setroubleshoot)
 

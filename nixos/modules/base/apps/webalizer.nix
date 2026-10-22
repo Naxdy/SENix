@@ -3,75 +3,69 @@
 { lib, ... }: {
   config.security.selinux.modules.webalizer = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Web server log analysis.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute webalizer in the webalizer domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`webalizer_domtrans',`
-      	gen_require(`
-      		type webalizer_t, webalizer_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, webalizer_exec_t, webalizer_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute webalizer in the webalizer
-      ##	domain, and allow the specified
-      ##	role the webalizer domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`webalizer_run',`
-      	gen_require(`
-      		attribute_role webalizer_roles;
-      	')
-
-      	webalizer_domtrans($1)
-      	roleattribute $2 webalizer_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage webalizer usage files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to manage webalizer usage files
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`manage_webalizer_var_lib',`
-      	gen_require(`
-      		type webalizer_var_lib_t;
-      	')
-
-      	allow $1 webalizer_var_lib_t:dir manage_dir_perms;
-      	allow $1 webalizer_var_lib_t:file manage_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "Web server log analysis.";
+      exports = {
+        "webalizer_domtrans" = {
+          summary = "Execute webalizer in the webalizer domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type webalizer_t, webalizer_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, webalizer_exec_t, webalizer_t)
+          '';
+        };
+        "webalizer_run" = {
+          summary = ''
+            Execute webalizer in the webalizer
+            domain, and allow the specified
+            role the webalizer domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role webalizer_roles;
+          '';
+          content = ''
+            webalizer_domtrans($1)
+            roleattribute $2 webalizer_roles;
+          '';
+          rolecap = true;
+        };
+        "manage_webalizer_var_lib" = {
+          summary = "Manage webalizer usage files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to manage webalizer usage files";
+            };
+          };
+          gen_require = ''
+            type webalizer_var_lib_t;
+          '';
+          content = ''
+            allow $1 webalizer_var_lib_t:dir manage_dir_perms;
+            allow $1 webalizer_var_lib_t:file manage_file_perms;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(webalizer)
 

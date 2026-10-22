@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.nut = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Network UPS Tools </summary>
+    interface = {
+      summary = "Network UPS Tools ";
+      exports = {
+        "nut_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an nut environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute nut_domain;
+            type nut_initrc_exec_t, nut_runtime_t, nut_conf_t;
+          '';
+          content = ''
+            allow $1 nut_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, nut_domain)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an nut environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`nut_admin',`
-      	gen_require(`
-      		attribute nut_domain;
-      		type nut_initrc_exec_t, nut_runtime_t, nut_conf_t;
-      	')
+            init_startstop_service($1, $2, nut_domain, nut_initrc_exec_t)
 
-      	allow $1 nut_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, nut_domain)
+            files_search_etc($1)
+            admin_pattern($1, nut_conf_t)
 
-      	init_startstop_service($1, $2, nut_domain, nut_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, nut_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, nut_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, nut_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(nut)
 

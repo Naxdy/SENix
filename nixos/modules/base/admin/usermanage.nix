@@ -3,334 +3,298 @@
 { lib, ... }: {
   config.security.selinux.modules.usermanage = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for managing user accounts.</summary>
+    interface = {
+      summary = "Policy for managing user accounts.";
+      exports = {
+        "usermanage_domtrans_chfn" = {
+          summary = "Execute chfn in the chfn domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type chfn_t, chfn_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, chfn_exec_t, chfn_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute chfn in the chfn domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_domtrans_chfn',`
-      	gen_require(`
-      		type chfn_t, chfn_exec_t;
-      	')
+            dontaudit chfn_t $1:socket_class_set { read write };
+          '';
+        };
+        "usermanage_run_chfn" = {
+          summary = ''
+            Execute chfn in the chfn domain, and
+            allow the specified role the chfn domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role chfn_roles;
+          '';
+          content = ''
+            usermanage_domtrans_chfn($1)
+            roleattribute $2 chfn_roles;
+          '';
+        };
+        "usermanage_domtrans_groupadd" = {
+          summary = "Execute groupadd in the groupadd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type groupadd_t, groupadd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, groupadd_exec_t, groupadd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, chfn_exec_t, chfn_t)
+            dontaudit groupadd_t $1:socket_class_set { read write };
+          '';
+        };
+        "usermanage_run_groupadd" = {
+          summary = ''
+            Execute groupadd in the groupadd domain, and
+            allow the specified role the groupadd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role groupadd_roles;
+          '';
+          content = ''
+            usermanage_domtrans_groupadd($1)
+            roleattribute $2 groupadd_roles;
+          '';
+          rolecap = true;
+        };
+        "usermanage_domtrans_passwd" = {
+          summary = "Execute passwd in the passwd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type passwd_t, passwd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, passwd_exec_t, passwd_t)
 
-      	dontaudit chfn_t $1:socket_class_set { read write };
-      ')
+            dontaudit passwd_t $1:socket_class_set { read write };
+          '';
+        };
+        "usermanage_kill_passwd" = {
+          summary = "Send sigkills to passwd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type passwd_t;
+          '';
+          content = ''
+            allow $1 passwd_t:process sigkill;
+          '';
+        };
+        "usermanage_check_exec_passwd" = {
+          summary = "Check if the passwd binary is executable.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type passwd_exec_t;
+          '';
+          content = ''
+            allow $1 passwd_exec_t:file { execute getattr_file_perms };
+          '';
+        };
+        "usermanage_run_passwd" = {
+          summary = ''
+            Execute passwd in the passwd domain, and
+            allow the specified role the passwd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role passwd_roles;
+          '';
+          content = ''
+            usermanage_domtrans_passwd($1)
+            roleattribute $2 passwd_roles;
+          '';
+        };
+        "usermanage_domtrans_admin_passwd" = {
+          summary = ''
+            Execute password admin functions in
+            the admin passwd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sysadm_passwd_t, admin_passwd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, admin_passwd_exec_t, sysadm_passwd_t)
+          '';
+        };
+        "usermanage_run_admin_passwd" = {
+          summary = ''
+            Execute passwd admin functions in the admin
+            passwd domain, and allow the specified role
+            the admin passwd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role sysadm_passwd_roles;
+          '';
+          content = ''
+            usermanage_domtrans_admin_passwd($1)
+            roleattribute $2 sysadm_passwd_roles;
+          '';
+          rolecap = true;
+        };
+        "usermanage_dontaudit_use_useradd_fds" = {
+          summary = "Do not audit attempts to use useradd fds.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type useradd_t;
+          '';
+          content = ''
+            dontaudit $1 useradd_t:fd use;
+          '';
+        };
+        "usermanage_domtrans_useradd" = {
+          summary = "Execute useradd in the useradd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type useradd_t, useradd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, useradd_exec_t, useradd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute chfn in the chfn domain, and
-      ##	allow the specified role the chfn domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_run_chfn',`
-      	gen_require(`
-      		attribute_role chfn_roles;
-      	')
-
-      	usermanage_domtrans_chfn($1)
-      	roleattribute $2 chfn_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute groupadd in the groupadd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_domtrans_groupadd',`
-      	gen_require(`
-      		type groupadd_t, groupadd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, groupadd_exec_t, groupadd_t)
-
-      	dontaudit groupadd_t $1:socket_class_set { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute groupadd in the groupadd domain, and
-      ##	allow the specified role the groupadd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`usermanage_run_groupadd',`
-      	gen_require(`
-      		attribute_role groupadd_roles;
-      	')
-
-      	usermanage_domtrans_groupadd($1)
-      	roleattribute $2 groupadd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute passwd in the passwd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_domtrans_passwd',`
-      	gen_require(`
-      		type passwd_t, passwd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, passwd_exec_t, passwd_t)
-
-      	dontaudit passwd_t $1:socket_class_set { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send sigkills to passwd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_kill_passwd',`
-      	gen_require(`
-      		type passwd_t;
-      	')
-
-      	allow $1 passwd_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Check if the passwd binary is executable.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_check_exec_passwd',`
-      	gen_require(`
-      		type passwd_exec_t;
-      	')
-
-      	allow $1 passwd_exec_t:file { execute getattr_file_perms };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute passwd in the passwd domain, and
-      ##	allow the specified role the passwd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_run_passwd',`
-      	gen_require(`
-      		attribute_role passwd_roles;
-      	')
-
-      	usermanage_domtrans_passwd($1)
-      	roleattribute $2 passwd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute password admin functions in
-      ##	the admin passwd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_domtrans_admin_passwd',`
-      	gen_require(`
-      		type sysadm_passwd_t, admin_passwd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, admin_passwd_exec_t, sysadm_passwd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute passwd admin functions in the admin
-      ##	passwd domain, and allow the specified role
-      ##	the admin passwd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`usermanage_run_admin_passwd',`
-      	gen_require(`
-      		attribute_role sysadm_passwd_roles;
-      	')
-
-      	usermanage_domtrans_admin_passwd($1)
-      	roleattribute $2 sysadm_passwd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to use useradd fds.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_dontaudit_use_useradd_fds',`
-      	gen_require(`
-      		type useradd_t;
-      	')
-
-      	dontaudit $1 useradd_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute useradd in the useradd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_domtrans_useradd',`
-      	gen_require(`
-      		type useradd_t, useradd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, useradd_exec_t, useradd_t)
-
-      	dontaudit useradd_t $1:socket_class_set { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Check if the useradd binaries are executable.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_check_exec_useradd',`
-      	gen_require(`
-      		type useradd_exec_t;
-      	')
-
-      	allow $1 useradd_exec_t:file { execute getattr_file_perms };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute useradd in the useradd domain, and
-      ##	allow the specified role the useradd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`usermanage_run_useradd',`
-      	gen_require(`
-      		attribute_role useradd_roles;
-      	')
-
-      	usermanage_domtrans_useradd($1)
-      	roleattribute $2 useradd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the crack database.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usermanage_read_crack_db',`
-      	gen_require(`
-      		type crack_db_t;
-      	')
-
-      	files_search_var($1)
-      	read_files_pattern($1, crack_db_t, crack_db_t)
-      	read_lnk_files_pattern($1, crack_db_t, crack_db_t)
-      ')
-    '';
+            dontaudit useradd_t $1:socket_class_set { read write };
+          '';
+        };
+        "usermanage_check_exec_useradd" = {
+          summary = "Check if the useradd binaries are executable.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type useradd_exec_t;
+          '';
+          content = ''
+            allow $1 useradd_exec_t:file { execute getattr_file_perms };
+          '';
+        };
+        "usermanage_run_useradd" = {
+          summary = ''
+            Execute useradd in the useradd domain, and
+            allow the specified role the useradd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role useradd_roles;
+          '';
+          content = ''
+            usermanage_domtrans_useradd($1)
+            roleattribute $2 useradd_roles;
+          '';
+          rolecap = true;
+        };
+        "usermanage_read_crack_db" = {
+          summary = "Read the crack database.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type crack_db_t;
+          '';
+          content = ''
+            files_search_var($1)
+            read_files_pattern($1, crack_db_t, crack_db_t)
+            read_lnk_files_pattern($1, crack_db_t, crack_db_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(usermanage)
 

@@ -3,137 +3,121 @@
 { lib, ... }: {
   config.security.selinux.modules.sosreport = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Generate debugging information for system.</summary>
+    interface = {
+      summary = "Generate debugging information for system.";
+      exports = {
+        "sosreport_domtrans" = {
+          summary = "Execute a domain transition to run sosreport.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sosreport_t, sosreport_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, sosreport_exec_t, sosreport_t)
+          '';
+        };
+        "sosreport_run" = {
+          summary = ''
+            Execute sosreport in the sosreport
+            domain, and allow the specified
+            role the sosreport domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role sosreport_roles;
+          '';
+          content = ''
+            sosreport_domtrans($1)
+            roleattribute $2 sosreport_roles;
+          '';
+        };
+        "sosreport_role" = {
+          summary = "Role access for sosreport.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "User domain for the role.";
+            };
+          };
+          gen_require = ''
+            type sosreport_t;
+          '';
+          content = ''
+            sosreport_run($2, $1)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run sosreport.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_domtrans',`
-      	gen_require(`
-      		type sosreport_t, sosreport_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, sosreport_exec_t, sosreport_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute sosreport in the sosreport
-      ##	domain, and allow the specified
-      ##	role the sosreport domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_run',`
-      	gen_require(`
-      		attribute_role sosreport_roles;
-      	')
-
-      	sosreport_domtrans($1)
-      	roleattribute $2 sosreport_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Role access for sosreport.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_role',`
-      	gen_require(`
-      		type sosreport_t;
-      	')
-
-      	sosreport_run($2, $1)
-
-      	allow $2 sosreport_t:process { ptrace signal_perms };
-      	ps_process_pattern($2, sosreport_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read sosreport temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_read_tmp_files',`
-      	gen_require(`
-      		type sosreport_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	read_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append sosreport temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_append_tmp_files',`
-      	gen_require(`
-      		type sosreport_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	append_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete sosreport temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sosreport_delete_tmp_files',`
-      	gen_require(`
-      		type sosreport_tmp_t;
-      	')
-
-      	files_delete_tmp_dir_entry($1)
-      	delete_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
-      ')
-    '';
+            allow $2 sosreport_t:process { ptrace signal_perms };
+            ps_process_pattern($2, sosreport_t)
+          '';
+        };
+        "sosreport_read_tmp_files" = {
+          summary = "Read sosreport temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sosreport_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
+          '';
+        };
+        "sosreport_append_tmp_files" = {
+          summary = "Append sosreport temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sosreport_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            append_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
+          '';
+        };
+        "sosreport_delete_tmp_files" = {
+          summary = "Delete sosreport temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sosreport_tmp_t;
+          '';
+          content = ''
+            files_delete_tmp_dir_entry($1)
+            delete_files_pattern($1, sosreport_tmp_t, sosreport_tmp_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sosreport)
 

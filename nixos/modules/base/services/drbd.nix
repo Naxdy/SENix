@@ -3,64 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.drbd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Mirrors a block device over the network to another machine.</summary>
+    interface = {
+      summary = "Mirrors a block device over the network to another machine.";
+      exports = {
+        "drbd_domtrans" = {
+          summary = ''
+            Execute a domain transition to
+            run drbd.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type drbd_t, drbd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, drbd_exec_t, drbd_t)
+          '';
+        };
+        "drbd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an drbd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type drbd_t, drbd_initrc_exec_t, drbd_lock_t;
+            type drbd_var_lib_t;
+          '';
+          content = ''
+            allow $1 drbd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, drbd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run drbd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`drbd_domtrans',`
-      	gen_require(`
-      		type drbd_t, drbd_exec_t;
-      	')
+            init_startstop_service($1, $2, drbd_t, drbd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, drbd_exec_t, drbd_t)
-      ')
+            files_search_locks($1)
+            admin_pattern($1, drbd_lock_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an drbd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`drbd_admin',`
-      	gen_require(`
-      		type drbd_t, drbd_initrc_exec_t, drbd_lock_t;
-      		type drbd_var_lib_t;
-      	')
-
-      	allow $1 drbd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, drbd_t)
-
-      	init_startstop_service($1, $2, drbd_t, drbd_initrc_exec_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, drbd_lock_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, drbd_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, drbd_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(drbd)
 

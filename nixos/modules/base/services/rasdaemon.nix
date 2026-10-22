@@ -3,18 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.rasdaemon = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>RAS (Reliability, Availability and Serviceability) logging tool</summary>
-      ##
-      ## <desc>
-      ## rasdaemon is a RAS (Reliability, Availability and Serviceability) logging
-      ## tool.  It currently records memory errors, using the EDAC tracing events.
-      ## EDAC are drivers in the Linux kernel that handle detection of ECC errors
-      ## from memory controllers for most chipsets on x86 and ARM architectures.
-      ##
-      ## https://git.infradead.org/users/mchehab/rasdaemon.git
-      ## </desc>
-    '';
+    interface = {
+      summary = "RAS (Reliability, Availability and Serviceability) logging tool";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rasdaemon)
 

@@ -3,97 +3,92 @@
 { lib, ... }: {
   config.security.selinux.modules.haproxy = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>A TCP/HTTP reverse proxy for high availability environments.</summary>
+    interface = {
+      summary = "A TCP/HTTP reverse proxy for high availability environments.";
+      exports = {
+        "haproxy_domtrans" = {
+          summary = "Execute haproxy in the haproxy domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type haproxy_t, haproxy_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, haproxy_exec_t, haproxy_t)
+          '';
+        };
+        "haproxy_run" = {
+          summary = ''
+            Execute haproxy in the haproxy domain, and
+            allow the specified role the haproxy domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type haproxy_t;
+          '';
+          content = ''
+            haproxy_domtrans($1)
+            role $2 types haproxy_t;
+          '';
+          rolecap = true;
+        };
+        "haproxy_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an haproxy environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type haproxy_t, haproxy_initrc_exec_t, haproxy_conf_t;
+            type haproxy_log_t, haproxy_runtime_t, haproxy_tmpfs_t;
+          '';
+          content = ''
+            haproxy_run($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Execute haproxy in the haproxy domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`haproxy_domtrans',`
-      	gen_require(`
-      		type haproxy_t, haproxy_exec_t;
-      	')
+            init_startstop_service($1, $2, haproxy_t, haproxy_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, haproxy_exec_t, haproxy_t)
-      ')
+            allow $1 haproxy_t:process { ptrace signal_perms };
+            ps_process_pattern($1, haproxy_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute haproxy in the haproxy domain, and
-      ##	allow the specified role the haproxy domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`haproxy_run',`
-      	gen_require(`
-      		type haproxy_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, haproxy_conf_t)
 
-      	haproxy_domtrans($1)
-      	role $2 types haproxy_t;
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, haproxy_log_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an haproxy environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`haproxy_admin',`
-      	gen_require(`
-      		type haproxy_t, haproxy_initrc_exec_t, haproxy_conf_t;
-      		type haproxy_log_t, haproxy_runtime_t, haproxy_tmpfs_t;
-      	')
+            fs_search_tmpfs($1)
+            admin_pattern($1, haproxy_tmpfs_t)
 
-      	haproxy_run($1, $2)
-
-      	init_startstop_service($1, $2, haproxy_t, haproxy_initrc_exec_t)
-
-      	allow $1 haproxy_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, haproxy_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, haproxy_conf_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, haproxy_log_t)
-
-      	fs_search_tmpfs($1)
-      	admin_pattern($1, haproxy_tmpfs_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, haproxy_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, haproxy_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(haproxy)
 

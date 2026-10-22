@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.xguest = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Least privilege xwindows user role.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the xguest role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`xguest_role_change',`
-      	gen_require(`
-      		role xguest_r;
-      	')
-
-      	allow $1 xguest_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the xguest role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the xguest role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`xguest_role_change_to',`
-      	gen_require(`
-      		role xguest_r;
-      	')
-
-      	allow xguest_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Least privilege xwindows user role.";
+      exports = {
+        "xguest_role_change" = {
+          summary = "Change to the xguest role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role xguest_r;
+          '';
+          content = ''
+            allow $1 xguest_r;
+          '';
+          rolecap = true;
+        };
+        "xguest_role_change_to" = {
+          summary = "Change from the xguest role.";
+          desc = ''
+            <p>
+            Change from the xguest role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role xguest_r;
+          '';
+          content = ''
+            allow xguest_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xguest)
 

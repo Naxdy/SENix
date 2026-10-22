@@ -3,319 +3,290 @@
 { lib, ... }: {
   config.security.selinux.modules.nscd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Name service cache daemon.</summary>
+    interface = {
+      summary = "Name service cache daemon.";
+      exports = {
+        "nscd_signal" = {
+          summary = "Send generic signals to nscd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t;
+          '';
+          content = ''
+            allow $1 nscd_t:process signal;
+          '';
+        };
+        "nscd_kill" = {
+          summary = "Send kill signals to nscd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t;
+          '';
+          content = ''
+            allow $1 nscd_t:process sigkill;
+          '';
+        };
+        "nscd_signull" = {
+          summary = "Send null signals to nscd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t;
+          '';
+          content = ''
+            allow $1 nscd_t:process signull;
+          '';
+        };
+        "nscd_domtrans" = {
+          summary = "Execute nscd in the nscd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nscd_t, nscd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, nscd_exec_t, nscd_t)
+          '';
+        };
+        "nscd_exec" = {
+          summary = "Execute nscd in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, nscd_exec_t)
+          '';
+        };
+        "nscd_socket_use" = {
+          summary = ''
+            Use nscd services by connecting using
+            a unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t, nscd_runtime_t;
+            class nscd { getgrp gethost getpwd getserv shmemgrp shmemhost shmempwd shmemserv };
+          '';
+          content = ''
+            allow $1 self:unix_stream_socket create_socket_perms;
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to nscd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_signal',`
-      	gen_require(`
-      		type nscd_t;
-      	')
+            allow $1 nscd_t:nscd { getgrp gethost getpwd };
 
-      	allow $1 nscd_t:process signal;
-      ')
+            dontaudit $1 nscd_t:fd use;
+            dontaudit $1 nscd_t:nscd { getserv shmemgrp shmemhost shmempwd shmemserv };
 
-      ########################################
-      ## <summary>
-      ##	Send kill signals to nscd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_kill',`
-      	gen_require(`
-      		type nscd_t;
-      	')
+            files_search_runtime($1)
+            stream_connect_pattern($1, nscd_runtime_t, nscd_runtime_t, nscd_t)
+            dontaudit $1 nscd_runtime_t:file read_file_perms;
 
-      	allow $1 nscd_t:process sigkill;
-      ')
+            ps_process_pattern(nscd_t, $1)
+          '';
+        };
+        "nscd_shm_use" = {
+          summary = ''
+            Use nscd services by mapping the
+            database from an inherited nscd
+            file descriptor.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t, nscd_runtime_t;
+            class nscd { getgrp gethost getpwd shmemgrp shmemhost shmempwd };
+          '';
+          content = ''
+            allow $1 self:unix_stream_socket create_stream_socket_perms;
 
-      ########################################
-      ## <summary>
-      ##	Send null signals to nscd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_signull',`
-      	gen_require(`
-      		type nscd_t;
-      	')
+            allow $1 nscd_t:nscd { getgrp gethost getpwd shmemgrp shmemhost shmempwd };
+            allow $1 nscd_t:fd use;
 
-      	allow $1 nscd_t:process signull;
-      ')
+            files_search_runtime($1)
+            stream_connect_pattern($1, nscd_runtime_t, nscd_runtime_t, nscd_t)
+            dontaudit $1 nscd_runtime_t:file read_file_perms;
 
-      ########################################
-      ## <summary>
-      ##	Execute nscd in the nscd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_domtrans',`
-      	gen_require(`
-      		type nscd_t, nscd_exec_t;
-      	')
+            allow $1 nscd_runtime_t:dir list_dir_perms;
+            allow $1 nscd_runtime_t:sock_file read_sock_file_perms;
+          '';
+        };
+        "nscd_use" = {
+          summary = "Use nscd services.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          content = ''
+            tunable_policy(`nscd_use_shm',`
+                    nscd_shm_use($1)
+            ',`
+                    nscd_socket_use($1)
+            ')
+          '';
+        };
+        "nscd_dontaudit_search_runtime" = {
+          summary = ''
+            Do not audit attempts to search
+            nscd runtime directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nscd_runtime_t;
+          '';
+          content = ''
+            dontaudit $1 nscd_runtime_t:dir search_dir_perms;
+          '';
+        };
+        "nscd_read_runtime_files" = {
+          summary = "Read nscd runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, nscd_runtime_t, nscd_runtime_t)
+          '';
+        };
+        "nscd_unconfined" = {
+          summary = "Unconfined access to nscd services.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t;
+            class nscd all_nscd_perms;
+          '';
+          content = ''
+            allow $1 nscd_t:nscd { admin getgrp gethost getpwd getserv getstat shmemgrp shmemhost shmempwd shmemserv };
+          '';
+        };
+        "nscd_run" = {
+          summary = ''
+            Execute nscd in the nscd domain, and
+            allow the specified role the nscd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role nscd_roles;
+          '';
+          content = ''
+            nscd_domtrans($1)
+            roleattribute $2 nscd_roles;
+          '';
+        };
+        "nscd_initrc_domtrans" = {
+          summary = ''
+            Execute the nscd server init
+            script in the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nscd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, nscd_initrc_exec_t)
+          '';
+        };
+        "nscd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an nscd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type nscd_t, nscd_log_t, nscd_runtime_t;
+            type nscd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 nscd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, nscd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, nscd_exec_t, nscd_t)
-      ')
+            init_startstop_service($1, $2, nscd_t, nscd_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute nscd in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_exec',`
-      	gen_require(`
-      		type nscd_exec_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, nscd_log_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, nscd_exec_t)
-      ')
+            files_list_runtime($1)
+            admin_pattern($1, nscd_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Use nscd services by connecting using
-      ##	a unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_socket_use',`
-      	gen_require(`
-      		type nscd_t, nscd_runtime_t;
-      		class nscd { getgrp gethost getpwd getserv shmemgrp shmemhost shmempwd shmemserv };
-      	')
-
-      	allow $1 self:unix_stream_socket create_socket_perms;
-
-      	allow $1 nscd_t:nscd { getgrp gethost getpwd };
-
-      	dontaudit $1 nscd_t:fd use;
-      	dontaudit $1 nscd_t:nscd { getserv shmemgrp shmemhost shmempwd shmemserv };
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, nscd_runtime_t, nscd_runtime_t, nscd_t)
-      	dontaudit $1 nscd_runtime_t:file read_file_perms;
-
-      	ps_process_pattern(nscd_t, $1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Use nscd services by mapping the
-      ##	database from an inherited nscd
-      ##	file descriptor.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_shm_use',`
-      	gen_require(`
-      		type nscd_t, nscd_runtime_t;
-      		class nscd { getgrp gethost getpwd shmemgrp shmemhost shmempwd };
-      	')
-
-      	allow $1 self:unix_stream_socket create_stream_socket_perms;
-
-      	allow $1 nscd_t:nscd { getgrp gethost getpwd shmemgrp shmemhost shmempwd };
-      	allow $1 nscd_t:fd use;
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, nscd_runtime_t, nscd_runtime_t, nscd_t)
-      	dontaudit $1 nscd_runtime_t:file read_file_perms;
-
-      	allow $1 nscd_runtime_t:dir list_dir_perms;
-      	allow $1 nscd_runtime_t:sock_file read_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Use nscd services.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_use',`
-      	tunable_policy(`nscd_use_shm',`
-      		nscd_shm_use($1)
-      	',`
-      		nscd_socket_use($1)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search
-      ##	nscd runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_dontaudit_search_runtime',`
-      	gen_require(`
-      		type nscd_runtime_t;
-      	')
-
-      	dontaudit $1 nscd_runtime_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read nscd runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_read_runtime_files',`
-      	gen_require(`
-      		type nscd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, nscd_runtime_t, nscd_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unconfined access to nscd services.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_unconfined',`
-      	gen_require(`
-      		type nscd_t;
-      		class nscd all_nscd_perms;
-      	')
-
-      	allow $1 nscd_t:nscd { admin getgrp gethost getpwd getserv getstat shmemgrp shmemhost shmempwd shmemserv };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute nscd in the nscd domain, and
-      ##	allow the specified role the nscd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_run',`
-      	gen_require(`
-      		attribute_role nscd_roles;
-      	')
-
-      	nscd_domtrans($1)
-      	roleattribute $2 nscd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the nscd server init
-      ##	script in the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nscd_initrc_domtrans',`
-      	gen_require(`
-      		type nscd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, nscd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an nscd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`nscd_admin',`
-      	gen_require(`
-      		type nscd_t, nscd_log_t, nscd_runtime_t;
-      		type nscd_initrc_exec_t;
-      	')
-
-      	allow $1 nscd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, nscd_t)
-
-      	init_startstop_service($1, $2, nscd_t, nscd_initrc_exec_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, nscd_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, nscd_runtime_t)
-
-      	nscd_run($1, $2)
-      ')
-    '';
+            nscd_run($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(nscd)
 

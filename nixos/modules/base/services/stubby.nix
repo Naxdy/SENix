@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.stubby = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>DNS Privacy stub resolver.</summary>
-    '';
+    interface = {
+      summary = "DNS Privacy stub resolver.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(stubby)
 

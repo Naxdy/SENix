@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.hostapd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>IEEE 802.11 wireless LAN Host AP daemon.</summary>
-    '';
+    interface = {
+      summary = "IEEE 802.11 wireless LAN Host AP daemon.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(hostapd)
 

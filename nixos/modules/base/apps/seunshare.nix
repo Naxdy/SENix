@@ -3,86 +3,79 @@
 { lib, ... }: {
   config.security.selinux.modules.seunshare = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Filesystem namespacing/polyinstantiation application.</summary>
+    interface = {
+      summary = "Filesystem namespacing/polyinstantiation application.";
+      exports = {
+        "seunshare_domtrans" = {
+          summary = "Execute a domain transition to run seunshare.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type seunshare_t, seunshare_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, seunshare_exec_t, seunshare_t)
+          '';
+        };
+        "seunshare_run" = {
+          summary = ''
+            Execute seunshare in the seunshare domain, and
+            allow the specified role the seunshare domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type seunshare_t;
+          '';
+          content = ''
+            seunshare_domtrans($1)
+            role $2 types seunshare_t;
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run seunshare.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`seunshare_domtrans',`
-      	gen_require(`
-      		type seunshare_t, seunshare_exec_t;
-      	')
+            allow $1 seunshare_t:process signal_perms;
 
-      	domtrans_pattern($1, seunshare_exec_t, seunshare_t)
-      ')
+            dontaudit seunshare_t $1:tcp_socket rw_socket_perms;
+            dontaudit seunshare_t $1:udp_socket rw_socket_perms;
+            dontaudit seunshare_t $1:unix_stream_socket rw_socket_perms;
+          '';
+        };
+        "seunshare_role" = {
+          summary = "Role access for seunshare";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "User domain for the role.";
+            };
+          };
+          gen_require = ''
+            type seunshare_t;
+          '';
+          content = ''
+            role $1 types seunshare_t;
 
-      ########################################
-      ## <summary>
-      ##	Execute seunshare in the seunshare domain, and
-      ##	allow the specified role the seunshare domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`seunshare_run',`
-      	gen_require(`
-      		type seunshare_t;
-      	')
+            seunshare_domtrans($2)
 
-      	seunshare_domtrans($1)
-      	role $2 types seunshare_t;
-
-      	allow $1 seunshare_t:process signal_perms;
-
-              dontaudit seunshare_t $1:tcp_socket rw_socket_perms;
-              dontaudit seunshare_t $1:udp_socket rw_socket_perms;
-              dontaudit seunshare_t $1:unix_stream_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Role access for seunshare
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`seunshare_role',`
-      	gen_require(`
-      		type seunshare_t;
-      	')
-
-      	role $1 types seunshare_t;
-
-      	seunshare_domtrans($2)
-
-      	ps_process_pattern($2, seunshare_t)
-      	allow $2 seunshare_t:process signal;
-      ')
-    '';
+            ps_process_pattern($2, seunshare_t)
+            allow $2 seunshare_t:process signal;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(seunshare)
 

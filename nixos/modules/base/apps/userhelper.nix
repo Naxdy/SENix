@@ -3,252 +3,236 @@
 { lib, ... }: {
   config.security.selinux.modules.userhelper = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>A wrapper that helps users run system programs.</summary>
+    interface = {
+      summary = "A wrapper that helps users run system programs.";
+      exports = {
+        "userhelper_role_template" = {
+          type = "template";
+          summary = "The role template for the userhelper module.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute userhelper_type, consolehelper_type;
+            attribute_role userhelper_roles, consolehelper_roles;
+            type userhelper_exec_t, consolehelper_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The role template for the userhelper module.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`userhelper_role_template',`
-      	gen_require(`
-      		attribute userhelper_type, consolehelper_type;
-      		attribute_role userhelper_roles, consolehelper_roles;
-      		type userhelper_exec_t, consolehelper_exec_t;
-      	')
+            type $1_consolehelper_t, consolehelper_type;
+            userdom_user_application_domain($1_consolehelper_t, consolehelper_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            role consolehelper_roles types $1_consolehelper_t;
+            roleattribute $4 consolehelper_roles;
 
-      	type $1_consolehelper_t, consolehelper_type;
-      	userdom_user_application_domain($1_consolehelper_t, consolehelper_exec_t)
+            type $1_userhelper_t, userhelper_type;
+            userdom_user_application_domain($1_userhelper_t, userhelper_exec_t)
 
-      	role consolehelper_roles types $1_consolehelper_t;
-      	roleattribute $4 consolehelper_roles;
+            domain_role_change_exemption($1_userhelper_t)
+            domain_obj_id_change_exemption($1_userhelper_t)
+            domain_interactive_fd($1_userhelper_t)
+            domain_subj_id_change_exemption($1_userhelper_t)
 
-      	type $1_userhelper_t, userhelper_type;
-      	userdom_user_application_domain($1_userhelper_t, userhelper_exec_t)
+            role userhelper_roles types $1_userhelper_t;
+            roleattribute $4 userhelper_roles;
 
-      	domain_role_change_exemption($1_userhelper_t)
-      	domain_obj_id_change_exemption($1_userhelper_t)
-      	domain_interactive_fd($1_userhelper_t)
-      	domain_subj_id_change_exemption($1_userhelper_t)
+            ########################################
+            #
+            # Consolehelper local policy
+            #
 
-      	role userhelper_roles types $1_userhelper_t;
-      	roleattribute $4 userhelper_roles;
+            allow $1_consolehelper_t $3:unix_stream_socket connectto;
 
-      	########################################
-      	#
-      	# Consolehelper local policy
-      	#
+            domtrans_pattern($3, consolehelper_exec_t, $1_consolehelper_t)
 
-      	allow $1_consolehelper_t $3:unix_stream_socket connectto;
+            allow $3 $1_consolehelper_t:process { ptrace signal_perms };
+            ps_process_pattern($3, $1_consolehelper_t)
 
-      	domtrans_pattern($3, consolehelper_exec_t, $1_consolehelper_t)
+            auth_use_pam($1_consolehelper_t)
 
-      	allow $3 $1_consolehelper_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, $1_consolehelper_t)
+            optional_policy(`
+                    dbus_connect_all_session_bus($1_consolehelper_t)
 
-      	auth_use_pam($1_consolehelper_t)
+                    optional_policy(`
+                            userhelper_dbus_chat_all_consolehelper($3)
+                    ')
+            ')
 
-      	optional_policy(`
-      		dbus_connect_all_session_bus($1_consolehelper_t)
+            optional_policy(`
+                    systemd_user_app_status($1, $1_consolehelper_t)
+            ')
 
-      		optional_policy(`
-      			userhelper_dbus_chat_all_consolehelper($3)
-      		')
-      	')
+            ########################################
+            #
+            # Userhelper local policy
+            #
 
-      	optional_policy(`
-      		systemd_user_app_status($1, $1_consolehelper_t)
-      	')
+            domtrans_pattern($3, userhelper_exec_t, $1_userhelper_t)
 
-      	########################################
-      	#
-      	# Userhelper local policy
-      	#
+            dontaudit $3 $1_userhelper_t:process signal;
 
-      	domtrans_pattern($3, userhelper_exec_t, $1_userhelper_t)
+            corecmd_bin_domtrans($1_userhelper_t, $2)
 
-      	dontaudit $3 $1_userhelper_t:process signal;
+            auth_domtrans_chk_passwd($1_userhelper_t)
+            auth_use_nsswitch($1_userhelper_t)
 
-      	corecmd_bin_domtrans($1_userhelper_t, $2)
+            userdom_bin_spec_domtrans_unpriv_users($1_userhelper_t)
+            userdom_entry_spec_domtrans_unpriv_users($1_userhelper_t)
 
-      	auth_domtrans_chk_passwd($1_userhelper_t)
-      	auth_use_nsswitch($1_userhelper_t)
+            optional_policy(`
+                    tunable_policy(`! secure_mode',`
+                            sysadm_bin_spec_domtrans($1_userhelper_t)
+                            sysadm_entry_spec_domtrans($1_userhelper_t)
+                    ')
+            ')
 
-      	userdom_bin_spec_domtrans_unpriv_users($1_userhelper_t)
-      	userdom_entry_spec_domtrans_unpriv_users($1_userhelper_t)
-
-      	optional_policy(`
-      		tunable_policy(`! secure_mode',`
-      			sysadm_bin_spec_domtrans($1_userhelper_t)
-      			sysadm_entry_spec_domtrans($1_userhelper_t)
-      		')
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, $1_userhelper_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search userhelper configuration directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_search_config',`
-      	gen_require(`
-      		type userhelper_conf_t;
-      	')
-
-      	allow $1 userhelper_conf_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search
-      ##	userhelper configuration directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_dontaudit_search_config',`
-      	gen_require(`
-      		type userhelper_conf_t;
-      	')
-
-      	dontaudit $1 userhelper_conf_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	consolehelper over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_dbus_chat_all_consolehelper',`
-      	gen_require(`
-      		attribute consolehelper_type;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 consolehelper_type:dbus send_msg;
-      	allow consolehelper_type $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Use userhelper all userhelper file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_use_fd',`
-      	gen_require(`
-      		attribute userhelper_type;
-      	')
-
-      	allow $1 userhelper_type:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send child terminated signals to all userhelper.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_sigchld',`
-      	gen_require(`
-      		attribute userhelper_type;
-      	')
-
-      	allow $1 userhelper_type:process sigchld;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the userhelper program in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_exec',`
-      	gen_require(`
-      		type userhelper_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, userhelper_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the consolehelper program
-      ##	in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`userhelper_exec_consolehelper',`
-      	gen_require(`
-      		type consolehelper_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, consolehelper_exec_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, $1_userhelper_t)
+            ')
+          '';
+        };
+        "userhelper_search_config" = {
+          summary = "Search userhelper configuration directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type userhelper_conf_t;
+          '';
+          content = ''
+            allow $1 userhelper_conf_t:dir search_dir_perms;
+          '';
+        };
+        "userhelper_dontaudit_search_config" = {
+          summary = ''
+            Do not audit attempts to search
+            userhelper configuration directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type userhelper_conf_t;
+          '';
+          content = ''
+            dontaudit $1 userhelper_conf_t:dir search_dir_perms;
+          '';
+        };
+        "userhelper_dbus_chat_all_consolehelper" = {
+          summary = ''
+            Send and receive messages from
+            consolehelper over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute consolehelper_type;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 consolehelper_type:dbus send_msg;
+            allow consolehelper_type $1:dbus send_msg;
+          '';
+        };
+        "userhelper_use_fd" = {
+          summary = "Use userhelper all userhelper file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute userhelper_type;
+          '';
+          content = ''
+            allow $1 userhelper_type:fd use;
+          '';
+        };
+        "userhelper_sigchld" = {
+          summary = "Send child terminated signals to all userhelper.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute userhelper_type;
+          '';
+          content = ''
+            allow $1 userhelper_type:process sigchld;
+          '';
+        };
+        "userhelper_exec" = {
+          summary = "Execute the userhelper program in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type userhelper_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, userhelper_exec_t)
+          '';
+        };
+        "userhelper_exec_consolehelper" = {
+          summary = ''
+            Execute the consolehelper program
+            in the caller domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type consolehelper_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, consolehelper_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(userhelper)
 

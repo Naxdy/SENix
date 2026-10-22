@@ -3,114 +3,104 @@
 { lib, ... }: {
   config.security.selinux.modules.hwloc = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Dump topology and locality information from hardware tables.</summary>
+    interface = {
+      summary = "Dump topology and locality information from hardware tables.";
+      exports = {
+        "hwloc_domtrans_dhwd" = {
+          summary = "Execute hwloc dhwd in the hwloc dhwd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type hwloc_dhwd_t, hwloc_dhwd_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, hwloc_dhwd_exec_t, hwloc_dhwd_t)
+          '';
+        };
+        "hwloc_run_dhwd" = {
+          summary = ''
+            Execute hwloc dhwd in the hwloc dhwd domain, and
+            allow the specified role the hwloc dhwd domain,
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role hwloc_dhwd_roles;
+          '';
+          content = ''
+            hwloc_domtrans_dhwd($1)
+            roleattribute $2 hwloc_dhwd_roles;
+          '';
+          rolecap = true;
+        };
+        "hwloc_exec_dhwd" = {
+          summary = "Execute hwloc dhwd in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwloc_dhwd_exec_t;
+          '';
+          content = ''
+            can_exec($1, hwloc_dhwd_exec_t)
+          '';
+        };
+        "hwloc_read_runtime_files" = {
+          summary = "Read hwloc runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwloc_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, hwloc_runtime_t, hwloc_runtime_t)
+          '';
+        };
+        "hwloc_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an hwloc environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwloc_dhwd_t, hwloc_runtime_t;
+          '';
+          content = ''
+            allow $1 hwloc_dhwd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, hwloc_dhwd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute hwloc dhwd in the hwloc dhwd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hwloc_domtrans_dhwd',`
-      	gen_require(`
-      		type hwloc_dhwd_t, hwloc_dhwd_exec_t;
-      	')
-
-      	domtrans_pattern($1, hwloc_dhwd_exec_t, hwloc_dhwd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute hwloc dhwd in the hwloc dhwd domain, and
-      ##	allow the specified role the hwloc dhwd domain,
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hwloc_run_dhwd',`
-      	gen_require(`
-      		attribute_role hwloc_dhwd_roles;
-      	')
-
-      	hwloc_domtrans_dhwd($1)
-      	roleattribute $2 hwloc_dhwd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute hwloc dhwd in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hwloc_exec_dhwd',`
-      	gen_require(`
-      		type hwloc_dhwd_exec_t;
-      	')
-
-      	can_exec($1, hwloc_dhwd_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read hwloc runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hwloc_read_runtime_files',`
-      	gen_require(`
-      		type hwloc_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, hwloc_runtime_t, hwloc_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an hwloc environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hwloc_admin',`
-      	gen_require(`
-      		type hwloc_dhwd_t, hwloc_runtime_t;
-      	')
-
-      	allow $1 hwloc_dhwd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, hwloc_dhwd_t)
-
-      	admin_pattern($1, hwloc_runtime_t)
-      	files_runtime_filetrans($1, hwloc_runtime_t, dir, "hwloc")
-      ')
-    '';
+            admin_pattern($1, hwloc_runtime_t)
+            files_runtime_filetrans($1, hwloc_runtime_t, dir, "hwloc")
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(hwloc)
 

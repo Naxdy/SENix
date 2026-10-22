@@ -3,107 +3,102 @@
 { lib, ... }: {
   config.security.selinux.modules.l2tp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Layer 2 Tunneling Protocol.</summary>
+    interface = {
+      summary = "Layer 2 Tunneling Protocol.";
+      exports = {
+        "l2tpd_dgram_send" = {
+          summary = ''
+            Send to l2tpd with a unix
+            domain dgram socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type l2tpd_t, l2tpd_tmp_t, l2tpd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            files_search_tmp($1)
+            dgram_send_pattern($1, { l2tpd_tmp_t l2tpd_runtime_t }, { l2tpd_tmp_t l2tpd_runtime_t }, l2tpd_t)
+          '';
+        };
+        "l2tpd_rw_socket" = {
+          summary = "Read and write l2tpd sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type l2tpd_t;
+          '';
+          content = ''
+            allow $1 l2tpd_t:socket rw_socket_perms;
+          '';
+        };
+        "l2tpd_stream_connect" = {
+          summary = ''
+            Connect to l2tpd with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type l2tpd_t, l2tpd_runtime_t, l2tpd_tmp_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            files_search_tmp($1)
+            stream_connect_pattern($1, { l2tpd_tmp_t l2tpd_runtime_t }, { l2tpd_tmp_t l2tpd_runtime_t }, l2tpd_t)
+          '';
+        };
+        "l2tp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an l2tp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type l2tpd_t, l2tpd_initrc_exec_t, l2tpd_runtime_t;
+            type l2tp_conf_t, l2tpd_tmp_t;
+          '';
+          content = ''
+            allow $1 l2tpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, l2tpd_t)
 
-      ########################################
-      ## <summary>
-      ##	Send to l2tpd with a unix
-      ##	domain dgram socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`l2tpd_dgram_send',`
-      	gen_require(`
-      		type l2tpd_t, l2tpd_tmp_t, l2tpd_runtime_t;
-      	')
+            init_startstop_service($1, $2, l2tpd_t, l2tpd_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	files_search_tmp($1)
-      	dgram_send_pattern($1, { l2tpd_tmp_t l2tpd_runtime_t }, { l2tpd_tmp_t l2tpd_runtime_t }, l2tpd_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, l2tp_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Read and write l2tpd sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`l2tpd_rw_socket',`
-      	gen_require(`
-      		type l2tpd_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, l2tpd_runtime_t)
 
-      	allow $1 l2tpd_t:socket rw_socket_perms;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Connect to l2tpd with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`l2tpd_stream_connect',`
-      	gen_require(`
-      		type l2tpd_t, l2tpd_runtime_t, l2tpd_tmp_t;
-      	')
-
-      	files_search_runtime($1)
-      	files_search_tmp($1)
-      	stream_connect_pattern($1, { l2tpd_tmp_t l2tpd_runtime_t }, { l2tpd_tmp_t l2tpd_runtime_t }, l2tpd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an l2tp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`l2tp_admin',`
-      	gen_require(`
-      		type l2tpd_t, l2tpd_initrc_exec_t, l2tpd_runtime_t;
-      		type l2tp_conf_t, l2tpd_tmp_t;
-      	')
-
-      	allow $1 l2tpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, l2tpd_t)
-
-      	init_startstop_service($1, $2, l2tpd_t, l2tpd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, l2tp_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, l2tpd_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, l2tpd_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, l2tpd_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(l2tp)
 

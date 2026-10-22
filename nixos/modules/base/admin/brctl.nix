@@ -3,53 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.brctl = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Utilities for configuring the Linux ethernet bridge.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run brctl.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`brctl_domtrans',`
-      	gen_require(`
-      		type brctl_t, brctl_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, brctl_exec_t, brctl_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute brctl in the brctl domain, and
-      ##	allow the specified role the brctl domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`brctl_run',`
-      	gen_require(`
-      		attribute_role brctl_roles;
-      	')
-
-      	brctl_domtrans($1)
-      	roleattribute $2 brctl_roles;
-      ')
-    '';
+    interface = {
+      summary = "Utilities for configuring the Linux ethernet bridge.";
+      exports = {
+        "brctl_domtrans" = {
+          summary = "Execute a domain transition to run brctl.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type brctl_t, brctl_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, brctl_exec_t, brctl_t)
+          '';
+        };
+        "brctl_run" = {
+          summary = ''
+            Execute brctl in the brctl domain, and
+            allow the specified role the brctl domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role brctl_roles;
+          '';
+          content = ''
+            brctl_domtrans($1)
+            roleattribute $2 brctl_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(brctl)
 

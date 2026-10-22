@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.man2html = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>A Unix manpage-to-HTML converter.</summary>
-    '';
+    interface = {
+      summary = "A Unix manpage-to-HTML converter.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(man2html)
 

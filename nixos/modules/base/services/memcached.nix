@@ -3,119 +3,111 @@
 { lib, ... }: {
   config.security.selinux.modules.memcached = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>High-performance memory object caching system.</summary>
+    interface = {
+      summary = "High-performance memory object caching system.";
+      exports = {
+        "memcached_domtrans" = {
+          summary = "Execute a domain transition to run memcached.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type memcached_t,memcached_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, memcached_exec_t, memcached_t)
+          '';
+        };
+        "memcached_manage_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete
+            memcached runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type memcached_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, memcached_runtime_t, memcached_runtime_t)
+          '';
+        };
+        "memcached_stream_connect" = {
+          summary = ''
+            Connect to memcached using a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type memcached_t, memcached_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, memcached_runtime_t, memcached_runtime_t, memcached_t)
+          '';
+        };
+        "memcached_tcp_connect" = {
+          summary = "Connect to memcache over the network.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type memcached_t;
+          '';
+          content = ''
+            corenet_sendrecv_memcache_client_packets($1)
+            corenet_tcp_connect_memcache_port($1)
+            corenet_tcp_recvfrom_labeled($1, memcached_t)
+          '';
+        };
+        "memcached_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an memcached environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type memcached_t, memcached_initrc_exec_t, memcached_runtime_t;
+          '';
+          content = ''
+            allow $1 memcached_t:process { ptrace signal_perms };
+            ps_process_pattern($1, memcached_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run memcached.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`memcached_domtrans',`
-      	gen_require(`
-      		type memcached_t,memcached_exec_t;
-      	')
+            init_startstop_service($1, $2, memcached_t, memcached_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, memcached_exec_t, memcached_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	memcached runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`memcached_manage_runtime_files',`
-      	gen_require(`
-      		type memcached_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, memcached_runtime_t, memcached_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to memcached using a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`memcached_stream_connect',`
-      	gen_require(`
-      		type memcached_t, memcached_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, memcached_runtime_t, memcached_runtime_t, memcached_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ## 	Connect to memcache over the network.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`memcached_tcp_connect',`
-      	gen_require(`
-      		type memcached_t;
-      	')
-
-      	corenet_sendrecv_memcache_client_packets($1)
-      	corenet_tcp_connect_memcache_port($1)
-      	corenet_tcp_recvfrom_labeled($1, memcached_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an memcached environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`memcached_admin',`
-      	gen_require(`
-      		type memcached_t, memcached_initrc_exec_t, memcached_runtime_t;
-      	')
-
-      	allow $1 memcached_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, memcached_t)
-
-      	init_startstop_service($1, $2, memcached_t, memcached_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, memcached_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, memcached_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(memcached)
 

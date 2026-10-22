@@ -3,127 +3,112 @@
 { lib, ... }: {
   config.security.selinux.modules.clock = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for reading and setting the hardware clock.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute hwclock in the clock domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`clock_domtrans',`
-      	gen_require(`
-      		type hwclock_t, hwclock_exec_t;
-      	')
-
-      	domtrans_pattern($1, hwclock_exec_t, hwclock_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute hwclock in the clock domain, and
-      ##	allow the specified role the hwclock domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`clock_run',`
-      	gen_require(`
-      		type hwclock_t;
-      	')
-
-      	clock_domtrans($1)
-      	role $2 types hwclock_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ## 	Execute hwclock in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`clock_exec',`
-      	gen_require(`
-      		type hwclock_exec_t;
-      	')
-
-      	can_exec($1, hwclock_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read clock drift adjustments.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`clock_read_adjtime',`
-      	gen_require(`
-      		type adjtime_t;
-      	')
-
-      	files_list_etc($1)
-      	allow $1 adjtime_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write clock drift adjustments.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`clock_dontaudit_write_adjtime',`
-      	gen_require(`
-      		type adjtime_t;
-      	')
-
-      	dontaudit $1 adjtime_t:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write clock drift adjustments.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`clock_rw_adjtime',`
-      	gen_require(`
-      		type adjtime_t;
-      	')
-
-      	allow $1 adjtime_t:file rw_file_perms;
-      	files_list_etc($1)
-      ')
-    '';
+    interface = {
+      summary = "Policy for reading and setting the hardware clock.";
+      exports = {
+        "clock_domtrans" = {
+          summary = "Execute hwclock in the clock domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type hwclock_t, hwclock_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, hwclock_exec_t, hwclock_t)
+          '';
+        };
+        "clock_run" = {
+          summary = ''
+            Execute hwclock in the clock domain, and
+            allow the specified role the hwclock domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwclock_t;
+          '';
+          content = ''
+            clock_domtrans($1)
+            role $2 types hwclock_t;
+          '';
+          rolecap = true;
+        };
+        "clock_exec" = {
+          summary = "Execute hwclock in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwclock_exec_t;
+          '';
+          content = ''
+            can_exec($1, hwclock_exec_t)
+          '';
+        };
+        "clock_read_adjtime" = {
+          summary = "Read clock drift adjustments.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type adjtime_t;
+          '';
+          content = ''
+            files_list_etc($1)
+            allow $1 adjtime_t:file read_file_perms;
+          '';
+        };
+        "clock_dontaudit_write_adjtime" = {
+          summary = "Do not audit attempts to write clock drift adjustments.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type adjtime_t;
+          '';
+          content = ''
+            dontaudit $1 adjtime_t:file write;
+          '';
+        };
+        "clock_rw_adjtime" = {
+          summary = "Read and write clock drift adjustments.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type adjtime_t;
+          '';
+          content = ''
+            allow $1 adjtime_t:file rw_file_perms;
+            files_list_etc($1)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(clock)
 

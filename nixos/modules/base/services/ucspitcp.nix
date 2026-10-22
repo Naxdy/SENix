@@ -3,37 +3,35 @@
 { lib, ... }: {
   config.security.selinux.modules.ucspitcp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>UNIX Client-Server Program Interface for TCP.</summary>
+    interface = {
+      summary = "UNIX Client-Server Program Interface for TCP.";
+      exports = {
+        "ucspitcp_service_domain" = {
+          summary = "Define a specified domain as a ucspitcp service.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "entrypoint";
+              description = "The type associated with the process program.";
+            };
+          };
+          gen_require = ''
+            type ucspitcp_t;
+          '';
+          content = ''
+            domain_type($1)
+            domain_entry_file($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Define a specified domain as a ucspitcp service.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="entrypoint">
-      ##	<summary>
-      ##	The type associated with the process program.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ucspitcp_service_domain',`
-      	gen_require(`
-      		type ucspitcp_t;
-      	')
+            role system_r types $1;
 
-      	domain_type($1)
-      	domain_entry_file($1, $2)
-
-      	role system_r types $1;
-
-      	domtrans_pattern(ucspitcp_t, $2, $1)
-      ')
-    '';
+            domtrans_pattern(ucspitcp_t, $2, $1)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ucspitcp)
 

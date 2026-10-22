@@ -3,63 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.gdomap = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>GNUstep distributed object mapper.</summary>
+    interface = {
+      summary = "GNUstep distributed object mapper.";
+      exports = {
+        "gdomap_read_config" = {
+          summary = "Read gdomap configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gdomap_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 gdomap_conf_t:file read_file_perms;
+          '';
+        };
+        "gdomap_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an gdomap environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type gdomap_t, gdomap_conf_t, gdomap_initrc_exec_t;
+            type gdomap_runtime_t;
+          '';
+          content = ''
+            allow $1 gdomap_t:process { ptrace signal_perms };
+            ps_process_pattern($1, gdomap_t)
 
-      ########################################
-      ## <summary>
-      ##	Read gdomap configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gdomap_read_config',`
-      	gen_require(`
-      		type gdomap_conf_t;
-      	')
+            init_startstop_service($1, $2, gdomap_t, gdomap_initrc_exec_t)
 
-      	files_search_etc($1)
-      	allow $1 gdomap_conf_t:file read_file_perms;
-      ')
+            files_search_etc($1)
+            admin_pattern($1, gdomap_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an gdomap environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`gdomap_admin',`
-      	gen_require(`
-      		type gdomap_t, gdomap_conf_t, gdomap_initrc_exec_t;
-      		type gdomap_runtime_t;
-      	')
-
-      	allow $1 gdomap_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, gdomap_t)
-
-      	init_startstop_service($1, $2, gdomap_t, gdomap_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, gdomap_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, gdomap_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, gdomap_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gdomap)
 

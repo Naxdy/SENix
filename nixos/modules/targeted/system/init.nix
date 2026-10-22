@@ -121,6 +121,9 @@ in
 
   security.selinux.modules.senix_init = {
     layer = "system";
+    interface = {
+      summary = "SENix init domain and service policy additions.";
+    };
     typeEnforcement = ''
       policy_module(senix_init)
 

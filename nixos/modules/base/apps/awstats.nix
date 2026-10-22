@@ -3,29 +3,30 @@
 { lib, ... }: {
   config.security.selinux.modules.awstats = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Log file analyzer for advanced statistics.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute the awstats program in
-      ##	the awstats domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`awstats_domtrans',`
-      	gen_require(`
-      		type awstats_t, awstats_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, awstats_exec_t, awstats_t)
-      ')
-    '';
+    interface = {
+      summary = "Log file analyzer for advanced statistics.";
+      exports = {
+        "awstats_domtrans" = {
+          summary = ''
+            Execute the awstats program in
+            the awstats domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type awstats_t, awstats_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, awstats_exec_t, awstats_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(awstats)
 

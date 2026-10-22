@@ -3,82 +3,75 @@
 { lib, ... }: {
   config.security.selinux.modules.openarc = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Authenticated Received Chain milter.</summary>
+    interface = {
+      summary = "Authenticated Received Chain milter.";
+      exports = {
+        "openarc_stream_connect" = {
+          summary = "Allow a domain to talk to OpenARC via Unix domain socket";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openarc_milter_data_t, openarc_milter_t;
+          '';
+          content = ''
+            stream_connect_pattern($1, openarc_milter_data_t, openarc_milter_data_t, openarc_milter_t)
+          '';
+        };
+        "openarc_reload" = {
+          summary = "Reload the openarc service (systemd).";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type openarc_milter_unit_t;
+            class service { reload status };
+          '';
+          content = ''
+            allow $1 openarc_milter_unit_t:service { reload status };
+          '';
+        };
+        "openarc_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an OpenARC environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type openarc_milter_t, openarc_milter_initrc_exec_t, openarc_milter_private_key_t;
+            type openarc_milter_data_t;
+          '';
+          content = ''
+            allow $1 openarc_milter_t:process { ptrace signal_perms };
+            ps_process_pattern($1, openarc_milter_t)
 
-      ########################################
-      ## <summary>
-      ##	Allow a domain to talk to OpenARC via Unix domain socket
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openarc_stream_connect',`
-      	gen_require(`
-      		type openarc_milter_data_t, openarc_milter_t;
-      	')
+            init_startstop_service($1, $2, openarc_milter_t, openarc_milter_initrc_exec_t)
 
-      	stream_connect_pattern($1, openarc_milter_data_t, openarc_milter_data_t, openarc_milter_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, openarc_milter_private_key_t)
 
-      ########################################
-      ## <summary>
-      ##	Reload the openarc service (systemd).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`openarc_reload',`
-      	gen_require(`
-      		type openarc_milter_unit_t;
-      		class service { reload status };
-      	')
-
-      	allow $1 openarc_milter_unit_t:service { reload status };
-      ')
-
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an OpenARC environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openarc_admin',`
-      	gen_require(`
-      		type openarc_milter_t, openarc_milter_initrc_exec_t, openarc_milter_private_key_t;
-      		type openarc_milter_data_t;
-      	')
-
-      	allow $1 openarc_milter_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, openarc_milter_t)
-
-      	init_startstop_service($1, $2, openarc_milter_t, openarc_milter_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, openarc_milter_private_key_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, openarc_milter_data_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, openarc_milter_data_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openarc)
 

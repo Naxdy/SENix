@@ -3,54 +3,51 @@
 { lib, ... }: {
   config.security.selinux.modules.chkrootkit = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>chkrootkit - rootkit checker.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run chkrootkit.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chkrootkit_domtrans',`
-      	gen_require(`
-      		type chkrootkit_t, chkrootkit_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, chkrootkit_exec_t, chkrootkit_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute chkrootkit in the chkrootkit domain,
-      ##	and allow the specified role
-      ##	the chkrootkit domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chkrootkit_run',`
-      	gen_require(`
-      		attribute_role chkrootkit_roles;
-      	')
-
-      	chkrootkit_domtrans($1)
-      	roleattribute $2 chkrootkit_roles;
-      ')
-    '';
+    interface = {
+      summary = "chkrootkit - rootkit checker.";
+      exports = {
+        "chkrootkit_domtrans" = {
+          summary = "Execute a domain transition to run chkrootkit.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type chkrootkit_t, chkrootkit_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, chkrootkit_exec_t, chkrootkit_t)
+          '';
+        };
+        "chkrootkit_run" = {
+          summary = ''
+            Execute chkrootkit in the chkrootkit domain,
+            and allow the specified role
+            the chkrootkit domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role chkrootkit_roles;
+          '';
+          content = ''
+            chkrootkit_domtrans($1)
+            roleattribute $2 chkrootkit_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(chkrootkit)
 

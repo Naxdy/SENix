@@ -3,67 +3,66 @@
 { lib, ... }: {
   config.security.selinux.modules.canna = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Kana-kanji conversion server.</summary>
+    interface = {
+      summary = "Kana-kanji conversion server.";
+      exports = {
+        "canna_stream_connect" = {
+          summary = ''
+            Connect to Canna using a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type canna_t, canna_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, canna_runtime_t, canna_runtime_t, canna_t)
+          '';
+        };
+        "canna_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an canna environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type canna_t, canna_log_t, canna_var_lib_t;
+            type canna_runtime_t, canna_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 canna_t:process { ptrace signal_perms };
+            ps_process_pattern($1, canna_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to Canna using a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`canna_stream_connect',`
-      	gen_require(`
-      		type canna_t, canna_runtime_t;
-      	')
+            init_startstop_service($1, $2, canna_t, canna_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, canna_runtime_t, canna_runtime_t, canna_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, canna_log_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an canna environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`canna_admin',`
-      	gen_require(`
-      		type canna_t, canna_log_t, canna_var_lib_t;
-      		type canna_runtime_t, canna_initrc_exec_t;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, canna_var_lib_t)
 
-      	allow $1 canna_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, canna_t)
-
-      	init_startstop_service($1, $2, canna_t, canna_initrc_exec_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, canna_log_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, canna_var_lib_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, canna_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, canna_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(canna)
 

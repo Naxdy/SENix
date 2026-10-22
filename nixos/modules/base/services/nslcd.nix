@@ -3,101 +3,94 @@
 { lib, ... }: {
   config.security.selinux.modules.nslcd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Local LDAP name service daemon.</summary>
+    interface = {
+      summary = "Local LDAP name service daemon.";
+      exports = {
+        "nslcd_domtrans" = {
+          summary = "Execute a domain transition to run nslcd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nslcd_t, nslcd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, nslcd_exec_t, nslcd_t)
+          '';
+        };
+        "nslcd_initrc_domtrans" = {
+          summary = "Execute nslcd server in the nslcd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nslcd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, nslcd_initrc_exec_t)
+          '';
+        };
+        "nslcd_stream_connect" = {
+          summary = ''
+            Connect to nslcd over an unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nslcd_t, nslcd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, nslcd_runtime_t, nslcd_runtime_t, nslcd_t)
+          '';
+        };
+        "nslcd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an nslcd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type nslcd_t, nslcd_initrc_exec_t, nslcd_runtime_t;
+            type nslcd_conf_t;
+          '';
+          content = ''
+            allow $1 nslcd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, nslcd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run nslcd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nslcd_domtrans',`
-      	gen_require(`
-      		type nslcd_t, nslcd_exec_t;
-      	')
+            init_startstop_service($1, $2, nslcd_t, nslcd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, nslcd_exec_t, nslcd_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, nslcd_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute nslcd server in the nslcd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nslcd_initrc_domtrans',`
-      	gen_require(`
-      		type nslcd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, nslcd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to nslcd over an unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nslcd_stream_connect',`
-      	gen_require(`
-      		type nslcd_t, nslcd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, nslcd_runtime_t, nslcd_runtime_t, nslcd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an nslcd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`nslcd_admin',`
-      	gen_require(`
-      		type nslcd_t, nslcd_initrc_exec_t, nslcd_runtime_t;
-      		type nslcd_conf_t;
-      	')
-
-      	allow $1 nslcd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, nslcd_t)
-
-      	init_startstop_service($1, $2, nslcd_t, nslcd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, nslcd_conf_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, nslcd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, nslcd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(nslcd)
 

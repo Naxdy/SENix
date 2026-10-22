@@ -3,30 +3,31 @@
 { lib, ... }: {
   config.security.selinux.modules.cpufreqselector = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Command-line CPU frequency settings.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	cpufreq-selector over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cpufreqselector_dbus_chat',`
-      	gen_require(`
-      		type cpufreqselector_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 cpufreqselector_t:dbus send_msg;
-      	allow cpufreqselector_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "Command-line CPU frequency settings.";
+      exports = {
+        "cpufreqselector_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            cpufreq-selector over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cpufreqselector_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 cpufreqselector_t:dbus send_msg;
+            allow cpufreqselector_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cpufreqselector)
 

@@ -3,64 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.resmgr = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Resource management daemon.</summary>
+    interface = {
+      summary = "Resource management daemon.";
+      exports = {
+        "resmgr_stream_connect" = {
+          summary = ''
+            Connect to resmgrd over a unix domain
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type resmgrd_runtime_t, resmgrd_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, resmgrd_runtime_t, resmgrd_runtime_t, resmgrd_t)
+          '';
+        };
+        "resmgr_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an resmgr environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type resmgrd_t, resmgrd_initrc_exec_t, resmgrd_runtime_t;
+            type resmgrd_etc_t;
+          '';
+          content = ''
+            allow $1 resmgrd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, resmgrd_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to resmgrd over a unix domain
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`resmgr_stream_connect',`
-      	gen_require(`
-      		type resmgrd_runtime_t, resmgrd_t;
-      	')
+            init_startstop_service($1, $2, resmgrd_t, resmgrd_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, resmgrd_runtime_t, resmgrd_runtime_t, resmgrd_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, resmgrd_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an resmgr environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`resmgr_admin',`
-      	gen_require(`
-      		type resmgrd_t, resmgrd_initrc_exec_t, resmgrd_runtime_t;
-      		type resmgrd_etc_t;
-      	')
-
-      	allow $1 resmgrd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, resmgrd_t)
-
-      	init_startstop_service($1, $2, resmgrd_t, resmgrd_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, resmgrd_etc_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, resmgrd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, resmgrd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(resmgr)
 

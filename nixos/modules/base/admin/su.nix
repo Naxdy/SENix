@@ -3,325 +3,330 @@
 { lib, ... }: {
   config.security.selinux.modules.su = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Run shells with substitute user and group.</summary>
+    interface = {
+      summary = "Run shells with substitute user and group.";
+      exports = {
+        "su_restricted_domain_template" = {
+          type = "template";
+          summary = "Restricted su domain template.";
+          desc = ''
+            <p>
+            This template creates a derived domain which is allowed
+            to change the linux user id, to run shells as a different
+            user.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "userdomain_prefix";
+              description = ''
+                The prefix of the user domain (e.g., user
+                is the prefix for user_t).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "The type of the user domain.";
+            };
+            "$3" = {
+              name = "user_role";
+              description = "The role associated with the user domain.";
+            };
+          };
+          gen_require = ''
+            type su_exec_t;
+            attribute sudomain;
+          '';
+          content = ''
+            type $1_su_t, sudomain;
+            domain_entry_file($1_su_t, su_exec_t)
+            domain_type($1_su_t)
+            domain_interactive_fd($1_su_t)
+            role $3 types $1_su_t;
 
-      #######################################
-      ## <summary>
-      ##	Restricted su domain template.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	This template creates a derived domain which is allowed
-      ##	to change the linux user id, to run shells as a different
-      ##	user.
-      ##	</p>
-      ## </desc>
-      ## <param name="userdomain_prefix">
-      ##	<summary>
-      ##	The prefix of the user domain (e.g., user
-      ##	is the prefix for user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	The type of the user domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_role">
-      ##	<summary>
-      ##	The role associated with the user domain.
-      ##	</summary>
-      ## </param>
-      #
-      template(`su_restricted_domain_template', `
-      	gen_require(`
-      		type su_exec_t;
-      		attribute sudomain;
-      	')
+            allow $2 $1_su_t:process signal;
+            allow $1_su_t $2:process { sigkill signal };
 
-      	type $1_su_t, sudomain;
-      	domain_entry_file($1_su_t, su_exec_t)
-      	domain_type($1_su_t)
-      	domain_interactive_fd($1_su_t)
-      	role $3 types $1_su_t;
+            allow $1_su_t self:capability { audit_control audit_write chown dac_override fowner net_bind_service setgid setuid sys_nice sys_resource };
+            dontaudit $1_su_t self:capability sys_tty_config;
+            allow $1_su_t self:key { search write };
+            allow $1_su_t self:process { getcap setexec setrlimit setsched signal };
+            allow $1_su_t self:fifo_file rw_fifo_file_perms;
+            allow $1_su_t self:netlink_audit_socket { create_netlink_socket_perms nlmsg_relay };
+            allow $1_su_t self:unix_stream_socket create_stream_socket_perms;
 
-      	allow $2 $1_su_t:process signal;
-      	allow $1_su_t $2:process { sigkill signal };
+            # Transition from the user domain to this domain.
+            domtrans_pattern($2, su_exec_t, $1_su_t)
 
-      	allow $1_su_t self:capability { audit_control audit_write chown dac_override fowner net_bind_service setgid setuid sys_nice sys_resource };
-      	dontaudit $1_su_t self:capability sys_tty_config;
-      	allow $1_su_t self:key { search write };
-      	allow $1_su_t self:process { getcap setexec setrlimit setsched signal };
-      	allow $1_su_t self:fifo_file rw_fifo_file_perms;
-      	allow $1_su_t self:netlink_audit_socket { create_netlink_socket_perms nlmsg_relay };
-      	allow $1_su_t self:unix_stream_socket create_stream_socket_perms;
+            # By default, revert to the calling domain when a shell is executed.
+            corecmd_shell_domtrans($1_su_t,$2)
+            allow $2 $1_su_t:fd use;
+            allow $2 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
+            allow $2 $1_su_t:process sigchld;
 
-      	# Transition from the user domain to this domain.
-      	domtrans_pattern($2, su_exec_t, $1_su_t)
+            kernel_read_system_state($1_su_t)
+            kernel_read_kernel_sysctls($1_su_t)
+            kernel_search_key($1_su_t)
+            kernel_link_key($1_su_t)
 
-      	# By default, revert to the calling domain when a shell is executed.
-      	corecmd_shell_domtrans($1_su_t,$2)
-      	allow $2 $1_su_t:fd use;
-      	allow $2 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
-      	allow $2 $1_su_t:process sigchld;
+            # for SSP
+            dev_read_urand($1_su_t)
 
-      	kernel_read_system_state($1_su_t)
-      	kernel_read_kernel_sysctls($1_su_t)
-      	kernel_search_key($1_su_t)
-      	kernel_link_key($1_su_t)
+            files_read_etc_files($1_su_t)
+            files_read_etc_runtime_files($1_su_t)
+            files_search_var_lib($1_su_t)
+            files_dontaudit_getattr_tmp_dirs($1_su_t)
 
-      	# for SSP
-      	dev_read_urand($1_su_t)
+            # for the rootok check
+            selinux_compute_access_vector($1_su_t)
 
-      	files_read_etc_files($1_su_t)
-      	files_read_etc_runtime_files($1_su_t)
-      	files_search_var_lib($1_su_t)
-      	files_dontaudit_getattr_tmp_dirs($1_su_t)
+            auth_domtrans_chk_passwd($1_su_t)
+            auth_dontaudit_read_shadow($1_su_t)
+            auth_use_pam($1_su_t)
+            auth_create_faillog_files($1_su_t)
+            auth_rw_faillog($1_su_t)
+            auth_setattr_faillog_files($1_su_t)
+            auth_rw_lastlog($1_su_t)
+            auth_write_login_records($1_su_t)
 
-      	# for the rootok check
-      	selinux_compute_access_vector($1_su_t)
+            domain_use_interactive_fds($1_su_t)
 
-      	auth_domtrans_chk_passwd($1_su_t)
-      	auth_dontaudit_read_shadow($1_su_t)
-      	auth_use_pam($1_su_t)
-      	auth_create_faillog_files($1_su_t)
-      	auth_rw_faillog($1_su_t)
-      	auth_setattr_faillog_files($1_su_t)
-      	auth_rw_lastlog($1_su_t)
-      	auth_write_login_records($1_su_t)
+            init_dontaudit_use_fds($1_su_t)
+            init_dontaudit_use_script_ptys($1_su_t)
+            # Write to utmp.
+            init_rw_utmp($1_su_t)
+            init_search_script_keys($1_su_t)
 
-      	domain_use_interactive_fds($1_su_t)
+            logging_send_syslog_msg($1_su_t)
 
-      	init_dontaudit_use_fds($1_su_t)
-      	init_dontaudit_use_script_ptys($1_su_t)
-      	# Write to utmp.
-      	init_rw_utmp($1_su_t)
-      	init_search_script_keys($1_su_t)
+            miscfiles_read_localization($1_su_t)
 
-      	logging_send_syslog_msg($1_su_t)
+            ifdef(`distro_redhat',`
+                    # RHEL5 and possibly newer releases incl. Fedora
+                    auth_domtrans_upd_passwd($1_su_t)
 
-      	miscfiles_read_localization($1_su_t)
+                    optional_policy(`
+                            locallogin_search_keys($1_su_t)
+                    ')
+            ')
 
-      	
+            optional_policy(`
+                    cron_read_pipes($1_su_t)
+            ')
 
-      	optional_policy(`
-      		cron_read_pipes($1_su_t)
-      	')
+            optional_policy(`
+                    kerberos_use($1_su_t)
+            ')
 
-      	optional_policy(`
-      		kerberos_use($1_su_t)
-      	')
+            optional_policy(`
+                    # used when the password has expired
+                    usermanage_read_crack_db($1_su_t)
+            ')
+          '';
+        };
+        "su_role_template" = {
+          type = "template";
+          summary = "The role template for the su module.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type su_exec_t;
+            attribute sudomain;
+          '';
+          content = ''
+            type $1_su_t, sudomain;
+            userdom_user_application_domain($1_su_t, su_exec_t)
+            domain_interactive_fd($1_su_t)
+            role $4 types $1_su_t;
 
-      	optional_policy(`
-      		# used when the password has expired
-      		usermanage_read_crack_db($1_su_t)
-      	')
-      ')
+            allow $1_su_t $2:process { sigkill signal };
 
-      #######################################
-      ## <summary>
-      ##	The role template for the su module.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`su_role_template',`
-      	gen_require(`
-      		type su_exec_t;
-      		attribute sudomain;
-      	')
+            allow $1_su_t self:capability { audit_control audit_write chown dac_override fowner net_bind_service setgid setuid sys_nice sys_resource };
+            dontaudit $1_su_t self:capability { net_admin sys_tty_config };
+            allow $1_su_t self:process { getcap setexec setrlimit setsched signal };
+            allow $1_su_t self:fifo_file rw_fifo_file_perms;
+            allow $1_su_t self:netlink_audit_socket { create_netlink_socket_perms nlmsg_relay };
+            allow $1_su_t self:key { search write };
 
-      	type $1_su_t, sudomain;
-      	userdom_user_application_domain($1_su_t, su_exec_t)
-      	domain_interactive_fd($1_su_t)
-      	role $4 types $1_su_t;
+            # By default, revert to the calling domain when a shell is executed.
+            corecmd_shell_domtrans($1_su_t, $2)
 
-      	allow $1_su_t $2:process { sigkill signal };
+            kernel_read_system_state($1_su_t)
+            kernel_read_kernel_sysctls($1_su_t)
+            kernel_search_key($1_su_t)
+            kernel_link_key($1_su_t)
+            kernel_dontaudit_getattr_proc($1_su_t)
 
-      	allow $1_su_t self:capability { audit_control audit_write chown dac_override fowner net_bind_service setgid setuid sys_nice sys_resource };
-      	dontaudit $1_su_t self:capability { net_admin sys_tty_config };
-      	allow $1_su_t self:process { getcap setexec setrlimit setsched signal };
-      	allow $1_su_t self:fifo_file rw_fifo_file_perms;
-      	allow $1_su_t self:netlink_audit_socket { create_netlink_socket_perms nlmsg_relay };
-      	allow $1_su_t self:key { search write };
+            # for SSP
+            dev_read_urand($1_su_t)
 
-      	# By default, revert to the calling domain when a shell is executed.
-      	corecmd_shell_domtrans($1_su_t, $2)
+            fs_search_auto_mountpoints($1_su_t)
 
-      	kernel_read_system_state($1_su_t)
-      	kernel_read_kernel_sysctls($1_su_t)
-      	kernel_search_key($1_su_t)
-      	kernel_link_key($1_su_t)
-      	kernel_dontaudit_getattr_proc($1_su_t)
+            # needed for pam_rootok
+            selinux_compute_access_vector($1_su_t)
+            selinux_use_status_page($1_su_t)
 
-      	# for SSP
-      	dev_read_urand($1_su_t)
+            auth_domtrans_chk_passwd($1_su_t)
+            auth_dontaudit_read_shadow($1_su_t)
+            auth_use_pam($1_su_t)
+            auth_create_faillog_files($1_su_t)
+            auth_rw_faillog($1_su_t)
+            auth_setattr_faillog_files($1_su_t)
+            auth_rw_lastlog($1_su_t)
+            auth_write_login_records($1_su_t)
 
-      	fs_search_auto_mountpoints($1_su_t)
+            corecmd_search_bin($1_su_t)
 
-      	# needed for pam_rootok
-      	selinux_compute_access_vector($1_su_t)
-      	selinux_use_status_page($1_su_t)
+            domain_use_interactive_fds($1_su_t)
 
-      	auth_domtrans_chk_passwd($1_su_t)
-      	auth_dontaudit_read_shadow($1_su_t)
-      	auth_use_pam($1_su_t)
-      	auth_create_faillog_files($1_su_t)
-      	auth_rw_faillog($1_su_t)
-      	auth_setattr_faillog_files($1_su_t)
-      	auth_rw_lastlog($1_su_t)
-      	auth_write_login_records($1_su_t)
+            files_read_etc_files($1_su_t)
+            files_read_etc_runtime_files($1_su_t)
+            files_search_var_lib($1_su_t)
+            files_dontaudit_getattr_tmp_dirs($1_su_t)
 
-      	corecmd_search_bin($1_su_t)
+            init_dontaudit_use_fds($1_su_t)
+            init_dontaudit_read_state($1_su_t)
+            # Write to utmp.
+            init_rw_utmp($1_su_t)
 
-      	domain_use_interactive_fds($1_su_t)
+            mls_file_write_all_levels($1_su_t)
 
-      	files_read_etc_files($1_su_t)
-      	files_read_etc_runtime_files($1_su_t)
-      	files_search_var_lib($1_su_t)
-      	files_dontaudit_getattr_tmp_dirs($1_su_t)
+            logging_send_syslog_msg($1_su_t)
 
-      	init_dontaudit_use_fds($1_su_t)
-      	init_dontaudit_read_state($1_su_t)
-      	# Write to utmp.
-      	init_rw_utmp($1_su_t)
+            miscfiles_read_localization($1_su_t)
 
-      	mls_file_write_all_levels($1_su_t)
+            # pam_unix is linked against libselinux
+            seutil_libselinux_linked($1_su_t)
 
-      	logging_send_syslog_msg($1_su_t)
+            userdom_use_user_terminals($1_su_t)
+            userdom_search_user_home_dirs($1_su_t)
 
-      	miscfiles_read_localization($1_su_t)
+            ifdef(`distro_redhat',`
+                    # RHEL5 and possibly newer releases incl. Fedora
+                    auth_domtrans_upd_passwd($1_su_t)
 
-      	# pam_unix is linked against libselinux
-      	seutil_libselinux_linked($1_su_t)
+                    optional_policy(`
+                            locallogin_search_keys($1_su_t)
+                    ')
+            ')
 
-      	userdom_use_user_terminals($1_su_t)
-      	userdom_search_user_home_dirs($1_su_t)
+            optional_policy(`
+                    auth_use_pam_systemd($1_su_t)
+            ')
 
-      	
+            tunable_policy(`su_allow_user_exec_domains',`
+                    allow $3 $1_su_t:process signal;
 
-      	optional_policy(`
-      		auth_use_pam_systemd($1_su_t)
-      	')
+                    allow $1_su_t $3:key search;
 
-      	tunable_policy(`su_allow_user_exec_domains',`
-      		allow $3 $1_su_t:process signal;
+                    # Transition from the user domain to this domain.
+                    domtrans_pattern($3, su_exec_t, $1_su_t)
 
-      		allow $1_su_t $3:key search;
+                    ps_process_pattern($3, $1_su_t)
 
-      		# Transition from the user domain to this domain.
-      		domtrans_pattern($3, su_exec_t, $1_su_t)
+                    allow $3 $1_su_t:fd use;
+                    allow $3 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
+                    allow $3 $1_su_t:process sigchld;
+            ',`
+                    allow $2 $1_su_t:process signal;
 
-      		ps_process_pattern($3, $1_su_t)
+                    allow $1_su_t $2:key search;
 
-      		allow $3 $1_su_t:fd use;
-      		allow $3 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
-      		allow $3 $1_su_t:process sigchld;
-      	',`
-      		allow $2 $1_su_t:process signal;
+                    # Transition from the user domain to this domain.
+                    domtrans_pattern($2, su_exec_t, $1_su_t)
 
-      		allow $1_su_t $2:key search;
+                    ps_process_pattern($2, $1_su_t)
 
-      		# Transition from the user domain to this domain.
-      		domtrans_pattern($2, su_exec_t, $1_su_t)
+                    allow $2 $1_su_t:fd use;
+                    allow $2 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
+                    allow $2 $1_su_t:process sigchld;
+            ')
 
-      		ps_process_pattern($2, $1_su_t)
+            tunable_policy(`allow_polyinstantiation',`
+                    fs_mount_xattr_fs($1_su_t)
+                    fs_unmount_xattr_fs($1_su_t)
+            ')
 
-      		allow $2 $1_su_t:fd use;
-      		allow $2 $1_su_t:fifo_file rw_inherited_fifo_file_perms;
-      		allow $2 $1_su_t:process sigchld;
-      	')
+            tunable_policy(`use_nfs_home_dirs',`
+                    fs_search_nfs($1_su_t)
+            ')
 
-      	tunable_policy(`allow_polyinstantiation',`
-      		fs_mount_xattr_fs($1_su_t)
-      		fs_unmount_xattr_fs($1_su_t)
-      	')
+            tunable_policy(`use_samba_home_dirs',`
+                    fs_search_cifs($1_su_t)
+            ')
 
-      	tunable_policy(`use_nfs_home_dirs',`
-      		fs_search_nfs($1_su_t)
-      	')
+            optional_policy(`
+                    cron_read_pipes($1_su_t)
+            ')
 
-      	tunable_policy(`use_samba_home_dirs',`
-      		fs_search_cifs($1_su_t)
-      	')
+            optional_policy(`
+                    kerberos_use($1_su_t)
+            ')
 
-      	optional_policy(`
-      		cron_read_pipes($1_su_t)
-      	')
+            optional_policy(`
+                    # used when the password has expired
+                    usermanage_read_crack_db($1_su_t)
+            ')
 
-      	optional_policy(`
-      		kerberos_use($1_su_t)
-      	')
-
-      	optional_policy(`
-      		# used when the password has expired
-      		usermanage_read_crack_db($1_su_t)
-      	')
-
-      	# Modify .Xauthority file (via xauth program).
-      	optional_policy(`
-      		xserver_user_home_dir_filetrans_user_xauth($1_su_t)
-      		xserver_domtrans_xauth($1_su_t)
-      	')
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute su in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`su_exec',`
-      	gen_require(`
-      		type su_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, su_exec_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Send signals to all su domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`su_signal_all',`
-      	gen_require(`
-      		attribute sudomain;
-      	')
-
-      	allow $1 sudomain:process signal;
-      ')
-    '';
+            # Modify .Xauthority file (via xauth program).
+            optional_policy(`
+                    xserver_user_home_dir_filetrans_user_xauth($1_su_t)
+                    xserver_domtrans_xauth($1_su_t)
+            ')
+          '';
+        };
+        "su_exec" = {
+          summary = "Execute su in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type su_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, su_exec_t)
+          '';
+        };
+        "su_signal_all" = {
+          summary = "Send signals to all su domains.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute sudomain;
+          '';
+          content = ''
+            allow $1 sudomain:process signal;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(su)
 

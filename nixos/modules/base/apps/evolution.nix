@@ -3,255 +3,241 @@
 { lib, ... }: {
   config.security.selinux.modules.evolution = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Evolution email client.</summary>
+    interface = {
+      summary = "Evolution email client.";
+      exports = {
+        "evolution_role" = {
+          type = "template";
+          summary = "Role access for evolution.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role evolution_roles;
+            type evolution_t, evolution_exec_t, evolution_home_t;
+            type evolution_alarm_t, evolution_alarm_exec_t, evolution_alarm_orbit_tmp_t;
+            type evolution_exchange_t, evolution_exchange_exec_t, evolution_exchange_tmp_t;
+            type evolution_exchange_orbit_tmp_t, evolution_orbit_tmp_t, evolution_server_orbit_tmp_t;
+            type evolution_server_t, evolution_server_exec_t, evolution_webcal_t;
+            type evolution_webcal_exec_t, evolution_alarm_tmpfs_t, evolution_exchange_tmpfs_t;
+            type evolution_tmpfs_t, evolution_webcal_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 evolution_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for evolution.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`evolution_role',`
-      	gen_require(`
-      		attribute_role evolution_roles;
-      		type evolution_t, evolution_exec_t, evolution_home_t;
-      		type evolution_alarm_t, evolution_alarm_exec_t, evolution_alarm_orbit_tmp_t;
-      		type evolution_exchange_t, evolution_exchange_exec_t, evolution_exchange_tmp_t;
-      		type evolution_exchange_orbit_tmp_t, evolution_orbit_tmp_t, evolution_server_orbit_tmp_t;
-      		type evolution_server_t, evolution_server_exec_t, evolution_webcal_t;
-      		type evolution_webcal_exec_t, evolution_alarm_tmpfs_t, evolution_exchange_tmpfs_t;
-      		type evolution_tmpfs_t, evolution_webcal_tmpfs_t;
-      	')
+            domtrans_pattern($3, evolution_exec_t, evolution_t)
+            domtrans_pattern($3, evolution_alarm_exec_t, evolution_alarm_t)
+            domtrans_pattern($3, evolution_exchange_exec_t, evolution_exchange_t)
+            domtrans_pattern($3, evolution_server_exec_t, evolution_server_t)
+            domtrans_pattern($3, evolution_webcal_exec_t, evolution_webcal_t)
 
-      	roleattribute $4 evolution_roles;
+            allow $3 { evolution_t evolution_alarm_t evolution_exchange_t evolution_server_t evolution_webcal_t }:process { noatsecure ptrace signal_perms };
+            ps_process_pattern($3, { evolution_t evolution_alarm_t evolution_exchange_t })
+            ps_process_pattern($3, { evolution_server_t evolution_webcal_t })
 
-      	domtrans_pattern($3, evolution_exec_t, evolution_t)
-      	domtrans_pattern($3, evolution_alarm_exec_t, evolution_alarm_t)
-      	domtrans_pattern($3, evolution_exchange_exec_t, evolution_exchange_t)
-      	domtrans_pattern($3, evolution_server_exec_t, evolution_server_t)
-      	domtrans_pattern($3, evolution_webcal_exec_t, evolution_webcal_t)
+            allow evolution_t $3:dir search_dir_perms;
+            allow evolution_t $3:file read_file_perms;
+            allow evolution_t $3:lnk_file read_lnk_file_perms;
 
-      	allow $3 { evolution_t evolution_alarm_t evolution_exchange_t evolution_server_t evolution_webcal_t }:process { noatsecure ptrace signal_perms };
-      	ps_process_pattern($3, { evolution_t evolution_alarm_t evolution_exchange_t })
-      	ps_process_pattern($3, { evolution_server_t evolution_webcal_t })
+            allow $2 evolution_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 evolution_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 evolution_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-      	allow evolution_t $3:dir search_dir_perms;
-      	allow evolution_t $3:file read_file_perms;
-      	allow evolution_t $3:lnk_file read_lnk_file_perms;
+            userdom_user_home_dir_filetrans($2, evolution_home_t, dir, ".camel_certs")
+            userdom_user_home_dir_filetrans($2, evolution_home_t, dir, ".evolution")
 
-      	allow $2 evolution_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 evolution_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 evolution_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 evolution_exchange_tmp_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { evolution_alarm_orbit_tmp_t evolution_exchange_orbit_tmp_t evolution_orbit_tmp_t evolution_server_orbit_tmp_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	userdom_user_home_dir_filetrans($2, evolution_home_t, dir, ".camel_certs")
-      	userdom_user_home_dir_filetrans($2, evolution_home_t, dir, ".evolution")
+            allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
 
-      	allow $2 evolution_exchange_tmp_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { evolution_alarm_orbit_tmp_t evolution_exchange_orbit_tmp_t evolution_orbit_tmp_t evolution_server_orbit_tmp_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            allow { evolution_t evolution_exchange_t } $3:unix_stream_socket connectto;
 
-      	allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-      	allow $2 { evolution_alarm_tmpfs_t evolution_exchange_tmpfs_t evolution_tmpfs_t evolution_webcal_tmpfs_t }:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            stream_connect_pattern($3, evolution_orbit_tmp_t, evolution_orbit_tmp_t, evolution_t)
+            stream_connect_pattern($3, evolution_exchange_orbit_tmp_t, evolution_exchange_orbit_tmp_t, evolution_exchange_t)
 
-      	allow { evolution_t evolution_exchange_t } $3:unix_stream_socket connectto;
+            optional_policy(`
+                    evolution_dbus_chat($3)
+                    evolution_alarm_dbus_chat($3)
+            ')
 
-      	stream_connect_pattern($3, evolution_orbit_tmp_t, evolution_orbit_tmp_t, evolution_t)
-      	stream_connect_pattern($3, evolution_exchange_orbit_tmp_t, evolution_exchange_orbit_tmp_t, evolution_exchange_t)
-
-      	optional_policy(`
-      		evolution_dbus_chat($3)
-      		evolution_alarm_dbus_chat($3)
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, evolution_t)
-      		systemd_user_app_status($1, evolution_alarm_t)
-      		systemd_user_app_status($1, evolution_exchange_t)
-      		systemd_user_app_status($1, evolution_server_t)
-      		systemd_user_app_status($1, evolution_webcal_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the evolution home
-      ##	directories with a private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	Private file type.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_home_filetrans',`
-      	gen_require(`
-      		type evolution_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	filetrans_pattern($1, evolution_home_t, $2, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read evolution home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_read_home_files',`
-      	gen_require(`
-      		type evolution_home_t;
-      	')
-
-      	read_files_pattern($1, evolution_home_t, evolution_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to evolution using a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_stream_connect',`
-      	gen_require(`
-      		type evolution_t, evolution_orbit_tmp_t;
-      	')
-
-
-      	files_search_tmp($1)
-      	stream_connect_pattern($1, evolution_orbit_tmp_t, evolution_orbit_tmp_t, evolution_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read evolution orbit temporary
-      ##	files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_read_orbit_tmp_files',`
-      	gen_require(`
-      		type evolution_orbit_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	read_files_pattern($1, evolution_orbit_tmp_t, evolution_orbit_tmp_t)
-      ')
-
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	evolution over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_dbus_chat',`
-      	gen_require(`
-      		type evolution_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 evolution_t:dbus send_msg;
-      	allow evolution_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	evolution_alarm over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_alarm_dbus_chat',`
-      	gen_require(`
-      		type evolution_alarm_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 evolution_alarm_t:dbus send_msg;
-      	allow evolution_alarm_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make a domain transition to the
-      ##	evolution target domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`evolution_domtrans',`
-      	gen_require(`
-      		type evolution_t, evolution_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, evolution_exec_t, evolution_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, evolution_t)
+                    systemd_user_app_status($1, evolution_alarm_t)
+                    systemd_user_app_status($1, evolution_exchange_t)
+                    systemd_user_app_status($1, evolution_server_t)
+                    systemd_user_app_status($1, evolution_webcal_t)
+            ')
+          '';
+        };
+        "evolution_home_filetrans" = {
+          summary = ''
+            Create objects in the evolution home
+            directories with a private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "Private file type.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type evolution_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            filetrans_pattern($1, evolution_home_t, $2, $3, $4)
+          '';
+        };
+        "evolution_read_home_files" = {
+          summary = "Read evolution home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_home_t;
+          '';
+          content = ''
+            read_files_pattern($1, evolution_home_t, evolution_home_t)
+          '';
+        };
+        "evolution_stream_connect" = {
+          summary = ''
+            Connect to evolution using a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_t, evolution_orbit_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            stream_connect_pattern($1, evolution_orbit_tmp_t, evolution_orbit_tmp_t, evolution_t)
+          '';
+        };
+        "evolution_read_orbit_tmp_files" = {
+          summary = ''
+            Read evolution orbit temporary
+            files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_orbit_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_files_pattern($1, evolution_orbit_tmp_t, evolution_orbit_tmp_t)
+          '';
+        };
+        "evolution_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            evolution over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 evolution_t:dbus send_msg;
+            allow evolution_t $1:dbus send_msg;
+          '';
+        };
+        "evolution_alarm_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            evolution_alarm over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_alarm_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 evolution_alarm_t:dbus send_msg;
+            allow evolution_alarm_t $1:dbus send_msg;
+          '';
+        };
+        "evolution_domtrans" = {
+          summary = ''
+            Make a domain transition to the
+            evolution target domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type evolution_t, evolution_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, evolution_exec_t, evolution_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(evolution)
 

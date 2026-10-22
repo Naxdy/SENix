@@ -3,50 +3,50 @@
 { lib, ... }: {
   config.security.selinux.modules.gatekeeper = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>OpenH.323 Voice-Over-IP Gatekeeper.</summary>
+    interface = {
+      summary = "OpenH.323 Voice-Over-IP Gatekeeper.";
+      exports = {
+        "gatekeeper_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an gatekeeper environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type gatekeeper_t, gatekeeper_etc_t, gatekeeper_log_t;
+            type gatekeeper_runtime_t, gatekeeper_tmp_t, gatekeeper_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 gatekeeper_t:process { ptrace signal_perms };
+            ps_process_pattern($1, gatekeeper_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an gatekeeper environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`gatekeeper_admin',`
-      	gen_require(`
-      		type gatekeeper_t, gatekeeper_etc_t, gatekeeper_log_t;
-      		type gatekeeper_runtime_t, gatekeeper_tmp_t, gatekeeper_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, gatekeeper_t, gatekeeper_initrc_exec_t)
 
-      	allow $1 gatekeeper_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, gatekeeper_t)
+            files_search_etc($1)
+            admin_pattern($1, gatekeeper_etc_t)
 
-      	init_startstop_service($1, $2, gatekeeper_t, gatekeeper_initrc_exec_t)
+            logging_search_logs($1)
+            admin_pattern($1, gatekeeper_log_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, gatekeeper_etc_t)
+            files_search_tmp($1)
+            admin_pattern($1, gatekeeper_tmp_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, gatekeeper_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, gatekeeper_tmp_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, gatekeeper_runtime_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, gatekeeper_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gatekeeper)
 

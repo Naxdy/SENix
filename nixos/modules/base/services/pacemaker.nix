@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.pacemaker = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>A scalable high-availability cluster resource manager.</summary>
+    interface = {
+      summary = "A scalable high-availability cluster resource manager.";
+      exports = {
+        "pacemaker_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pacemaker environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pacemaker_t, pacemaker_initrc_exec_t, pacemaker_var_lib_t;
+            type pacemaker_runtime_t;
+          '';
+          content = ''
+            allow $1 pacemaker_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pacemaker_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pacemaker environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pacemaker_admin',`
-      	gen_require(`
-      		type pacemaker_t, pacemaker_initrc_exec_t, pacemaker_var_lib_t;
-      		type pacemaker_runtime_t;
-      	')
+            init_startstop_service($1, $2, pacemaker_t, pacemaker_initrc_exec_t)
 
-      	allow $1 pacemaker_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pacemaker_t)
+            files_search_var_lib($1)
+            admin_pattern($1, pacemaker_var_lib_t)
 
-      	init_startstop_service($1, $2, pacemaker_t, pacemaker_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, pacemaker_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, pacemaker_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, pacemaker_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pacemaker)
 

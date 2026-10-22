@@ -3,110 +3,106 @@
 { lib, ... }: {
   config.security.selinux.modules.xscreensaver = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Modular screen saver and locker for X11.</summary>
+    interface = {
+      summary = "Modular screen saver and locker for X11.";
+      exports = {
+        "xscreensaver_role" = {
+          type = "template";
+          summary = "Role access for xscreensaver.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role xscreensaver_roles;
+            attribute_role xscreensaver_helper_roles;
+            type xscreensaver_t, xscreensaver_exec_t;
+            type xscreensaver_helper_t;
+            type xscreensaver_config_t, xscreensaver_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 xscreensaver_roles;
+            roleattribute $4 xscreensaver_helper_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for xscreensaver.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`xscreensaver_role',`
-      	gen_require(`
-      		attribute_role xscreensaver_roles;
-      		attribute_role xscreensaver_helper_roles;
-      		type xscreensaver_t, xscreensaver_exec_t;
-      		type xscreensaver_helper_t;
-      		type xscreensaver_config_t, xscreensaver_tmpfs_t;
-      	')
+            domtrans_pattern($3, xscreensaver_exec_t, xscreensaver_t)
 
-      	roleattribute $4 xscreensaver_roles;
-      	roleattribute $4 xscreensaver_helper_roles;
+            allow $3 xscreensaver_t:process { ptrace signal_perms };
+            ps_process_pattern($3, xscreensaver_t)
 
-      	domtrans_pattern($3, xscreensaver_exec_t, xscreensaver_t)
+            allow $2 xscreensaver_config_t:file { manage_file_perms relabel_file_perms };
 
-      	allow $3 xscreensaver_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, xscreensaver_t)
+            allow $2 xscreensaver_tmpfs_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 xscreensaver_tmpfs_t:file { manage_file_perms relabel_file_perms };
 
-      	allow $2 xscreensaver_config_t:file { manage_file_perms relabel_file_perms };
+            allow xscreensaver_helper_t $3:fd use;
 
-      	allow $2 xscreensaver_tmpfs_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 xscreensaver_tmpfs_t:file { manage_file_perms relabel_file_perms };
-
-      	allow xscreensaver_helper_t $3:fd use;
-
-      	optional_policy(`
-      		systemd_user_app_status($1, xscreensaver_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make a domain transition to the
-      ##	xscreensaver target domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xscreensaver_domtrans',`
-      	gen_require(`
-      		type xscreensaver_t, xscreensaver_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, xscreensaver_exec_t, xscreensaver_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute xscreensaver in the xscreensaver
-      ##	domain, and allow the specified role
-      ##	the xscreensaver domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xscreensaver_run',`
-      	gen_require(`
-      		attribute_role xscreensaver_roles;
-      	')
-
-      	xscreensaver_domtrans($1)
-      	roleattribute $2 xscreensaver_roles;
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, xscreensaver_t)
+            ')
+          '';
+        };
+        "xscreensaver_domtrans" = {
+          summary = ''
+            Make a domain transition to the
+            xscreensaver target domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xscreensaver_t, xscreensaver_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, xscreensaver_exec_t, xscreensaver_t)
+          '';
+        };
+        "xscreensaver_run" = {
+          summary = ''
+            Execute xscreensaver in the xscreensaver
+            domain, and allow the specified role
+            the xscreensaver domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role xscreensaver_roles;
+          '';
+          content = ''
+            xscreensaver_domtrans($1)
+            roleattribute $2 xscreensaver_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xscreensaver)
 

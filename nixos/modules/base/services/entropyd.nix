@@ -3,40 +3,40 @@
 { lib, ... }: {
   config.security.selinux.modules.entropyd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Generate entropy from audio input.</summary>
+    interface = {
+      summary = "Generate entropy from audio input.";
+      exports = {
+        "entropyd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an entropyd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type entropyd_t, entropyd_initrc_exec_t, entropyd_runtime_t;
+          '';
+          content = ''
+            allow $1 entropyd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, entropyd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an entropyd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`entropyd_admin',`
-      	gen_require(`
-      		type entropyd_t, entropyd_initrc_exec_t, entropyd_runtime_t;
-      	')
+            init_startstop_service($1, $2, entropyd_t, entropyd_initrc_exec_t)
 
-      	allow $1 entropyd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, entropyd_t)
-
-      	init_startstop_service($1, $2, entropyd_t, entropyd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, entropyd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, entropyd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(entropyd)
 

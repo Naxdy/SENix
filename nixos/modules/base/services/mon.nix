@@ -3,45 +3,41 @@
 { lib, ... }: {
   config.security.selinux.modules.mon = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>mon network monitoring daemon.</summary>
-
-      ######################################
-      ## <summary>
-      ##      dontaudit using an inherited fd from mon_t
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mon_dontaudit_use_fds',`
-      	gen_require(`
-      		type mon_t;
-      	')
-
-      	dontaudit $1 mon_t:fd use;
-      ')
-
-      ######################################
-      ## <summary>
-      ##      dontaudit searching /var/lib/mon
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mon_dontaudit_search_var_lib',`
-      	gen_require(`
-      		type mon_var_lib_t;
-      	')
-
-      	dontaudit $1 mon_var_lib_t:dir search;
-      ')
-    '';
+    interface = {
+      summary = "mon network monitoring daemon.";
+      exports = {
+        "mon_dontaudit_use_fds" = {
+          summary = "dontaudit using an inherited fd from mon_t";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit";
+            };
+          };
+          gen_require = ''
+            type mon_t;
+          '';
+          content = ''
+            dontaudit $1 mon_t:fd use;
+          '';
+        };
+        "mon_dontaudit_search_var_lib" = {
+          summary = "dontaudit searching /var/lib/mon";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit";
+            };
+          };
+          gen_require = ''
+            type mon_var_lib_t;
+          '';
+          content = ''
+            dontaudit $1 mon_var_lib_t:dir search;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mon)
 

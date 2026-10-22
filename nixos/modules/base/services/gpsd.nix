@@ -3,108 +3,100 @@
 { lib, ... }: {
   config.security.selinux.modules.gpsd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>gpsd monitor daemon.</summary>
+    interface = {
+      summary = "gpsd monitor daemon.";
+      exports = {
+        "gpsd_domtrans" = {
+          summary = "Execute a domain transition to run gpsd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type gpsd_t, gpsd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, gpsd_exec_t, gpsd_t)
+          '';
+        };
+        "gpsd_run" = {
+          summary = ''
+            Execute gpsd in the gpsd domain, and
+            allow the specified role the gpsd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role gpsd_roles;
+          '';
+          content = ''
+            gpsd_domtrans($1)
+            roleattribute $2 gpsd_roles;
+          '';
+        };
+        "gpsd_rw_shm" = {
+          summary = "Read and write gpsd shared memory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpsd_t, gpsd_tmpfs_t;
+          '';
+          content = ''
+            allow $1 gpsd_t:shm rw_shm_perms;
+            allow $1 gpsd_tmpfs_t:dir list_dir_perms;
+            rw_files_pattern($1, gpsd_tmpfs_t, gpsd_tmpfs_t)
+            read_lnk_files_pattern($1, gpsd_tmpfs_t, gpsd_tmpfs_t)
+            fs_search_tmpfs($1)
+          '';
+        };
+        "gpsd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an gpsd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type gpsd_t, gpsd_initrc_exec_t, gpsd_runtime_t;
+          '';
+          content = ''
+            allow $1 gpsd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, gpsd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run gpsd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpsd_domtrans',`
-      	gen_require(`
-      		type gpsd_t, gpsd_exec_t;
-      	')
+            init_startstop_service($1, $2, gpsd_t, gpsd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, gpsd_exec_t, gpsd_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, gpsd_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute gpsd in the gpsd domain, and
-      ##	allow the specified role the gpsd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpsd_run',`
-      	gen_require(`
-      		attribute_role gpsd_roles;
-      	')
-
-      	gpsd_domtrans($1)
-      	roleattribute $2 gpsd_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write gpsd shared memory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gpsd_rw_shm',`
-      	gen_require(`
-      		type gpsd_t, gpsd_tmpfs_t;
-      	')
-
-      	allow $1 gpsd_t:shm rw_shm_perms;
-      	allow $1 gpsd_tmpfs_t:dir list_dir_perms;
-      	rw_files_pattern($1, gpsd_tmpfs_t, gpsd_tmpfs_t)
-      	read_lnk_files_pattern($1, gpsd_tmpfs_t, gpsd_tmpfs_t)
-      	fs_search_tmpfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an gpsd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`gpsd_admin',`
-      	gen_require(`
-      		type gpsd_t, gpsd_initrc_exec_t, gpsd_runtime_t;
-      	')
-
-      	allow $1 gpsd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, gpsd_t)
-
-      	init_startstop_service($1, $2, gpsd_t, gpsd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, gpsd_runtime_t)
-
-      	gpsd_run($1, $2)
-      ')
-    '';
+            gpsd_run($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gpsd)
 

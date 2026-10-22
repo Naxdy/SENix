@@ -3,60 +3,57 @@
 { lib, ... }: {
   config.security.selinux.modules.sblim = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Standards Based Linux Instrumentation for Manageability.</summary>
+    interface = {
+      summary = "Standards Based Linux Instrumentation for Manageability.";
+      exports = {
+        "sblim_domtrans_gatherd" = {
+          summary = "Execute gatherd in the gatherd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sblim_gatherd_t, sblim_gatherd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, sblim_gatherd_exec_t, sblim_gatherd_t)
+          '';
+        };
+        "sblim_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an sblim environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute sblim_domain;
+            type sblim_initrc_exec_t, sblim_runtime_t;
+          '';
+          content = ''
+            allow $1 sblim_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, sblim_domain)
 
-      ########################################
-      ## <summary>
-      ##	Execute gatherd in the gatherd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sblim_domtrans_gatherd',`
-      	gen_require(`
-      		type sblim_gatherd_t, sblim_gatherd_exec_t;
-      	')
+            init_startstop_service($1, $2, sblim_domain, sblim_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, sblim_gatherd_exec_t, sblim_gatherd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an sblim environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sblim_admin',`
-      	gen_require(`
-      		attribute sblim_domain;
-      		type sblim_initrc_exec_t, sblim_runtime_t;
-      	')
-
-      	allow $1 sblim_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, sblim_domain)
-
-      	init_startstop_service($1, $2, sblim_domain, sblim_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, sblim_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, sblim_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sblim)
 

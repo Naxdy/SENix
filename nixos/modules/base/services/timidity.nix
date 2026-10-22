@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.timidity = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>MIDI to WAV converter and player configured as a service.</summary>
-    '';
+    interface = {
+      summary = "MIDI to WAV converter and player configured as a service.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(timidity)
 

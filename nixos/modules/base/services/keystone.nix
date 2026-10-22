@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.keystone = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Python implementation of the OpenStack identity service API.</summary>
+    interface = {
+      summary = "Python implementation of the OpenStack identity service API.";
+      exports = {
+        "keystone_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an keystone environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type keystone_t, keystone_initrc_exec_t, keystone_log_t;
+            type keystone_var_lib_t, keystone_tmp_t;
+          '';
+          content = ''
+            allow $1 keystone_t:process { ptrace signal_perms };
+            ps_process_pattern($1, keystone_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an keystone environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`keystone_admin',`
-      	gen_require(`
-      		type keystone_t, keystone_initrc_exec_t, keystone_log_t;
-      		type keystone_var_lib_t, keystone_tmp_t;
-      	')
+            init_startstop_service($1, $2, keystone_t, keystone_initrc_exec_t)
 
-      	allow $1 keystone_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, keystone_t)
+            logging_search_logs($1)
+            admin_pattern($1, keystone_log_t)
 
-      	init_startstop_service($1, $2, keystone_t, keystone_initrc_exec_t)
+            files_search_var_lib($1)
+            admin_pattern($1, keystone_var_lib_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, keystone_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, keystone_var_lib_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, keystone_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, keystone_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(keystone)
 

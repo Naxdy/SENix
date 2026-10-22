@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.postfixpolicyd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Postfix policy server.</summary>
+    interface = {
+      summary = "Postfix policy server.";
+      exports = {
+        "postfixpolicyd_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            an postfixpolicyd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type postfix_policyd_t, postfix_policyd_conf_t;
+            type postfix_policyd_runtime_t, postfix_policyd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 postfix_policyd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, postfix_policyd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to administrate
-      ##	an postfixpolicyd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`postfixpolicyd_admin',`
-      	gen_require(`
-      		type postfix_policyd_t, postfix_policyd_conf_t;
-      		type postfix_policyd_runtime_t, postfix_policyd_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, postfix_policyd_t, postfix_policyd_initrc_exec_t)
 
-      	allow $1 postfix_policyd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, postfix_policyd_t)
+            files_list_etc($1)
+            admin_pattern($1, postfix_policyd_conf_t)
 
-      	init_startstop_service($1, $2, postfix_policyd_t, postfix_policyd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, postfix_policyd_conf_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, postfix_policyd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, postfix_policyd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(postfixpolicyd)
 

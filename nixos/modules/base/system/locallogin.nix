@@ -3,174 +3,149 @@
 { lib, ... }: {
   config.security.selinux.modules.locallogin = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for local logins.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute local logins in the local login domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_domtrans',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	auth_domtrans_login_program($1, local_login_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow calling domain to read locallogin state.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed permission.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_read_state',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	kernel_search_proc($1)
-      	allow $1 local_login_t:file read_file_perms;
-      	allow $1 local_login_t:lnk_file read_lnk_file_perms;
-      	allow $1 local_login_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow processes to inherit local login file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_use_fds',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	allow $1 local_login_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Use PIDFDs from local login.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_use_pidfds',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	allow $1 local_login_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to inherit local login file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_dontaudit_use_fds',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	dontaudit $1 local_login_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send a null signal to local login processes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_signull',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	allow $1 local_login_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search for key.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_search_keys',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	allow $1 local_login_t:key search;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow link to the local_login key ring.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_link_keys',`
-      	gen_require(`
-      		type local_login_t;
-      	')
-
-      	allow $1 local_login_t:key link;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute single-user logins in the single-user login domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locallogin_domtrans_sulogin',`
-      	gen_require(`
-      		type sulogin_exec_t, sulogin_t;
-      	')
-
-      	domtrans_pattern($1, sulogin_exec_t, sulogin_t)
-      ')
-    '';
+    interface = {
+      summary = "Policy for local logins.";
+      exports = {
+        "locallogin_domtrans" = {
+          summary = "Execute local logins in the local login domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            auth_domtrans_login_program($1, local_login_t)
+          '';
+        };
+        "locallogin_read_state" = {
+          summary = "Allow calling domain to read locallogin state.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed permission.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            kernel_search_proc($1)
+            allow $1 local_login_t:file read_file_perms;
+            allow $1 local_login_t:lnk_file read_lnk_file_perms;
+            allow $1 local_login_t:dir list_dir_perms;
+          '';
+        };
+        "locallogin_use_fds" = {
+          summary = "Allow processes to inherit local login file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            allow $1 local_login_t:fd use;
+          '';
+        };
+        "locallogin_use_pidfds" = {
+          summary = "Use PIDFDs from local login.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            allow $1 local_login_t:fd use;
+          '';
+        };
+        "locallogin_dontaudit_use_fds" = {
+          summary = "Do not audit attempts to inherit local login file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            dontaudit $1 local_login_t:fd use;
+          '';
+        };
+        "locallogin_signull" = {
+          summary = "Send a null signal to local login processes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            allow $1 local_login_t:process signull;
+          '';
+        };
+        "locallogin_search_keys" = {
+          summary = "Search for key.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            allow $1 local_login_t:key search;
+          '';
+        };
+        "locallogin_link_keys" = {
+          summary = "Allow link to the local_login key ring.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type local_login_t;
+          '';
+          content = ''
+            allow $1 local_login_t:key link;
+          '';
+        };
+        "locallogin_domtrans_sulogin" = {
+          summary = "Execute single-user logins in the single-user login domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sulogin_exec_t, sulogin_t;
+          '';
+          content = ''
+            domtrans_pattern($1, sulogin_exec_t, sulogin_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(locallogin)
 

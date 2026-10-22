@@ -3,88 +3,85 @@
 { lib, ... }: {
   config.security.selinux.modules.lightsquid = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Log analyzer for squid proxy.</summary>
+    interface = {
+      summary = "Log analyzer for squid proxy.";
+      exports = {
+        "lightsquid_domtrans" = {
+          summary = ''
+            Execute the lightsquid program in
+            the lightsquid domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type lightsquid_t, lightsquid_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, lightsquid_exec_t, lightsquid_t)
+          '';
+        };
+        "lightsquid_run" = {
+          summary = ''
+            Execute lightsquid in the
+            lightsquid domain, and allow the
+            specified role the lightsquid domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role lightsquid_roles;
+          '';
+          content = ''
+            lightsquid_domtrans($1)
+            roleattribute $2 lightsquid_roles;
+          '';
+        };
+        "lightsquid_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an lightsquid environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type lightsquid_t, lightsquid_rw_content_t;
+          '';
+          content = ''
+            allow $1 lightsquid_t:process { ptrace signal_perms };
+            ps_process_pattern($1, lightsquid_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute the lightsquid program in
-      ##	the lightsquid domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lightsquid_domtrans',`
-      	gen_require(`
-      		type lightsquid_t, lightsquid_exec_t;
-      	')
+            lightsquid_run($1, $2)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, lightsquid_exec_t, lightsquid_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, lightsquid_rw_content_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute lightsquid in the
-      ##	lightsquid domain, and allow the
-      ##	specified role the lightsquid domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`lightsquid_run',`
-      	gen_require(`
-      		attribute_role lightsquid_roles;
-      	')
-
-      	lightsquid_domtrans($1)
-      	roleattribute $2 lightsquid_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an lightsquid environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lightsquid_admin',`
-      	gen_require(`
-      		type lightsquid_t, lightsquid_rw_content_t;
-      	')
-
-      	allow $1 lightsquid_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, lightsquid_t)
-
-      	lightsquid_run($1, $2)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, lightsquid_rw_content_t)
-
-      	apache_list_sys_content($1)
-      ')
-    '';
+            apache_list_sys_content($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(lightsquid)
 

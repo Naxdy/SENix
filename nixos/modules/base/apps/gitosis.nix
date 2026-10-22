@@ -3,95 +3,88 @@
 { lib, ... }: {
   config.security.selinux.modules.gitosis = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Tools for managing and hosting git repositories.</summary>
-
-      #######################################
-      ## <summary>
-      ##	Execute a domain transition to run gitosis.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gitosis_domtrans',`
-      	gen_require(`
-      		type gitosis_t, gitosis_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, gitosis_exec_t, gitosis_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute gitosis-serve in the
-      ##	gitosis domain, and allow the
-      ##	specified role the gitosis domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gitosis_run',`
-      	gen_require(`
-      		attribute_role gitosis_roles;
-      	')
-
-      	gitosis_domtrans($1)
-      	roleattribute $2 gitosis_roles;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read gitosis lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gitosis_read_lib_files',`
-      	gen_require(`
-      		type gitosis_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
-      	read_lnk_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
-      	list_dirs_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	gitosis lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gitosis_manage_lib_files',`
-      	gen_require(`
-      		type gitosis_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
-      ')
-    '';
+    interface = {
+      summary = "Tools for managing and hosting git repositories.";
+      exports = {
+        "gitosis_domtrans" = {
+          summary = "Execute a domain transition to run gitosis.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type gitosis_t, gitosis_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, gitosis_exec_t, gitosis_t)
+          '';
+        };
+        "gitosis_run" = {
+          summary = ''
+            Execute gitosis-serve in the
+            gitosis domain, and allow the
+            specified role the gitosis domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role gitosis_roles;
+          '';
+          content = ''
+            gitosis_domtrans($1)
+            roleattribute $2 gitosis_roles;
+          '';
+        };
+        "gitosis_read_lib_files" = {
+          summary = "Read gitosis lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gitosis_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
+            read_lnk_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
+            list_dirs_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
+          '';
+        };
+        "gitosis_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            gitosis lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gitosis_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, gitosis_var_lib_t, gitosis_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gitosis)
 

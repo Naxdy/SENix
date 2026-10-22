@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.watchdog = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Software watchdog.</summary>
+    interface = {
+      summary = "Software watchdog.";
+      exports = {
+        "watchdog_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an watchdog environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type watchdog_t, watchdog_initrc_exec_t, watchdog_log_t;
+            type watchdog_runtime_t;
+          '';
+          content = ''
+            allow $1 watchdog_t:process { ptrace signal_perms };
+            ps_process_pattern($1, watchdog_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an watchdog environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`watchdog_admin',`
-      	gen_require(`
-      		type watchdog_t, watchdog_initrc_exec_t, watchdog_log_t;
-      		type watchdog_runtime_t;
-      	')
+            init_startstop_service($1, $2, watchdog_t, watchdog_initrc_exec_t)
 
-      	allow $1 watchdog_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, watchdog_t)
+            logging_search_logs($1)
+            admin_pattern($1, watchdog_log_t)
 
-      	init_startstop_service($1, $2, watchdog_t, watchdog_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, watchdog_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, watchdog_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, watchdog_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(watchdog)
 

@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.uptime = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Daemon to record and keep track of system up times.</summary>
+    interface = {
+      summary = "Daemon to record and keep track of system up times.";
+      exports = {
+        "uptime_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an uptime environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type uptimed_t, uptimed_initrc_exec_t, uptimed_etc_t;
+            type uptimed_spool_t, uptimed_runtime_t;
+          '';
+          content = ''
+            allow $1 uptimed_t:process { ptrace signal_perms };
+            ps_process_pattern($1, uptimed_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an uptime environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`uptime_admin',`
-      	gen_require(`
-      		type uptimed_t, uptimed_initrc_exec_t, uptimed_etc_t;
-      		type uptimed_spool_t, uptimed_runtime_t;
-      	')
+            init_startstop_service($1, $2, uptimed_t, uptimed_initrc_exec_t)
 
-      	allow $1 uptimed_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, uptimed_t)
+            files_search_etc($1)
+            admin_pattern($1, uptimed_etc_t)
 
-      	init_startstop_service($1, $2, uptimed_t, uptimed_initrc_exec_t)
+            files_search_spool($1)
+            admin_pattern($1, uptimed_spool_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, uptimed_etc_t)
-
-      	files_search_spool($1)
-      	admin_pattern($1, uptimed_spool_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, uptimed_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, uptimed_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(uptime)
 

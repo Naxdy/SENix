@@ -3,47 +3,43 @@
 { lib, ... }: {
   config.security.selinux.modules.logwatch = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>System log analyzer and reporter.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Read logwatch temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logwatch_read_tmp_files',`
-      	gen_require(`
-      		type logwatch_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 logwatch_tmp_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search logwatch cache directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`logwatch_search_cache_dir',`
-      	gen_require(`
-      		type logwatch_cache_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 logwatch_cache_t:dir search_dir_perms;
-      ')
-    '';
+    interface = {
+      summary = "System log analyzer and reporter.";
+      exports = {
+        "logwatch_read_tmp_files" = {
+          summary = "Read logwatch temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type logwatch_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 logwatch_tmp_t:file read_file_perms;
+          '';
+        };
+        "logwatch_search_cache_dir" = {
+          summary = "Search logwatch cache directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type logwatch_cache_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 logwatch_cache_t:dir search_dir_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(logwatch)
 

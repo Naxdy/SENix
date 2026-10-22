@@ -3,429 +3,377 @@
 { lib, ... }: {
   config.security.selinux.modules.udev = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for udev.</summary>
+    interface = {
+      summary = "Policy for udev.";
+      exports = {
+        "udev_signal" = {
+          summary = "Send generic signals to udev.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            allow $1 udev_t:process signal;
+          '';
+        };
+        "udev_domtrans" = {
+          summary = "Execute udev in the udev domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type udev_t, udev_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, udev_exec_t, udev_t)
+          '';
+        };
+        "udev_run_domain" = {
+          summary = ''
+            Allow udev to execute the specified program in
+            the specified domain.
+          '';
+          desc = ''
+            <p>
+            This is a interface to support the UDEV 'RUN'
+            command.  This will allow the command run by
+            udev to be run in a domain other than udev_t.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to execute in.";
+            };
+            "$2" = {
+              name = "entry_file";
+              description = "Domain entry point file.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            domtrans_pattern(udev_t,$2,$1)
+          '';
+        };
+        "udev_exec" = {
+          summary = "Execute udev in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_exec_t;
+          '';
+          content = ''
+            can_exec($1, udev_exec_t)
+          '';
+        };
+        "udev_helper_domtrans" = {
+          summary = "Execute a udev helper in the udev domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type udev_t, udev_helper_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, udev_helper_exec_t, udev_t)
+          '';
+        };
+        "udev_read_state" = {
+          summary = "Allow process to read udev process state.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            kernel_search_proc($1)
+            allow $1 udev_t:file read_file_perms;
+            allow $1 udev_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "udev_create_kobject_uevent_sockets" = {
+          summary = "Allow domain to create uevent sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            allow $1 udev_t:netlink_kobject_uevent_socket create_socket_perms;
+          '';
+        };
+        "udev_dontaudit_use_fds" = {
+          summary = ''
+            Do not audit attempts to inherit a
+            udev file descriptor.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            dontaudit $1 udev_t:fd use;
+          '';
+        };
+        "udev_dontaudit_rw_dgram_sockets" = {
+          summary = ''
+            Do not audit attempts to read or write
+            to a udev unix datagram socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type udev_t;
+          '';
+          content = ''
+            dontaudit $1 udev_t:unix_dgram_socket { read write };
+          '';
+        };
+        "udev_manage_rules_files" = {
+          summary = "Manage udev rules files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_rules_t;
+          '';
+          content = ''
+            manage_files_pattern($1, udev_rules_t, udev_rules_t)
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to udev.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_signal',`
-      	gen_require(`
-      		type udev_t;
-      	')
+            files_search_etc($1)
 
-      	allow $1 udev_t:process signal;
-      ')
+            udev_search_runtime($1)
+          '';
+        };
+        "udev_relabel_rules_dirs" = {
+          summary = "Relabel udev rules directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_rules_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, udev_rules_t, udev_rules_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute udev in the udev domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_domtrans',`
-      	gen_require(`
-      		type udev_t, udev_exec_t;
-      	')
+            files_search_etc($1)
+          '';
+        };
+        "udev_relabel_rules_files" = {
+          summary = "Relabel udev rules files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_rules_t;
+          '';
+          content = ''
+            relabel_files_pattern($1, udev_rules_t, udev_rules_t)
 
-      	domtrans_pattern($1, udev_exec_t, udev_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow udev to execute the specified program in
-      ##	the specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	This is a interface to support the UDEV 'RUN'
-      ##	command.  This will allow the command run by
-      ##	udev to be run in a domain other than udev_t.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to execute in.
-      ##	</summary>
-      ## </param>
-      ## <param name="entry_file">
-      ##	<summary>
-      ##	Domain entry point file.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_run_domain',`
-      	gen_require(`
-      		type udev_t;
-      	')
-
-      	domtrans_pattern(udev_t,$2,$1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute udev in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_exec',`
-      	gen_require(`
-      		type udev_exec_t;
-      	')
-
-      	can_exec($1, udev_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a udev helper in the udev domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_helper_domtrans',`
-      	gen_require(`
-      		type udev_t, udev_helper_exec_t;
-      	')
-
-      	domtrans_pattern($1, udev_helper_exec_t, udev_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to read udev process state.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_read_state',`
-      	gen_require(`
-      		type udev_t;
-      	')
-
-      	kernel_search_proc($1)
-      	allow $1 udev_t:file read_file_perms;
-      	allow $1 udev_t:lnk_file read_lnk_file_perms;
-      ')
-
-
-      ########################################
-      ## <summary>
-      ##	Allow domain to create uevent sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_create_kobject_uevent_sockets',`
-      	gen_require(`
-      		type udev_t;
-      	')
-
-      	allow $1 udev_t:netlink_kobject_uevent_socket create_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to inherit a
-      ##	udev file descriptor.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_dontaudit_use_fds',`
-      	gen_require(`
-      		type udev_t;
-      	')
-
-      	dontaudit $1 udev_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or write
-      ##	to a udev unix datagram socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_dontaudit_rw_dgram_sockets',`
-      	gen_require(`
-      		type udev_t;
-      	')
-
-      	dontaudit $1 udev_t:unix_dgram_socket { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage udev rules files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_manage_rules_files',`
-      	gen_require(`
-      		type udev_rules_t;
-      	')
-
-      	manage_files_pattern($1, udev_rules_t, udev_rules_t)
-
-      	files_search_etc($1)
-
-      	udev_search_runtime($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel udev rules directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_relabel_rules_dirs',`
-      	gen_require(`
-      		type udev_rules_t;
-      	')
-
-      	relabel_dirs_pattern($1, udev_rules_t, udev_rules_t)
-
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel udev rules files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_relabel_rules_files',`
-      	gen_require(`
-      		type udev_rules_t;
-      	')
-
-      	relabel_files_pattern($1, udev_rules_t, udev_rules_t)
-
-      	files_search_etc($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search through udev runtime dirs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_search_runtime',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	search_dirs_pattern($1, udev_runtime_t, udev_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      List udev runtime dirs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_list_runtime',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	allow $1 udev_runtime_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	udev runtime directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_manage_runtime_dirs',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	files_search_var($1)
-      	manage_dirs_pattern($1, udev_runtime_t, udev_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read udev runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_read_runtime_files',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, udev_runtime_t, udev_runtime_t)
-      	read_lnk_files_pattern($1, udev_runtime_t, udev_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	dontaudit attempts to read/write udev runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_dontaudit_rw_runtime_files',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	dontaudit $1 udev_runtime_t:file { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	udev runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_manage_runtime_files',`
-      	gen_require(`
-      		type udev_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, udev_runtime_t, udev_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute udev admin in the udevadm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_domtrans_udevadm',`
-      	gen_require(`
-      		type udevadm_t, udev_exec_t;
-      	')
-
-      	domtrans_pattern($1, udev_exec_t, udevadm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute udevadm in the udevadm domain, and
-      ##	allow the specified role the udevadm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`udev_run_udevadm',`
-      	gen_require(`
-      		attribute_role udevadm_roles;
-      	')
-
-      	udev_domtrans_udevadm($1)
-      	roleattribute $2 udevadm_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute udevadm in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`udev_exec_udevadm',`
-      	gen_require(`
-      		type udev_exec_t;
-      	')
-
-      	can_exec($1, udev_exec_t)
-      ')
-    '';
+            files_search_etc($1)
+          '';
+        };
+        "udev_search_runtime" = {
+          summary = "Search through udev runtime dirs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            search_dirs_pattern($1, udev_runtime_t, udev_runtime_t)
+          '';
+        };
+        "udev_list_runtime" = {
+          summary = "List udev runtime dirs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 udev_runtime_t:dir list_dir_perms;
+          '';
+        };
+        "udev_manage_runtime_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            udev runtime directories
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            files_search_var($1)
+            manage_dirs_pattern($1, udev_runtime_t, udev_runtime_t)
+          '';
+        };
+        "udev_read_runtime_files" = {
+          summary = "Read udev runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, udev_runtime_t, udev_runtime_t)
+            read_lnk_files_pattern($1, udev_runtime_t, udev_runtime_t)
+          '';
+        };
+        "udev_dontaudit_rw_runtime_files" = {
+          summary = "dontaudit attempts to read/write udev runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            dontaudit $1 udev_runtime_t:file { read write };
+          '';
+        };
+        "udev_manage_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete
+            udev runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, udev_runtime_t, udev_runtime_t)
+          '';
+        };
+        "udev_domtrans_udevadm" = {
+          summary = "Execute udev admin in the udevadm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type udevadm_t, udev_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, udev_exec_t, udevadm_t)
+          '';
+        };
+        "udev_run_udevadm" = {
+          summary = ''
+            Execute udevadm in the udevadm domain, and
+            allow the specified role the udevadm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role udevadm_roles;
+          '';
+          content = ''
+            udev_domtrans_udevadm($1)
+            roleattribute $2 udevadm_roles;
+          '';
+          rolecap = true;
+        };
+        "udev_exec_udevadm" = {
+          summary = "Execute udevadm in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type udev_exec_t;
+          '';
+          content = ''
+            can_exec($1, udev_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(udev)
 

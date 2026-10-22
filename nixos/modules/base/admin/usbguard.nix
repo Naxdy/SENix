@@ -3,49 +3,45 @@
 { lib, ... }: {
   config.security.selinux.modules.usbguard = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>
-      ## Usbguard enforces the USB device authorization policy for all USB
-      ## devices.
-      ## </summary>
-
-      #####################################
-      ## <summary>
-      ##	Connect to usbguard with a unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usbguard_stream_connect',`
-      	gen_require(`
-      		type usbguard_t, usbguard_tmpfs_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, usbguard_tmpfs_t, usbguard_tmpfs_t, usbguard_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	mmap and rw usbguard tmpfs files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`usbguard_mmap_rw_tmpfs',`
-      	gen_require(`
-      		type usbguard_tmpfs_t;
-      	')
-
-      	allow $1 usbguard_tmpfs_t:file mmap_rw_file_perms;
-      ')
-    '';
+    interface = {
+      summary = ''
+        Usbguard enforces the USB device authorization policy for all USB
+        devices.
+      '';
+      exports = {
+        "usbguard_stream_connect" = {
+          summary = "Connect to usbguard with a unix domain stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type usbguard_t, usbguard_tmpfs_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, usbguard_tmpfs_t, usbguard_tmpfs_t, usbguard_t)
+          '';
+        };
+        "usbguard_mmap_rw_tmpfs" = {
+          summary = "mmap and rw usbguard tmpfs files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type usbguard_tmpfs_t;
+          '';
+          content = ''
+            allow $1 usbguard_tmpfs_t:file mmap_rw_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(usbguard)
 

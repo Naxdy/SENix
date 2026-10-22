@@ -3,54 +3,49 @@
 { lib, ... }: {
   config.security.selinux.modules.stunnel = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>SSL Tunneling Proxy.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Define the specified domain as a stunnel inetd service.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type associated with the stunnel inetd service process.
-      ##	</summary>
-      ## </param>
-      ## <param name="entrypoint">
-      ##	<summary>
-      ##	The type associated with the process program.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`stunnel_service_domain',`
-      	gen_require(`
-      		type stunnel_t;
-      	')
-
-      	domtrans_pattern(stunnel_t, $2, $1)
-      	allow $1 stunnel_t:tcp_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read stunnel configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`stunnel_read_config',`
-      	gen_require(`
-      		type stunnel_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 stunnel_etc_t:dir list_dir_perms;
-      	allow $1 stunnel_etc_t:file read_file_perms;
-      	allow $1 stunnel_etc_t:lnk_file read_lnk_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "SSL Tunneling Proxy.";
+      exports = {
+        "stunnel_service_domain" = {
+          summary = "Define the specified domain as a stunnel inetd service.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type associated with the stunnel inetd service process.";
+            };
+            "$2" = {
+              name = "entrypoint";
+              description = "The type associated with the process program.";
+            };
+          };
+          gen_require = ''
+            type stunnel_t;
+          '';
+          content = ''
+            domtrans_pattern(stunnel_t, $2, $1)
+            allow $1 stunnel_t:tcp_socket rw_socket_perms;
+          '';
+        };
+        "stunnel_read_config" = {
+          summary = "Read stunnel configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type stunnel_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 stunnel_etc_t:dir list_dir_perms;
+            allow $1 stunnel_etc_t:file read_file_perms;
+            allow $1 stunnel_etc_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(stunnel)
 

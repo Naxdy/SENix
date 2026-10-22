@@ -3,628 +3,567 @@
 { lib, ... }: {
   config.security.selinux.modules.rpm = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Redhat package manager.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute rpm in the rpm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_domtrans',`
-      	gen_require(`
-      		type rpm_t, rpm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rpm_exec_t, rpm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute debuginfo install
-      ##	in the rpm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_debuginfo_domtrans',`
-      	gen_require(`
-      		type rpm_t, debuginfo_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, debuginfo_exec_t, rpm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rpm scripts in the rpm script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_domtrans_script',`
-      	gen_require(`
-      		type rpm_script_t;
-      	')
-
-      	corecmd_shell_domtrans($1, rpm_script_t)
-
-      	allow rpm_script_t $1:fd use;
-      	allow rpm_script_t $1:fifo_file rw_fifo_file_perms;
-      	allow rpm_script_t $1:process sigchld;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rpm in the rpm domain,
-      ##	and allow the specified roles the
-      ##	rpm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpm_run',`
-      	gen_require(`
-      		attribute_role rpm_roles;
-      	')
-
-      	rpm_domtrans($1)
-      	roleattribute $2 rpm_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the rpm in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_exec',`
-      	gen_require(`
-      		type rpm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, rpm_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to rpm.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_signull',`
-      	gen_require(`
-      		type rpm_t;
-      	')
-
-      	allow $1 rpm_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Inherit and use file descriptors from rpm.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_use_fds',`
-      	gen_require(`
-      		type rpm_t;
-      	')
-
-      	allow $1 rpm_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rpm unnamed pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_read_pipes',`
-      	gen_require(`
-      		type rpm_t;
-      	')
-
-      	allow $1 rpm_t:fifo_file read_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write rpm unnamed pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_rw_pipes',`
-      	gen_require(`
-      		type rpm_t;
-      	')
-
-      	allow $1 rpm_t:fifo_file rw_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	rpm over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_dbus_chat',`
-      	gen_require(`
-      		type rpm_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 rpm_t:dbus send_msg;
-      	allow rpm_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to send and
-      ##	receive messages from rpm over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_dontaudit_dbus_chat',`
-      	gen_require(`
-      		type rpm_t;
-      		class dbus send_msg;
-      	')
-
-      	dontaudit $1 rpm_t:dbus send_msg;
-      	dontaudit rpm_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	rpm script over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_script_dbus_chat',`
-      	gen_require(`
-      		type rpm_script_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 rpm_script_t:dbus send_msg;
-      	allow rpm_script_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search rpm log directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_search_log',`
-      	gen_require(`
-      		type rpm_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 rpm_log_t:dir search_dir_perms;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Append rpm log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_append_log',`
-      	gen_require(`
-      		type rpm_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, rpm_log_t, rpm_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_log',`
-      	gen_require(`
-      		type rpm_log_t;
-      	')
-
-      	logging_rw_generic_log_dirs($1)
-      	allow $1 rpm_log_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Inherit and use rpm script file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_use_script_fds',`
-      	gen_require(`
-      		type rpm_script_t;
-      	')
-
-      	allow $1 rpm_script_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm script temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_script_tmp_files',`
-      	gen_require(`
-      		type rpm_script_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	manage_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Read rpm temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_read_tmp_files',`
-      	gen_require(`
-      		type rpm_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	read_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
-      	read_lnk_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Append rpm temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_append_tmp_files',`
-      	gen_require(`
-      		type rpm_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	append_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_tmp_files',`
-      	gen_require(`
-      		type rpm_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	manage_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rpm script temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_read_script_tmp_files',`
-      	gen_require(`
-      		type rpm_script_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	read_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
-      	read_lnk_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rpm cache content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_read_cache',`
-      	gen_require(`
-      		type rpm_var_cache_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 rpm_var_cache_t:dir list_dir_perms;
-      	read_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
-      	read_lnk_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm cache content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_cache',`
-      	gen_require(`
-      		type rpm_var_cache_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
-      	manage_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
-      	manage_lnk_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rpm lib content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_read_db',`
-      	gen_require(`
-      		type rpm_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 rpm_var_lib_t:dir list_dir_perms;
-      	read_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
-      	read_lnk_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
-      	allow $1 rpm_var_lib_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete rpm lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_delete_db',`
-      	gen_require(`
-      		type rpm_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	delete_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_db',`
-      	gen_require(`
-      		type rpm_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
-      	manage_lnk_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
-      	allow $1 rpm_var_lib_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete rpm lib content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_dontaudit_manage_db',`
-      	gen_require(`
-      		type rpm_var_lib_t;
-      	')
-
-      	dontaudit $1 rpm_var_lib_t:dir rw_dir_perms;
-      	dontaudit $1 rpm_var_lib_t:file manage_file_perms;
-      	dontaudit $1 rpm_var_lib_t:lnk_file manage_lnk_file_perms;
-      	dontaudit $1 rpm_var_lib_t:file map;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rpm runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpm_manage_runtime_files',`
-      	gen_require(`
-      		type rpm_runtime_t;
-      	')
-
-      	manage_files_pattern($1, rpm_runtime_t, rpm_runtime_t)
-      	files_search_runtime($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an rpm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpm_admin',`
-      	gen_require(`
-      		type rpm_t, rpm_script_t, rpm_initrc_exec_t;
-      		type rpm_var_cache_t, rpm_var_lib_t, rpm_lock_t;
-      		type rpm_log_t, rpm_tmpfs_t, rpm_tmp_t, rpm_runtime_t;
-      		type rpm_script_tmp_t, rpm_script_tmpfs_t, rpm_file_t;
-      	')
-
-      	allow $1 { rpm_t rpm_script_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { rpm_t rpm_script_t })
-
-      	init_startstop_service($1, $2, rpm_t, rpm_initrc_exec_t)
-
-      	admin_pattern($1, rpm_file_t)
-
-      	files_list_var($1)
-      	admin_pattern($1, rpm_var_cache_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, { rpm_tmp_t rpm_script_tmp_t })
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, rpm_var_lib_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, rpm_lock_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, rpm_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, rpm_runtime_t)
-
-      	fs_search_tmpfs($1)
-      	admin_pattern($1, { rpm_tmpfs_t rpm_script_tmpfs_t })
-      ')
-    '';
+    interface = {
+      summary = "Redhat package manager.";
+      exports = {
+        "rpm_domtrans" = {
+          summary = "Execute rpm in the rpm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpm_t, rpm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rpm_exec_t, rpm_t)
+          '';
+        };
+        "rpm_debuginfo_domtrans" = {
+          summary = ''
+            Execute debuginfo install
+            in the rpm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpm_t, debuginfo_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, debuginfo_exec_t, rpm_t)
+          '';
+        };
+        "rpm_domtrans_script" = {
+          summary = "Execute rpm scripts in the rpm script domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpm_script_t;
+          '';
+          content = ''
+            corecmd_shell_domtrans($1, rpm_script_t)
+
+            allow rpm_script_t $1:fd use;
+            allow rpm_script_t $1:fifo_file rw_fifo_file_perms;
+            allow rpm_script_t $1:process sigchld;
+          '';
+        };
+        "rpm_run" = {
+          summary = ''
+            Execute rpm in the rpm domain,
+            and allow the specified roles the
+            rpm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role rpm_roles;
+          '';
+          content = ''
+            rpm_domtrans($1)
+            roleattribute $2 rpm_roles;
+          '';
+          rolecap = true;
+        };
+        "rpm_exec" = {
+          summary = "Execute the rpm in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, rpm_exec_t)
+          '';
+        };
+        "rpm_signull" = {
+          summary = "Send null signals to rpm.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+          '';
+          content = ''
+            allow $1 rpm_t:process signull;
+          '';
+        };
+        "rpm_use_fds" = {
+          summary = "Inherit and use file descriptors from rpm.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+          '';
+          content = ''
+            allow $1 rpm_t:fd use;
+          '';
+        };
+        "rpm_read_pipes" = {
+          summary = "Read rpm unnamed pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+          '';
+          content = ''
+            allow $1 rpm_t:fifo_file read_fifo_file_perms;
+          '';
+        };
+        "rpm_rw_pipes" = {
+          summary = "Read and write rpm unnamed pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+          '';
+          content = ''
+            allow $1 rpm_t:fifo_file rw_fifo_file_perms;
+          '';
+        };
+        "rpm_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            rpm over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 rpm_t:dbus send_msg;
+            allow rpm_t $1:dbus send_msg;
+          '';
+        };
+        "rpm_dontaudit_dbus_chat" = {
+          summary = ''
+            Do not audit attempts to send and
+            receive messages from rpm over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type rpm_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            dontaudit $1 rpm_t:dbus send_msg;
+            dontaudit rpm_t $1:dbus send_msg;
+          '';
+        };
+        "rpm_script_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            rpm script over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_script_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 rpm_script_t:dbus send_msg;
+            allow rpm_script_t $1:dbus send_msg;
+          '';
+        };
+        "rpm_search_log" = {
+          summary = "Search rpm log directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 rpm_log_t:dir search_dir_perms;
+          '';
+        };
+        "rpm_append_log" = {
+          summary = "Append rpm log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, rpm_log_t, rpm_log_t)
+          '';
+        };
+        "rpm_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_log_t;
+          '';
+          content = ''
+            logging_rw_generic_log_dirs($1)
+            allow $1 rpm_log_t:file manage_file_perms;
+          '';
+        };
+        "rpm_use_script_fds" = {
+          summary = "Inherit and use rpm script file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_script_t;
+          '';
+          content = ''
+            allow $1 rpm_script_t:fd use;
+          '';
+        };
+        "rpm_manage_script_tmp_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm script temporary files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_script_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            manage_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
+          '';
+        };
+        "rpm_read_tmp_files" = {
+          summary = "Read rpm temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
+            read_lnk_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
+          '';
+        };
+        "rpm_append_tmp_files" = {
+          summary = "Append rpm temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            append_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
+          '';
+        };
+        "rpm_manage_tmp_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm temporary files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            manage_files_pattern($1, rpm_tmp_t, rpm_tmp_t)
+          '';
+        };
+        "rpm_read_script_tmp_files" = {
+          summary = "Read rpm script temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_script_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            read_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
+            read_lnk_files_pattern($1, rpm_script_tmp_t, rpm_script_tmp_t)
+          '';
+        };
+        "rpm_read_cache" = {
+          summary = "Read rpm cache content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_cache_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 rpm_var_cache_t:dir list_dir_perms;
+            read_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
+            read_lnk_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
+          '';
+        };
+        "rpm_manage_cache" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm cache content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_cache_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
+            manage_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
+            manage_lnk_files_pattern($1, rpm_var_cache_t, rpm_var_cache_t)
+          '';
+        };
+        "rpm_read_db" = {
+          summary = "Read rpm lib content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 rpm_var_lib_t:dir list_dir_perms;
+            read_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
+            read_lnk_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
+            allow $1 rpm_var_lib_t:file map;
+          '';
+        };
+        "rpm_delete_db" = {
+          summary = "Delete rpm lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            delete_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
+          '';
+        };
+        "rpm_manage_db" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
+            manage_lnk_files_pattern($1, rpm_var_lib_t, rpm_var_lib_t)
+            allow $1 rpm_var_lib_t:file map;
+          '';
+        };
+        "rpm_dontaudit_manage_db" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete rpm lib content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type rpm_var_lib_t;
+          '';
+          content = ''
+            dontaudit $1 rpm_var_lib_t:dir rw_dir_perms;
+            dontaudit $1 rpm_var_lib_t:file manage_file_perms;
+            dontaudit $1 rpm_var_lib_t:lnk_file manage_lnk_file_perms;
+            dontaudit $1 rpm_var_lib_t:file map;
+          '';
+        };
+        "rpm_manage_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rpm runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_runtime_t;
+          '';
+          content = ''
+            manage_files_pattern($1, rpm_runtime_t, rpm_runtime_t)
+            files_search_runtime($1)
+          '';
+        };
+        "rpm_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an rpm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpm_t, rpm_script_t, rpm_initrc_exec_t;
+            type rpm_var_cache_t, rpm_var_lib_t, rpm_lock_t;
+            type rpm_log_t, rpm_tmpfs_t, rpm_tmp_t, rpm_runtime_t;
+            type rpm_script_tmp_t, rpm_script_tmpfs_t, rpm_file_t;
+          '';
+          content = ''
+            allow $1 { rpm_t rpm_script_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { rpm_t rpm_script_t })
+
+            init_startstop_service($1, $2, rpm_t, rpm_initrc_exec_t)
+
+            admin_pattern($1, rpm_file_t)
+
+            files_list_var($1)
+            admin_pattern($1, rpm_var_cache_t)
+
+            files_list_tmp($1)
+            admin_pattern($1, { rpm_tmp_t rpm_script_tmp_t })
+
+            files_list_var_lib($1)
+            admin_pattern($1, rpm_var_lib_t)
+
+            files_search_locks($1)
+            admin_pattern($1, rpm_lock_t)
+
+            logging_list_logs($1)
+            admin_pattern($1, rpm_log_t)
+
+            files_list_runtime($1)
+            admin_pattern($1, rpm_runtime_t)
+
+            fs_search_tmpfs($1)
+            admin_pattern($1, { rpm_tmpfs_t rpm_script_tmpfs_t })
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rpm)
 

@@ -3,180 +3,173 @@
 { lib, ... }: {
   config.security.selinux.modules.git = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>GIT revision control system.</summary>
+    interface = {
+      summary = "GIT revision control system.";
+      exports = {
+        "git_role" = {
+          type = "template";
+          summary = "Role access for Git session.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role git_session_roles;
+            type git_session_t, gitd_exec_t, git_user_content_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for Git session.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`git_role',`
-      	gen_require(`
-      		attribute_role git_session_roles;
-      		type git_session_t, gitd_exec_t, git_user_content_t;
-      	')
+            roleattribute $4 git_session_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $4 git_session_roles;
+            allow $2 git_user_content_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 git_user_content_t:file { exec_file_perms manage_file_perms relabel_file_perms };
+            userdom_user_home_dir_filetrans($2, git_user_content_t, dir, "public_git")
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            allow $3 git_session_t:process { ptrace signal_perms };
+            ps_process_pattern($3, git_session_t)
 
-      	allow $2 git_user_content_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 git_user_content_t:file { exec_file_perms manage_file_perms relabel_file_perms };
-      	userdom_user_home_dir_filetrans($2, git_user_content_t, dir, "public_git")
+            tunable_policy(`git_session_users',`
+                    domtrans_pattern($3, gitd_exec_t, git_session_t)
+            ',`
+                    can_exec($3, gitd_exec_t)
+            ')
 
-      	allow $3 git_session_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, git_session_t)
+            optional_policy(`
+                    systemd_user_app_status($1, git_session_t)
+            ')
+          '';
+        };
+        "git_client_role_template" = {
+          type = "template";
+          summary = "Role access for Git client.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute git_client_domain;
+            type git_exec_t, git_home_t, git_home_hook_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      	tunable_policy(`git_session_users',`
-      		domtrans_pattern($3, gitd_exec_t, git_session_t)
-      	',`
-      		can_exec($3, gitd_exec_t)
-      	')
+            type $1_git_t, git_client_domain;
+            userdom_user_application_domain($1_git_t, git_exec_t)
+            role $4 types $1_git_t;
 
-      	optional_policy(`
-      		systemd_user_app_status($1, git_session_t)
-      	')
-      ')
+            ########################################
+            #
+            # Policy
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for Git client.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`git_client_role_template',`
-      	gen_require(`
-      		attribute git_client_domain;
-      		type git_exec_t, git_home_t, git_home_hook_t;
-      	')
+            domtrans_pattern($3, git_exec_t, $1_git_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            allow $2 git_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 git_home_t:file { manage_file_perms relabel_file_perms };
+            userdom_user_home_dir_filetrans($2, git_home_t, dir, ".git")
 
-      	type $1_git_t, git_client_domain;
-      	userdom_user_application_domain($1_git_t, git_exec_t)
-      	role $4 types $1_git_t;
+            allow $2 git_home_hook_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 git_home_hook_t:file { exec_file_perms manage_file_perms relabel_file_perms };
+            filetrans_pattern($2, git_home_t, git_home_hook_t, dir, "hooks")
 
-      	########################################
-      	#
-      	# Policy
-      	#
-      	
-      	domtrans_pattern($3, git_exec_t, $1_git_t)
+            allow $3 $1_git_t:process { ptrace signal_perms };
+            ps_process_pattern($3, $1_git_t)
 
-      	allow $2 git_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 git_home_t:file { manage_file_perms relabel_file_perms };
-      	userdom_user_home_dir_filetrans($2, git_home_t, dir, ".git")
+            auth_use_nsswitch($1_git_t)
 
-      	allow $2 git_home_hook_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 git_home_hook_t:file { exec_file_perms manage_file_perms relabel_file_perms };
-      	filetrans_pattern($2, git_home_t, git_home_hook_t, dir, "hooks")
+            # allow userdomains to exec git hooks
+            exec_files_pattern($3, git_home_hook_t, git_home_hook_t)
+            # transition back to the user domain when executing git hooks
+            domtrans_pattern($1_git_t, git_home_t, $2)
 
-      	allow $3 $1_git_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, $1_git_t)
+            # transition to ssh client domain when performing ssh operations
+            optional_policy(`
+                    ssh_client_domtrans($1_git_t)
+            ')
 
-      	auth_use_nsswitch($1_git_t)
+            optional_policy(`
+                    systemd_user_app_status($1, $1_git_t)
+            ')
+          '';
+        };
+        "git_read_generic_sys_content_files" = {
+          summary = "Read generic system content files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type git_sys_content_t;
+          '';
+          content = ''
+            list_dirs_pattern($1, git_sys_content_t, git_sys_content_t)
+            read_files_pattern($1, git_sys_content_t, git_sys_content_t)
 
-      	# allow userdomains to exec git hooks
-      	exec_files_pattern($3, git_home_hook_t, git_home_hook_t)
-      	# transition back to the user domain when executing git hooks
-      	domtrans_pattern($1_git_t, git_home_t, $2)
+            files_search_var_lib($1)
 
-      	# transition to ssh client domain when performing ssh operations
-      	optional_policy(`
-      		ssh_client_domtrans($1_git_t)
-      	')
+            tunable_policy(`git_system_use_cifs',`
+                    fs_getattr_cifs($1)
+                    fs_list_cifs($1)
+                    fs_read_cifs_files($1)
+            ')
 
-      	optional_policy(`
-      		systemd_user_app_status($1, $1_git_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read generic system content files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`git_read_generic_sys_content_files',`
-      	gen_require(`
-      		type git_sys_content_t;
-      	')
-
-      	list_dirs_pattern($1, git_sys_content_t, git_sys_content_t)
-      	read_files_pattern($1, git_sys_content_t, git_sys_content_t)
-
-      	files_search_var_lib($1)
-
-      	tunable_policy(`git_system_use_cifs',`
-      		fs_getattr_cifs($1)
-      		fs_list_cifs($1)
-      		fs_read_cifs_files($1)
-      	')
-
-      	tunable_policy(`git_system_use_nfs',`
-      		fs_getattr_nfs($1)
-      		fs_list_nfs($1)
-      		fs_read_nfs_files($1)
-      	')
-      ')
-    '';
+            tunable_policy(`git_system_use_nfs',`
+                    fs_getattr_nfs($1)
+                    fs_list_nfs($1)
+                    fs_read_nfs_files($1)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(git)
 

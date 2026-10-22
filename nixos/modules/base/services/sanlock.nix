@@ -3,102 +3,97 @@
 { lib, ... }: {
   config.security.selinux.modules.sanlock = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>shared storage lock manager.</summary>
+    interface = {
+      summary = "shared storage lock manager.";
+      exports = {
+        "sanlock_domtrans" = {
+          summary = "Execute a domain transition to run sanlock.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sanlock_t, sanlock_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, sanlock_exec_t, sanlock_t)
+          '';
+        };
+        "sanlock_initrc_domtrans" = {
+          summary = ''
+            Execute sanlock init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type sanlock_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, sanlock_initrc_exec_t)
+          '';
+        };
+        "sanlock_stream_connect" = {
+          summary = ''
+            Connect to sanlock with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type sanlock_t, sanlock_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, sanlock_runtime_t, sanlock_runtime_t, sanlock_t)
+          '';
+        };
+        "sanlock_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an sanlock environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type sanlock_t, sanlock_initrc_exec_t, sanlock_runtime_t;
+            type sanlock_log_t;
+          '';
+          content = ''
+            allow $1 sanlock_t:process { ptrace signal_perms };
+            ps_process_pattern($1, sanlock_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run sanlock.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sanlock_domtrans',`
-      	gen_require(`
-      		type sanlock_t, sanlock_exec_t;
-      	')
+            init_startstop_service($1, $2, sanlock_t, sanlock_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, sanlock_exec_t, sanlock_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, sanlock_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute sanlock init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sanlock_initrc_domtrans',`
-      	gen_require(`
-      		type sanlock_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, sanlock_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to sanlock with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sanlock_stream_connect',`
-      	gen_require(`
-      		type sanlock_t, sanlock_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, sanlock_runtime_t, sanlock_runtime_t, sanlock_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an sanlock environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sanlock_admin',`
-      	gen_require(`
-      		type sanlock_t, sanlock_initrc_exec_t, sanlock_runtime_t;
-      		type sanlock_log_t;
-      	')
-
-      	allow $1 sanlock_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, sanlock_t)
-
-      	init_startstop_service($1, $2, sanlock_t, sanlock_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, sanlock_runtime_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, sanlock_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, sanlock_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sanlock)
 

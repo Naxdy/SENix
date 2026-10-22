@@ -3,1541 +3,1384 @@
 { lib, ... }: {
   config.security.selinux.modules.terminal = {
     layer = "kernel";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for terminals.</summary>
-      ## <required val="true">
-      ##	Depended on by other required modules.
-      ## </required>
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a pty type.
-      ## </summary>
-      ## <param name="pty_type">
-      ##	<summary>
-      ##	An object type that will applied to a pty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_pty',`
-      	gen_require(`
-      		attribute ptynode;
-      		type devpts_t;
-      	')
-
-      	dev_node($1)
-      	allow $1 devpts_t:filesystem associate;
-      	typeattribute $1 ptynode;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into an user
-      ##	pty type. This allows it to be relabeled via
-      ##	type change by login programs such as ssh.
-      ## </summary>
-      ## <param name="userdomain">
-      ##	<summary>
-      ##	The type of the user domain associated with
-      ##	this pty.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_type">
-      ##	<summary>
-      ##	An object type that will applied to a pty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_user_pty',`
-      	gen_require(`
-      		attribute server_ptynode;
-      	')
-
-      	term_pty($2)
-      	type_change $1 server_ptynode:chr_file $2;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a pty type
-      ##	used by login programs, such as sshd.
-      ## </summary>
-      ## <param name="pty_type">
-      ##	<summary>
-      ##	An object type that will applied to a pty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_login_pty',`
-      	gen_require(`
-      		attribute server_ptynode;
-      	')
-
-      	term_pty($1)
-      	typeattribute $1 server_ptynode;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a tty type.
-      ## </summary>
-      ## <param name="tty_type">
-      ##	<summary>
-      ##	An object type that will applied to a tty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_tty',`
-      	gen_require(`
-      		attribute ttynode, serial_device;
-      	')
-
-      	typeattribute $1 ttynode, serial_device;
-
-      	dev_node($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a user tty type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain that is related to this tty.
-      ##	</summary>
-      ## </param>
-      ## <param name="tty_type">
-      ##	<summary>
-      ##	An object type that will applied to a tty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_user_tty',`
-      	gen_require(`
-      		attribute ttynode;
-      		type console_device_t;
-      		type tty_device_t;
-      	')
-
-      	term_tty($2)
-
-      	type_change $1 tty_device_t:chr_file $2;
-
-      	# Debian login is from shadow utils and does not allow resetting the perms.
-      	# have to fix this!
-      	
-
-      	tunable_policy(`console_login',`
-      		# When user logs in from /dev/console, relabel it
-      		# to user tty type as well.
-      		type_change $1 console_device_t:chr_file $2;
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	mount a devpts_t filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process to mount it
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_mount_devpts',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a devpts_t filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_remount_devpts',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to remount
-      ##	devpts_t filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_dontaudit_remount_devpts',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a devpts_t filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process to unmount it
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_unmount_devpts',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create directory /dev/pts.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process creating the directory.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_create_devpts_dirs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_add_entry_generic_dirs($1)
-      	allow $1 devpts_t:dir create_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create a pty in the /dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process creating the pty.
-      ##	</summary>
-      ## </param>
-      ## <param name="pty_type">
-      ##	<summary>
-      ##	The type of the pty.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_create_pty',`
-      	gen_require(`
-      		type bsdpty_device_t, devpts_t, ptmx_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ptmx_t:chr_file rw_chr_file_perms;
-
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 devpts_t:filesystem getattr;
-      	dontaudit $1 bsdpty_device_t:chr_file { getattr read write };
-      	type_transition $1 devpts_t:chr_file $2;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write the console, all
-      ##	ttys and all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_write_all_terms',`
-      	gen_require(`
-      		attribute ttynode, ptynode;
-      		type console_device_t, devpts_t, tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 { console_device_t tty_device_t ttynode ptynode }:chr_file write_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write the console, all
-      ##	ttys and all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_use_all_terms',`
-      	gen_require(`
-      		attribute ttynode, ptynode;
-      		type console_device_t, devpts_t, tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 { devpts_t console_device_t tty_device_t ttynode ptynode }:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to the console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_write_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 console_device_t:chr_file write_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read from the console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_read_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 console_device_t:chr_file read_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read from the console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_dontaudit_read_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dontaudit $1 console_device_t:chr_file read_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read from and write to the console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_use_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 console_device_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read from
-      ##	or write to the console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dontaudit $1 console_device_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of the console
-      ##	device node.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_setattr_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 console_device_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to the console type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_console',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 console_device_t:chr_file relabel_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create the console device (/dev/console).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_create_console_dev',`
-      	gen_require(`
-      		type console_device_t;
-      	')
-
-      	dev_add_entry_generic_dirs($1)
-      	allow $1 console_device_t:chr_file create_chr_file_perms;
-      	allow $1 self:capability mknod;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a pty filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_getattr_pty_fs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to pty filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_pty_fs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:filesystem { relabelfrom relabelto };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of the
-      ##	/dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_getattr_pty_dirs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the
-      ##	attributes of the /dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_pty_dirs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search the contents of the /dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_search_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search the
-      ##	contents of the /dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_search_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_dontaudit_list_all_dev_nodes($1)
-      	dontaudit $1 devpts_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the /dev/pts directory to
-      ##	list all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_list_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read the
-      ##	/dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_list_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:dir { getattr read search };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, or delete the /dev/pts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_manage_pty_dirs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to pty directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_pty_dirs',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir relabel_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of generic pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_getattr_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of generic pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:chr_file getattr;
-      ')
-      ########################################
-      ## <summary>
-      ##	ioctl of generic pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      # cjp: added for ppp
-      interface(`term_ioctl_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir search;
-      	allow $1 devpts_t:chr_file ioctl;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow setting the attributes of
-      ##	generic pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_setattr_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	allow $1 devpts_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit setting the attributes of
-      ##	generic pty devices.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_setattr_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write the generic pty
-      ##	type.  This is generally only used in
-      ##	the targeted policy.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_use_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 devpts_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dot not audit attempts to read and
-      ##	write the generic pty type.  This is
-      ##	generally only used in the targeted policy.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_generic_ptys',`
-      	gen_require(`
-      		type devpts_t;
-      	')
-
-      	dontaudit $1 devpts_t:chr_file { getattr ioctl read write };
-      ')
-
-      #######################################
-      ## <summary>
-      ##  Create the tty device.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_create_controlling_term',`
-      	gen_require(`
-      		type devtty_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	dev_add_entry_generic_dirs($1)
-      	allow $1 devtty_t:chr_file create_chr_file_perms;
-      	allow $1 self:capability mknod;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Set the attributes of the tty device
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_setattr_controlling_term',`
-      	gen_require(`
-      		type devtty_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devtty_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write the controlling
-      ##	terminal (/dev/tty).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_use_controlling_term',`
-      	gen_require(`
-      		type devtty_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devtty_t:chr_file rw_chr_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##  Create the pty multiplexor (/dev/ptmx).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_create_ptmx',`
-      	gen_require(`
-      		type ptmx_t;
-      	')
-
-      	dev_add_entry_generic_dirs($1)
-      	allow $1 ptmx_t:chr_file create_chr_file_perms;
-      	allow $1 self:capability mknod;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Get the attributes of the pty multiplexor (/dev/ptmx).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_getattr_ptmx',`
-      	gen_require(`
-      		type ptmx_t;
-      	')
-
-      	allow $1 ptmx_t:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get attributes
-      ##	on the pty multiplexor (/dev/ptmx).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_ptmx',`
-      	gen_require(`
-      		type ptmx_t;
-      	')
-
-      	dontaudit $1 ptmx_t:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write the pty multiplexor (/dev/ptmx).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_use_ptmx',`
-      	gen_require(`
-      		type ptmx_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ptmx_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and
-      ##	write the pty multiplexor (/dev/ptmx).
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_ptmx',`
-      	gen_require(`
-      		type ptmx_t;
-      	')
-
-      	dontaudit $1 ptmx_t:chr_file { getattr read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all
-      ##	pty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_getattr_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 ptynode:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the
-      ##	attributes of any pty
-      ##	device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      	')
-
-      	dontaudit $1 ptynode:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of all
-      ##	pty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_setattr_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 ptynode:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel to all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabelto_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      	')
-
-      	allow $1 ptynode:chr_file relabelto;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_write_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ptynode:chr_file write_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write all ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_use_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 devpts_t:dir list_dir_perms;
-      	allow $1 ptynode:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or write any ptys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      	')
-
-      	dontaudit $1 ptynode:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to all pty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_all_ptys',`
-      	gen_require(`
-      		attribute ptynode;
-      		type devpts_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	relabel_chr_files_pattern($1, devpts_t, ptynode)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all unallocated
-      ##	tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_getattr_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Setattr and unlink unallocated tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_setattr_unlink_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file { delete_chr_file_perms setattr };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of all unallocated tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dontaudit $1 tty_device_t:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of all unallocated
-      ##	tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_setattr_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to set the attributes
-      ##	of unallocated tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_setattr_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dontaudit $1 tty_device_t:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to ioctl
-      ##	unallocated tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_ioctl_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dontaudit $1 tty_device_t:chr_file ioctl;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to the unallocated
-      ##	tty type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file relabel_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from all user tty types to
-      ##	the unallocated tty type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_reset_tty_labels',`
-      	gen_require(`
-      		attribute ttynode;
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file relabelfrom;
-      	allow $1 tty_device_t:chr_file relabelto;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append to unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_append_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file append_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_write_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file write_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_use_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or
-      ##	write unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dontaudit $1 tty_device_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_watch_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch reads on unallocated ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_watch_reads_unallocated_ttys',`
-      	gen_require(`
-      		type tty_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 tty_device_t:chr_file watch_reads;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_getattr_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the
-      ##	attributes of any tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_getattr_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	dontaudit $1 ttynode:chr_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of all tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_setattr_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from and to all tty device nodes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_relabel_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file relabel_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to all ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_write_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file write_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write all ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`term_use_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 ttynode:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or write
-      ##	any ttys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_dontaudit_use_all_ttys',`
-      	gen_require(`
-      		attribute ttynode;
-      	')
-
-      	dontaudit $1 ttynode:chr_file rw_chr_file_perms;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Read from and write virtio console.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`term_use_virtio_console',`
-      	gen_require(`
-      		type virtio_device_t;
-      	')
-
-      	dev_list_all_dev_nodes($1)
-      	allow $1 virtio_device_t:chr_file rw_term_perms;
-      ')
-    '';
+    interface = {
+      summary = "Policy for terminals.";
+      required = ''
+        Depended on by other required modules.
+      '';
+      exports = {
+        "term_pty" = {
+          summary = "Transform specified type into a pty type.";
+          params = {
+            "$1" = {
+              name = "pty_type";
+              description = "An object type that will applied to a pty.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+            type devpts_t;
+          '';
+          content = ''
+            dev_node($1)
+            allow $1 devpts_t:filesystem associate;
+            typeattribute $1 ptynode;
+          '';
+        };
+        "term_user_pty" = {
+          summary = ''
+            Transform specified type into an user
+            pty type. This allows it to be relabeled via
+            type change by login programs such as ssh.
+          '';
+          params = {
+            "$1" = {
+              name = "userdomain";
+              description = ''
+                The type of the user domain associated with
+                this pty.
+              '';
+            };
+            "$2" = {
+              name = "object_type";
+              description = "An object type that will applied to a pty.";
+            };
+          };
+          gen_require = ''
+            attribute server_ptynode;
+          '';
+          content = ''
+            term_pty($2)
+            type_change $1 server_ptynode:chr_file $2;
+          '';
+        };
+        "term_login_pty" = {
+          summary = ''
+            Transform specified type into a pty type
+            used by login programs, such as sshd.
+          '';
+          params = {
+            "$1" = {
+              name = "pty_type";
+              description = "An object type that will applied to a pty.";
+            };
+          };
+          gen_require = ''
+            attribute server_ptynode;
+          '';
+          content = ''
+            term_pty($1)
+            typeattribute $1 server_ptynode;
+          '';
+        };
+        "term_tty" = {
+          summary = "Transform specified type into a tty type.";
+          params = {
+            "$1" = {
+              name = "tty_type";
+              description = "An object type that will applied to a tty.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode, serial_device;
+          '';
+          content = ''
+            typeattribute $1 ttynode, serial_device;
+
+            dev_node($1)
+          '';
+        };
+        "term_user_tty" = {
+          summary = "Transform specified type into a user tty type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "User domain that is related to this tty.";
+            };
+            "$2" = {
+              name = "tty_type";
+              description = "An object type that will applied to a tty.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+            type console_device_t;
+            type tty_device_t;
+          '';
+          content = ''
+            term_tty($2)
+
+            type_change $1 tty_device_t:chr_file $2;
+
+            # Debian login is from shadow utils and does not allow resetting the perms.
+            # have to fix this!
+            ifdef(`distro_debian',`
+                    type_change $1 ttynode:chr_file $2;
+            ')
+
+            tunable_policy(`console_login',`
+                    # When user logs in from /dev/console, relabel it
+                    # to user tty type as well.
+                    type_change $1 console_device_t:chr_file $2;
+            ')
+          '';
+        };
+        "term_mount_devpts" = {
+          summary = "mount a devpts_t filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process to mount it";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:filesystem mount;
+          '';
+        };
+        "term_remount_devpts" = {
+          summary = "Remount a devpts_t filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:filesystem remount;
+          '';
+        };
+        "term_dontaudit_remount_devpts" = {
+          summary = ''
+            Do not audit attempts to remount
+            devpts_t filesystem
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:filesystem remount;
+          '';
+          rolecap = true;
+        };
+        "term_unmount_devpts" = {
+          summary = "Unmount a devpts_t filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process to unmount it";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:filesystem unmount;
+          '';
+        };
+        "term_create_devpts_dirs" = {
+          summary = "Create directory /dev/pts.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process creating the directory.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_add_entry_generic_dirs($1)
+            allow $1 devpts_t:dir create_dir_perms;
+          '';
+        };
+        "term_create_pty" = {
+          summary = "Create a pty in the /dev/pts directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process creating the pty.";
+            };
+            "$2" = {
+              name = "pty_type";
+              description = "The type of the pty.";
+            };
+          };
+          gen_require = ''
+            type bsdpty_device_t, devpts_t, ptmx_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ptmx_t:chr_file rw_chr_file_perms;
+
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 devpts_t:filesystem getattr;
+            dontaudit $1 bsdpty_device_t:chr_file { getattr read write };
+            type_transition $1 devpts_t:chr_file $2;
+          '';
+        };
+        "term_write_all_terms" = {
+          summary = ''
+            Write the console, all
+            ttys and all ptys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode, ptynode;
+            type console_device_t, devpts_t, tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 { console_device_t tty_device_t ttynode ptynode }:chr_file write_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_use_all_terms" = {
+          summary = ''
+            Read and write the console, all
+            ttys and all ptys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode, ptynode;
+            type console_device_t, devpts_t, tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 { devpts_t console_device_t tty_device_t ttynode ptynode }:chr_file rw_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_write_console" = {
+          summary = "Write to the console.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 console_device_t:chr_file write_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_read_console" = {
+          summary = "Read from the console.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 console_device_t:chr_file read_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_read_console" = {
+          summary = "Do not audit attempts to read from the console.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dontaudit $1 console_device_t:chr_file read_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_use_console" = {
+          summary = "Read from and write to the console.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 console_device_t:chr_file rw_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_use_console" = {
+          summary = ''
+            Do not audit attempts to read from
+            or write to the console.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dontaudit $1 console_device_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_setattr_console" = {
+          summary = ''
+            Set the attributes of the console
+            device node.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 console_device_t:chr_file setattr;
+          '';
+          rolecap = true;
+        };
+        "term_relabel_console" = {
+          summary = "Relabel from and to the console type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 console_device_t:chr_file relabel_chr_file_perms;
+          '';
+        };
+        "term_create_console_dev" = {
+          summary = "Create the console device (/dev/console).";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type console_device_t;
+          '';
+          content = ''
+            dev_add_entry_generic_dirs($1)
+            allow $1 console_device_t:chr_file create_chr_file_perms;
+            allow $1 self:capability mknod;
+          '';
+        };
+        "term_getattr_pty_fs" = {
+          summary = "Get the attributes of a pty filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:filesystem getattr;
+          '';
+        };
+        "term_relabel_pty_fs" = {
+          summary = "Relabel from and to pty filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:filesystem { relabelfrom relabelto };
+          '';
+        };
+        "term_getattr_pty_dirs" = {
+          summary = ''
+            Get the attributes of the
+            /dev/pts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:dir getattr;
+          '';
+        };
+        "term_dontaudit_getattr_pty_dirs" = {
+          summary = ''
+            Do not audit attempts to get the
+            attributes of the /dev/pts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:dir getattr;
+          '';
+        };
+        "term_search_ptys" = {
+          summary = "Search the contents of the /dev/pts directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir search_dir_perms;
+          '';
+        };
+        "term_dontaudit_search_ptys" = {
+          summary = ''
+            Do not audit attempts to search the
+            contents of the /dev/pts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_dontaudit_list_all_dev_nodes($1)
+            dontaudit $1 devpts_t:dir search_dir_perms;
+          '';
+        };
+        "term_list_ptys" = {
+          summary = ''
+            Read the /dev/pts directory to
+            list all ptys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+          '';
+        };
+        "term_dontaudit_list_ptys" = {
+          summary = ''
+            Do not audit attempts to read the
+            /dev/pts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:dir { getattr read search };
+          '';
+        };
+        "term_dontaudit_manage_pty_dirs" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, or delete the /dev/pts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:dir manage_dir_perms;
+          '';
+        };
+        "term_relabel_pty_dirs" = {
+          summary = "Relabel from and to pty directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir relabel_dir_perms;
+          '';
+        };
+        "term_getattr_generic_ptys" = {
+          summary = "Get the attributes of generic pty devices.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:chr_file getattr;
+          '';
+        };
+        "term_dontaudit_getattr_generic_ptys" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of generic pty devices.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:chr_file getattr;
+          '';
+        };
+        "term_ioctl_generic_ptys" = {
+          summary = "ioctl of generic pty devices.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir search;
+            allow $1 devpts_t:chr_file ioctl;
+          '';
+        };
+        "term_setattr_generic_ptys" = {
+          summary = ''
+            Allow setting the attributes of
+            generic pty devices.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            allow $1 devpts_t:chr_file setattr;
+          '';
+        };
+        "term_dontaudit_setattr_generic_ptys" = {
+          summary = ''
+            Dontaudit setting the attributes of
+            generic pty devices.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:chr_file setattr;
+          '';
+        };
+        "term_use_generic_ptys" = {
+          summary = ''
+            Read and write the generic pty
+            type.  This is generally only used in
+            the targeted policy.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 devpts_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_dontaudit_use_generic_ptys" = {
+          summary = ''
+            Dot not audit attempts to read and
+            write the generic pty type.  This is
+            generally only used in the targeted policy.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type devpts_t;
+          '';
+          content = ''
+            dontaudit $1 devpts_t:chr_file { getattr ioctl read write };
+          '';
+        };
+        "term_create_controlling_term" = {
+          summary = "Create the tty device.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devtty_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            dev_add_entry_generic_dirs($1)
+            allow $1 devtty_t:chr_file create_chr_file_perms;
+            allow $1 self:capability mknod;
+          '';
+        };
+        "term_setattr_controlling_term" = {
+          summary = "Set the attributes of the tty device";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devtty_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devtty_t:chr_file setattr;
+          '';
+        };
+        "term_use_controlling_term" = {
+          summary = ''
+            Read and write the controlling
+            terminal (/dev/tty).
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type devtty_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devtty_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_create_ptmx" = {
+          summary = "Create the pty multiplexor (/dev/ptmx).";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ptmx_t;
+          '';
+          content = ''
+            dev_add_entry_generic_dirs($1)
+            allow $1 ptmx_t:chr_file create_chr_file_perms;
+            allow $1 self:capability mknod;
+          '';
+        };
+        "term_getattr_ptmx" = {
+          summary = "Get the attributes of the pty multiplexor (/dev/ptmx).";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ptmx_t;
+          '';
+          content = ''
+            allow $1 ptmx_t:chr_file getattr;
+          '';
+        };
+        "term_dontaudit_getattr_ptmx" = {
+          summary = ''
+            Do not audit attempts to get attributes
+            on the pty multiplexor (/dev/ptmx).
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ptmx_t;
+          '';
+          content = ''
+            dontaudit $1 ptmx_t:chr_file getattr;
+          '';
+        };
+        "term_use_ptmx" = {
+          summary = "Read and write the pty multiplexor (/dev/ptmx).";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ptmx_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ptmx_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_dontaudit_use_ptmx" = {
+          summary = ''
+            Do not audit attempts to read and
+            write the pty multiplexor (/dev/ptmx).
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ptmx_t;
+          '';
+          content = ''
+            dontaudit $1 ptmx_t:chr_file { getattr read write };
+          '';
+        };
+        "term_getattr_all_ptys" = {
+          summary = ''
+            Get the attributes of all
+            pty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 ptynode:chr_file getattr;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_getattr_all_ptys" = {
+          summary = ''
+            Do not audit attempts to get the
+            attributes of any pty
+            device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+          '';
+          content = ''
+            dontaudit $1 ptynode:chr_file getattr;
+          '';
+        };
+        "term_setattr_all_ptys" = {
+          summary = ''
+            Set the attributes of all
+            pty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 ptynode:chr_file setattr;
+          '';
+          rolecap = true;
+        };
+        "term_relabelto_all_ptys" = {
+          summary = "Relabel to all ptys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+          '';
+          content = ''
+            allow $1 ptynode:chr_file relabelto;
+          '';
+        };
+        "term_write_all_ptys" = {
+          summary = "Write to all ptys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ptynode:chr_file write_chr_file_perms;
+          '';
+        };
+        "term_use_all_ptys" = {
+          summary = "Read and write all ptys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 devpts_t:dir list_dir_perms;
+            allow $1 ptynode:chr_file rw_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_use_all_ptys" = {
+          summary = "Do not audit attempts to read or write any ptys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+          '';
+          content = ''
+            dontaudit $1 ptynode:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_relabel_all_ptys" = {
+          summary = "Relabel from and to all pty device nodes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ptynode;
+            type devpts_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            relabel_chr_files_pattern($1, devpts_t, ptynode)
+          '';
+        };
+        "term_getattr_unallocated_ttys" = {
+          summary = ''
+            Get the attributes of all unallocated
+            tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file getattr;
+          '';
+          rolecap = true;
+        };
+        "term_setattr_unlink_unallocated_ttys" = {
+          summary = "Setattr and unlink unallocated tty device nodes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file { delete_chr_file_perms setattr };
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_getattr_unallocated_ttys" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of all unallocated tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dontaudit $1 tty_device_t:chr_file getattr;
+          '';
+        };
+        "term_setattr_unallocated_ttys" = {
+          summary = ''
+            Set the attributes of all unallocated
+            tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file setattr;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_setattr_unallocated_ttys" = {
+          summary = ''
+            Do not audit attempts to set the attributes
+            of unallocated tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dontaudit $1 tty_device_t:chr_file setattr;
+          '';
+        };
+        "term_dontaudit_ioctl_unallocated_ttys" = {
+          summary = ''
+            Do not audit attempts to ioctl
+            unallocated tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dontaudit $1 tty_device_t:chr_file ioctl;
+          '';
+        };
+        "term_relabel_unallocated_ttys" = {
+          summary = ''
+            Relabel from and to the unallocated
+            tty type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file relabel_chr_file_perms;
+          '';
+        };
+        "term_reset_tty_labels" = {
+          summary = ''
+            Relabel from all user tty types to
+            the unallocated tty type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file relabelfrom;
+            allow $1 tty_device_t:chr_file relabelto;
+          '';
+        };
+        "term_append_unallocated_ttys" = {
+          summary = "Append to unallocated ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file append_chr_file_perms;
+          '';
+        };
+        "term_write_unallocated_ttys" = {
+          summary = "Write to unallocated ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file write_chr_file_perms;
+          '';
+        };
+        "term_use_unallocated_ttys" = {
+          summary = "Read and write unallocated ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file rw_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_use_unallocated_ttys" = {
+          summary = ''
+            Do not audit attempts to read or
+            write unallocated ttys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dontaudit $1 tty_device_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_watch_unallocated_ttys" = {
+          summary = "Watch unallocated ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file watch;
+          '';
+        };
+        "term_watch_reads_unallocated_ttys" = {
+          summary = "Watch reads on unallocated ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tty_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 tty_device_t:chr_file watch_reads;
+          '';
+        };
+        "term_getattr_all_ttys" = {
+          summary = "Get the attributes of all tty device nodes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file getattr;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_getattr_all_ttys" = {
+          summary = ''
+            Do not audit attempts to get the
+            attributes of any tty device nodes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            dontaudit $1 ttynode:chr_file getattr;
+          '';
+        };
+        "term_setattr_all_ttys" = {
+          summary = "Set the attributes of all tty device nodes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file setattr;
+          '';
+          rolecap = true;
+        };
+        "term_relabel_all_ttys" = {
+          summary = "Relabel from and to all tty device nodes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file relabel_chr_file_perms;
+          '';
+        };
+        "term_write_all_ttys" = {
+          summary = "Write to all ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file write_chr_file_perms;
+          '';
+        };
+        "term_use_all_ttys" = {
+          summary = "Read and write all ttys.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 ttynode:chr_file rw_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "term_dontaudit_use_all_ttys" = {
+          summary = ''
+            Do not audit attempts to read or write
+            any ttys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute ttynode;
+          '';
+          content = ''
+            dontaudit $1 ttynode:chr_file rw_chr_file_perms;
+          '';
+        };
+        "term_use_virtio_console" = {
+          summary = "Read from and write virtio console.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type virtio_device_t;
+          '';
+          content = ''
+            dev_list_all_dev_nodes($1)
+            allow $1 virtio_device_t:chr_file rw_term_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(terminal)
 

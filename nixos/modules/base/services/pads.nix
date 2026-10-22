@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.pads = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Passive Asset Detection System.</summary>
+    interface = {
+      summary = "Passive Asset Detection System.";
+      exports = {
+        "pads_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pads environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pads_t, pads_config_t, pads_runtime_t;
+            type pads_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 pads_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pads_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pads environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pads_admin', `
-      	gen_require(`
-      		type pads_t, pads_config_t, pads_runtime_t;
-      		type pads_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, pads_t, pads_initrc_exec_t)
 
-      	allow $1 pads_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pads_t)
+            files_search_runtime($1)
+            admin_pattern($1, pads_runtime_t)
 
-      	init_startstop_service($1, $2, pads_t, pads_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, pads_runtime_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, pads_config_t)
-      ')
-    '';
+            files_search_etc($1)
+            admin_pattern($1, pads_config_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pads)
 

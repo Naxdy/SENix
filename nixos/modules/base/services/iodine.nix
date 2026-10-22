@@ -3,37 +3,37 @@
 { lib, ... }: {
   config.security.selinux.modules.iodine = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>IP over DNS tunneling daemon.</summary>
+    interface = {
+      summary = "IP over DNS tunneling daemon.";
+      exports = {
+        "iodine_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an iodined environment
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type iodined_t, iodined_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 iodined_t:process { ptrace signal_perms };
+            ps_process_pattern($1, iodined_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an iodined environment
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`iodine_admin',`
-      	gen_require(`
-      		type iodined_t, iodined_initrc_exec_t;
-      	')
-
-      	allow $1 iodined_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, iodined_t)
-
-      	init_startstop_service($1, $2, iodined_t, iodined_initrc_exec_t)
-      ')
-    '';
+            init_startstop_service($1, $2, iodined_t, iodined_initrc_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(iodine)
 

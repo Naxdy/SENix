@@ -3,169 +3,150 @@
 { lib, ... }: {
   config.security.selinux.modules.amanda = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Advanced Maryland Automatic Network Disk Archiver.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	Amanda recover.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_domtrans_recover',`
-      	gen_require(`
-      		type amanda_recover_t, amanda_recover_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, amanda_recover_exec_t, amanda_recover_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	Amanda recover, and allow the specified
-      ##	role the Amanda recover domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`amanda_run_recover',`
-      	gen_require(`
-      		attribute_role amanda_recover_roles;
-      	')
-
-      	amanda_domtrans_recover($1)
-      	roleattribute $2 amanda_recover_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search Amanda library directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_search_lib',`
-      	gen_require(`
-      		type amanda_usr_lib_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 amanda_usr_lib_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read /etc/dumpdates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_dontaudit_read_dumpdates',`
-      	gen_require(`
-      		type amanda_dumpdates_t;
-      	')
-
-      	dontaudit $1 amanda_dumpdates_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write /etc/dumpdates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_rw_dumpdates_files',`
-      	gen_require(`
-      		type amanda_dumpdates_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 amanda_dumpdates_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage Amanda library directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_manage_lib',`
-      	gen_require(`
-      		type amanda_usr_lib_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 amanda_usr_lib_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and append amanda log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_append_log_files',`
-      	gen_require(`
-      		type amanda_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 amanda_log_t:file { append_file_perms read_file_perms };
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Search Amanda var library directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amanda_search_var_lib',`
-      	gen_require(`
-      		type amanda_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 amanda_var_lib_t:dir search_dir_perms;
-      ')
-    '';
+    interface = {
+      summary = "Advanced Maryland Automatic Network Disk Archiver.";
+      exports = {
+        "amanda_domtrans_recover" = {
+          summary = ''
+            Execute a domain transition to run
+            Amanda recover.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type amanda_recover_t, amanda_recover_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, amanda_recover_exec_t, amanda_recover_t)
+          '';
+        };
+        "amanda_run_recover" = {
+          summary = ''
+            Execute a domain transition to run
+            Amanda recover, and allow the specified
+            role the Amanda recover domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role amanda_recover_roles;
+          '';
+          content = ''
+            amanda_domtrans_recover($1)
+            roleattribute $2 amanda_recover_roles;
+          '';
+          rolecap = true;
+        };
+        "amanda_search_lib" = {
+          summary = "Search Amanda library directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amanda_usr_lib_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 amanda_usr_lib_t:dir search_dir_perms;
+          '';
+        };
+        "amanda_dontaudit_read_dumpdates" = {
+          summary = "Do not audit attempts to read /etc/dumpdates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type amanda_dumpdates_t;
+          '';
+          content = ''
+            dontaudit $1 amanda_dumpdates_t:file read_file_perms;
+          '';
+        };
+        "amanda_rw_dumpdates_files" = {
+          summary = "Read and write /etc/dumpdates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amanda_dumpdates_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 amanda_dumpdates_t:file rw_file_perms;
+          '';
+        };
+        "amanda_manage_lib" = {
+          summary = "Manage Amanda library directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amanda_usr_lib_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 amanda_usr_lib_t:dir manage_dir_perms;
+          '';
+        };
+        "amanda_append_log_files" = {
+          summary = "Read and append amanda log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amanda_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 amanda_log_t:file { append_file_perms read_file_perms };
+          '';
+        };
+        "amanda_search_var_lib" = {
+          summary = "Search Amanda var library directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amanda_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 amanda_var_lib_t:dir search_dir_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(amanda)
 

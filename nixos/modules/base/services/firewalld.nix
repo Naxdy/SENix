@@ -3,128 +3,120 @@
 { lib, ... }: {
   config.security.selinux.modules.firewalld = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Service daemon with a D-BUS interface that provides a dynamic managed firewall.</summary>
+    interface = {
+      summary = "Service daemon with a D-BUS interface that provides a dynamic managed firewall.";
+      exports = {
+        "firewalld_read_config_files" = {
+          summary = "Read firewalld configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type firewalld_etc_rw_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, firewalld_etc_rw_t, firewalld_etc_rw_t)
+          '';
+        };
+        "firewalld_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            firewalld over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type firewalld_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 firewalld_t:dbus send_msg;
+            allow firewalld_t $1:dbus send_msg;
+          '';
+        };
+        "firewalld_dontaudit_rw_tmp_files" = {
+          summary = ''
+            Do not audit attempts to read, snd
+            write firewalld temporary files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type firewalld_tmp_t;
+          '';
+          content = ''
+            dontaudit $1 firewalld_tmp_t:file { read write };
+          '';
+        };
+        "firewalld_read_var_run_files" = {
+          summary = "Read firewalld runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type firewalld_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, firewalld_runtime_t, firewalld_runtime_t)
+          '';
+        };
+        "firewalld_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an firewalld environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type firewalld_t, firewalld_initrc_exec_t;
+            type firewalld_etc_rw_t, firewalld_runtime_t;
+            type firewalld_var_log_t;
+          '';
+          content = ''
+            allow $1 firewalld_t:process { ptrace signal_perms };
+            ps_process_pattern($1, firewalld_t)
 
-      ########################################
-      ## <summary>
-      ##	Read firewalld configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`firewalld_read_config_files',`
-      	gen_require(`
-      		type firewalld_etc_rw_t;
-      	')
+            firewalld_dbus_chat($1)
 
-      	files_search_etc($1)
-      	read_files_pattern($1, firewalld_etc_rw_t, firewalld_etc_rw_t)
-      ')
+            init_startstop_service($1, $2, firewalld_t, firewalld_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	firewalld over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`firewalld_dbus_chat',`
-      	gen_require(`
-      		type firewalld_t;
-      		class dbus send_msg;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, firewalld_runtime_t)
 
-      	allow $1 firewalld_t:dbus send_msg;
-      	allow firewalld_t $1:dbus send_msg;
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, firewalld_var_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read, snd
-      ##	write firewalld temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`firewalld_dontaudit_rw_tmp_files',`
-      	gen_require(`
-      		type firewalld_tmp_t;
-      	')
-
-      	dontaudit $1 firewalld_tmp_t:file { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read firewalld runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`firewalld_read_var_run_files',`
-      	gen_require(`
-      		type firewalld_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, firewalld_runtime_t, firewalld_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an firewalld environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`firewalld_admin',`
-      	gen_require(`
-      		type firewalld_t, firewalld_initrc_exec_t;
-      		type firewalld_etc_rw_t, firewalld_runtime_t;
-      		type firewalld_var_log_t;
-      	')
-
-      	allow $1 firewalld_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, firewalld_t)
-
-      	firewalld_dbus_chat($1)
-
-      	init_startstop_service($1, $2, firewalld_t, firewalld_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, firewalld_runtime_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, firewalld_var_log_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, firewalld_etc_rw_t)
-      ')
-    '';
+            files_search_etc($1)
+            admin_pattern($1, firewalld_etc_rw_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(firewalld)
 

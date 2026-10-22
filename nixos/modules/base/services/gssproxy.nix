@@ -3,157 +3,142 @@
 { lib, ... }: {
   config.security.selinux.modules.gssproxy = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>policy for gssproxy - daemon to proxy GSSAPI context establishment and channel handling</summary>
+    interface = {
+      summary = "policy for gssproxy - daemon to proxy GSSAPI context establishment and channel handling";
+      exports = {
+        "gssproxy_domtrans" = {
+          summary = "Execute gssproxy in the gssproxy domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_t, gssproxy_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, gssproxy_exec_t, gssproxy_t)
+          '';
+        };
+        "gssproxy_search_lib" = {
+          summary = "Search gssproxy lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_var_lib_t;
+          '';
+          content = ''
+            allow $1 gssproxy_var_lib_t:dir search_dir_perms;
+            files_search_var_lib($1)
+          '';
+        };
+        "gssproxy_read_lib_files" = {
+          summary = "Read gssproxy lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
+          '';
+        };
+        "gssproxy_manage_lib_files" = {
+          summary = "Manage gssproxy lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
+          '';
+        };
+        "gssproxy_manage_lib_dirs" = {
+          summary = "Manage gssproxy lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
+          '';
+        };
+        "gssproxy_stream_connect" = {
+          summary = ''
+            Connect to gssproxy over an unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_t, gssproxy_run_t, gssproxy_var_lib_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, gssproxy_run_t, gssproxy_run_t, gssproxy_t)
+            stream_connect_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t, gssproxy_t)
+          '';
+        };
+        "gssproxy_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            an gssproxy environment
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type gssproxy_t;
+            type gssproxy_var_lib_t;
+            type gssproxy_run_t;
+            type gssproxy_unit_t;
+          '';
+          content = ''
+            allow $1 gssproxy_t:process { ptrace signal_perms };
+            ps_process_pattern($1, gssproxy_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute gssproxy in the gssproxy domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_domtrans',`
-      	gen_require(`
-      		type gssproxy_t, gssproxy_exec_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, gssproxy_var_lib_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, gssproxy_exec_t, gssproxy_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, gssproxy_run_t)
 
-      ########################################
-      ## <summary>
-      ##	Search gssproxy lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_search_lib',`
-      	gen_require(`
-      		type gssproxy_var_lib_t;
-      	')
-
-      	allow $1 gssproxy_var_lib_t:dir search_dir_perms;
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read gssproxy lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_read_lib_files',`
-      	gen_require(`
-      		type gssproxy_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage gssproxy lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_manage_lib_files',`
-      	gen_require(`
-      		type gssproxy_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage gssproxy lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_manage_lib_dirs',`
-      	gen_require(`
-      		type gssproxy_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to gssproxy over an unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`gssproxy_stream_connect',`
-      	gen_require(`
-      		type gssproxy_t, gssproxy_run_t, gssproxy_var_lib_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, gssproxy_run_t, gssproxy_run_t, gssproxy_t)
-      	stream_connect_pattern($1, gssproxy_var_lib_t, gssproxy_var_lib_t, gssproxy_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to administrate
-      ##	an gssproxy environment
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`gssproxy_admin',`
-      	gen_require(`
-      		type gssproxy_t;
-      		type gssproxy_var_lib_t;
-      		type gssproxy_run_t;
-      		type gssproxy_unit_t;
-      	')
-
-      	allow $1 gssproxy_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, gssproxy_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, gssproxy_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, gssproxy_run_t)
-
-      	admin_pattern($1, gssproxy_unit_t)
-      ')
-    '';
+            admin_pattern($1, gssproxy_unit_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(gssproxy)
 

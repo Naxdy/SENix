@@ -3,1080 +3,970 @@
 { lib, ... }: {
   config.security.selinux.modules.kubernetes = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>policy for kubernetes</summary>
-
-      ########################################
-      ## <summary>
-      ##	Role access for kubectl.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`kubernetes_kubectl_role',`
-      	gen_require(`
-      		attribute kubectl_domain;
-      		type kubectl_exec_t;
-      		type kubernetes_home_t;
-      	')
-
-      	########################################
-      	#
-      	# Declarations
-      	#
-
-      	type $1_kubectl_t, kubectl_domain;
-      	userdom_user_application_domain($1_kubectl_t, kubectl_exec_t)
-      	role $4 types $1_kubectl_t;
-
-      	########################################
-      	#
-      	# Policy
-      	#
-
-      	domtrans_pattern($3, kubectl_exec_t, $1_kubectl_t)
-
-      	allow $2 kubernetes_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 kubernetes_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 kubernetes_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, kubernetes_home_t, dir, ".kube")
-
-      	allow $3 $1_kubectl_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, $1_kubectl_t)
-
-      	auth_use_nsswitch($1_kubectl_t)
-
-      	# kubectl executes an editor when editing files.
-      	# transition back to the user domain when running them
-      	corecmd_bin_domtrans($1_kubectl_t, $2)
-
-      	optional_policy(`
-      		systemd_user_app_status($1, $1_kubectl_t)
-      	')
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute kubelet in the kubelet domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_domtrans_kubelet',`
-      	gen_require(`
-      		type kubelet_t, kubelet_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kubelet_exec_t, kubelet_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute kubelet in the kubelet domain,
-      ##	and allow the specified role the
-      ##	kubelet domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the kubelet domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_run_kubelet',`
-      	gen_require(`
-      		type kubelet_t;
-      	')
-
-      	role $2 types kubelet_t;
-
-      	kubernetes_domtrans_kubelet($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to kubelet over a unix stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_stream_connect_kubelet',`
-      	gen_require(`
-      		type kubelet_t;
-      		type kubernetes_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, kubernetes_runtime_t, kubernetes_runtime_t, kubelet_t)
-      	allow $1 kubernetes_runtime_t:sock_file read_sock_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read the process state (/proc/pid)
-      ##	of kubelet.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_read_kubelet_state',`
-      	gen_require(`
-      		type kubelet_t;
-      	')
-
-      	ps_process_pattern($1, kubelet_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Inherit and use file descriptors from
-      ##	kubelet.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_use_kubelet_fds',`
-      	gen_require(`
-      		type kubelet_t;
-      	')
-
-      	allow $1 kubelet_t:fd use;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Allow kubelet to send a kill signal
-      ##	to the specified domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_kubelet_kill',`
-      	gen_require(`
-      		type kubelet_t;
-      	')
-
-      	allow kubelet_t $1:process sigkill;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute kubeadm in the kubeadm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_domtrans_kubeadm',`
-      	gen_require(`
-      		type kubeadm_t, kubeadm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kubeadm_exec_t, kubeadm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute kubeadm in the kubeadm domain,
-      ##	and allow the specified role the
-      ##	kubeadm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the kubeadm domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_run_kubeadm',`
-      	gen_require(`
-      		type kubeadm_t;
-      	')
-
-      	role $2 types kubeadm_t;
-
-      	kubernetes_domtrans_kubeadm($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Associated the specified domain to
-      ##	be a domain which is capable of
-      ##	operating as a kubernetes container
-      ##	engine.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_container_engine',`
-      	gen_require(`
-      		attribute kubernetes_container_engine_domain;
-      	')
-
-      	typeattribute $1 kubernetes_container_engine_domain;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Associated the specified domain to
-      ##	be a domain which is capable of
-      ##	operating as a container domain
-      ##	which can be spawned by kubernetes.
-      ##	engine.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_container',`
-      	gen_require(`
-      		attribute kubernetes_container_domain;
-      	')
-
-      	typeattribute $1 kubernetes_container_domain;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified file type to be
-      ##	mounted on by kubernetes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_mountpoint',`
-      	gen_require(`
-      		attribute kubernetes_mountpoint_type;
-      	')
-
-      	typeattribute $1 kubernetes_mountpoint_type;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the process state (/proc/pid) of
-      ##	kubernetes container engines.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_read_container_engine_state',`
-      	gen_require(`
-      		attribute kubernetes_container_engine_domain;
-      	')
-
-      	ps_process_pattern($1, kubernetes_container_engine_domain, kubernetes_container_engine_domain)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search
-      ##	kubernetes container engine keys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_dontaudit_search_engine_keys',`
-      	gen_require(`
-      		attribute kubernetes_container_engine_domain;
-      	')
-
-      	dontaudit $1 kubernetes_container_engine_domain:key search;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to
-      ##	get the process group ID of all
-      ##	kubernetes containers.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_getpgid_containers',`
-      	gen_require(`
-      		attribute kubernetes_container_domain;
-      	')
-
-      	allow $1 kubernetes_container_domain:process getpgid;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Run kubernetes container engine bpf
-      ##	programs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_run_engine_bpf',`
-      	gen_require(`
-      		attribute kubernetes_container_engine_domain;
-      	')
-
-      	allow $1 kubernetes_container_engine_domain:bpf prog_run;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write FIFO files from
-      ##	kubernetes container engines.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_rw_container_engine_fifo_files',`
-      	gen_require(`
-      		attribute kubernetes_container_engine_domain;
-      	')
-
-      	allow $1 kubernetes_container_engine_domain:fifo_file rw_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search kubernetes config directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_search_config',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 kubernetes_config_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read kubernetes config files and symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_read_config',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	kubernetes_search_config($1)
-      	allow $1 kubernetes_config_t:file read_file_perms;
-      	allow $1 kubernetes_config_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on kubernetes config directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_mounton_config_dirs',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	allow $1 kubernetes_config_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to watch
-      ##	kubernetes config directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_config_dirs',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	allow $1 kubernetes_config_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_config_files',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	manage_files_pattern($1, kubernetes_config_t, kubernetes_config_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on kubernetes config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_mounton_config_files',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	allow $1 kubernetes_config_t:file mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to watch
-      ##	kubernetes config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_config_files',`
-      	gen_require(`
-      		type kubernetes_config_t;
-      	')
-
-      	allow $1 kubernetes_config_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to search
-      ##	through the contents of kubernetes plugin
-      ##	directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_search_plugin_dirs',`
-      	gen_require(`
-      		type kubernetes_plugin_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	allow $1 kubernetes_plugin_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to list
-      ##	the contents of kubernetes plugin
-      ##	directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_list_plugins',`
-      	gen_require(`
-      		type kubernetes_plugin_t;
-      	')
-
-      	allow $1 kubernetes_plugin_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to watch
-      ##	kubernetes plugin directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_plugin_dirs',`
-      	gen_require(`
-      		type kubernetes_plugin_t;
-      	')
-
-      	allow $1 kubernetes_plugin_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the specified domain to manage
-      ##	kubernetes plugin files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_plugin_files',`
-      	gen_require(`
-      		type kubernetes_plugin_t;
-      	')
-
-      	manage_files_pattern($1, kubernetes_plugin_t, kubernetes_plugin_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_runtime_dirs',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on kubernetes runtime directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_mounton_runtime_dirs',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_runtime_files',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Memory map kubernetes runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_map_runtime_files',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch kubernetes runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_runtime_files',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes runtime symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_runtime_symlinks',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes runtime sock files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_runtime_sock_files',`
-      	gen_require(`
-      		type kubernetes_runtime_t;
-      	')
-
-      	allow $1 kubernetes_runtime_t:sock_file manage_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List the contents of kubernetes tmpfs
-      ##	directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_list_tmpfs',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_tmpfs_dirs',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch kubernetes tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_tmpfs_dirs',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read kubernetes tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_read_tmpfs_files',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_tmpfs_files',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch kubernetes tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_watch_tmpfs_files',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read kubernetes tmpfs symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_read_tmpfs_symlinks',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage kubernetes tmpfs symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_manage_tmpfs_symlinks',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel directories from the kubernetes
-      ##	tmpfs type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_relabelfrom_tmpfs_dirs',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:dir relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel files from the kubernetes tmpfs type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_relabelfrom_tmpfs_files',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:file relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel symlinks from the kubernetes tmpfs type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_relabelfrom_tmpfs_symlinks',`
-      	gen_require(`
-      		type kubernetes_tmpfs_t;
-      	')
-
-      	allow $1 kubernetes_tmpfs_t:lnk_file relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the status of kubernetes systemd units.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_get_unit_status',`
-      	gen_require(`
-      		type kubernetes_unit_t;
-      		class service status;
-      	')
-
-      	allow $1 kubernetes_unit_t:service status;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Start kubernetes systemd units.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_start_unit',`
-      	gen_require(`
-      		type kubernetes_unit_t;
-      		class service start;
-      	')
-
-      	allow $1 kubernetes_unit_t:service start;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Stop kubernetes systemd units.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_stop_unit',`
-      	gen_require(`
-      		type kubernetes_unit_t;
-      		class service stop;
-      	')
-
-      	allow $1 kubernetes_unit_t:service stop;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Reload kubernetes systemd units.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kubernetes_reload_unit',`
-      	gen_require(`
-      		type kubernetes_unit_t;
-      		class service reload;
-      	')
-
-      	allow $1 kubernetes_unit_t:service reload;
-      ')
-
-      #######################################
-      ## <summary>
-      ##  All of the rules required to administrate
-      ##  a kubernetes environment.
-      ## </summary>
-      ## <param name="domain">
-      ##  <summary>
-      ##  Domain allowed access.
-      ##  </summary>
-      ## </param>
-      ## <param name="role">
-      ##  <summary>
-      ##  Role allowed access.
-      ##  </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`kubernetes_admin',`
-      	gen_require(`
-      		type kubeadm_t, kubelet_t, kubectl_t;
-      		type kubectl_exec_t;
-      		type kubernetes_config_t, kubernetes_tmp_t;
-      		type kubernetes_tmpfs_t, kubernetes_runtime_t;
-      		type kubernetes_home_t;
-      	')
-
-      	container_admin($1, $2)
-
-      	kubernetes_run_kubeadm($1, $2)
-      	kubernetes_run_kubelet($1, $2)
-
-      	role $2 types kubectl_t;
-      	domtrans_pattern($1, kubectl_exec_t, kubectl_t)
-
-      	allow $1 kubeadm_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, kubeadm_t)
-
-      	allow $1 kubelet_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, kubelet_t)
-
-      	allow $1 kubectl_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, kubectl_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, kubernetes_config_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, kubernetes_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, kubernetes_tmp_t)
-
-      	fs_search_tmpfs($1)
-      	admin_pattern($1, kubernetes_tmpfs_t)
-
-      	admin_pattern($1, kubernetes_home_t)
-      	userdom_user_home_dir_filetrans($1, kubernetes_home_t, dir, ".kube")
-
-      	optional_policy(`
-      		crio_admin($1, $2)
-      	')
-      ')
-    '';
+    interface = {
+      summary = "policy for kubernetes";
+      exports = {
+        "kubernetes_kubectl_role" = {
+          type = "template";
+          summary = "Role access for kubectl.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute kubectl_domain;
+            type kubectl_exec_t;
+            type kubernetes_home_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
+
+            type $1_kubectl_t, kubectl_domain;
+            userdom_user_application_domain($1_kubectl_t, kubectl_exec_t)
+            role $4 types $1_kubectl_t;
+
+            ########################################
+            #
+            # Policy
+            #
+
+            domtrans_pattern($3, kubectl_exec_t, $1_kubectl_t)
+
+            allow $2 kubernetes_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 kubernetes_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 kubernetes_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, kubernetes_home_t, dir, ".kube")
+
+            allow $3 $1_kubectl_t:process { ptrace signal_perms };
+            ps_process_pattern($3, $1_kubectl_t)
+
+            auth_use_nsswitch($1_kubectl_t)
+
+            # kubectl executes an editor when editing files.
+            # transition back to the user domain when running them
+            corecmd_bin_domtrans($1_kubectl_t, $2)
+
+            optional_policy(`
+                    systemd_user_app_status($1, $1_kubectl_t)
+            ')
+          '';
+        };
+        "kubernetes_domtrans_kubelet" = {
+          summary = "Execute kubelet in the kubelet domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t, kubelet_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kubelet_exec_t, kubelet_t)
+          '';
+        };
+        "kubernetes_run_kubelet" = {
+          summary = ''
+            Execute kubelet in the kubelet domain,
+            and allow the specified role the
+            kubelet domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the kubelet domain.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t;
+          '';
+          content = ''
+            role $2 types kubelet_t;
+
+            kubernetes_domtrans_kubelet($1)
+          '';
+        };
+        "kubernetes_stream_connect_kubelet" = {
+          summary = "Connect to kubelet over a unix stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t;
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, kubernetes_runtime_t, kubernetes_runtime_t, kubelet_t)
+            allow $1 kubernetes_runtime_t:sock_file read_sock_file_perms;
+          '';
+        };
+        "kubernetes_read_kubelet_state" = {
+          summary = ''
+            Read the process state (/proc/pid)
+            of kubelet.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t;
+          '';
+          content = ''
+            ps_process_pattern($1, kubelet_t)
+          '';
+        };
+        "kubernetes_use_kubelet_fds" = {
+          summary = ''
+            Inherit and use file descriptors from
+            kubelet.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t;
+          '';
+          content = ''
+            allow $1 kubelet_t:fd use;
+          '';
+        };
+        "kubernetes_kubelet_kill" = {
+          summary = ''
+            Allow kubelet to send a kill signal
+            to the specified domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubelet_t;
+          '';
+          content = ''
+            allow kubelet_t $1:process sigkill;
+          '';
+        };
+        "kubernetes_domtrans_kubeadm" = {
+          summary = "Execute kubeadm in the kubeadm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kubeadm_t, kubeadm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kubeadm_exec_t, kubeadm_t)
+          '';
+        };
+        "kubernetes_run_kubeadm" = {
+          summary = ''
+            Execute kubeadm in the kubeadm domain,
+            and allow the specified role the
+            kubeadm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the kubeadm domain.";
+            };
+          };
+          gen_require = ''
+            type kubeadm_t;
+          '';
+          content = ''
+            role $2 types kubeadm_t;
+
+            kubernetes_domtrans_kubeadm($1)
+          '';
+        };
+        "kubernetes_container_engine" = {
+          summary = ''
+            Associated the specified domain to
+            be a domain which is capable of
+            operating as a kubernetes container
+            engine.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_engine_domain;
+          '';
+          content = ''
+            typeattribute $1 kubernetes_container_engine_domain;
+          '';
+        };
+        "kubernetes_container" = {
+          summary = ''
+            Associated the specified domain to
+            be a domain which is capable of
+            operating as a container domain
+            which can be spawned by kubernetes.
+            engine.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_domain;
+          '';
+          content = ''
+            typeattribute $1 kubernetes_container_domain;
+          '';
+        };
+        "kubernetes_mountpoint" = {
+          summary = ''
+            Allow the specified file type to be
+            mounted on by kubernetes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_mountpoint_type;
+          '';
+          content = ''
+            typeattribute $1 kubernetes_mountpoint_type;
+          '';
+        };
+        "kubernetes_read_container_engine_state" = {
+          summary = ''
+            Read the process state (/proc/pid) of
+            kubernetes container engines.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_engine_domain;
+          '';
+          content = ''
+            ps_process_pattern($1, kubernetes_container_engine_domain, kubernetes_container_engine_domain)
+          '';
+        };
+        "kubernetes_dontaudit_search_engine_keys" = {
+          summary = ''
+            Do not audit attempts to search
+            kubernetes container engine keys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_engine_domain;
+          '';
+          content = ''
+            dontaudit $1 kubernetes_container_engine_domain:key search;
+          '';
+        };
+        "kubernetes_getpgid_containers" = {
+          summary = ''
+            Allow the specified domain to
+            get the process group ID of all
+            kubernetes containers.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_domain;
+          '';
+          content = ''
+            allow $1 kubernetes_container_domain:process getpgid;
+          '';
+        };
+        "kubernetes_run_engine_bpf" = {
+          summary = ''
+            Run kubernetes container engine bpf
+            programs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_engine_domain;
+          '';
+          content = ''
+            allow $1 kubernetes_container_engine_domain:bpf prog_run;
+          '';
+        };
+        "kubernetes_rw_container_engine_fifo_files" = {
+          summary = ''
+            Read and write FIFO files from
+            kubernetes container engines.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute kubernetes_container_engine_domain;
+          '';
+          content = ''
+            allow $1 kubernetes_container_engine_domain:fifo_file rw_fifo_file_perms;
+          '';
+        };
+        "kubernetes_search_config" = {
+          summary = "Search kubernetes config directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 kubernetes_config_t:dir search_dir_perms;
+          '';
+        };
+        "kubernetes_read_config" = {
+          summary = "Read kubernetes config files and symlinks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            kubernetes_search_config($1)
+            allow $1 kubernetes_config_t:file read_file_perms;
+            allow $1 kubernetes_config_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "kubernetes_mounton_config_dirs" = {
+          summary = "Mount on kubernetes config directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            allow $1 kubernetes_config_t:dir mounton;
+          '';
+        };
+        "kubernetes_watch_config_dirs" = {
+          summary = ''
+            Allow the specified domain to watch
+            kubernetes config directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            allow $1 kubernetes_config_t:dir watch;
+          '';
+        };
+        "kubernetes_manage_config_files" = {
+          summary = "Manage kubernetes config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            manage_files_pattern($1, kubernetes_config_t, kubernetes_config_t)
+          '';
+        };
+        "kubernetes_mounton_config_files" = {
+          summary = "Mount on kubernetes config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            allow $1 kubernetes_config_t:file mounton;
+          '';
+        };
+        "kubernetes_watch_config_files" = {
+          summary = ''
+            Allow the specified domain to watch
+            kubernetes config files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_config_t;
+          '';
+          content = ''
+            allow $1 kubernetes_config_t:file watch;
+          '';
+        };
+        "kubernetes_search_plugin_dirs" = {
+          summary = ''
+            Allow the specified domain to search
+            through the contents of kubernetes plugin
+            directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_plugin_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            allow $1 kubernetes_plugin_t:dir search_dir_perms;
+          '';
+        };
+        "kubernetes_list_plugins" = {
+          summary = ''
+            Allow the specified domain to list
+            the contents of kubernetes plugin
+            directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_plugin_t;
+          '';
+          content = ''
+            allow $1 kubernetes_plugin_t:dir list_dir_perms;
+          '';
+        };
+        "kubernetes_watch_plugin_dirs" = {
+          summary = ''
+            Allow the specified domain to watch
+            kubernetes plugin directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_plugin_t;
+          '';
+          content = ''
+            allow $1 kubernetes_plugin_t:dir watch;
+          '';
+        };
+        "kubernetes_manage_plugin_files" = {
+          summary = ''
+            Allow the specified domain to manage
+            kubernetes plugin files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_plugin_t;
+          '';
+          content = ''
+            manage_files_pattern($1, kubernetes_plugin_t, kubernetes_plugin_t)
+          '';
+        };
+        "kubernetes_manage_runtime_dirs" = {
+          summary = "Manage kubernetes runtime directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:dir manage_dir_perms;
+          '';
+        };
+        "kubernetes_mounton_runtime_dirs" = {
+          summary = "Mount on kubernetes runtime directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:dir mounton;
+          '';
+        };
+        "kubernetes_manage_runtime_files" = {
+          summary = "Manage kubernetes runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:file manage_file_perms;
+          '';
+        };
+        "kubernetes_map_runtime_files" = {
+          summary = "Memory map kubernetes runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:file map;
+          '';
+        };
+        "kubernetes_watch_runtime_files" = {
+          summary = "Watch kubernetes runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:file watch;
+          '';
+        };
+        "kubernetes_manage_runtime_symlinks" = {
+          summary = "Manage kubernetes runtime symlinks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "kubernetes_manage_runtime_sock_files" = {
+          summary = "Manage kubernetes runtime sock files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_runtime_t;
+          '';
+          content = ''
+            allow $1 kubernetes_runtime_t:sock_file manage_sock_file_perms;
+          '';
+        };
+        "kubernetes_list_tmpfs" = {
+          summary = ''
+            List the contents of kubernetes tmpfs
+            directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:dir list_dir_perms;
+          '';
+        };
+        "kubernetes_manage_tmpfs_dirs" = {
+          summary = "Manage kubernetes tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:dir manage_dir_perms;
+          '';
+        };
+        "kubernetes_watch_tmpfs_dirs" = {
+          summary = "Watch kubernetes tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:dir watch;
+          '';
+        };
+        "kubernetes_read_tmpfs_files" = {
+          summary = "Read kubernetes tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:file read_file_perms;
+          '';
+        };
+        "kubernetes_manage_tmpfs_files" = {
+          summary = "Manage kubernetes tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:file manage_file_perms;
+          '';
+        };
+        "kubernetes_watch_tmpfs_files" = {
+          summary = "Watch kubernetes tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:file watch;
+          '';
+        };
+        "kubernetes_read_tmpfs_symlinks" = {
+          summary = "Read kubernetes tmpfs symlinks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "kubernetes_manage_tmpfs_symlinks" = {
+          summary = "Manage kubernetes tmpfs symlinks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "kubernetes_relabelfrom_tmpfs_dirs" = {
+          summary = ''
+            Relabel directories from the kubernetes
+            tmpfs type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:dir relabelfrom;
+          '';
+        };
+        "kubernetes_relabelfrom_tmpfs_files" = {
+          summary = "Relabel files from the kubernetes tmpfs type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:file relabelfrom;
+          '';
+        };
+        "kubernetes_relabelfrom_tmpfs_symlinks" = {
+          summary = "Relabel symlinks from the kubernetes tmpfs type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_tmpfs_t;
+          '';
+          content = ''
+            allow $1 kubernetes_tmpfs_t:lnk_file relabelfrom;
+          '';
+        };
+        "kubernetes_get_unit_status" = {
+          summary = "Get the status of kubernetes systemd units.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_unit_t;
+            class service status;
+          '';
+          content = ''
+            allow $1 kubernetes_unit_t:service status;
+          '';
+        };
+        "kubernetes_start_unit" = {
+          summary = "Start kubernetes systemd units.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_unit_t;
+            class service start;
+          '';
+          content = ''
+            allow $1 kubernetes_unit_t:service start;
+          '';
+        };
+        "kubernetes_stop_unit" = {
+          summary = "Stop kubernetes systemd units.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_unit_t;
+            class service stop;
+          '';
+          content = ''
+            allow $1 kubernetes_unit_t:service stop;
+          '';
+        };
+        "kubernetes_reload_unit" = {
+          summary = "Reload kubernetes systemd units.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubernetes_unit_t;
+            class service reload;
+          '';
+          content = ''
+            allow $1 kubernetes_unit_t:service reload;
+          '';
+        };
+        "kubernetes_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            a kubernetes environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type kubeadm_t, kubelet_t, kubectl_t;
+            type kubectl_exec_t;
+            type kubernetes_config_t, kubernetes_tmp_t;
+            type kubernetes_tmpfs_t, kubernetes_runtime_t;
+            type kubernetes_home_t;
+          '';
+          content = ''
+            container_admin($1, $2)
+
+            kubernetes_run_kubeadm($1, $2)
+            kubernetes_run_kubelet($1, $2)
+
+            role $2 types kubectl_t;
+            domtrans_pattern($1, kubectl_exec_t, kubectl_t)
+
+            allow $1 kubeadm_t:process { ptrace signal_perms };
+            ps_process_pattern($1, kubeadm_t)
+
+            allow $1 kubelet_t:process { ptrace signal_perms };
+            ps_process_pattern($1, kubelet_t)
+
+            allow $1 kubectl_t:process { ptrace signal_perms };
+            ps_process_pattern($1, kubectl_t)
+
+            files_search_etc($1)
+            admin_pattern($1, kubernetes_config_t)
+
+            files_search_runtime($1)
+            admin_pattern($1, kubernetes_runtime_t)
+
+            files_search_tmp($1)
+            admin_pattern($1, kubernetes_tmp_t)
+
+            fs_search_tmpfs($1)
+            admin_pattern($1, kubernetes_tmpfs_t)
+
+            admin_pattern($1, kubernetes_home_t)
+            userdom_user_home_dir_filetrans($1, kubernetes_home_t, dir, ".kube")
+
+            optional_policy(`
+                    crio_admin($1, $2)
+            ')
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(kubernetes)
 

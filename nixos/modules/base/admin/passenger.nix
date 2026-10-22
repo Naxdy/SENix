@@ -3,66 +3,59 @@
 { lib, ... }: {
   config.security.selinux.modules.passenger = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Ruby on rails deployment for Apache and Nginx servers.</summary>
-
-      ######################################
-      ## <summary>
-      ##	Execute passenger in the passenger domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`passenger_domtrans',`
-      	gen_require(`
-      		type passenger_t, passenger_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, passenger_exec_t, passenger_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Execute passenger in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`passenger_exec',`
-      	gen_require(`
-      		type passenger_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, passenger_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read passenger lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`passenger_read_lib_files',`
-      	gen_require(`
-      		type passenger_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, passenger_var_lib_t, passenger_var_lib_t)
-      ')
-    '';
+    interface = {
+      summary = "Ruby on rails deployment for Apache and Nginx servers.";
+      exports = {
+        "passenger_domtrans" = {
+          summary = "Execute passenger in the passenger domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type passenger_t, passenger_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, passenger_exec_t, passenger_t)
+          '';
+        };
+        "passenger_exec" = {
+          summary = "Execute passenger in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type passenger_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, passenger_exec_t)
+          '';
+        };
+        "passenger_read_lib_files" = {
+          summary = "Read passenger lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type passenger_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, passenger_var_lib_t, passenger_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(passenger)
 

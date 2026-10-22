@@ -3,158 +3,147 @@
 { lib, ... }: {
   config.security.selinux.modules.oddjob = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>D-BUS service which runs odd jobs on behalf of client applications.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run oddjob.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_domtrans',`
-      	gen_require(`
-      		type oddjob_t, oddjob_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, oddjob_exec_t, oddjob_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make the specified program domain
-      ##	accessible from the oddjob.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process to transition to.
-      ##	</summary>
-      ## </param>
-      ## <param name="entrypoint">
-      ##	<summary>
-      ##	The type of the file used as an entrypoint to this domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_system_entry',`
-      	gen_require(`
-      		type oddjob_t;
-      	')
-
-      	domtrans_pattern(oddjob_t, $2, $1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	oddjob over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_dbus_chat',`
-      	gen_require(`
-      		type oddjob_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 oddjob_t:dbus send_msg;
-      	allow oddjob_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run oddjob mkhomedir.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_domtrans_mkhomedir',`
-      	gen_require(`
-      		type oddjob_mkhomedir_t, oddjob_mkhomedir_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, oddjob_mkhomedir_exec_t, oddjob_mkhomedir_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute oddjob mkhomedir in the
-      ##	oddjob mkhomedir domain and allow
-      ##	the specified role the oddjob
-      ##	mkhomedir domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`oddjob_run_mkhomedir',`
-      	gen_require(`
-      		attribute_role oddjob_mkhomedir_roles;
-      	')
-
-      	oddjob_domtrans_mkhomedir($1)
-      	roleattribute $2 oddjob_mkhomedir_roles;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Do not audit attempts to read and write
-      ##	oddjob fifo files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_dontaudit_rw_fifo_files',`
-      	gen_require(`
-      		type oddjob_t;
-      	')
-
-      	dontaudit $1 oddjob_t:fifo_file rw_fifo_file_perms;
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Send child terminated signals to oddjob.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`oddjob_sigchld',`
-      	gen_require(`
-      		type oddjob_t;
-      	')
-
-      	allow $1 oddjob_t:process sigchld;
-      ')
-    '';
+    interface = {
+      summary = "D-BUS service which runs odd jobs on behalf of client applications.";
+      exports = {
+        "oddjob_domtrans" = {
+          summary = "Execute a domain transition to run oddjob.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type oddjob_t, oddjob_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, oddjob_exec_t, oddjob_t)
+          '';
+        };
+        "oddjob_system_entry" = {
+          summary = ''
+            Make the specified program domain
+            accessible from the oddjob.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process to transition to.";
+            };
+            "$2" = {
+              name = "entrypoint";
+              description = "The type of the file used as an entrypoint to this domain.";
+            };
+          };
+          gen_require = ''
+            type oddjob_t;
+          '';
+          content = ''
+            domtrans_pattern(oddjob_t, $2, $1)
+          '';
+        };
+        "oddjob_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            oddjob over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type oddjob_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 oddjob_t:dbus send_msg;
+            allow oddjob_t $1:dbus send_msg;
+          '';
+        };
+        "oddjob_domtrans_mkhomedir" = {
+          summary = ''
+            Execute a domain transition to
+            run oddjob mkhomedir.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type oddjob_mkhomedir_t, oddjob_mkhomedir_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, oddjob_mkhomedir_exec_t, oddjob_mkhomedir_t)
+          '';
+        };
+        "oddjob_run_mkhomedir" = {
+          summary = ''
+            Execute oddjob mkhomedir in the
+            oddjob mkhomedir domain and allow
+            the specified role the oddjob
+            mkhomedir domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role oddjob_mkhomedir_roles;
+          '';
+          content = ''
+            oddjob_domtrans_mkhomedir($1)
+            roleattribute $2 oddjob_mkhomedir_roles;
+          '';
+          rolecap = true;
+        };
+        "oddjob_dontaudit_rw_fifo_files" = {
+          summary = ''
+            Do not audit attempts to read and write
+            oddjob fifo files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type oddjob_t;
+          '';
+          content = ''
+            dontaudit $1 oddjob_t:fifo_file rw_fifo_file_perms;
+          '';
+        };
+        "oddjob_sigchld" = {
+          summary = "Send child terminated signals to oddjob.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type oddjob_t;
+          '';
+          content = ''
+            allow $1 oddjob_t:process sigchld;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(oddjob)
 

@@ -3,101 +3,94 @@
 { lib, ... }: {
   config.security.selinux.modules.pcscd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>PCSC smart card service.</summary>
+    interface = {
+      summary = "PCSC smart card service.";
+      exports = {
+        "pcscd_domtrans" = {
+          summary = "Execute a domain transition to run pcscd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type pcscd_t, pcscd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, pcscd_exec_t, pcscd_t)
+          '';
+        };
+        "pcscd_read_runtime_files" = {
+          summary = "Read pcscd runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pcscd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, pcscd_runtime_t, pcscd_runtime_t)
+          '';
+        };
+        "pcscd_stream_connect" = {
+          summary = ''
+            Connect to pcscd over an unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pcscd_t, pcscd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, pcscd_runtime_t, pcscd_runtime_t, pcscd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run pcscd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pcscd_domtrans',`
-      	gen_require(`
-      		type pcscd_t, pcscd_exec_t;
-      	')
+            allow pcscd_t $1:dir list_dir_perms;
+            allow pcscd_t $1:file read_file_perms;
+          '';
+        };
+        "pcscd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pcscd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pcscd_t, pcscd_initrc_exec_t, pcscd_runtime_t;
+          '';
+          content = ''
+            allow $1 pcscd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pcscd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, pcscd_exec_t, pcscd_t)
-      ')
+            init_startstop_service($1, $2, pcscd_t, pcscd_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Read pcscd runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pcscd_read_runtime_files',`
-      	gen_require(`
-      		type pcscd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, pcscd_runtime_t, pcscd_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to pcscd over an unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pcscd_stream_connect',`
-      	gen_require(`
-      		type pcscd_t, pcscd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, pcscd_runtime_t, pcscd_runtime_t, pcscd_t)
-
-      	allow pcscd_t $1:dir list_dir_perms;
-      	allow pcscd_t $1:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pcscd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pcscd_admin',`
-      	gen_require(`
-      		type pcscd_t, pcscd_initrc_exec_t, pcscd_runtime_t;
-      	')
-
-      	allow $1 pcscd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pcscd_t)
-
-      	init_startstop_service($1, $2, pcscd_t, pcscd_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, pcscd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, pcscd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pcscd)
 

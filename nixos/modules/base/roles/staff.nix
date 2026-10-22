@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.staff = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Administrator's unprivileged user role</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the staff role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`staff_role_change',`
-      	gen_require(`
-      		role staff_r;
-      	')
-
-      	allow $1 staff_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the staff role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the staff role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`staff_role_change_to',`
-      	gen_require(`
-      		role staff_r;
-      	')
-
-      	allow staff_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Administrator's unprivileged user role";
+      exports = {
+        "staff_role_change" = {
+          summary = "Change to the staff role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role staff_r;
+          '';
+          content = ''
+            allow $1 staff_r;
+          '';
+          rolecap = true;
+        };
+        "staff_role_change_to" = {
+          summary = "Change from the staff role.";
+          desc = ''
+            <p>
+            Change from the staff role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role staff_r;
+          '';
+          content = ''
+            allow staff_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(staff)
 

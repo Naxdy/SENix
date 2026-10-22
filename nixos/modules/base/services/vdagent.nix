@@ -3,120 +3,110 @@
 { lib, ... }: {
   config.security.selinux.modules.vdagent = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Spice agent for Linux.</summary>
+    interface = {
+      summary = "Spice agent for Linux.";
+      exports = {
+        "vdagent_domtrans" = {
+          summary = "Execute a domain transition to run vdagent.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vdagent_t, vdagent_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, vdagent_exec_t, vdagent_t)
+          '';
+        };
+        "vdagent_getattr_exec_files" = {
+          summary = "Get attributes of vdagent executable files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vdagent_exec_t;
+          '';
+          content = ''
+            allow $1 vdagent_exec_t:file getattr_file_perms;
+          '';
+        };
+        "vdagent_getattr_log" = {
+          summary = "Get attributes of vdagent log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vdagent_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 vdagent_log_t:file getattr_file_perms;
+          '';
+        };
+        "vdagent_stream_connect" = {
+          summary = ''
+            Connect to vdagent with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vdagent_runtime_t, vdagent_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, vdagent_runtime_t, vdagent_runtime_t, vdagent_t)
+          '';
+        };
+        "vdagent_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an vdagent environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type vdagent_t, vdagent_runtime_t, vdagentd_initrc_exec_t;
+            type vdagent_log_t;
+          '';
+          content = ''
+            allow $1 vdagent_t:process signal_perms;
+            ps_process_pattern($1, vdagent_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run vdagent.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vdagent_domtrans',`
-      	gen_require(`
-      		type vdagent_t, vdagent_exec_t;
-      	')
+            init_startstop_service($1, $2, vdagentd_t, vdagentd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, vdagent_exec_t, vdagent_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, vdagent_log_t)
 
-      #####################################
-      ## <summary>
-      ##	Get attributes of vdagent executable files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vdagent_getattr_exec_files',`
-      	gen_require(`
-      		type vdagent_exec_t;
-      	')
-
-      	allow $1 vdagent_exec_t:file getattr_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Get attributes of vdagent log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vdagent_getattr_log',`
-      	gen_require(`
-      		type vdagent_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 vdagent_log_t:file getattr_file_perms;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Connect to vdagent with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vdagent_stream_connect',`
-      	gen_require(`
-      		type vdagent_runtime_t, vdagent_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, vdagent_runtime_t, vdagent_runtime_t, vdagent_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an vdagent environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`vdagent_admin',`
-      	gen_require(`
-      		type vdagent_t, vdagent_runtime_t, vdagentd_initrc_exec_t;
-      		type vdagent_log_t;
-      	')
-
-      	allow $1 vdagent_t:process signal_perms;
-      	ps_process_pattern($1, vdagent_t)
-
-      	init_startstop_service($1, $2, vdagentd_t, vdagentd_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, vdagent_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, vdagent_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, vdagent_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vdagent)
 

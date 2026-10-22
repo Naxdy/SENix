@@ -3,386 +3,369 @@
 { lib, ... }: {
   config.security.selinux.modules.wm = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>X Window Managers.</summary>
+    interface = {
+      summary = "X Window Managers.";
+      exports = {
+        "wm_role_template" = {
+          type = "template";
+          summary = "The role template for the wm module.";
+          desc = ''
+            <p>
+            This template creates a derived domains which are used
+            for window manager applications.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute wm_domain;
+            type wm_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The role template for the wm module.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	This template creates a derived domains which are used
-      ##	for window manager applications.
-      ##	</p>
-      ## </desc>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`wm_role_template',`
-      	gen_require(`
-      		attribute wm_domain;
-      		type wm_exec_t;
-      	')
+            type $1_wm_t, wm_domain;
+            userdom_application_exec_domain($1_wm_t, $1)
+            userdom_user_application_domain($1_wm_t, wm_exec_t)
+            role $4 types $1_wm_t;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	type $1_wm_t, wm_domain;
-      	userdom_application_exec_domain($1_wm_t, $1)
-      	userdom_user_application_domain($1_wm_t, wm_exec_t)
-      	role $4 types $1_wm_t;
+            allow $1_wm_t self:process getcap;
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            allow $3 $1_wm_t:fd use;
 
-      	allow $1_wm_t self:process getcap;
+            allow $1_wm_t $3:unix_stream_socket { connectto read write getopt getattr accept };
+            allow $3 $1_wm_t:unix_stream_socket { connectto read write getopt };
 
-      	allow $3 $1_wm_t:fd use;
+            # ptrace here would allow messing with keyboard
+            allow $3 $1_wm_t:process { signal_perms };
+            ps_process_pattern($3, $1_wm_t)
 
-      	allow $1_wm_t $3:unix_stream_socket { connectto read write getopt getattr accept };
-      	allow $3 $1_wm_t:unix_stream_socket { connectto read write getopt };
+            allow $1_wm_t $3:process { sigkill signull signal };
+            ps_process_pattern($1_wm_t, $3)
 
-      	# ptrace here would allow messing with keyboard
-      	allow $3 $1_wm_t:process { signal_perms };
-      	ps_process_pattern($3, $1_wm_t)
+            domtrans_pattern($3, wm_exec_t, $1_wm_t)
 
-      	allow $1_wm_t $3:process { sigkill signull signal };
-      	ps_process_pattern($1_wm_t, $3)
+            corecmd_bin_domtrans($1_wm_t, $2)
+            corecmd_shell_domtrans($1_wm_t, $2)
 
-      	domtrans_pattern($3, wm_exec_t, $1_wm_t)
+            mls_file_read_all_levels($1_wm_t)
+            mls_file_write_all_levels($1_wm_t)
+            mls_xwin_read_all_levels($1_wm_t)
+            mls_xwin_write_all_levels($1_wm_t)
+            mls_fd_use_all_levels($1_wm_t)
 
-      	corecmd_bin_domtrans($1_wm_t, $2)
-      	corecmd_shell_domtrans($1_wm_t, $2)
+            auth_domtrans_chk_passwd($1_wm_t)
+            auth_use_nsswitch($1_wm_t)
 
-      	mls_file_read_all_levels($1_wm_t)
-      	mls_file_write_all_levels($1_wm_t)
-      	mls_xwin_read_all_levels($1_wm_t)
-      	mls_xwin_write_all_levels($1_wm_t)
-      	mls_fd_use_all_levels($1_wm_t)
+            miscfiles_manage_fonts_cache($1_wm_t)
 
-      	auth_domtrans_chk_passwd($1_wm_t)
-      	auth_use_nsswitch($1_wm_t)
+            userdom_rw_user_tmpfs_files($1_wm_t)
+            userdom_map_user_tmpfs_files($1_wm_t)
 
-      	miscfiles_manage_fonts_cache($1_wm_t)
+            xserver_role($1, $1_wm_t, $3, $4)
+            xserver_user_runtime_dir_filetrans_user_xauth($1_wm_t)
+            xserver_manage_core_devices($1_wm_t)
 
-      	userdom_rw_user_tmpfs_files($1_wm_t)
-      	userdom_map_user_tmpfs_files($1_wm_t)
+            wm_write_pipes($1, $3)
 
-      	xserver_role($1, $1_wm_t, $3, $4)
-      	xserver_user_runtime_dir_filetrans_user_xauth($1_wm_t)
-      	xserver_manage_core_devices($1_wm_t)
+            optional_policy(`
+                    dbus_connect_spec_session_bus($1, $1_wm_t)
+                    dbus_spec_session_bus_client($1, $1_wm_t)
+                    dbus_system_bus_client($1_wm_t)
 
-      	wm_write_pipes($1, $3)
+                    optional_policy(`
+                            wm_dbus_chat($1, $3)
+                    ')
+            ')
 
-      	optional_policy(`
-      		dbus_connect_spec_session_bus($1, $1_wm_t)
-      		dbus_spec_session_bus_client($1, $1_wm_t)
-      		dbus_system_bus_client($1_wm_t)
+            optional_policy(`
+                    gnome_stream_connect_all_gkeyringd($1_wm_t)
+            ')
 
-      		optional_policy(`
-      			wm_dbus_chat($1, $3)
-      		')
-      	')
+            optional_policy(`
+                    modemmanager_dbus_chat($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		gnome_stream_connect_all_gkeyringd($1_wm_t)
-      	')
+            optional_policy(`
+                    networkmanager_watch_etc_dirs($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		modemmanager_dbus_chat($1_wm_t)
-      	')
+            optional_policy(`
+                    pipewire_client($1_wm_t)
+                    pipewire_read_home_files($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		networkmanager_watch_etc_dirs($1_wm_t)
-      	')
+            optional_policy(`
+                    policykit_run_auth($1_wm_t, $4)
+                    policykit_signal_auth($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		pipewire_client($1_wm_t)
-      		pipewire_read_home_files($1_wm_t)
-      	')
+            optional_policy(`
+                    pulseaudio_run($1_wm_t, $4)
+            ')
 
-      	optional_policy(`
-      		policykit_run_auth($1_wm_t, $4)
-      		policykit_signal_auth($1_wm_t)
-      	')
+            optional_policy(`
+                    systemd_read_logind_state($1_wm_t)
+                    systemd_user_app_status($1, $1_wm_t)
+                    systemd_write_inherited_logind_inhibit_pipes($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		pulseaudio_run($1_wm_t, $4)
-      	')
+            optional_policy(`
+                    wayland_compositor_domain($1_wm_t)
+            ')
 
-      	optional_policy(`
-      		systemd_read_logind_state($1_wm_t)
-      		systemd_user_app_status($1, $1_wm_t)
-      		systemd_write_inherited_logind_inhibit_pipes($1_wm_t)
-      	')
-
-      	optional_policy(`
-      		wayland_compositor_domain($1_wm_t)
-      	')
-
-      	optional_policy(`
-      		xscreensaver_run($1_wm_t, $4)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute wm in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_exec',`
-      	gen_require(`
-      		type wm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, wm_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	specified wm over dbus.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user domain (e.g., user
-      ##	is the prefix for user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      template(`wm_dbus_chat',`
-      	gen_require(`
-      		type $1_wm_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $2 $1_wm_t:dbus send_msg;
-      	allow $1_wm_t $2:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to execute
-      ##	files in temporary directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_dontaudit_exec_tmp_files',`
-      	gen_require(`
-      		type wm_tmp_t;
-      	')
-
-      	dontaudit $1 wm_tmp_t:file exec_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	mmap and read-write files created by wm_domain in tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_mmap_rw_tmpfs_files',`
-      	gen_require(`
-      		type wm_tmpfs_t;
-      	')
-
-      	fs_list_tmpfs($1)
-      	allow $1 wm_tmpfs_t:file mmap_rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to execute
-      ##	files in temporary filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_dontaudit_exec_tmpfs_files',`
-      	gen_require(`
-      		type wm_tmpfs_t;
-      	')
-
-      	dontaudit $1 wm_tmpfs_t:file exec_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow receiving fd from wm domain
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_use_application_fds',`
-      	gen_require(`
-      		attribute wm_domain;
-      	')
-
-      	allow $1 wm_domain:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Allow using socket of wm domain
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain to allow
-      ##      </summary>
-      ## </param>
-      #
-      interface(`wm_rw_application_stream_sockets',`
-      	gen_require(`
-      		attribute wm_domain;
-      	')
-
-      	allow $1 wm_domain:unix_stream_socket rw_stream_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create a domain for applications
-      ##	that are launched by the window
-      ##	manager.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Create a domain for applications that are launched by the
-      ##	window manager (implying a domain transition).  Typically
-      ##	these are graphical applications that are run interactively.
-      ##	</p>
-      ##	<p>
-      ##	The types will be made usable as a domain and file, making
-      ##	calls to domain_type() and files_type() redundant.
-      ##	</p>
-      ## </desc>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	Type to be used in the domain transition as the application
-      ##	domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="entry_point">
-      ##	<summary>
-      ##	Type of the program to be used as an entry point to this domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="source_domain">
-      ##	<summary>
-      ##	Type to be used as the source window manager domain.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="none"/>
-      #
-      interface(`wm_application_domain',`
-      	gen_require(`
-      		attribute wm_domain;
-      		type wm_tmpfs_t;
-      	')
-
-      	userdom_user_application_domain($1, $2)
-      	domtrans_pattern(wm_domain, $2, $1)
-      	allow $1 wm_domain:unix_stream_socket { connectto rw_stream_socket_perms };
-      	allow $1 wm_tmpfs_t:file mmap_rw_file_perms;
-      	allow wm_domain $1:fd use;
-      	optional_policy(`
-      		wayland_client_domain($1)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow dbus communication with wm domain
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wm_dbus_chat_applications',`
-      	gen_require(`
-      		attribute wm_domain;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 wm_domain:dbus send_msg;
-      	allow wm_domain $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write wm unnamed pipes.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user domain (e.g., user
-      ##	is the prefix for user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      template(`wm_write_pipes',`
-      	gen_require(`
-      		type $1_wm_t;
-      	')
-
-      	allow $2 $1_wm_t:fifo_file write;
-      ')
-    '';
+            optional_policy(`
+                    xscreensaver_run($1_wm_t, $4)
+            ')
+          '';
+        };
+        "wm_exec" = {
+          summary = "Execute wm in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type wm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, wm_exec_t)
+          '';
+        };
+        "wm_dbus_chat" = {
+          type = "template";
+          summary = ''
+            Send and receive messages from
+            specified wm over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user domain (e.g., user
+                is the prefix for user_t).
+              '';
+            };
+            "$2" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type $1_wm_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $2 $1_wm_t:dbus send_msg;
+            allow $1_wm_t $2:dbus send_msg;
+          '';
+        };
+        "wm_dontaudit_exec_tmp_files" = {
+          summary = ''
+            Do not audit attempts to execute
+            files in temporary directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type wm_tmp_t;
+          '';
+          content = ''
+            dontaudit $1 wm_tmp_t:file exec_file_perms;
+          '';
+        };
+        "wm_mmap_rw_tmpfs_files" = {
+          summary = "mmap and read-write files created by wm_domain in tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            type wm_tmpfs_t;
+          '';
+          content = ''
+            fs_list_tmpfs($1)
+            allow $1 wm_tmpfs_t:file mmap_rw_file_perms;
+          '';
+        };
+        "wm_dontaudit_exec_tmpfs_files" = {
+          summary = ''
+            Do not audit attempts to execute
+            files in temporary filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type wm_tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 wm_tmpfs_t:file exec_file_perms;
+          '';
+        };
+        "wm_use_application_fds" = {
+          summary = "Allow receiving fd from wm domain";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            attribute wm_domain;
+          '';
+          content = ''
+            allow $1 wm_domain:fd use;
+          '';
+        };
+        "wm_rw_application_stream_sockets" = {
+          summary = "Allow using socket of wm domain";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            attribute wm_domain;
+          '';
+          content = ''
+            allow $1 wm_domain:unix_stream_socket rw_stream_socket_perms;
+          '';
+        };
+        "wm_application_domain" = {
+          summary = ''
+            Create a domain for applications
+            that are launched by the window
+            manager.
+          '';
+          desc = ''
+            <p>
+            Create a domain for applications that are launched by the
+            window manager (implying a domain transition).  Typically
+            these are graphical applications that are run interactively.
+            </p>
+            <p>
+            The types will be made usable as a domain and file, making
+            calls to domain_type() and files_type() redundant.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "target_domain";
+              description = ''
+                Type to be used in the domain transition as the application
+                domain.
+              '';
+            };
+            "$2" = {
+              name = "entry_point";
+              description = "Type of the program to be used as an entry point to this domain.";
+            };
+            "$3" = {
+              name = "source_domain";
+              description = "Type to be used as the source window manager domain.";
+            };
+          };
+          gen_require = ''
+            attribute wm_domain;
+            type wm_tmpfs_t;
+          '';
+          content = ''
+            userdom_user_application_domain($1, $2)
+            domtrans_pattern(wm_domain, $2, $1)
+            allow $1 wm_domain:unix_stream_socket { connectto rw_stream_socket_perms };
+            allow $1 wm_tmpfs_t:file mmap_rw_file_perms;
+            allow wm_domain $1:fd use;
+            optional_policy(`
+                    wayland_client_domain($1)
+            ')
+          '';
+          infoflow = {
+            type = "none";
+          };
+        };
+        "wm_dbus_chat_applications" = {
+          summary = "Allow dbus communication with wm domain";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow";
+            };
+          };
+          gen_require = ''
+            attribute wm_domain;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 wm_domain:dbus send_msg;
+            allow wm_domain $1:dbus send_msg;
+          '';
+        };
+        "wm_write_pipes" = {
+          type = "template";
+          summary = "Write wm unnamed pipes.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user domain (e.g., user
+                is the prefix for user_t).
+              '';
+            };
+            "$2" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type $1_wm_t;
+          '';
+          content = ''
+            allow $2 $1_wm_t:fifo_file write;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(wm)
 

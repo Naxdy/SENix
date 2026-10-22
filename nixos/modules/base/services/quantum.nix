@@ -3,47 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.quantum = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Virtual network service for Openstack.</summary>
+    interface = {
+      summary = "Virtual network service for Openstack.";
+      exports = {
+        "quantum_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an quantum environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type quantum_t, quantum_initrc_exec_t, quantum_log_t;
+            type quantum_var_lib_t, quantum_tmp_t;
+          '';
+          content = ''
+            allow $1 quantum_t:process { ptrace signal_perms };
+            ps_process_pattern($1, quantum_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an quantum environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`quantum_admin',`
-      	gen_require(`
-      		type quantum_t, quantum_initrc_exec_t, quantum_log_t;
-      		type quantum_var_lib_t, quantum_tmp_t;
-      	')
+            init_startstop_service($1, $2, quantum_t, quantum_initrc_exec_t)
 
-      	allow $1 quantum_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, quantum_t)
+            logging_search_logs($1)
+            admin_pattern($1, quantum_log_t)
 
-      	init_startstop_service($1, $2, quantum_t, quantum_initrc_exec_t)
+            files_search_var_lib($1)
+            admin_pattern($1, quantum_var_lib_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, quantum_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, quantum_var_lib_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, quantum_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, quantum_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(quantum)
 

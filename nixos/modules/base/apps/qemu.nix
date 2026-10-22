@@ -3,479 +3,436 @@
 { lib, ... }: {
   config.security.selinux.modules.qemu = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>QEMU machine emulator and virtualizer.</summary>
+    interface = {
+      summary = "QEMU machine emulator and virtualizer.";
+      exports = {
+        "qemu_domain_template" = {
+          type = "template";
+          summary = "The template to define a qemu domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          content = ''
+            ##############################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a qemu domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`qemu_domain_template',`
-      	##############################
-      	#
-      	# Declarations
-      	#
+            type $1_t;
+            domain_type($1_t)
 
-      	type $1_t;
-      	domain_type($1_t)
+            type $1_tmp_t;
+            files_tmp_file($1_tmp_t)
 
-      	type $1_tmp_t;
-      	files_tmp_file($1_tmp_t)
+            ##############################
+            #
+            # Policy
+            #
 
-      	##############################
-      	#
-      	# Policy
-      	#
+            allow $1_t self:capability { dac_override dac_read_search };
+            allow $1_t self:process { execmem execstack getsched signal };
+            allow $1_t self:fifo_file rw_fifo_file_perms;
+            allow $1_t self:shm create_shm_perms;
+            allow $1_t self:unix_stream_socket create_stream_socket_perms;
+            allow $1_t self:tcp_socket create_stream_socket_perms;
+            allow $1_t self:tun_socket create;
 
-      	allow $1_t self:capability { dac_override dac_read_search };
-      	allow $1_t self:process { execmem execstack getsched signal };
-      	allow $1_t self:fifo_file rw_fifo_file_perms;
-      	allow $1_t self:shm create_shm_perms;
-      	allow $1_t self:unix_stream_socket create_stream_socket_perms;
-      	allow $1_t self:tcp_socket create_stream_socket_perms;
-      	allow $1_t self:tun_socket create;
+            manage_dirs_pattern($1_t, $1_tmp_t, $1_tmp_t)
+            manage_files_pattern($1_t, $1_tmp_t, $1_tmp_t)
+            files_tmp_filetrans($1_t, $1_tmp_t, { file dir })
 
-      	manage_dirs_pattern($1_t, $1_tmp_t, $1_tmp_t)
-      	manage_files_pattern($1_t, $1_tmp_t, $1_tmp_t)
-      	files_tmp_filetrans($1_t, $1_tmp_t, { file dir })
+            kernel_read_system_state($1_t)
 
-      	kernel_read_system_state($1_t)
+            corenet_all_recvfrom_netlabel($1_t)
+            corenet_tcp_sendrecv_generic_if($1_t)
+            corenet_tcp_sendrecv_generic_node($1_t)
+            corenet_tcp_bind_generic_node($1_t)
+            corenet_tcp_bind_vnc_port($1_t)
+            corenet_rw_tun_tap_dev($1_t)
 
-      	corenet_all_recvfrom_netlabel($1_t)
-      	corenet_tcp_sendrecv_generic_if($1_t)
-      	corenet_tcp_sendrecv_generic_node($1_t)
-      	corenet_tcp_bind_generic_node($1_t)
-      	corenet_tcp_bind_vnc_port($1_t)
-      	corenet_rw_tun_tap_dev($1_t)
+            #       dev_rw_kvm($1_t)
 
-      #	dev_rw_kvm($1_t)
+            domain_use_interactive_fds($1_t)
 
-      	domain_use_interactive_fds($1_t)
+            files_read_etc_files($1_t)
+            files_read_usr_files($1_t)
+            files_read_var_files($1_t)
+            files_search_all($1_t)
 
-      	files_read_etc_files($1_t)
-      	files_read_usr_files($1_t)
-      	files_read_var_files($1_t)
-      	files_search_all($1_t)
+            fs_list_inotifyfs($1_t)
+            fs_rw_anon_inodefs_files($1_t)
+            fs_rw_tmpfs_files($1_t)
 
-      	fs_list_inotifyfs($1_t)
-      	fs_rw_anon_inodefs_files($1_t)
-      	fs_rw_tmpfs_files($1_t)
+            storage_raw_write_removable_device($1_t)
+            storage_raw_read_removable_device($1_t)
 
-      	storage_raw_write_removable_device($1_t)
-      	storage_raw_read_removable_device($1_t)
+            term_use_ptmx($1_t)
+            term_getattr_pty_fs($1_t)
+            term_use_generic_ptys($1_t)
 
-      	term_use_ptmx($1_t)
-      	term_getattr_pty_fs($1_t)
-      	term_use_generic_ptys($1_t)
+            miscfiles_read_localization($1_t)
 
-      	miscfiles_read_localization($1_t)
+            sysnet_read_config($1_t)
 
-      	sysnet_read_config($1_t)
+            userdom_use_user_terminals($1_t)
+            userdom_attach_admin_tun_iface($1_t)
 
-      	userdom_use_user_terminals($1_t)
-      	userdom_attach_admin_tun_iface($1_t)
+            optional_policy(`
+                    samba_domtrans_smbd($1_t)
+            ')
 
-      	optional_policy(`
-      		samba_domtrans_smbd($1_t)
-      	')
+            optional_policy(`
+                    virt_manage_images($1_t)
+                    virt_read_config($1_t)
+                    virt_read_lib_files($1_t)
+                    virt_attach_tun_iface($1_t)
+            ')
 
-      	optional_policy(`
-      		virt_manage_images($1_t)
-      		virt_read_config($1_t)
-      		virt_read_lib_files($1_t)
-      		virt_attach_tun_iface($1_t)
-      	')
+            optional_policy(`
+                    xserver_stream_connect($1_t)
+                    xserver_read_xdm_tmp_files($1_t)
+                    xserver_read_xdm_runtime_files($1_t)
+            #               xserver_xdm_rw_shm($1_t)
+            ')
+          '';
+        };
+        "qemu_role" = {
+          summary = "Role access for qemu.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+            "$2" = {
+              name = "domain";
+              description = "User domain for the role.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            qemu_run($2, $1)
 
-      	optional_policy(`
-      		xserver_stream_connect($1_t)
-      		xserver_read_xdm_tmp_files($1_t)
-      		xserver_read_xdm_runtime_files($1_t)
-      #		xserver_xdm_rw_shm($1_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Role access for qemu.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_role',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	qemu_run($2, $1)
-
-      	allow $2 qemu_t:process { ptrace signal_perms };
-      	ps_process_pattern($2, qemu_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run qemu.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_domtrans',`
-      	gen_require(`
-      		type qemu_t, qemu_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, qemu_exec_t, qemu_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a qemu in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_exec',`
-      	gen_require(`
-      		type qemu_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, qemu_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute qemu in the qemu domain,
-      ##	and allow the specified role the
-      ##	qemu domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`qemu_run',`
-      	gen_require(`
-      		attribute_role qemu_roles;
-      	')
-
-      	qemu_domtrans($1)
-      	roleattribute $2 qemu_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read qemu process state files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_read_state',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	kernel_search_proc($1)
-      	allow $1 qemu_t:dir list_dir_perms;
-      	allow $1 qemu_t:file read_file_perms;
-      	allow $1 qemu_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write qemu process state files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to allow access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_write_state',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	kernel_search_proc($1)
-      	allow $1 qemu_t:dir list_dir_perms;
-      	allow $1 qemu_t:file write_file_perms;
-      	allow $1 qemu_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get qemu process stats.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_getattr',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	allow $1 qemu_t:process getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set qemu scheduler.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_setsched',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	allow $1 qemu_t:process setsched;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to qemu.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_signal',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	allow $1 qemu_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send kill signals to qemu.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_kill',`
-      	gen_require(`
-      		type qemu_t;
-      	')
-
-      	allow $1 qemu_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to qemu with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_stream_connect',`
-      	gen_require(`
-      		type qemu_t, qemu_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, qemu_runtime_t, qemu_runtime_t, qemu_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unlink qemu runtime sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_delete_runtime_sock_files',`
-      	gen_require(`
-      		type qemu_runtime_t;
-      	')
-
-      	allow $1 qemu_runtime_t:sock_file unlink;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run qemu unconfined.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_domtrans_unconfined',`
-      	gen_require(`
-      		type unconfined_qemu_t, qemu_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, qemu_exec_t, unconfined_qemu_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	qemu image symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_manage_image_symlinks',`
-      	gen_require(`
-      		type qemu_image_t;
-      	')
-
-      	manage_lnk_files_pattern($1, qemu_image_t, qemu_image_t)
-
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	qemu temporary directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_manage_tmp_dirs',`
-      	gen_require(`
-      		type qemu_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	manage_dirs_pattern($1, qemu_tmp_t, qemu_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	qemu temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_manage_tmp_files',`
-      	gen_require(`
-      		type qemu_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	manage_files_pattern($1, qemu_tmp_t, qemu_tmp_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute qemu in a specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute qemu in a specified domain.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ## </desc>
-      ## <param name="source_domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	Domain to transition to.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_spec_domtrans',`
-      	gen_require(`
-      		type qemu_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domain_auto_transition_pattern($1, qemu_exec_t, $2)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Make qemu executable files an
-      ##	entrypoint for the specified domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The domain for which qemu_exec_t is an entrypoint.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qemu_entry_type',`
-      	gen_require(`
-      		type qemu_exec_t;
-      	')
-
-      	domain_entry_file($1, qemu_exec_t)
-      ')
-    '';
+            allow $2 qemu_t:process { ptrace signal_perms };
+            ps_process_pattern($2, qemu_t)
+          '';
+        };
+        "qemu_domtrans" = {
+          summary = "Execute a domain transition to run qemu.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type qemu_t, qemu_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, qemu_exec_t, qemu_t)
+          '';
+        };
+        "qemu_exec" = {
+          summary = "Execute a qemu in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, qemu_exec_t)
+          '';
+        };
+        "qemu_run" = {
+          summary = ''
+            Execute qemu in the qemu domain,
+            and allow the specified role the
+            qemu domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role qemu_roles;
+          '';
+          content = ''
+            qemu_domtrans($1)
+            roleattribute $2 qemu_roles;
+          '';
+          rolecap = true;
+        };
+        "qemu_read_state" = {
+          summary = "Read qemu process state files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            kernel_search_proc($1)
+            allow $1 qemu_t:dir list_dir_perms;
+            allow $1 qemu_t:file read_file_perms;
+            allow $1 qemu_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "qemu_write_state" = {
+          summary = "Write qemu process state files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to allow access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            kernel_search_proc($1)
+            allow $1 qemu_t:dir list_dir_perms;
+            allow $1 qemu_t:file write_file_perms;
+            allow $1 qemu_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "qemu_getattr" = {
+          summary = "Get qemu process stats.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            allow $1 qemu_t:process getattr;
+          '';
+        };
+        "qemu_setsched" = {
+          summary = "Set qemu scheduler.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            allow $1 qemu_t:process setsched;
+          '';
+        };
+        "qemu_signal" = {
+          summary = "Send generic signals to qemu.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            allow $1 qemu_t:process signal;
+          '';
+        };
+        "qemu_kill" = {
+          summary = "Send kill signals to qemu.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t;
+          '';
+          content = ''
+            allow $1 qemu_t:process sigkill;
+          '';
+        };
+        "qemu_stream_connect" = {
+          summary = ''
+            Connect to qemu with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_t, qemu_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, qemu_runtime_t, qemu_runtime_t, qemu_t)
+          '';
+        };
+        "qemu_delete_runtime_sock_files" = {
+          summary = "Unlink qemu runtime sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_runtime_t;
+          '';
+          content = ''
+            allow $1 qemu_runtime_t:sock_file unlink;
+          '';
+        };
+        "qemu_domtrans_unconfined" = {
+          summary = ''
+            Execute a domain transition to
+            run qemu unconfined.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type unconfined_qemu_t, qemu_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, qemu_exec_t, unconfined_qemu_t)
+          '';
+        };
+        "qemu_manage_image_symlinks" = {
+          summary = ''
+            Create, read, write, and delete
+            qemu image symlinks.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_image_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, qemu_image_t, qemu_image_t)
+          '';
+        };
+        "qemu_manage_tmp_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            qemu temporary directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            manage_dirs_pattern($1, qemu_tmp_t, qemu_tmp_t)
+          '';
+        };
+        "qemu_manage_tmp_files" = {
+          summary = ''
+            Create, read, write, and delete
+            qemu temporary files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qemu_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            manage_files_pattern($1, qemu_tmp_t, qemu_tmp_t)
+          '';
+        };
+        "qemu_spec_domtrans" = {
+          summary = "Execute qemu in a specified domain.";
+          desc = ''
+            <p>
+            Execute qemu in a specified domain.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "source_domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "Domain to transition to.";
+            };
+          };
+          gen_require = ''
+            type qemu_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domain_auto_transition_pattern($1, qemu_exec_t, $2)
+          '';
+        };
+        "qemu_entry_type" = {
+          summary = ''
+            Make qemu executable files an
+            entrypoint for the specified domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The domain for which qemu_exec_t is an entrypoint.";
+            };
+          };
+          gen_require = ''
+            type qemu_exec_t;
+          '';
+          content = ''
+            domain_entry_file($1, qemu_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(qemu)
 

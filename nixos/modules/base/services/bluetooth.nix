@@ -3,302 +3,281 @@
 { lib, ... }: {
   config.security.selinux.modules.bluetooth = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Bluetooth tools and system services.</summary>
+    interface = {
+      summary = "Bluetooth tools and system services.";
+      exports = {
+        "bluetooth_role" = {
+          type = "template";
+          summary = "Role access for bluetooth.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role bluetooth_helper_roles;
+            type bluetooth_t, bluetooth_helper_t, bluetooth_helper_exec_t;
+            type bluetooth_helper_tmp_t, bluetooth_helper_tmpfs_t, bluetooth_runtime_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for bluetooth.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`bluetooth_role',`
-      	gen_require(`
-      		attribute_role bluetooth_helper_roles;
-      		type bluetooth_t, bluetooth_helper_t, bluetooth_helper_exec_t;
-      		type bluetooth_helper_tmp_t, bluetooth_helper_tmpfs_t, bluetooth_runtime_t;
-      	')
+            roleattribute $4 bluetooth_helper_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $4 bluetooth_helper_roles;
+            domtrans_pattern($3, bluetooth_helper_exec_t, bluetooth_helper_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            ps_process_pattern($3, bluetooth_helper_t)
+            allow $3 bluetooth_helper_t:process { ptrace signal_perms };
 
-      	domtrans_pattern($3, bluetooth_helper_exec_t, bluetooth_helper_t)
+            allow $3 bluetooth_t:socket rw_socket_perms;
 
-      	ps_process_pattern($3, bluetooth_helper_t)
-      	allow $3 bluetooth_helper_t:process { ptrace signal_perms };
+            allow $2 { bluetooth_helper_tmp_t bluetooth_helper_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { bluetooth_helper_tmp_t bluetooth_helper_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 bluetooth_helper_tmp_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	allow $3 bluetooth_t:socket rw_socket_perms;
+            stream_connect_pattern($3, bluetooth_runtime_t, bluetooth_runtime_t, bluetooth_t)
+            files_search_runtime($3)
 
-      	allow $2 { bluetooth_helper_tmp_t bluetooth_helper_tmpfs_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { bluetooth_helper_tmp_t bluetooth_helper_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 bluetooth_helper_tmp_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            optional_policy(`
+                    systemd_user_app_status($1, bluetooth_helper_t)
+            ')
+          '';
+        };
+        "bluetooth_stream_connect" = {
+          summary = ''
+            Connect to bluetooth over a unix domain
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_t, bluetooth_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 bluetooth_t:socket rw_socket_perms;
+            stream_connect_pattern($1, bluetooth_runtime_t, bluetooth_runtime_t, bluetooth_t)
+          '';
+        };
+        "bluetooth_use" = {
+          summary = ''
+            Connect to bluetooth over a unix domain
+            stream socket. The socket can be used
+            for read and write.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            allow $1 bluetooth_t:bluetooth_socket rw_socket_perms;
+            allow $1 bluetooth_t:unix_stream_socket rw_socket_perms;
+            allow $1 bluetooth_t:fd use;
+            bluetooth_stream_connect($1)
+          '';
+        };
+        "bluetooth_domtrans" = {
+          summary = "Execute bluetooth in the bluetooth domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_t, bluetooth_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, bluetooth_exec_t, bluetooth_t)
+          '';
+        };
+        "bluetooth_read_config" = {
+          summary = "Read bluetooth configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_conf_t;
+          '';
+          content = ''
+            allow $1 bluetooth_conf_t:file read_file_perms;
+          '';
+        };
+        "bluetooth_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            bluetooth over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 bluetooth_t:dbus send_msg;
+            allow bluetooth_t $1:dbus send_msg;
+          '';
+        };
+        "bluetooth_dontaudit_read_helper_state" = {
+          summary = ''
+            Do not audit attempts to read
+            bluetooth process state files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_helper_t;
+          '';
+          content = ''
+            dontaudit $1 bluetooth_helper_t:dir search_dir_perms;
+            dontaudit $1 bluetooth_helper_t:file read_file_perms;
+          '';
+        };
+        "bluetooth_use_inherited_helper_stream_sockets" = {
+          summary = ''
+            Connect to bluetooth over a unix domain
+            stream socket. The socket can be used
+            for read and write. This is required for
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_helper_t;
+          '';
+          content = ''
+            allow $1 bluetooth_helper_t:unix_stream_socket rw_socket_perms;
+            allow $1 bluetooth_helper_t:fd use;
+          '';
+        };
+        "bluetooth_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an bluetooth environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_t, bluetooth_tmp_t, bluetooth_lock_t;
+            type bluetooth_var_lib_t, bluetooth_runtime_t;
+            type bluetooth_conf_t, bluetooth_conf_rw_t, bluetooth_var_lib_t;
+            type bluetooth_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 bluetooth_t:process { ptrace signal_perms };
+            ps_process_pattern($1, bluetooth_t)
 
-      	stream_connect_pattern($3, bluetooth_runtime_t, bluetooth_runtime_t, bluetooth_t)
-      	files_search_runtime($3)
+            init_startstop_service($1, $2, bluetooth_t, bluetooth_initrc_exec_t)
 
-      	optional_policy(`
-      		systemd_user_app_status($1, bluetooth_helper_t)
-      	')
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, bluetooth_tmp_t)
 
-      #####################################
-      ## <summary>
-      ##	Connect to bluetooth over a unix domain
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_stream_connect',`
-      	gen_require(`
-      		type bluetooth_t, bluetooth_runtime_t;
-      	')
+            files_list_var($1)
+            admin_pattern($1, bluetooth_lock_t)
 
-      	files_search_runtime($1)
-      	allow $1 bluetooth_t:socket rw_socket_perms;
-      	stream_connect_pattern($1, bluetooth_runtime_t, bluetooth_runtime_t, bluetooth_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { bluetooth_conf_t bluetooth_conf_rw_t })
 
-      #####################################
-      ## <summary>
-      ##	Connect to bluetooth over a unix domain
-      ##	stream socket. The socket can be used
-      ##      for read and write.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_use',`
-      	gen_require(`
-      		type bluetooth_t;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, bluetooth_var_lib_t)
 
-      	files_search_runtime($1)
-      	allow $1 bluetooth_t:bluetooth_socket rw_socket_perms;
-      	allow $1 bluetooth_t:unix_stream_socket rw_socket_perms;
-      	allow $1 bluetooth_t:fd use;
-      	bluetooth_stream_connect($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute bluetooth in the bluetooth domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_domtrans',`
-      	gen_require(`
-      		type bluetooth_t, bluetooth_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, bluetooth_exec_t, bluetooth_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read bluetooth configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_read_config',`
-      	gen_require(`
-      		type bluetooth_conf_t;
-      	')
-
-      	allow $1 bluetooth_conf_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	bluetooth over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_dbus_chat',`
-      	gen_require(`
-      		type bluetooth_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 bluetooth_t:dbus send_msg;
-      	allow bluetooth_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read
-      ##	bluetooth process state files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_dontaudit_read_helper_state',`
-      	gen_require(`
-      		type bluetooth_helper_t;
-      	')
-
-      	dontaudit $1 bluetooth_helper_t:dir search_dir_perms;
-      	dontaudit $1 bluetooth_helper_t:file read_file_perms;
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Connect to bluetooth over a unix domain
-      ##	stream socket. The socket can be used
-      ##      for read and write. This is required for
-      #       bluetooth helper context.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bluetooth_use_inherited_helper_stream_sockets',`
-      	gen_require(`
-      		type bluetooth_helper_t;
-      	')
-
-      	allow $1 bluetooth_helper_t:unix_stream_socket rw_socket_perms;
-      	allow $1 bluetooth_helper_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an bluetooth environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bluetooth_admin',`
-      	gen_require(`
-      		type bluetooth_t, bluetooth_tmp_t, bluetooth_lock_t;
-      		type bluetooth_var_lib_t, bluetooth_runtime_t;
-      		type bluetooth_conf_t, bluetooth_conf_rw_t, bluetooth_var_lib_t;
-      		type bluetooth_initrc_exec_t;
-      	')
-
-      	allow $1 bluetooth_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, bluetooth_t)
-
-      	init_startstop_service($1, $2, bluetooth_t, bluetooth_initrc_exec_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, bluetooth_tmp_t)
-
-      	files_list_var($1)
-      	admin_pattern($1, bluetooth_lock_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { bluetooth_conf_t bluetooth_conf_rw_t })
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, bluetooth_var_lib_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, bluetooth_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Get status of bluetooth_unit_t service
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`bluetooth_service_status',`
-      	gen_require(`
-      		type bluetooth_unit_t;
-      		class service { status };
-      	')
-
-      	allow $1 bluetooth_unit_t:service status;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      start bluetooth service
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`bluetooth_service_start',`
-      	gen_require(`
-      		type bluetooth_unit_t;
-      		class service { start };
-      	')
-
-      	allow $1 bluetooth_unit_t:service start;
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, bluetooth_runtime_t)
+          '';
+          rolecap = true;
+        };
+        "bluetooth_service_status" = {
+          summary = "Get status of bluetooth_unit_t service";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_unit_t;
+            class service { status };
+          '';
+          content = ''
+            allow $1 bluetooth_unit_t:service status;
+          '';
+        };
+        "bluetooth_service_start" = {
+          summary = "start bluetooth service";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bluetooth_unit_t;
+            class service { start };
+          '';
+          content = ''
+            allow $1 bluetooth_unit_t:service start;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(bluetooth)
 

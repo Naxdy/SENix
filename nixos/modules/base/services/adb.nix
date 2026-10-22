@@ -3,26 +3,26 @@
 { lib, ... }: {
   config.security.selinux.modules.adb = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for adb</summary>
-      ########################################
-      ## <summary>
-      ##      Allow processes to inherit adbd file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`adb_use_fds',`
-              gen_require(`
-                      type adbd_t;
-              ')
-
-              allow $1 adbd_t:fd use;
-      ')
-    '';
+    interface = {
+      summary = "Policy for adb";
+      exports = {
+        "adb_use_fds" = {
+          summary = "Allow processes to inherit adbd file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type adbd_t;
+          '';
+          content = ''
+            allow $1 adbd_t:fd use;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(adb)
 

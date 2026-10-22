@@ -3,7460 +3,6662 @@
 { lib, ... }: {
   config.security.selinux.modules.filesystem = {
     layer = "kernel";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for filesystems.</summary>
-      ## <required val="true">
-      ##	Contains the initial SID for the filesystems.
-      ## </required>
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_type',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	typeattribute $1 filesystem_type;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a filesystem
-      ##	type which does not have extended attribute
-      ##	support.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_noxattr_type',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	fs_type($1)
-
-      	typeattribute $1 noxattrfs;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a filesystem
-      ##	type which is a pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_pseudo_type',`
-      	gen_require(`
-      		attribute pseudofs;
-      	')
-
-      	fs_type($1)
-
-      	typeattribute $1 pseudofs;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a filesystem
-      ##	image file type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_image_file',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	files_type($1)
-
-      	typeattribute $1 filesystem_image_file_type;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Associate the specified file type to persistent
-      ##	filesystems with extended attributes.  This
-      ##	allows a file of this type to be created on
-      ##	a filesystem such as ext3, JFS, and XFS.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	The type of the to be associated.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_associate',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem associate;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Associate the specified file type to
-      ##	filesystems which lack extended attributes
-      ##	support.  This allows a file of this type
-      ##	to be created on a filesystem such as
-      ##	FAT32, and NFS.
-      ## </summary>
-      ## <param name="file_type">
-      ##	<summary>
-      ##	The type of the to be associated.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_associate_noxattr',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	allow $1 noxattrfs:filesystem associate;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute files on a filesystem that does
-      ##	not support extended attributes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_exec_noxattr',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	can_exec($1, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transform specified type into a filesystem
-      ##	type which has extended attribute
-      ##	support.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_xattr_type',`
-      	gen_require(`
-      		attribute xattrfs;
-      	')
-
-      	fs_type($1)
-
-      	typeattribute $1 xattrfs;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all the
-      ##	filesystems which have extended
-      ##	attributes.
-      ##	This includes pseudo filesystems.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Allow the specified domain to
-      ##	get the attributes of a filesystems
-      ##	which have extended attributes.
-      ##	Example attributes:
-      ##	</p>
-      ##	<ul>
-      ##		<li>Type of the file system (e.g., tmpfs)</li>
-      ##		<li>Size of the file system</li>
-      ##		<li>Available space on the file system</li>
-      ##	</ul>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="read" weight="5"/>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_all_xattr_fs',`
-      	gen_require(`
-      		attribute xattrfs;
-      	')
-
-      	allow $1 xattrfs:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a persistent filesystem which
-      ##	has extended attributes, such as
-      ##	ext3, JFS, or XFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a persistent filesystem which
-      ##	has extended attributes, such as
-      ##	ext3, JFS, or XFS.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a persistent filesystem which
-      ##	has extended attributes, such as
-      ##	ext3, JFS, or XFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of persistent
-      ##	filesystems which have extended
-      ##	attributes, such as ext3, JFS, or XFS.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Allow the specified domain to
-      ##	get the attributes of a persistent
-      ##	filesystems which have extended
-      ##	attributes, such as ext3, JFS, or XFS.
-      ##	Example attributes:
-      ##	</p>
-      ##	<ul>
-      ##		<li>Type of the file system (e.g., ext3)</li>
-      ##		<li>Size of the file system</li>
-      ##		<li>Available space on the file system</li>
-      ##	</ul>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="read" weight="5"/>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to
-      ##	get the attributes of a persistent
-      ##	filesystem which has extended
-      ##	attributes, such as ext3, JFS, or XFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	dontaudit $1 fs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow changing of the label of a
-      ##	filesystem with extended attributes
-      ##	using the context= mount option.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_xattr_fs',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the filesystem quotas of a filesystem
-      ##	with extended attributes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_get_xattr_fs_quotas',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem quotaget;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the filesystem quotas of a filesystem
-      ##	with extended attributes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_set_xattr_fs_quotas',`
-      	gen_require(`
-      		type fs_t;
-      	')
-
-      	allow $1 fs_t:filesystem quotamod;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on anon_inodefs file systems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_anon_inodefs_files',`
-      	gen_require(`
-      		type anon_inodefs_t;
-
-      	')
-
-      	read_files_pattern($1, anon_inodefs_t, anon_inodefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write files on anon_inodefs
-      ##	file systems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_anon_inodefs_files',`
-      	gen_require(`
-      		type anon_inodefs_t;
-
-      	')
-
-      	rw_files_pattern($1, anon_inodefs_t, anon_inodefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or write files on
-      ##	anon_inodefs file systems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_rw_anon_inodefs_files',`
-      	gen_require(`
-      		type anon_inodefs_t;
-
-      	')
-
-      	dontaudit $1 anon_inodefs_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount an automount pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_autofs',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount an automount pseudo filesystem
-      ##	This allows some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_autofs',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount an automount pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_autofs',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of an automount
-      ##	pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_autofs',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search automount filesystem to use automatically
-      ##	mounted filesystems.
-      ## </summary>
-      ## <desc>
-      ##	Allow the specified domain to search mount points
-      ##	that have filesystems that are mounted by
-      ##	the automount service.  Generally this will
-      ##	be required for any domain that accesses objects
-      ##	on these filesystems.
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="read" weight="5"/>
-      #
-      interface(`fs_search_auto_mountpoints',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read directories of automatically
-      ##	mounted filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_list_auto_mountpoints',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list directories of automatically
-      ##	mounted filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_auto_mountpoints',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	dontaudit $1 autofs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete symbolic links
-      ##	on an autofs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_autofs_symlinks',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	manage_lnk_files_pattern($1, autofs_t, autofs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of binfmt_misc filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_binfmt_misc_fs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	allow $1 binfmt_misc_fs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to getattr a
-      ##	binfmt_misc_fs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_binfmt_misc_fs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	dontaudit $1 binfmt_misc_fs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount binfmt_misc_fs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_binfmt_misc_fs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	allow $1 binfmt_misc_fs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of directories on
-      ##	binfmt_misc filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_binfmt_misc_dirs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	allow $1 binfmt_misc_fs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read/write directories on binfmt_misc filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_binfmt_misc_dirs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	allow $1 binfmt_misc_fs_t:dir rw_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Check for permissions using access(2) of directories on
-      ##	binfmt_misc filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_check_write_binfmt_misc_dirs',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	allow $1 binfmt_misc_fs_t:dir { getattr write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Register an interpreter for new binary
-      ##	file types, using the kernel binfmt_misc
-      ##	support.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Register an interpreter for new binary
-      ##	file types, using the kernel binfmt_misc
-      ##	support.
-      ##	</p>
-      ##	<p>
-      ##	A common use for this is to
-      ##	register a JVM as an interpreter for
-      ##	Java byte code.  Registered binaries
-      ##	can be directly executed on a command line
-      ##	without specifying the interpreter.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_register_binary_executable_type',`
-      	gen_require(`
-      		type binfmt_misc_fs_t;
-      	')
-
-      	# binfmt_misc filesystem is usually mounted on /proc/sys/fs/binfmt_misc
-      	kernel_search_fs_sysctls($1)
-      	rw_files_pattern($1, binfmt_misc_fs_t, binfmt_misc_fs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a bpf filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_bpf',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	allow $1 bpf_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a bpf filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_bpf',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	allow $1 bpf_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a bpf filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_bpf',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	allow $1 bpf_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create bpf directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_bpf_dirs',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	create_dirs_pattern($1, bpf_t, bpf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage bpf directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_bpf_dirs',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	manage_dirs_pattern($1, bpf_t, bpf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage bpf files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_bpf_files',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	manage_files_pattern($1, bpf_t, bpf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage bpf symlinks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_bpf_symlinks',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	manage_lnk_files_pattern($1, bpf_t, bpf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount cgroup filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_cgroup', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount cgroup filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_cgroup', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount cgroup filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_cgroup', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of cgroup filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_cgroup',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_cgroup_dirs',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	search_dirs_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	list cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_cgroup_dirs', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	list_dirs_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Ioctl cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_ioctl_cgroup_dirs', `
-      	gen_require(`
-      		type cgroup_t;
-      	')
-
-      	allow $1 cgroup_t:dir ioctl;
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_cgroup_dirs',`
-      	gen_require(`
-      		type cgroup_t;
-      	')
-
-      	create_dirs_pattern($1, cgroup_t, cgroup_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_delete_cgroup_dirs', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	delete_dirs_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_cgroup_dirs',`
-      	gen_require(`
-      		attribute cgroup_types;
-
-      	')
-
-      	manage_dirs_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_cgroup_dirs',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	relabel_dirs_pattern($1, cgroup_types, cgroup_types)
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Get attributes of cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	getattr_files_pattern($1, cgroup_types, cgroup_types)
-      	fs_search_tmpfs($1)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-
-      	')
-
-      	read_files_pattern($1, cgroup_types, cgroup_types)
-      	read_lnk_files_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_cgroup_files',`
-      	gen_require(`
-      		type cgroup_t;
-
-      	')
-
-      	create_files_pattern($1, cgroup_t, cgroup_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-
-      	')
-
-      	allow $1 cgroup_types:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Read cgroup symlnks.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_cgroup_symlinks',`
-      	gen_require(`
-      		type cgroup_t;
-      	')
-
-      	read_lnk_files_pattern($1, cgroup_t, cgroup_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Create cgroup lnk_files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_cgroup_links',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	create_lnk_files_pattern($1, cgroup_types, cgroup_types)
-      	rw_lnk_files_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_write_cgroup_files', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	write_files_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	rw_files_pattern($1, cgroup_types, cgroup_types)
-      	read_lnk_files_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to open,
-      ##	get attributes, read and write
-      ##	cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_rw_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	dontaudit $1 cgroup_types:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_cgroup_files',`
-      	gen_require(`
-      		attribute cgroup_types;
-
-      	')
-
-      	manage_files_pattern($1, cgroup_types, cgroup_types)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel cgroup symbolic links.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_cgroup_symlinks',`
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	relabel_lnk_files_pattern($1, cgroup_types, cgroup_types)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_cgroup_dirs', `
-      	gen_require(`
-      		type cgroup_t;
-      	')
-
-      	allow $1 cgroup_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on cgroup directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_cgroup', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on cgroup files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_cgroup_files', `
-      	gen_require(`
-      		attribute cgroup_types;
-      	')
-
-      	allow $1 cgroup_types:file mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create an object in a cgroup tmpfs filesystem, with a private
-      ##	type using a type transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private type">
-      ##	<summary>
-      ##	The type of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_cgroup_filetrans',`
-      	gen_require(`
-      		type cgroup_t, tmpfs_t;
-      	')
-
-      	allow $2 tmpfs_t:filesystem associate;
-      	filetrans_pattern($1, cgroup_t, $2, $3, $4)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create an object in a cgroup tmpfs filesystem, with the memory_pressure_t
-      ##	type using a type transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_cgroup_filetrans_memory_pressure',`
-      	gen_require(`
-      		type memory_pressure_t;
-      	')
-
-      	fs_cgroup_filetrans($1, memory_pressure_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of cgroup's memory.pressure files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_memory_pressure',`
-      	gen_require(`
-      		type memory_pressure_t;
-      	')
-
-      	allow $1 memory_pressure_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Allow managing a cgroup's memory.pressure file to get notifications
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Source domain
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_watch_memory_pressure',`
-      	gen_require(`
-      		type memory_pressure_t;
-      	')
-
-      	allow $1 memory_pressure_t:file { rw_file_perms setattr };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read
-      ##	dirs on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_cifs_dirs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a CIFS or SMB network filesystem.
-      ##	This allows some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a CIFS or
-      ##	SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search directories on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List the contents of directories on a
-      ##	CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list the contents
-      ##	of directories on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mounton a CIFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_cifs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir list_dir_perms;
-      	read_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all inherited filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_all_inherited_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	allow $1 filesystem_image_file_type:file read_inherited_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_all_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	read_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mmap-read all filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_mmap_read_all_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	mmap_read_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write all filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_rw_all_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	rw_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mmap-Read-write all filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_mmap_rw_all_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	mmap_rw_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write all filesystem image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_dontaudit_write_all_image_files',`
-      	gen_require(`
-      		attribute filesystem_image_file_type;
-      	')
-
-      	dontaudit $1 filesystem_image_file_type:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of filesystems that
-      ##	do not have extended attribute support.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_noxattr_fs',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	allow $1 noxattrfs:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all noxattrfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_noxattr_fs',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	allow $1 noxattrfs:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list all
-      ##	noxattrfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_noxattr_fs',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	dontaudit $1 noxattrfs:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete all noxattrfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_noxattr_fs_dirs',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	allow $1 noxattrfs:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all noxattrfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_noxattr_fs_files',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	fs_list_noxattr_fs($1)
-      	read_files_pattern($1, noxattrfs, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read all
-      ##	noxattrfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_noxattr_fs_files',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	dontaudit $1 noxattrfs:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dont audit attempts to write to noxattrfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_write_noxattr_fs_files',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	dontaudit $1 noxattrfs:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete all noxattrfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_noxattr_fs_files',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	fs_list_noxattr_fs($1)
-      	manage_files_pattern($1, noxattrfs, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all noxattrfs symbolic links.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_noxattr_fs_symlinks',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	fs_list_noxattr_fs($1)
-      	read_lnk_files_pattern($1, noxattrfs, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage all noxattrfs symbolic links.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_noxattr_fs_symlinks',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	fs_list_noxattr_fs($1)
-      	manage_lnk_files_pattern($1, noxattrfs, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel all objects from filesystems that
-      ##	do not support extended attributes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_noxattr_fs',`
-      	gen_require(`
-      		attribute noxattrfs;
-      	')
-
-      	allow $1 noxattrfs:dir list_dir_perms;
-      	relabelfrom_dirs_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_files_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_lnk_files_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_fifo_files_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_sock_files_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_blk_files_pattern($1, noxattrfs, noxattrfs)
-      	relabelfrom_chr_files_pattern($1, noxattrfs, noxattrfs)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read
-      ##	files on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append files
-      ##	on a CIFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_append_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	append_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	dontaudit Append files
-      ##	on a CIFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_dontaudit_append_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or
-      ##	write files on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_rw_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read symbolic links on a CIFS or SMB filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_cifs_symlinks',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir list_dir_perms;
-      	read_lnk_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read named pipes
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_cifs_named_pipes',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	read_fifo_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read named sockets
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_cifs_named_sockets',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	read_sock_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute files on a CIFS or SMB
-      ##	network filesystem, in the caller
-      ##	domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_exec_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir list_dir_perms;
-      	exec_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete directories
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_cifs_dirs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete directories
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_cifs_dirs',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	manage_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete files
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_cifs_files',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	dontaudit $1 cifs_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete symbolic links
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_cifs_symlinks',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	manage_lnk_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete named pipes
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_cifs_named_pipes',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	manage_fifo_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete named sockets
-      ##	on a CIFS or SMB network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_cifs_named_sockets',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	manage_sock_files_pattern($1, cifs_t, cifs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a file on a CIFS or SMB filesystem
-      ##	in the specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute a file on a CIFS or SMB filesystem
-      ##	in the specified domain.  This allows
-      ##	the specified domain to execute any file
-      ##	on these filesystems in the specified
-      ##	domain.  This is not suggested.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ##	<p>
-      ##	This interface was added to handle
-      ##	home directories on CIFS/SMB filesystems,
-      ##	in particular used by the ssh-agent policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	The type of the new process.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_cifs_domtrans',`
-      	gen_require(`
-      		type cifs_t;
-      	')
-
-      	allow $1 cifs_t:dir search_dir_perms;
-      	domain_auto_transition_pattern($1, cifs_t, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to getattr a configfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_configfs',`
-      	gen_require(`
-      		type configfs_t;
-      	')
-
-      	dontaudit $1 configfs_t:filesystem getattr;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete dirs
-      ##	on a configfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_configfs_dirs',`
-      	gen_require(`
-      		type configfs_t;
-      	')
-
-      	allow $1 configfs_t:dir getattr;
-      ')
-
-      ######################################
-      ## <summary>
-      ##      Search on a configfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_search_configfs_dirs',`
-              gen_require(`
-                      type configfs_t;
-             ')
-              allow $1 configfs_t:dir search_dir_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete dirs
-      ##	on a configfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_configfs_dirs',`
-      	gen_require(`
-      		type configfs_t;
-      	')
-
-      	manage_dirs_pattern($1, configfs_t, configfs_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a configfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_configfs_files',`
-      	gen_require(`
-      		type configfs_t;
-      	')
-
-      	manage_files_pattern($1, configfs_t, configfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to remount a configfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_remount_configfs',`
-      	gen_require(`
-      		type configfs_t;
-      	')
-
-      	dontaudit $1 configfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a DOS filesystem, such as
-      ##	FAT32 or NTFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_dos_fs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a DOS filesystem, such as
-      ##	FAT32 or NTFS.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_dos_fs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a DOS filesystem, such as
-      ##	FAT32 or NTFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_dos_fs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a DOS
-      ##	filesystem, such as FAT32 or NTFS.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_dos_fs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow changing of the label of a
-      ##	DOS filesystem using the context= mount option.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_dos_fs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:filesystem relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of directories on a dosfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_dos_dirs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search dosfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_dos',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	allow $1 dosfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List dirs DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_dos',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	list_dirs_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##      Create dirs on a DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_create_dos_dirs',`
-              gen_require(`
-                      type dosfs_t;
-              ')
-              create_dirs_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete dirs
-      ##	on a DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_dos_dirs',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	manage_dirs_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on a DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_dos_files',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	read_files_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Read and map files on a DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mmap_read_dos_files',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	mmap_read_files_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a DOS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_dos_files',`
-      	gen_require(`
-      		type dosfs_t;
-      	')
-
-      	manage_files_pattern($1, dosfs_t, dosfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Read symbolic links on an eCryptfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_list_ecryptfs',`
-      	gen_require(`
-      		type ecryptfs_t;
-      	')
-
-      	allow $1 ecryptfs_t:dir list_dir_perms;
-      	read_lnk_files_pattern($1, ecryptfs_t, ecryptfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Create, read, write, and delete directories
-      ##      on an eCryptfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_ecryptfs_dirs',`
-      	gen_require(`
-      		type ecryptfs_t;
-      	')
-
-      	allow $1 ecryptfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Create, read, write, and delete files
-      ##      on an eCryptfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_ecryptfs_files',`
-      	gen_require(`
-      		type ecryptfs_t;
-      	')
-
-      	manage_files_pattern($1, ecryptfs_t, ecryptfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Create, read, write, and delete named sockets
-      ##      on an eCryptfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_manage_ecryptfs_named_sockets',`
-      	gen_require(`
-      		type ecryptfs_t;
-      	')
-
-      	manage_sock_files_pattern($1, ecryptfs_t, ecryptfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of efivarfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_efivarfs',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	allow $1 efivarfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to getattr an efivarfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_efivarfs',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	dontaudit $1 efivarfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount an efivarfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_efivarfs',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	allow $1 efivarfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to remount an efivarfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_remount_efivarfs',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	dontaudit $1 efivarfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List dirs in efivarfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_efivars',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	list_dirs_pattern($1, efivarfs_t, efivarfs_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##      Read files in efivarfs
-      ##      - contains Linux Kernel configuration options for UEFI systems
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_efivarfs_files',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	read_files_pattern($1, efivarfs_t, efivarfs_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##      Set the attributes of files in efivarfs
-      ##      - contains Linux Kernel configuration options for UEFI systems
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_efivarfs_files',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	setattr_files_pattern($1, efivarfs_t, efivarfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on an efivarfs filesystem.
-      ##      - contains Linux Kernel configuration options for UEFI systems
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_efivarfs_files',`
-      	gen_require(`
-      		type efivarfs_t;
-      	')
-
-      	manage_files_pattern($1, efivarfs_t, efivarfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	stat a FUSE filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a FUSE filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a FUSE filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a FUSE filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mounton a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on files on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:file mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make FUSEFS files an entrypoint for the
-      ##	specified domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The domain for which fusefs_t is an entrypoint.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_fusefs_entry_type',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	domain_entry_file($1, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute FUSEFS files in a specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute FUSEFS files in a specified domain.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ## </desc>
-      ## <param name="source_domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	Domain to transition to.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_fusefs_domtrans',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	domain_auto_transition_pattern($1, fusefs_t, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search directories
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_search_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List the contents of directories
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_list_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list the contents
-      ##	of directories on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_fusefs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	dontaudit $1 fusefs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of directories
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_dirs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir setattr_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete directories
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_dirs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete directories
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_fusefs_dirs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	dontaudit $1 fusefs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch directories on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_fusefs_dirs',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of files on a
-      ##	FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	getattr_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read, a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	read_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute files on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_exec_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	exec_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of files on a
-      ##	FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:file setattr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	manage_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create,
-      ##	read, write, and delete files
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	dontaudit $1 fusefs_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch files on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_fusefs_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of symlinks
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_fusefs_symlinks',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:lnk_file getattr_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read symbolic links on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_fusefs_symlinks',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:dir list_dir_perms;
-      	read_lnk_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of symlinks
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_symlinks',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:lnk_file setattr_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage symlinks on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_symlinks',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	manage_lnk_files_pattern($1, fusefs_t, fusefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of named pipes
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_fusefs_fifo_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:fifo_file getattr_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of named pipes
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_fifo_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:fifo_file setattr_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage named pipes on a FUSEFS
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_fifo_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:fifo_file manage_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of named sockets
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_fusefs_sock_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:sock_file getattr_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of named sockets
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_sock_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:sock_file setattr_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage named sockets on a FUSEFS
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_sock_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:sock_file manage_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of character files
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_fusefs_chr_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:chr_file getattr_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of character files
-      ##	on a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_chr_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:chr_file setattr_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage character files on a FUSEFS
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_fusefs_chr_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:chr_file manage_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create block files on a FUSEFS
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_create_fusefs_blk_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:blk_file create_blk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of block files on
-      ##	a FUSEFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_setattr_fusefs_blk_files',`
-      	gen_require(`
-      		type fusefs_t;
-      	')
-
-      	allow $1 fusefs_t:blk_file setattr_blk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of an hugetlbfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_hugetlbfs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a hugetlbfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_hugetlbfs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List hugetlbfs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_hugetlbfs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create hugetlbfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_hugetlbfs_dirs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	create_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes on hugetlbfs dirs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_setattr_hugetlbfs_dirs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	setattr_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage hugetlbfs dirs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_hugetlbfs_dirs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	manage_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow changing of the label of a
-      ##	directory with the hugetlbfs type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_hugetlbfs_dirs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	relabelfrom_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on hugetlbfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_hugetlbfs_dirs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write inherited hugetlbfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_inherited_hugetlbfs_files',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:file rw_inherited_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write hugetlbfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_hugetlbfs_files',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	rw_files_pattern($1, hugetlbfs_t, hugetlbfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Read, map and write hugetlbfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mmap_rw_hugetlbfs_files',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	fs_rw_hugetlbfs_files($1)
-      	allow $1 hugetlbfs_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the type to associate to hugetlbfs filesystems.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	The type of the object to be associated.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_associate_hugetlbfs',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $1 hugetlbfs_t:filesystem associate;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search inotifyfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_inotifyfs',`
-      	gen_require(`
-      		type inotifyfs_t;
-      	')
-
-      	allow $1 inotifyfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List inotifyfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_inotifyfs',`
-      	gen_require(`
-      		type inotifyfs_t;
-      	')
-
-      	allow $1 inotifyfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit List inotifyfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_inotifyfs',`
-      	gen_require(`
-      		type inotifyfs_t;
-      	')
-
-      	dontaudit $1 inotifyfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create an object in a hugetlbfs filesystem, with a private
-      ##	type using a type transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private type">
-      ##	<summary>
-      ##	The type of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_hugetlbfs_filetrans',`
-      	gen_require(`
-      		type hugetlbfs_t;
-      	')
-
-      	allow $2 hugetlbfs_t:filesystem associate;
-      	filetrans_pattern($1, hugetlbfs_t, $2, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount an iso9660 filesystem, which
-      ##	is usually used on CDs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_iso9660_fs',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount an iso9660 filesystem, which
-      ##	is usually used on CDs.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_iso9660_fs',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow changing of the label of a
-      ##	filesystem with iso9660 type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_iso9660_fs',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:filesystem relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount an iso9660 filesystem, which
-      ##	is usually used on CDs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_iso9660_fs',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of an iso9660
-      ##	filesystem, which is usually used on CDs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_iso9660_fs',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of files on an iso9660
-      ##	filesystem, which is usually used on CDs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_iso9660_files',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:dir list_dir_perms;
-      	allow $1 iso9660_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on an iso9660 filesystem, which
-      ##	is usually used on CDs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_iso9660_files',`
-      	gen_require(`
-      		type iso9660_t;
-      	')
-
-      	allow $1 iso9660_t:dir list_dir_perms;
-      	read_files_pattern($1, iso9660_t, iso9660_t)
-      	read_lnk_files_pattern($1, iso9660_t, iso9660_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a NFS filesystem.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search directories on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list the contents
-      ##	of directories on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Add a watch on directories on an NFS
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_nfs_dirs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mounton a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_nfs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir list_dir_perms;
-      	read_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read
-      ##	files on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_write_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir list_dir_perms;
-      	write_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute files on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_exec_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir list_dir_perms;
-      	exec_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append files
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_append_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	append_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	dontaudit Append files
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_dontaudit_append_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or
-      ##	write files on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_rw_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Add a watch on files on an NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read symbolic links on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_nfs_symlinks',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir list_dir_perms;
-      	read_lnk_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit read symbolic links on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_nfs_symlinks',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:lnk_file read_lnk_file_perms;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read named sockets on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_nfs_named_sockets',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	read_sock_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read named pipes on a NFS network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_read_nfs_named_pipes',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	read_fifo_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of directories of RPC
-      ##	file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_rpc_dirs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:dir getattr;
-
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search directories of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_rpc',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search removable storage directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_removable',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	allow $1 removable_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list removable storage directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain not to audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_removable',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	dontaudit $1 removable_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read removable storage files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_removable_files',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	read_files_pattern($1, removable_t, removable_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read removable storage files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain not to audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_removable_files',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	dontaudit $1 removable_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write removable storage files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain not to audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_write_removable_files',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	dontaudit $1 removable_t:file write_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read removable storage symbolic links.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_removable_symlinks',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	read_lnk_files_pattern($1, removable_t, removable_t)
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Read block nodes on removable filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_removable_blk_files',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	allow $1 removable_t:dir list_dir_perms;
-      	read_blk_files_pattern($1, removable_t, removable_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write block nodes on removable filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_removable_blk_files',`
-      	gen_require(`
-      		type removable_t;
-      	')
-
-      	allow $1 removable_t:dir list_dir_perms;
-      	rw_blk_files_pattern($1, removable_t, removable_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read directories of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_rpc',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read files of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_rpc_files',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	read_files_pattern($1, rpc_pipefs_t, rpc_pipefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read symbolic links of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_rpc_symlinks',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	read_lnk_files_pattern($1, rpc_pipefs_t, rpc_pipefs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read sockets of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_rpc_sockets',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:sock_file read;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write sockets of RPC file system pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_rpc_sockets',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:sock_file { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete directories
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_nfs_dirs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete directories
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_nfs_dirs',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	manage_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create,
-      ##	read, write, and delete files
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_nfs_files',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	dontaudit $1 nfs_t:file manage_file_perms;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Create, read, write, and delete symbolic links
-      ##	on a NFS network filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_nfs_symlinks',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	manage_lnk_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Create, read, write, and delete named pipes
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_nfs_named_pipes',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	manage_fifo_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Create, read, write, and delete named sockets
-      ##	on a NFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_nfs_named_sockets',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	manage_sock_files_pattern($1, nfs_t, nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a file on a NFS filesystem
-      ##	in the specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute a file on a NFS filesystem
-      ##	in the specified domain.  This allows
-      ##	the specified domain to execute any file
-      ##	on a NFS filesystem in the specified
-      ##	domain.  This is not suggested.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ##	<p>
-      ##	This interface was added to handle
-      ##	home directories on NFS filesystems,
-      ##	in particular used by the ssh-agent policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	The type of the new process.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_nfs_domtrans',`
-      	gen_require(`
-      		type nfs_t;
-      	')
-
-      	allow $1 nfs_t:dir search_dir_perms;
-      	domain_auto_transition_pattern($1, nfs_t, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a NFS server pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a NFS server pseudo filesystem.
-      ##	This allows some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a NFS server pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a NFS server
-      ##	pseudo filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search NFS server directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List NFS server directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch NFS server directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_nfsd_dirs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Getattr files on an nfsd filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_nfsd_files',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	getattr_files_pattern($1, nfsd_fs_t, nfsd_fs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write NFS server files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_nfsd_fs',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	rw_files_pattern($1, nfsd_fs_t, nfsd_fs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of nsfs inodes (e.g. /proc/pid/ns/uts)
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_nsfs_files',`
-      	gen_require(`
-      		type nsfs_t;
-      	')
-
-      	allow $1 nsfs_t:file getattr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read nsfs inodes (e.g. /proc/pid/ns/uts)
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_nsfs_files',`
-      	gen_require(`
-      		type nsfs_t;
-      	')
-
-      	allow $1 nsfs_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch NFS server files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_nfsd_files',`
-      	gen_require(`
-      		type nfsd_fs_t;
-      	')
-
-      	allow $1 nfsd_fs_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of an nsfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_nsfs',`
-      	gen_require(`
-      		type nsfs_t;
-      	')
-
-      	allow $1 nsfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount an nsfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_nsfs',`
-      	gen_require(`
-      		type nsfs_t;
-      	')
-
-      	allow $1 nsfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a pstore filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_pstorefs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	allow $1 pstore_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get
-      ##	attributes of dirs on a pstorefs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_pstorefs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	dontaudit $1 pstore_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of directories
-      ##	of a pstore filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_pstore_dirs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	getattr_files_pattern($1, pstore_t, pstore_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create pstore directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_create_pstore_dirs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	create_dirs_pattern($1, pstore_t, pstore_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Relabel to/from pstore_t directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_pstore_dirs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	relabel_dirs_pattern($1, pstore_t, pstore_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List the directories
-      ##	of a pstore filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_pstore_dirs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	allow $1 pstore_t:dir list_dir_perms;
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read pstore_t files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_pstore_files',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	allow $1 pstore_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete the files
-      ##	of a pstore filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_delete_pstore_files',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	delete_files_pattern($1, pstore_t, pstore_t)
-      	dev_search_sysfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a pstorefs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain sllowd access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_pstorefs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	allow $1 pstore_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to remount a pstorefs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_remount_pstorefs',`
-      	gen_require(`
-      		type pstore_t;
-      	')
-
-      	dontaudit $1 pstore_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the type to associate to ramfs filesystems.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	The type of the object to be associated.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_associate_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:filesystem associate;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a RAM filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a RAM filesystem.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a RAM filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a RAM filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search directories on a ramfs
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit Search directories on a ramfs
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_search_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	dontaudit $1 ramfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of directories on
-      ##	a ramfs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_setattr_ramfs_dirs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List directories on a ramfs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_ramfs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	directories on a ramfs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_ramfs_dirs',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	allow $1 ramfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit read on a ramfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_ramfs_files',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	dontaudit $1 ramfs_t:file read;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Dontaudit read on a ramfs fifo_files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_read_ramfs_pipes',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	dontaudit $1 ramfs_t:fifo_file read;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	files on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_ramfs_files',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	manage_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to named pipe on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_write_ramfs_pipes',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	write_fifo_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write to named
-      ##	pipes on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_write_ramfs_pipes',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	dontaudit $1 ramfs_t:fifo_file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write a named pipe on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_ramfs_pipes',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	rw_fifo_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	named pipes on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_ramfs_pipes',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	manage_fifo_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to named socket on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_write_ramfs_sockets',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	write_sock_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	named sockets on a ramfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_ramfs_sockets',`
-      	gen_require(`
-      		type ramfs_t;
-      	')
-
-      	manage_sock_files_pattern($1, ramfs_t, ramfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a ROM filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_romfs',`
-      	gen_require(`
-      		type romfs_t;
-      	')
-
-      	allow $1 romfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a ROM filesystem.  This allows
-      ##	some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_romfs',`
-      	gen_require(`
-      		type romfs_t;
-      	')
-
-      	allow $1 romfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a ROM filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_romfs',`
-      	gen_require(`
-      		type romfs_t;
-      	')
-
-      	allow $1 romfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a ROM
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_romfs',`
-      	gen_require(`
-      		type romfs_t;
-      	')
-
-      	allow $1 romfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a RPC pipe filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_rpc_pipefs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a RPC pipe filesystem.  This
-      ##	allows some mount option to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_rpc_pipefs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a RPC pipe filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_rpc_pipefs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a RPC pipe
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_rpc_pipefs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:filesystem getattr;
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Read and write RPC pipe filesystem named pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_rpc_named_pipes',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:fifo_file rw_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch RPC pipe filesystem directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_rpc_pipefs_dirs',`
-      	gen_require(`
-      		type rpc_pipefs_t;
-      	')
-
-      	allow $1 rpc_pipefs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a tmpfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount a tmpfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount a tmpfs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a tmpfs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow the type to associate to tmpfs filesystems.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	The type of the object to be associated.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_associate_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem associate;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel from tmpfs filesystem.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:filesystem relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mounton_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:file mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes of tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_setattr_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List the contents of generic tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to list the
-      ##	contents of generic tmpfs directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_list_tmpfs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	tmpfs directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write
-      ##	tmpfs directories
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_write_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:dir write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Relabel from tmpfs_t dir
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Relabel directory on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-      	relabel_dirs_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch directories on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_watch_tmpfs_dirs',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create an object in a tmpfs filesystem, with a private
-      ##	type using a type transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private type">
-      ##	<summary>
-      ##	The type of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_tmpfs_filetrans',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $2 tmpfs_t:filesystem associate;
-      	filetrans_pattern($1, tmpfs_t, $2, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to getattr
-      ##	generic tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read or write
-      ##	generic tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_rw_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete tmpfs symbolic links.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_delete_tmpfs_symlinks',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:lnk_file delete_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	auto moutpoints.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_auto_mountpoints',`
-      	gen_require(`
-      		type autofs_t;
-      	')
-
-      	allow $1 autofs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read generic tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	read_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Read and map generic tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mmap_read_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	mmap_read_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write generic tmpfs files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	rw_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##     Relabel files on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	relabel_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read tmpfs link files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_read_tmpfs_symlinks',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	read_lnk_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabelfrom socket files on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_tmpfs_sockets',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:sock_file relabelfrom_sock_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabelfrom tmpfs link files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_tmpfs_symlinks',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:lnk_file relabelfrom_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write character nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_tmpfs_chr_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      	rw_chr_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	dontaudit Read and write character nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_use_tmpfs_chr_dev',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	dontaudit $1 tmpfs_t:dir list_dir_perms;
-      	dontaudit $1 tmpfs_t:chr_file rw_chr_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel character nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_tmpfs_chr_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      	relabel_chr_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write block nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_rw_tmpfs_blk_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      	rw_blk_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel block nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_tmpfs_blk_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      	relabel_blk_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel named pipes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabel_tmpfs_fifo_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	allow $1 tmpfs_t:dir list_dir_perms;
-      	relabel_fifo_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write, create and delete generic
-      ##	files on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	manage_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write, create and delete symbolic
-      ##	links on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_symlinks',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	manage_lnk_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write, create and delete socket
-      ##	files on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_sockets',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	manage_sock_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write, create and delete character
-      ##	nodes on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_chr_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	manage_chr_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write, create and delete block nodes
-      ##	on tmpfs filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_manage_tmpfs_blk_files',`
-      	gen_require(`
-      		type tmpfs_t;
-      	')
-
-      	manage_blk_files_pattern($1, tmpfs_t, tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of a trace filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_tracefs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the
-      ##	attributes of a trace filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_tracefs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	dontaudit $1 tracefs_t:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of dirs on tracefs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_tracefs_dirs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get
-      ##	attributes of dirs on tracefs filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_tracefs_dirs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	dontaudit $1 tracefs_t:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      search directories on a tracefs filesystem
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_tracefs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Get the attributes of files
-      ##	on a trace filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_tracefs_files',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read/write trace filesystem files
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_rw_tracefs_files',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:dir list_dir_perms;
-      	allow $1 tracefs_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create trace filesystem directories
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed access.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fs_create_tracefs_dirs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	allow $1 tracefs_t:dir { create rw_dir_perms };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to remount a tracefs
-      ##	filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_remount_tracefs',`
-      	gen_require(`
-      		type tracefs_t;
-      	')
-
-      	dontaudit $1 tracefs_t:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_xenfs',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	allow $1 xenfs_t:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search the XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_xenfs',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	allow $1 xenfs_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete directories
-      ##	on a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_xenfs_dirs',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	allow $1 xenfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create, read,
-      ##	write, and delete directories
-      ##	on a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_xenfs_dirs',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	dontaudit $1 xenfs_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete files
-      ##	on a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_manage_xenfs_files',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	manage_files_pattern($1, xenfs_t, xenfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Map files a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mmap_xenfs_files',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	allow $1 xenfs_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to create,
-      ##	read, write, and delete files
-      ##	on a XENFS filesystem.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_manage_xenfs_files',`
-      	gen_require(`
-      		type xenfs_t;
-      	')
-
-      	dontaudit $1 xenfs_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_mount_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem mount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Remount all filesystems.  This
-      ##	allows some mount options to be changed.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_remount_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem remount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unmount all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unmount_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem unmount;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all filesystems.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Allow the specified domain to
-      ##	get the attributes of all filesystems.
-      ##	Example attributes:
-      ##	</p>
-      ##	<ul>
-      ##		<li>Type of the file system (e.g., ext3)</li>
-      ##		<li>Size of the file system</li>
-      ##		<li>Available space on the file system</li>
-      ##	</ul>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="read" weight="5"/>
-      ## <rolecap/>
-      #
-      interface(`fs_getattr_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem getattr;
-      	files_getattr_all_file_type_fs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	dontaudit $1 filesystem_type:filesystem getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the quotas of all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_get_all_fs_quotas',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem quotaget;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the quotas of all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_set_all_quotas',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem quotamod;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabelfrom all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_relabelfrom_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem relabelfrom;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch all filesystems.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fs_watch_all_fs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:filesystem watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all directories
-      ##	with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_dirs',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:dir getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search all directories with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_all',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	List all directories with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_list_all',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	allow $1 filesystem_type:dir list_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all files with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_files',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of all files with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_all_files',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	dontaudit $1 filesystem_type:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all symbolic links with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_symlinks',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_lnk_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of all symbolic links with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_all_symlinks',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	dontaudit $1 filesystem_type:lnk_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all named pipes with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_pipes',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_fifo_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of all named pipes with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_all_pipes',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	dontaudit $1 filesystem_type:fifo_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all named sockets with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_sockets',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_sock_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get the attributes
-      ##	of all named sockets with a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_dontaudit_getattr_all_sockets',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	dontaudit $1 filesystem_type:sock_file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all block device nodes with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_blk_files',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_blk_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of all character device nodes with
-      ##	a filesystem type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_getattr_all_chr_files',`
-      	gen_require(`
-      		attribute filesystem_type;
-      	')
-
-      	getattr_chr_files_pattern($1, filesystem_type, filesystem_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unconfined access to filesystems
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_unconfined',`
-      	gen_require(`
-      		attribute filesystem_unconfined_type;
-      	')
-
-      	typeattribute $1 filesystem_unconfined_type;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search bpf dirs
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fs_search_bpf',`
-      	gen_require(`
-      		type bpf_t;
-      	')
-
-      	allow $1 bpf_t:dir search;
-      ')
-    '';
+    interface = {
+      summary = "Policy for filesystems.";
+      required = ''
+        Contains the initial SID for the filesystems.
+      '';
+      exports = {
+        "fs_type" = {
+          summary = "Transform specified type into a filesystem type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            typeattribute $1 filesystem_type;
+          '';
+        };
+        "fs_noxattr_type" = {
+          summary = ''
+            Transform specified type into a filesystem
+            type which does not have extended attribute
+            support.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            fs_type($1)
+
+            typeattribute $1 noxattrfs;
+          '';
+        };
+        "fs_pseudo_type" = {
+          summary = ''
+            Transform specified type into a filesystem
+            type which is a pseudo filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute pseudofs;
+          '';
+          content = ''
+            fs_type($1)
+
+            typeattribute $1 pseudofs;
+          '';
+        };
+        "fs_image_file" = {
+          summary = ''
+            Transform specified type into a filesystem
+            image file type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            files_type($1)
+
+            typeattribute $1 filesystem_image_file_type;
+          '';
+        };
+        "fs_associate" = {
+          summary = ''
+            Associate the specified file type to persistent
+            filesystems with extended attributes.  This
+            allows a file of this type to be created on
+            a filesystem such as ext3, JFS, and XFS.
+          '';
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "The type of the to be associated.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem associate;
+          '';
+        };
+        "fs_associate_noxattr" = {
+          summary = ''
+            Associate the specified file type to
+            filesystems which lack extended attributes
+            support.  This allows a file of this type
+            to be created on a filesystem such as
+            FAT32, and NFS.
+          '';
+          params = {
+            "$1" = {
+              name = "file_type";
+              description = "The type of the to be associated.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            allow $1 noxattrfs:filesystem associate;
+          '';
+        };
+        "fs_exec_noxattr" = {
+          summary = ''
+            Execute files on a filesystem that does
+            not support extended attributes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            can_exec($1, noxattrfs)
+          '';
+          rolecap = true;
+        };
+        "fs_xattr_type" = {
+          summary = ''
+            Transform specified type into a filesystem
+            type which has extended attribute
+            support.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xattrfs;
+          '';
+          content = ''
+            fs_type($1)
+
+            typeattribute $1 xattrfs;
+          '';
+        };
+        "fs_getattr_all_xattr_fs" = {
+          summary = ''
+            Get the attributes of all the
+            filesystems which have extended
+            attributes.
+            This includes pseudo filesystems.
+          '';
+          desc = ''
+            <p>
+            Allow the specified domain to
+            get the attributes of a filesystems
+            which have extended attributes.
+            Example attributes:
+            </p>
+            <ul>
+            <li>Type of the file system (e.g., tmpfs)</li>
+            <li>Size of the file system</li>
+            <li>Available space on the file system</li>
+            </ul>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute xattrfs;
+          '';
+          content = ''
+            allow $1 xattrfs:filesystem getattr;
+          '';
+          infoflow = {
+            type = "read";
+            weight = "5";
+          };
+          rolecap = true;
+        };
+        "fs_mount_xattr_fs" = {
+          summary = ''
+            Mount a persistent filesystem which
+            has extended attributes, such as
+            ext3, JFS, or XFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_xattr_fs" = {
+          summary = ''
+            Remount a persistent filesystem which
+            has extended attributes, such as
+            ext3, JFS, or XFS.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_xattr_fs" = {
+          summary = ''
+            Unmount a persistent filesystem which
+            has extended attributes, such as
+            ext3, JFS, or XFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_xattr_fs" = {
+          summary = ''
+            Get the attributes of persistent
+            filesystems which have extended
+            attributes, such as ext3, JFS, or XFS.
+          '';
+          desc = ''
+            <p>
+            Allow the specified domain to
+            get the attributes of a persistent
+            filesystems which have extended
+            attributes, such as ext3, JFS, or XFS.
+            Example attributes:
+            </p>
+            <ul>
+            <li>Type of the file system (e.g., ext3)</li>
+            <li>Size of the file system</li>
+            <li>Available space on the file system</li>
+            </ul>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem getattr;
+          '';
+          infoflow = {
+            type = "read";
+            weight = "5";
+          };
+          rolecap = true;
+        };
+        "fs_dontaudit_getattr_xattr_fs" = {
+          summary = ''
+            Do not audit attempts to
+            get the attributes of a persistent
+            filesystem which has extended
+            attributes, such as ext3, JFS, or XFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            dontaudit $1 fs_t:filesystem getattr;
+          '';
+        };
+        "fs_relabelfrom_xattr_fs" = {
+          summary = ''
+            Allow changing of the label of a
+            filesystem with extended attributes
+            using the context= mount option.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem relabelfrom;
+          '';
+        };
+        "fs_get_xattr_fs_quotas" = {
+          summary = ''
+            Get the filesystem quotas of a filesystem
+            with extended attributes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem quotaget;
+          '';
+          rolecap = true;
+        };
+        "fs_set_xattr_fs_quotas" = {
+          summary = ''
+            Set the filesystem quotas of a filesystem
+            with extended attributes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fs_t;
+          '';
+          content = ''
+            allow $1 fs_t:filesystem quotamod;
+          '';
+          rolecap = true;
+        };
+        "fs_read_anon_inodefs_files" = {
+          summary = "Read files on anon_inodefs file systems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type anon_inodefs_t;
+          '';
+          content = ''
+            read_files_pattern($1, anon_inodefs_t, anon_inodefs_t)
+          '';
+        };
+        "fs_rw_anon_inodefs_files" = {
+          summary = ''
+            Read and write files on anon_inodefs
+            file systems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type anon_inodefs_t;
+          '';
+          content = ''
+            rw_files_pattern($1, anon_inodefs_t, anon_inodefs_t)
+          '';
+        };
+        "fs_dontaudit_rw_anon_inodefs_files" = {
+          summary = ''
+            Do not audit attempts to read or write files on
+            anon_inodefs file systems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type anon_inodefs_t;
+          '';
+          content = ''
+            dontaudit $1 anon_inodefs_t:file rw_file_perms;
+          '';
+        };
+        "fs_mount_autofs" = {
+          summary = "Mount an automount pseudo filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_autofs" = {
+          summary = ''
+            Remount an automount pseudo filesystem
+            This allows some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_autofs" = {
+          summary = "Unmount an automount pseudo filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_autofs" = {
+          summary = ''
+            Get the attributes of an automount
+            pseudo filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:filesystem getattr;
+          '';
+        };
+        "fs_search_auto_mountpoints" = {
+          summary = ''
+            Search automount filesystem to use automatically
+            mounted filesystems.
+          '';
+          desc = ''
+            Allow the specified domain to search mount points
+            that have filesystems that are mounted by
+            the automount service.  Generally this will
+            be required for any domain that accesses objects
+            on these filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:dir search_dir_perms;
+          '';
+          infoflow = {
+            type = "read";
+            weight = "5";
+          };
+        };
+        "fs_list_auto_mountpoints" = {
+          summary = ''
+            Read directories of automatically
+            mounted filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:dir list_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_list_auto_mountpoints" = {
+          summary = ''
+            Do not audit attempts to list directories of automatically
+            mounted filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            dontaudit $1 autofs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_manage_autofs_symlinks" = {
+          summary = ''
+            Create, read, write, and delete symbolic links
+            on an autofs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, autofs_t, autofs_t)
+          '';
+        };
+        "fs_getattr_binfmt_misc_fs" = {
+          summary = "Get the attributes of binfmt_misc filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            allow $1 binfmt_misc_fs_t:filesystem getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_binfmt_misc_fs" = {
+          summary = ''
+            Do not audit attempts to getattr a
+            binfmt_misc_fs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            dontaudit $1 binfmt_misc_fs_t:filesystem getattr;
+          '';
+        };
+        "fs_mount_binfmt_misc_fs" = {
+          summary = "Mount binfmt_misc_fs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            allow $1 binfmt_misc_fs_t:filesystem mount;
+          '';
+        };
+        "fs_getattr_binfmt_misc_dirs" = {
+          summary = ''
+            Get the attributes of directories on
+            binfmt_misc filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            allow $1 binfmt_misc_fs_t:dir getattr;
+          '';
+        };
+        "fs_rw_binfmt_misc_dirs" = {
+          summary = "Read/write directories on binfmt_misc filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            allow $1 binfmt_misc_fs_t:dir rw_dir_perms;
+          '';
+        };
+        "fs_check_write_binfmt_misc_dirs" = {
+          summary = ''
+            Check for permissions using access(2) of directories on
+            binfmt_misc filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            allow $1 binfmt_misc_fs_t:dir { getattr write };
+          '';
+        };
+        "fs_register_binary_executable_type" = {
+          summary = ''
+            Register an interpreter for new binary
+            file types, using the kernel binfmt_misc
+            support.
+          '';
+          desc = ''
+            <p>
+            Register an interpreter for new binary
+            file types, using the kernel binfmt_misc
+            support.
+            </p>
+            <p>
+            A common use for this is to
+            register a JVM as an interpreter for
+            Java byte code.  Registered binaries
+            can be directly executed on a command line
+            without specifying the interpreter.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type binfmt_misc_fs_t;
+          '';
+          content = ''
+            # binfmt_misc filesystem is usually mounted on /proc/sys/fs/binfmt_misc
+            kernel_search_fs_sysctls($1)
+            rw_files_pattern($1, binfmt_misc_fs_t, binfmt_misc_fs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_bpf" = {
+          summary = "Get the attributes of a bpf filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            allow $1 bpf_t:filesystem getattr;
+          '';
+        };
+        "fs_mount_bpf" = {
+          summary = "Mount a bpf filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            allow $1 bpf_t:filesystem mount;
+          '';
+        };
+        "fs_remount_bpf" = {
+          summary = "Remount a bpf filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            allow $1 bpf_t:filesystem remount;
+          '';
+        };
+        "fs_create_bpf_dirs" = {
+          summary = "Create bpf directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, bpf_t, bpf_t)
+          '';
+        };
+        "fs_manage_bpf_dirs" = {
+          summary = "Manage bpf directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, bpf_t, bpf_t)
+          '';
+        };
+        "fs_manage_bpf_files" = {
+          summary = "Manage bpf files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            manage_files_pattern($1, bpf_t, bpf_t)
+          '';
+        };
+        "fs_manage_bpf_symlinks" = {
+          summary = "Manage bpf symlinks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, bpf_t, bpf_t)
+          '';
+        };
+        "fs_mount_cgroup" = {
+          summary = "Mount cgroup filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:filesystem mount;
+          '';
+        };
+        "fs_remount_cgroup" = {
+          summary = "Remount cgroup filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:filesystem remount;
+          '';
+        };
+        "fs_unmount_cgroup" = {
+          summary = "Unmount cgroup filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:filesystem unmount;
+          '';
+        };
+        "fs_getattr_cgroup" = {
+          summary = "Get attributes of cgroup filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:filesystem getattr;
+          '';
+        };
+        "fs_search_cgroup_dirs" = {
+          summary = "Search cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            search_dirs_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_list_cgroup_dirs" = {
+          summary = "list cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            list_dirs_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_ioctl_cgroup_dirs" = {
+          summary = "Ioctl cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgroup_t;
+          '';
+          content = ''
+            allow $1 cgroup_t:dir ioctl;
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_create_cgroup_dirs" = {
+          summary = "Create cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgroup_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, cgroup_t, cgroup_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_delete_cgroup_dirs" = {
+          summary = "Delete cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            delete_dirs_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_manage_cgroup_dirs" = {
+          summary = "Manage cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            manage_dirs_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_relabel_cgroup_dirs" = {
+          summary = "Relabel cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, cgroup_types, cgroup_types)
+          '';
+        };
+        "fs_getattr_cgroup_files" = {
+          summary = "Get attributes of cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            getattr_files_pattern($1, cgroup_types, cgroup_types)
+            fs_search_tmpfs($1)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_read_cgroup_files" = {
+          summary = "Read cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            read_files_pattern($1, cgroup_types, cgroup_types)
+            read_lnk_files_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_create_cgroup_files" = {
+          summary = "Create cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgroup_t;
+          '';
+          content = ''
+            create_files_pattern($1, cgroup_t, cgroup_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_watch_cgroup_files" = {
+          summary = "Watch cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:file watch;
+          '';
+        };
+        "fs_read_cgroup_symlinks" = {
+          summary = "Read cgroup symlnks.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgroup_t;
+          '';
+          content = ''
+            read_lnk_files_pattern($1, cgroup_t, cgroup_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_create_cgroup_links" = {
+          summary = "Create cgroup lnk_files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            create_lnk_files_pattern($1, cgroup_types, cgroup_types)
+            rw_lnk_files_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_write_cgroup_files" = {
+          summary = "Write cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            write_files_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_rw_cgroup_files" = {
+          summary = "Read and write cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            rw_files_pattern($1, cgroup_types, cgroup_types)
+            read_lnk_files_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_dontaudit_rw_cgroup_files" = {
+          summary = ''
+            Do not audit attempts to open,
+            get attributes, read and write
+            cgroup files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            dontaudit $1 cgroup_types:file rw_file_perms;
+          '';
+        };
+        "fs_manage_cgroup_files" = {
+          summary = "Manage cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            manage_files_pattern($1, cgroup_types, cgroup_types)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_relabel_cgroup_symlinks" = {
+          summary = "Relabel cgroup symbolic links.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            relabel_lnk_files_pattern($1, cgroup_types, cgroup_types)
+          '';
+        };
+        "fs_watch_cgroup_dirs" = {
+          summary = "Watch cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cgroup_t;
+          '';
+          content = ''
+            allow $1 cgroup_t:dir watch;
+          '';
+        };
+        "fs_mounton_cgroup" = {
+          summary = "Mount on cgroup directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:dir mounton;
+          '';
+        };
+        "fs_mounton_cgroup_files" = {
+          summary = "Mount on cgroup files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cgroup_types;
+          '';
+          content = ''
+            allow $1 cgroup_types:file mounton;
+          '';
+        };
+        "fs_cgroup_filetrans" = {
+          summary = ''
+            Create an object in a cgroup tmpfs filesystem, with a private
+            type using a type transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private type";
+              description = "The type of the object to be created.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type cgroup_t, tmpfs_t;
+          '';
+          content = ''
+            allow $2 tmpfs_t:filesystem associate;
+            filetrans_pattern($1, cgroup_t, $2, $3, $4)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_cgroup_filetrans_memory_pressure" = {
+          summary = ''
+            Create an object in a cgroup tmpfs filesystem, with the memory_pressure_t
+            type using a type transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type memory_pressure_t;
+          '';
+          content = ''
+            fs_cgroup_filetrans($1, memory_pressure_t, $2, $3)
+          '';
+        };
+        "fs_getattr_memory_pressure" = {
+          summary = "Get the attributes of cgroup's memory.pressure files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type memory_pressure_t;
+          '';
+          content = ''
+            allow $1 memory_pressure_t:file getattr;
+          '';
+        };
+        "fs_watch_memory_pressure" = {
+          summary = "Allow managing a cgroup's memory.pressure file to get notifications";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Source domain";
+            };
+          };
+          gen_require = ''
+            type memory_pressure_t;
+          '';
+          content = ''
+            allow $1 memory_pressure_t:file { rw_file_perms setattr };
+          '';
+        };
+        "fs_dontaudit_list_cifs_dirs" = {
+          summary = ''
+            Do not audit attempts to read
+            dirs on a CIFS or SMB filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_mount_cifs" = {
+          summary = "Mount a CIFS or SMB network filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_cifs" = {
+          summary = ''
+            Remount a CIFS or SMB network filesystem.
+            This allows some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_cifs" = {
+          summary = "Unmount a CIFS or SMB network filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_cifs" = {
+          summary = ''
+            Get the attributes of a CIFS or
+            SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_search_cifs" = {
+          summary = "Search directories on a CIFS or SMB filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_cifs" = {
+          summary = ''
+            List the contents of directories on a
+            CIFS or SMB filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_cifs" = {
+          summary = ''
+            Do not audit attempts to list the contents
+            of directories on a CIFS or SMB filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_mounton_cifs" = {
+          summary = "Mounton a CIFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir mounton;
+          '';
+        };
+        "fs_read_cifs_files" = {
+          summary = "Read files on a CIFS or SMB filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir list_dir_perms;
+            read_files_pattern($1, cifs_t, cifs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_read_all_inherited_image_files" = {
+          summary = "Read all inherited filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            allow $1 filesystem_image_file_type:file read_inherited_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_read_all_image_files" = {
+          summary = "Read all filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            read_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
+          '';
+          rolecap = true;
+        };
+        "fs_mmap_read_all_image_files" = {
+          summary = "Mmap-read all filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            mmap_read_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
+          '';
+          rolecap = true;
+        };
+        "fs_rw_all_image_files" = {
+          summary = "Read and write all filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            rw_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
+          '';
+          rolecap = true;
+        };
+        "fs_mmap_rw_all_image_files" = {
+          summary = "Mmap-Read-write all filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            mmap_rw_files_pattern($1, filesystem_image_file_type, filesystem_image_file_type)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_write_all_image_files" = {
+          summary = "Do not audit attempts to write all filesystem image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_image_file_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_image_file_type:file write;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_noxattr_fs" = {
+          summary = ''
+            Get the attributes of filesystems that
+            do not have extended attribute support.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            allow $1 noxattrfs:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_list_noxattr_fs" = {
+          summary = "Read all noxattrfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            allow $1 noxattrfs:dir list_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_noxattr_fs" = {
+          summary = ''
+            Do not audit attempts to list all
+            noxattrfs directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            dontaudit $1 noxattrfs:dir list_dir_perms;
+          '';
+        };
+        "fs_manage_noxattr_fs_dirs" = {
+          summary = "Create, read, write, and delete all noxattrfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            allow $1 noxattrfs:dir manage_dir_perms;
+          '';
+        };
+        "fs_read_noxattr_fs_files" = {
+          summary = "Read all noxattrfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            fs_list_noxattr_fs($1)
+            read_files_pattern($1, noxattrfs, noxattrfs)
+          '';
+        };
+        "fs_dontaudit_read_noxattr_fs_files" = {
+          summary = ''
+            Do not audit attempts to read all
+            noxattrfs files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            dontaudit $1 noxattrfs:file read_file_perms;
+          '';
+        };
+        "fs_dontaudit_write_noxattr_fs_files" = {
+          summary = "Dont audit attempts to write to noxattrfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            dontaudit $1 noxattrfs:file write;
+          '';
+        };
+        "fs_manage_noxattr_fs_files" = {
+          summary = "Create, read, write, and delete all noxattrfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            fs_list_noxattr_fs($1)
+            manage_files_pattern($1, noxattrfs, noxattrfs)
+          '';
+        };
+        "fs_read_noxattr_fs_symlinks" = {
+          summary = "Read all noxattrfs symbolic links.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            fs_list_noxattr_fs($1)
+            read_lnk_files_pattern($1, noxattrfs, noxattrfs)
+          '';
+        };
+        "fs_manage_noxattr_fs_symlinks" = {
+          summary = "Manage all noxattrfs symbolic links.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            fs_list_noxattr_fs($1)
+            manage_lnk_files_pattern($1, noxattrfs, noxattrfs)
+          '';
+        };
+        "fs_relabelfrom_noxattr_fs" = {
+          summary = ''
+            Relabel all objects from filesystems that
+            do not support extended attributes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute noxattrfs;
+          '';
+          content = ''
+            allow $1 noxattrfs:dir list_dir_perms;
+            relabelfrom_dirs_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_files_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_lnk_files_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_fifo_files_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_sock_files_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_blk_files_pattern($1, noxattrfs, noxattrfs)
+            relabelfrom_chr_files_pattern($1, noxattrfs, noxattrfs)
+          '';
+        };
+        "fs_dontaudit_read_cifs_files" = {
+          summary = ''
+            Do not audit attempts to read
+            files on a CIFS or SMB filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:file read_file_perms;
+          '';
+        };
+        "fs_append_cifs_files" = {
+          summary = ''
+            Append files
+            on a CIFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            append_files_pattern($1, cifs_t, cifs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_append_cifs_files" = {
+          summary = ''
+            dontaudit Append files
+            on a CIFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:file append_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_rw_cifs_files" = {
+          summary = ''
+            Do not audit attempts to read or
+            write files on a CIFS or SMB filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:file rw_file_perms;
+          '';
+        };
+        "fs_read_cifs_symlinks" = {
+          summary = "Read symbolic links on a CIFS or SMB filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir list_dir_perms;
+            read_lnk_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_read_cifs_named_pipes" = {
+          summary = ''
+            Read named pipes
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            read_fifo_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_read_cifs_named_sockets" = {
+          summary = ''
+            Read named sockets
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            read_sock_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_exec_cifs_files" = {
+          summary = ''
+            Execute files on a CIFS or SMB
+            network filesystem, in the caller
+            domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir list_dir_perms;
+            exec_files_pattern($1, cifs_t, cifs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_manage_cifs_dirs" = {
+          summary = ''
+            Create, read, write, and delete directories
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir manage_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_cifs_dirs" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete directories
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_manage_cifs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, cifs_t, cifs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_cifs_files" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete files
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            dontaudit $1 cifs_t:file manage_file_perms;
+          '';
+        };
+        "fs_manage_cifs_symlinks" = {
+          summary = ''
+            Create, read, write, and delete symbolic links
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_manage_cifs_named_pipes" = {
+          summary = ''
+            Create, read, write, and delete named pipes
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            manage_fifo_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_manage_cifs_named_sockets" = {
+          summary = ''
+            Create, read, write, and delete named sockets
+            on a CIFS or SMB network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            manage_sock_files_pattern($1, cifs_t, cifs_t)
+          '';
+        };
+        "fs_cifs_domtrans" = {
+          summary = ''
+            Execute a file on a CIFS or SMB filesystem
+            in the specified domain.
+          '';
+          desc = ''
+            <p>
+            Execute a file on a CIFS or SMB filesystem
+            in the specified domain.  This allows
+            the specified domain to execute any file
+            on these filesystems in the specified
+            domain.  This is not suggested.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+            <p>
+            This interface was added to handle
+            home directories on CIFS/SMB filesystems,
+            in particular used by the ssh-agent policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "The type of the new process.";
+            };
+          };
+          gen_require = ''
+            type cifs_t;
+          '';
+          content = ''
+            allow $1 cifs_t:dir search_dir_perms;
+            domain_auto_transition_pattern($1, cifs_t, $2)
+          '';
+        };
+        "fs_dontaudit_getattr_configfs" = {
+          summary = ''
+            Do not audit attempts to getattr a configfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            dontaudit $1 configfs_t:filesystem getattr;
+          '';
+        };
+        "fs_getattr_configfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete dirs
+            on a configfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            allow $1 configfs_t:dir getattr;
+          '';
+        };
+        "fs_search_configfs_dirs" = {
+          summary = "Search on a configfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            allow $1 configfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_manage_configfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete dirs
+            on a configfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, configfs_t, configfs_t)
+          '';
+        };
+        "fs_manage_configfs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a configfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, configfs_t, configfs_t)
+          '';
+        };
+        "fs_dontaudit_remount_configfs" = {
+          summary = ''
+            Do not audit attempts to remount a configfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type configfs_t;
+          '';
+          content = ''
+            dontaudit $1 configfs_t:filesystem remount;
+          '';
+        };
+        "fs_mount_dos_fs" = {
+          summary = ''
+            Mount a DOS filesystem, such as
+            FAT32 or NTFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_dos_fs" = {
+          summary = ''
+            Remount a DOS filesystem, such as
+            FAT32 or NTFS.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_dos_fs" = {
+          summary = ''
+            Unmount a DOS filesystem, such as
+            FAT32 or NTFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_dos_fs" = {
+          summary = ''
+            Get the attributes of a DOS
+            filesystem, such as FAT32 or NTFS.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_relabelfrom_dos_fs" = {
+          summary = ''
+            Allow changing of the label of a
+            DOS filesystem using the context= mount option.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:filesystem relabelfrom;
+          '';
+        };
+        "fs_getattr_dos_dirs" = {
+          summary = "Get attributes of directories on a dosfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:dir getattr;
+          '';
+        };
+        "fs_search_dos" = {
+          summary = "Search dosfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            allow $1 dosfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_dos" = {
+          summary = "List dirs DOS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            list_dirs_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_create_dos_dirs" = {
+          summary = "Create dirs on a DOS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_manage_dos_dirs" = {
+          summary = ''
+            Create, read, write, and delete dirs
+            on a DOS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_read_dos_files" = {
+          summary = "Read files on a DOS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            read_files_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_mmap_read_dos_files" = {
+          summary = "Read and map files on a DOS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            mmap_read_files_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_manage_dos_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a DOS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dosfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, dosfs_t, dosfs_t)
+          '';
+        };
+        "fs_list_ecryptfs" = {
+          summary = "Read symbolic links on an eCryptfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ecryptfs_t;
+          '';
+          content = ''
+            allow $1 ecryptfs_t:dir list_dir_perms;
+            read_lnk_files_pattern($1, ecryptfs_t, ecryptfs_t)
+          '';
+        };
+        "fs_manage_ecryptfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete directories
+            on an eCryptfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ecryptfs_t;
+          '';
+          content = ''
+            allow $1 ecryptfs_t:dir manage_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_ecryptfs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on an eCryptfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ecryptfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, ecryptfs_t, ecryptfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_manage_ecryptfs_named_sockets" = {
+          summary = ''
+            Create, read, write, and delete named sockets
+            on an eCryptfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ecryptfs_t;
+          '';
+          content = ''
+            manage_sock_files_pattern($1, ecryptfs_t, ecryptfs_t)
+          '';
+        };
+        "fs_getattr_efivarfs" = {
+          summary = "Get the attributes of efivarfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            allow $1 efivarfs_t:filesystem getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_efivarfs" = {
+          summary = ''
+            Do not audit attempts to getattr an efivarfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            dontaudit $1 efivarfs_t:filesystem getattr;
+          '';
+        };
+        "fs_remount_efivarfs" = {
+          summary = "Remount an efivarfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            allow $1 efivarfs_t:filesystem remount;
+          '';
+        };
+        "fs_dontaudit_remount_efivarfs" = {
+          summary = ''
+            Do not audit attempts to remount an efivarfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            dontaudit $1 efivarfs_t:filesystem remount;
+          '';
+        };
+        "fs_list_efivars" = {
+          summary = "List dirs in efivarfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            list_dirs_pattern($1, efivarfs_t, efivarfs_t)
+          '';
+        };
+        "fs_read_efivarfs_files" = {
+          summary = ''
+            Read files in efivarfs
+            - contains Linux Kernel configuration options for UEFI systems
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            read_files_pattern($1, efivarfs_t, efivarfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_efivarfs_files" = {
+          summary = ''
+            Set the attributes of files in efivarfs
+            - contains Linux Kernel configuration options for UEFI systems
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            setattr_files_pattern($1, efivarfs_t, efivarfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_manage_efivarfs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on an efivarfs filesystem.
+            - contains Linux Kernel configuration options for UEFI systems
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type efivarfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, efivarfs_t, efivarfs_t)
+          '';
+        };
+        "fs_getattr_fusefs" = {
+          summary = "stat a FUSE filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:filesystem getattr;
+          '';
+        };
+        "fs_mount_fusefs" = {
+          summary = "Mount a FUSE filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:filesystem mount;
+          '';
+        };
+        "fs_unmount_fusefs" = {
+          summary = "Unmount a FUSE filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:filesystem unmount;
+          '';
+        };
+        "fs_remount_fusefs" = {
+          summary = "Remount a FUSE filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:filesystem remount;
+          '';
+        };
+        "fs_mounton_fusefs" = {
+          summary = "Mounton a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir mounton;
+          '';
+        };
+        "fs_mounton_fusefs_files" = {
+          summary = "Mount on files on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:file mounton;
+          '';
+        };
+        "fs_fusefs_entry_type" = {
+          summary = ''
+            Make FUSEFS files an entrypoint for the
+            specified domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The domain for which fusefs_t is an entrypoint.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            domain_entry_file($1, fusefs_t)
+          '';
+        };
+        "fs_fusefs_domtrans" = {
+          summary = "Execute FUSEFS files in a specified domain.";
+          desc = ''
+            <p>
+            Execute FUSEFS files in a specified domain.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "source_domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "Domain to transition to.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            domain_auto_transition_pattern($1, fusefs_t, $2)
+          '';
+        };
+        "fs_search_fusefs" = {
+          summary = ''
+            Search directories
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir search_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_list_fusefs" = {
+          summary = ''
+            List the contents of directories
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir list_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_list_fusefs" = {
+          summary = ''
+            Do not audit attempts to list the contents
+            of directories on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            dontaudit $1 fusefs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_setattr_fusefs_dirs" = {
+          summary = ''
+            Set the attributes of directories
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir setattr_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_dirs" = {
+          summary = ''
+            Create, read, write, and delete directories
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir manage_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_fusefs_dirs" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete directories
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            dontaudit $1 fusefs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_watch_fusefs_dirs" = {
+          summary = "Watch directories on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir watch;
+          '';
+        };
+        "fs_getattr_fusefs_files" = {
+          summary = ''
+            Get the attributes of files on a
+            FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            getattr_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_read_fusefs_files" = {
+          summary = "Read, a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            read_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_exec_fusefs_files" = {
+          summary = "Execute files on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            exec_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_fusefs_files" = {
+          summary = ''
+            Set the attributes of files on a
+            FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:file setattr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_fusefs_files" = {
+          summary = ''
+            Do not audit attempts to create,
+            read, write, and delete files
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            dontaudit $1 fusefs_t:file manage_file_perms;
+          '';
+        };
+        "fs_watch_fusefs_files" = {
+          summary = "Watch files on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:file watch;
+          '';
+        };
+        "fs_getattr_fusefs_symlinks" = {
+          summary = ''
+            Get the attributes of symlinks
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:lnk_file getattr_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_read_fusefs_symlinks" = {
+          summary = "Read symbolic links on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:dir list_dir_perms;
+            read_lnk_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+        };
+        "fs_setattr_fusefs_symlinks" = {
+          summary = ''
+            Set the attributes of symlinks
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:lnk_file setattr_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_symlinks" = {
+          summary = "Manage symlinks on a FUSEFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, fusefs_t, fusefs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_fusefs_fifo_files" = {
+          summary = ''
+            Get the attributes of named pipes
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:fifo_file getattr_fifo_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_fusefs_fifo_files" = {
+          summary = ''
+            Set the attributes of named pipes
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:fifo_file setattr_fifo_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_fifo_files" = {
+          summary = ''
+            Manage named pipes on a FUSEFS
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:fifo_file manage_fifo_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_fusefs_sock_files" = {
+          summary = ''
+            Get the attributes of named sockets
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:sock_file getattr_sock_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_fusefs_sock_files" = {
+          summary = ''
+            Set the attributes of named sockets
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:sock_file setattr_sock_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_sock_files" = {
+          summary = ''
+            Manage named sockets on a FUSEFS
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:sock_file manage_sock_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_fusefs_chr_files" = {
+          summary = ''
+            Get the attributes of character files
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:chr_file getattr_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_fusefs_chr_files" = {
+          summary = ''
+            Set the attributes of character files
+            on a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:chr_file setattr_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_manage_fusefs_chr_files" = {
+          summary = ''
+            Manage character files on a FUSEFS
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:chr_file manage_chr_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_create_fusefs_blk_files" = {
+          summary = ''
+            Create block files on a FUSEFS
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:blk_file create_blk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_setattr_fusefs_blk_files" = {
+          summary = ''
+            Set the attributes of block files on
+            a FUSEFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fusefs_t;
+          '';
+          content = ''
+            allow $1 fusefs_t:blk_file setattr_blk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_hugetlbfs" = {
+          summary = ''
+            Get the attributes of an hugetlbfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:filesystem getattr;
+          '';
+        };
+        "fs_remount_hugetlbfs" = {
+          summary = "Remount a hugetlbfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:filesystem remount;
+          '';
+        };
+        "fs_list_hugetlbfs" = {
+          summary = "List hugetlbfs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_create_hugetlbfs_dirs" = {
+          summary = "Create hugetlbfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
+          '';
+        };
+        "fs_setattr_hugetlbfs_dirs" = {
+          summary = "Set the attributes on hugetlbfs dirs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            setattr_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
+          '';
+        };
+        "fs_manage_hugetlbfs_dirs" = {
+          summary = "Manage hugetlbfs dirs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
+          '';
+        };
+        "fs_relabelfrom_hugetlbfs_dirs" = {
+          summary = ''
+            Allow changing of the label of a
+            directory with the hugetlbfs type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            relabelfrom_dirs_pattern($1, hugetlbfs_t, hugetlbfs_t)
+          '';
+        };
+        "fs_mounton_hugetlbfs_dirs" = {
+          summary = "Mount on hugetlbfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:dir mounton;
+          '';
+        };
+        "fs_rw_inherited_hugetlbfs_files" = {
+          summary = "Read and write inherited hugetlbfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:file rw_inherited_file_perms;
+          '';
+        };
+        "fs_rw_hugetlbfs_files" = {
+          summary = "Read and write hugetlbfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            rw_files_pattern($1, hugetlbfs_t, hugetlbfs_t)
+          '';
+        };
+        "fs_mmap_rw_hugetlbfs_files" = {
+          summary = "Read, map and write hugetlbfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            fs_rw_hugetlbfs_files($1)
+            allow $1 hugetlbfs_t:file map;
+          '';
+        };
+        "fs_associate_hugetlbfs" = {
+          summary = "Allow the type to associate to hugetlbfs filesystems.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "The type of the object to be associated.";
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $1 hugetlbfs_t:filesystem associate;
+          '';
+        };
+        "fs_search_inotifyfs" = {
+          summary = "Search inotifyfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type inotifyfs_t;
+          '';
+          content = ''
+            allow $1 inotifyfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_inotifyfs" = {
+          summary = "List inotifyfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type inotifyfs_t;
+          '';
+          content = ''
+            allow $1 inotifyfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_inotifyfs" = {
+          summary = "Dontaudit List inotifyfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type inotifyfs_t;
+          '';
+          content = ''
+            dontaudit $1 inotifyfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_hugetlbfs_filetrans" = {
+          summary = ''
+            Create an object in a hugetlbfs filesystem, with a private
+            type using a type transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private type";
+              description = "The type of the object to be created.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type hugetlbfs_t;
+          '';
+          content = ''
+            allow $2 hugetlbfs_t:filesystem associate;
+            filetrans_pattern($1, hugetlbfs_t, $2, $3, $4)
+          '';
+        };
+        "fs_mount_iso9660_fs" = {
+          summary = ''
+            Mount an iso9660 filesystem, which
+            is usually used on CDs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:filesystem mount;
+          '';
+        };
+        "fs_remount_iso9660_fs" = {
+          summary = ''
+            Remount an iso9660 filesystem, which
+            is usually used on CDs.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:filesystem remount;
+          '';
+        };
+        "fs_relabelfrom_iso9660_fs" = {
+          summary = ''
+            Allow changing of the label of a
+            filesystem with iso9660 type
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:filesystem relabelfrom;
+          '';
+        };
+        "fs_unmount_iso9660_fs" = {
+          summary = ''
+            Unmount an iso9660 filesystem, which
+            is usually used on CDs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_iso9660_fs" = {
+          summary = ''
+            Get the attributes of an iso9660
+            filesystem, which is usually used on CDs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_iso9660_files" = {
+          summary = ''
+            Get the attributes of files on an iso9660
+            filesystem, which is usually used on CDs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:dir list_dir_perms;
+            allow $1 iso9660_t:file getattr;
+          '';
+        };
+        "fs_read_iso9660_files" = {
+          summary = ''
+            Read files on an iso9660 filesystem, which
+            is usually used on CDs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type iso9660_t;
+          '';
+          content = ''
+            allow $1 iso9660_t:dir list_dir_perms;
+            read_files_pattern($1, iso9660_t, iso9660_t)
+            read_lnk_files_pattern($1, iso9660_t, iso9660_t)
+          '';
+        };
+        "fs_mount_nfs" = {
+          summary = "Mount a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_nfs" = {
+          summary = ''
+            Remount a NFS filesystem.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_nfs" = {
+          summary = "Unmount a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_nfs" = {
+          summary = "Get the attributes of a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_search_nfs" = {
+          summary = "Search directories on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_nfs" = {
+          summary = "List NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_nfs" = {
+          summary = ''
+            Do not audit attempts to list the contents
+            of directories on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_watch_nfs_dirs" = {
+          summary = ''
+            Add a watch on directories on an NFS
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir watch;
+          '';
+        };
+        "fs_mounton_nfs" = {
+          summary = "Mounton a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir mounton;
+          '';
+        };
+        "fs_read_nfs_files" = {
+          summary = "Read files on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir list_dir_perms;
+            read_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_read_nfs_files" = {
+          summary = ''
+            Do not audit attempts to read
+            files on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:file read_file_perms;
+          '';
+        };
+        "fs_write_nfs_files" = {
+          summary = "Read files on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir list_dir_perms;
+            write_files_pattern($1, nfs_t, nfs_t)
+          '';
+        };
+        "fs_exec_nfs_files" = {
+          summary = "Execute files on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir list_dir_perms;
+            exec_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_append_nfs_files" = {
+          summary = ''
+            Append files
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            append_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_append_nfs_files" = {
+          summary = ''
+            dontaudit Append files
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:file append_file_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_rw_nfs_files" = {
+          summary = ''
+            Do not audit attempts to read or
+            write files on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:file rw_file_perms;
+          '';
+        };
+        "fs_watch_nfs_files" = {
+          summary = "Add a watch on files on an NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:file watch;
+          '';
+        };
+        "fs_read_nfs_symlinks" = {
+          summary = "Read symbolic links on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir list_dir_perms;
+            read_lnk_files_pattern($1, nfs_t, nfs_t)
+          '';
+        };
+        "fs_dontaudit_read_nfs_symlinks" = {
+          summary = "Dontaudit read symbolic links on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "fs_read_nfs_named_sockets" = {
+          summary = "Read named sockets on a NFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            read_sock_files_pattern($1, nfs_t, nfs_t)
+          '';
+        };
+        "fs_read_nfs_named_pipes" = {
+          summary = "Read named pipes on a NFS network filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            read_fifo_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_rpc_dirs" = {
+          summary = ''
+            Get the attributes of directories of RPC
+            file system pipes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:dir getattr;
+          '';
+        };
+        "fs_search_rpc" = {
+          summary = "Search directories of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_search_removable" = {
+          summary = "Search removable storage directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            allow $1 removable_t:dir search_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_removable" = {
+          summary = "Do not audit attempts to list removable storage directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain not to audit.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            dontaudit $1 removable_t:dir list_dir_perms;
+          '';
+        };
+        "fs_read_removable_files" = {
+          summary = "Read removable storage files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            read_files_pattern($1, removable_t, removable_t)
+          '';
+        };
+        "fs_dontaudit_read_removable_files" = {
+          summary = "Do not audit attempts to read removable storage files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain not to audit.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            dontaudit $1 removable_t:file read_file_perms;
+          '';
+        };
+        "fs_dontaudit_write_removable_files" = {
+          summary = "Do not audit attempts to write removable storage files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain not to audit.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            dontaudit $1 removable_t:file write_file_perms;
+          '';
+        };
+        "fs_read_removable_symlinks" = {
+          summary = "Read removable storage symbolic links.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            read_lnk_files_pattern($1, removable_t, removable_t)
+          '';
+        };
+        "fs_read_removable_blk_files" = {
+          summary = "Read block nodes on removable filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            allow $1 removable_t:dir list_dir_perms;
+            read_blk_files_pattern($1, removable_t, removable_t)
+          '';
+        };
+        "fs_rw_removable_blk_files" = {
+          summary = "Read and write block nodes on removable filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type removable_t;
+          '';
+          content = ''
+            allow $1 removable_t:dir list_dir_perms;
+            rw_blk_files_pattern($1, removable_t, removable_t)
+          '';
+        };
+        "fs_list_rpc" = {
+          summary = "Read directories of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_read_rpc_files" = {
+          summary = "Read files of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            read_files_pattern($1, rpc_pipefs_t, rpc_pipefs_t)
+          '';
+        };
+        "fs_read_rpc_symlinks" = {
+          summary = "Read symbolic links of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            read_lnk_files_pattern($1, rpc_pipefs_t, rpc_pipefs_t)
+          '';
+        };
+        "fs_read_rpc_sockets" = {
+          summary = "Read sockets of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:sock_file read;
+          '';
+        };
+        "fs_rw_rpc_sockets" = {
+          summary = "Read and write sockets of RPC file system pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:sock_file { read write };
+          '';
+        };
+        "fs_manage_nfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete directories
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir manage_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_nfs_dirs" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete directories
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_manage_nfs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_nfs_files" = {
+          summary = ''
+            Do not audit attempts to create,
+            read, write, and delete files
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            dontaudit $1 nfs_t:file manage_file_perms;
+          '';
+        };
+        "fs_manage_nfs_symlinks" = {
+          summary = ''
+            Create, read, write, and delete symbolic links
+            on a NFS network filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, nfs_t, nfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_manage_nfs_named_pipes" = {
+          summary = ''
+            Create, read, write, and delete named pipes
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            manage_fifo_files_pattern($1, nfs_t, nfs_t)
+          '';
+        };
+        "fs_manage_nfs_named_sockets" = {
+          summary = ''
+            Create, read, write, and delete named sockets
+            on a NFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            manage_sock_files_pattern($1, nfs_t, nfs_t)
+          '';
+        };
+        "fs_nfs_domtrans" = {
+          summary = ''
+            Execute a file on a NFS filesystem
+            in the specified domain.
+          '';
+          desc = ''
+            <p>
+            Execute a file on a NFS filesystem
+            in the specified domain.  This allows
+            the specified domain to execute any file
+            on a NFS filesystem in the specified
+            domain.  This is not suggested.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+            <p>
+            This interface was added to handle
+            home directories on NFS filesystems,
+            in particular used by the ssh-agent policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "The type of the new process.";
+            };
+          };
+          gen_require = ''
+            type nfs_t;
+          '';
+          content = ''
+            allow $1 nfs_t:dir search_dir_perms;
+            domain_auto_transition_pattern($1, nfs_t, $2)
+          '';
+        };
+        "fs_mount_nfsd_fs" = {
+          summary = "Mount a NFS server pseudo filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_nfsd_fs" = {
+          summary = ''
+            Mount a NFS server pseudo filesystem.
+            This allows some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_nfsd_fs" = {
+          summary = "Unmount a NFS server pseudo filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_nfsd_fs" = {
+          summary = ''
+            Get the attributes of a NFS server
+            pseudo filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:filesystem getattr;
+          '';
+        };
+        "fs_search_nfsd_fs" = {
+          summary = "Search NFS server directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_nfsd_fs" = {
+          summary = "List NFS server directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_watch_nfsd_dirs" = {
+          summary = "Watch NFS server directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:dir watch;
+          '';
+        };
+        "fs_getattr_nfsd_files" = {
+          summary = "Getattr files on an nfsd filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            getattr_files_pattern($1, nfsd_fs_t, nfsd_fs_t)
+          '';
+        };
+        "fs_rw_nfsd_fs" = {
+          summary = "Read and write NFS server files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            rw_files_pattern($1, nfsd_fs_t, nfsd_fs_t)
+          '';
+        };
+        "fs_getattr_nsfs_files" = {
+          summary = "Get the attributes of nsfs inodes (e.g. /proc/pid/ns/uts)";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nsfs_t;
+          '';
+          content = ''
+            allow $1 nsfs_t:file getattr_file_perms;
+          '';
+        };
+        "fs_read_nsfs_files" = {
+          summary = "Read nsfs inodes (e.g. /proc/pid/ns/uts)";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nsfs_t;
+          '';
+          content = ''
+            allow $1 nsfs_t:file read_file_perms;
+          '';
+        };
+        "fs_watch_nfsd_files" = {
+          summary = "Watch NFS server files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_fs_t;
+          '';
+          content = ''
+            allow $1 nfsd_fs_t:file watch;
+          '';
+        };
+        "fs_getattr_nsfs" = {
+          summary = "Get the attributes of an nsfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nsfs_t;
+          '';
+          content = ''
+            allow $1 nsfs_t:filesystem getattr;
+          '';
+        };
+        "fs_unmount_nsfs" = {
+          summary = "Unmount an nsfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nsfs_t;
+          '';
+          content = ''
+            allow $1 nsfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_pstorefs" = {
+          summary = "Get the attributes of a pstore filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            allow $1 pstore_t:filesystem getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_pstorefs" = {
+          summary = ''
+            Do not audit attempts to get
+            attributes of dirs on a pstorefs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            dontaudit $1 pstore_t:filesystem getattr;
+          '';
+        };
+        "fs_getattr_pstore_dirs" = {
+          summary = ''
+            Get the attributes of directories
+            of a pstore filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            getattr_files_pattern($1, pstore_t, pstore_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_create_pstore_dirs" = {
+          summary = "Create pstore directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            create_dirs_pattern($1, pstore_t, pstore_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_relabel_pstore_dirs" = {
+          summary = "Relabel to/from pstore_t directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, pstore_t, pstore_t)
+          '';
+        };
+        "fs_list_pstore_dirs" = {
+          summary = ''
+            List the directories
+            of a pstore filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            allow $1 pstore_t:dir list_dir_perms;
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_read_pstore_files" = {
+          summary = "Read pstore_t files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            allow $1 pstore_t:file read_file_perms;
+          '';
+        };
+        "fs_delete_pstore_files" = {
+          summary = ''
+            Delete the files
+            of a pstore filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            delete_files_pattern($1, pstore_t, pstore_t)
+            dev_search_sysfs($1)
+          '';
+        };
+        "fs_remount_pstorefs" = {
+          summary = "Remount a pstorefs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain sllowd access.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            allow $1 pstore_t:filesystem remount;
+          '';
+        };
+        "fs_dontaudit_remount_pstorefs" = {
+          summary = ''
+            Do not audit attempts to remount a pstorefs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type pstore_t;
+          '';
+          content = ''
+            dontaudit $1 pstore_t:filesystem remount;
+          '';
+        };
+        "fs_associate_ramfs" = {
+          summary = "Allow the type to associate to ramfs filesystems.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "The type of the object to be associated.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:filesystem associate;
+          '';
+        };
+        "fs_mount_ramfs" = {
+          summary = "Mount a RAM filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_ramfs" = {
+          summary = ''
+            Remount a RAM filesystem.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_ramfs" = {
+          summary = "Unmount a RAM filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_ramfs" = {
+          summary = "Get the attributes of a RAM filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:filesystem getattr;
+          '';
+        };
+        "fs_search_ramfs" = {
+          summary = "Search directories on a ramfs";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_dontaudit_search_ramfs" = {
+          summary = "Dontaudit Search directories on a ramfs";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            dontaudit $1 ramfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_setattr_ramfs_dirs" = {
+          summary = ''
+            Set the attributes of directories on
+            a ramfs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:dir setattr;
+          '';
+        };
+        "fs_list_ramfs" = {
+          summary = "List directories on a ramfs.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_manage_ramfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            directories on a ramfs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            allow $1 ramfs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_dontaudit_read_ramfs_files" = {
+          summary = "Dontaudit read on a ramfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            dontaudit $1 ramfs_t:file read;
+          '';
+        };
+        "fs_dontaudit_read_ramfs_pipes" = {
+          summary = "Dontaudit read on a ramfs fifo_files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            dontaudit $1 ramfs_t:fifo_file read;
+          '';
+        };
+        "fs_manage_ramfs_files" = {
+          summary = ''
+            Create, read, write, and delete
+            files on a ramfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_write_ramfs_pipes" = {
+          summary = "Write to named pipe on a ramfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            write_fifo_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_dontaudit_write_ramfs_pipes" = {
+          summary = ''
+            Do not audit attempts to write to named
+            pipes on a ramfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            dontaudit $1 ramfs_t:fifo_file write;
+          '';
+        };
+        "fs_rw_ramfs_pipes" = {
+          summary = "Read and write a named pipe on a ramfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            rw_fifo_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_manage_ramfs_pipes" = {
+          summary = ''
+            Create, read, write, and delete
+            named pipes on a ramfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            manage_fifo_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_write_ramfs_sockets" = {
+          summary = "Write to named socket on a ramfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            write_sock_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_manage_ramfs_sockets" = {
+          summary = ''
+            Create, read, write, and delete
+            named sockets on a ramfs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ramfs_t;
+          '';
+          content = ''
+            manage_sock_files_pattern($1, ramfs_t, ramfs_t)
+          '';
+        };
+        "fs_mount_romfs" = {
+          summary = "Mount a ROM filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type romfs_t;
+          '';
+          content = ''
+            allow $1 romfs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_romfs" = {
+          summary = ''
+            Remount a ROM filesystem.  This allows
+            some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type romfs_t;
+          '';
+          content = ''
+            allow $1 romfs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_romfs" = {
+          summary = "Unmount a ROM filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type romfs_t;
+          '';
+          content = ''
+            allow $1 romfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_romfs" = {
+          summary = ''
+            Get the attributes of a ROM
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type romfs_t;
+          '';
+          content = ''
+            allow $1 romfs_t:filesystem getattr;
+          '';
+        };
+        "fs_mount_rpc_pipefs" = {
+          summary = "Mount a RPC pipe filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_rpc_pipefs" = {
+          summary = ''
+            Remount a RPC pipe filesystem.  This
+            allows some mount option to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_rpc_pipefs" = {
+          summary = "Unmount a RPC pipe filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_rpc_pipefs" = {
+          summary = ''
+            Get the attributes of a RPC pipe
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:filesystem getattr;
+          '';
+        };
+        "fs_rw_rpc_named_pipes" = {
+          summary = "Read and write RPC pipe filesystem named pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:fifo_file rw_fifo_file_perms;
+          '';
+        };
+        "fs_watch_rpc_pipefs_dirs" = {
+          summary = "Watch RPC pipe filesystem directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpc_pipefs_t;
+          '';
+          content = ''
+            allow $1 rpc_pipefs_t:dir watch;
+          '';
+        };
+        "fs_mount_tmpfs" = {
+          summary = "Mount a tmpfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem mount;
+          '';
+        };
+        "fs_remount_tmpfs" = {
+          summary = "Remount a tmpfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem remount;
+          '';
+        };
+        "fs_unmount_tmpfs" = {
+          summary = "Unmount a tmpfs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem unmount;
+          '';
+        };
+        "fs_getattr_tmpfs" = {
+          summary = ''
+            Get the attributes of a tmpfs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem getattr;
+          '';
+          rolecap = true;
+        };
+        "fs_associate_tmpfs" = {
+          summary = "Allow the type to associate to tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "The type of the object to be associated.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem associate;
+          '';
+        };
+        "fs_relabelfrom_tmpfs" = {
+          summary = "Relabel from tmpfs filesystem.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:filesystem relabelfrom;
+          '';
+        };
+        "fs_getattr_tmpfs_dirs" = {
+          summary = "Get the attributes of tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_tmpfs_dirs" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of tmpfs directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:dir getattr;
+          '';
+        };
+        "fs_mounton_tmpfs" = {
+          summary = "Mount on tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir mounton;
+          '';
+        };
+        "fs_mounton_tmpfs_files" = {
+          summary = "Mount on tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:file mounton;
+          '';
+        };
+        "fs_setattr_tmpfs_dirs" = {
+          summary = "Set the attributes of tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir setattr;
+          '';
+        };
+        "fs_search_tmpfs" = {
+          summary = "Search tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_list_tmpfs" = {
+          summary = "List the contents of generic tmpfs directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_dontaudit_list_tmpfs" = {
+          summary = ''
+            Do not audit attempts to list the
+            contents of generic tmpfs directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:dir list_dir_perms;
+          '';
+        };
+        "fs_manage_tmpfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            tmpfs directories
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_dontaudit_write_tmpfs_dirs" = {
+          summary = ''
+            Do not audit attempts to write
+            tmpfs directories
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:dir write;
+          '';
+        };
+        "fs_relabelfrom_tmpfs_dirs" = {
+          summary = "Relabel from tmpfs_t dir";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir relabelfrom;
+          '';
+        };
+        "fs_relabel_tmpfs_dirs" = {
+          summary = "Relabel directory on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_watch_tmpfs_dirs" = {
+          summary = "Watch directories on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir watch;
+          '';
+        };
+        "fs_tmpfs_filetrans" = {
+          summary = ''
+            Create an object in a tmpfs filesystem, with a private
+            type using a type transition.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private type";
+              description = "The type of the object to be created.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $2 tmpfs_t:filesystem associate;
+            filetrans_pattern($1, tmpfs_t, $2, $3, $4)
+          '';
+        };
+        "fs_dontaudit_getattr_tmpfs_files" = {
+          summary = ''
+            Do not audit attempts to getattr
+            generic tmpfs files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:file getattr;
+          '';
+        };
+        "fs_dontaudit_rw_tmpfs_files" = {
+          summary = ''
+            Do not audit attempts to read or write
+            generic tmpfs files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:file rw_file_perms;
+          '';
+        };
+        "fs_delete_tmpfs_symlinks" = {
+          summary = "Delete tmpfs symbolic links.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:lnk_file delete_lnk_file_perms;
+          '';
+        };
+        "fs_manage_auto_mountpoints" = {
+          summary = ''
+            Create, read, write, and delete
+            auto moutpoints.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type autofs_t;
+          '';
+          content = ''
+            allow $1 autofs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_read_tmpfs_files" = {
+          summary = "Read generic tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            read_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_mmap_read_tmpfs_files" = {
+          summary = "Read and map generic tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            mmap_read_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_rw_tmpfs_files" = {
+          summary = "Read and write generic tmpfs files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            rw_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_relabel_tmpfs_files" = {
+          summary = "Relabel files on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            relabel_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_read_tmpfs_symlinks" = {
+          summary = "Read tmpfs link files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            read_lnk_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_relabelfrom_tmpfs_sockets" = {
+          summary = "Relabelfrom socket files on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:sock_file relabelfrom_sock_file_perms;
+          '';
+        };
+        "fs_relabelfrom_tmpfs_symlinks" = {
+          summary = "Relabelfrom tmpfs link files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:lnk_file relabelfrom_lnk_file_perms;
+          '';
+        };
+        "fs_rw_tmpfs_chr_files" = {
+          summary = "Read and write character nodes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+            rw_chr_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_dontaudit_use_tmpfs_chr_dev" = {
+          summary = "dontaudit Read and write character nodes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            dontaudit $1 tmpfs_t:dir list_dir_perms;
+            dontaudit $1 tmpfs_t:chr_file rw_chr_file_perms;
+          '';
+        };
+        "fs_relabel_tmpfs_chr_files" = {
+          summary = "Relabel character nodes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+            relabel_chr_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_rw_tmpfs_blk_files" = {
+          summary = "Read and write block nodes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+            rw_blk_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_relabel_tmpfs_blk_files" = {
+          summary = "Relabel block nodes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+            relabel_blk_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_relabel_tmpfs_fifo_files" = {
+          summary = "Relabel named pipes on tmpfs filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            allow $1 tmpfs_t:dir list_dir_perms;
+            relabel_fifo_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_manage_tmpfs_files" = {
+          summary = ''
+            Read and write, create and delete generic
+            files on tmpfs filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_manage_tmpfs_symlinks" = {
+          summary = ''
+            Read and write, create and delete symbolic
+            links on tmpfs filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_manage_tmpfs_sockets" = {
+          summary = ''
+            Read and write, create and delete socket
+            files on tmpfs filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            manage_sock_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_manage_tmpfs_chr_files" = {
+          summary = ''
+            Read and write, create and delete character
+            nodes on tmpfs filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            manage_chr_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_manage_tmpfs_blk_files" = {
+          summary = ''
+            Read and write, create and delete block nodes
+            on tmpfs filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tmpfs_t;
+          '';
+          content = ''
+            manage_blk_files_pattern($1, tmpfs_t, tmpfs_t)
+          '';
+        };
+        "fs_getattr_tracefs" = {
+          summary = "Get the attributes of a trace filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:filesystem getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_tracefs" = {
+          summary = ''
+            Do not audit attempts to get the
+            attributes of a trace filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            dontaudit $1 tracefs_t:filesystem getattr;
+          '';
+        };
+        "fs_getattr_tracefs_dirs" = {
+          summary = "Get attributes of dirs on tracefs filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:dir getattr;
+          '';
+        };
+        "fs_dontaudit_getattr_tracefs_dirs" = {
+          summary = ''
+            Do not audit attempts to get
+            attributes of dirs on tracefs filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            dontaudit $1 tracefs_t:dir getattr;
+          '';
+        };
+        "fs_search_tracefs" = {
+          summary = "search directories on a tracefs filesystem";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_getattr_tracefs_files" = {
+          summary = ''
+            Get the attributes of files
+            on a trace filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:file getattr;
+          '';
+        };
+        "fs_rw_tracefs_files" = {
+          summary = "Read/write trace filesystem files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:dir list_dir_perms;
+            allow $1 tracefs_t:file rw_file_perms;
+          '';
+        };
+        "fs_create_tracefs_dirs" = {
+          summary = "create trace filesystem directories";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            allow $1 tracefs_t:dir { create rw_dir_perms };
+          '';
+        };
+        "fs_dontaudit_remount_tracefs" = {
+          summary = ''
+            Do not audit attempts to remount a tracefs
+            filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type tracefs_t;
+          '';
+          content = ''
+            dontaudit $1 tracefs_t:filesystem remount;
+          '';
+        };
+        "fs_mount_xenfs" = {
+          summary = "Mount a XENFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            allow $1 xenfs_t:filesystem mount;
+          '';
+        };
+        "fs_search_xenfs" = {
+          summary = "Search the XENFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            allow $1 xenfs_t:dir search_dir_perms;
+          '';
+        };
+        "fs_manage_xenfs_dirs" = {
+          summary = ''
+            Create, read, write, and delete directories
+            on a XENFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            allow $1 xenfs_t:dir manage_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "fs_dontaudit_manage_xenfs_dirs" = {
+          summary = ''
+            Do not audit attempts to create, read,
+            write, and delete directories
+            on a XENFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            dontaudit $1 xenfs_t:dir manage_dir_perms;
+          '';
+        };
+        "fs_manage_xenfs_files" = {
+          summary = ''
+            Create, read, write, and delete files
+            on a XENFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            manage_files_pattern($1, xenfs_t, xenfs_t)
+          '';
+          rolecap = true;
+        };
+        "fs_mmap_xenfs_files" = {
+          summary = "Map files a XENFS filesystem.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            allow $1 xenfs_t:file map;
+          '';
+        };
+        "fs_dontaudit_manage_xenfs_files" = {
+          summary = ''
+            Do not audit attempts to create,
+            read, write, and delete files
+            on a XENFS filesystem.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type xenfs_t;
+          '';
+          content = ''
+            dontaudit $1 xenfs_t:file manage_file_perms;
+          '';
+        };
+        "fs_mount_all_fs" = {
+          summary = "Mount all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem mount;
+          '';
+        };
+        "fs_remount_all_fs" = {
+          summary = ''
+            Remount all filesystems.  This
+            allows some mount options to be changed.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem remount;
+          '';
+        };
+        "fs_unmount_all_fs" = {
+          summary = "Unmount all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem unmount;
+          '';
+        };
+        "fs_getattr_all_fs" = {
+          summary = "Get the attributes of all filesystems.";
+          desc = ''
+            <p>
+            Allow the specified domain to
+            get the attributes of all filesystems.
+            Example attributes:
+            </p>
+            <ul>
+            <li>Type of the file system (e.g., ext3)</li>
+            <li>Size of the file system</li>
+            <li>Available space on the file system</li>
+            </ul>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem getattr;
+            files_getattr_all_file_type_fs($1)
+          '';
+          infoflow = {
+            type = "read";
+            weight = "5";
+          };
+          rolecap = true;
+        };
+        "fs_dontaudit_getattr_all_fs" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            all filesystems.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_type:filesystem getattr;
+          '';
+        };
+        "fs_get_all_fs_quotas" = {
+          summary = "Get the quotas of all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem quotaget;
+          '';
+          rolecap = true;
+        };
+        "fs_set_all_quotas" = {
+          summary = "Set the quotas of all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem quotamod;
+          '';
+          rolecap = true;
+        };
+        "fs_relabelfrom_all_fs" = {
+          summary = "Relabelfrom all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem relabelfrom;
+          '';
+        };
+        "fs_watch_all_fs" = {
+          summary = "Watch all filesystems.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:filesystem watch;
+          '';
+          rolecap = true;
+        };
+        "fs_getattr_all_dirs" = {
+          summary = ''
+            Get the attributes of all directories
+            with a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:dir getattr;
+          '';
+        };
+        "fs_search_all" = {
+          summary = "Search all directories with a filesystem type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:dir search_dir_perms;
+          '';
+        };
+        "fs_list_all" = {
+          summary = "List all directories with a filesystem type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            allow $1 filesystem_type:dir list_dir_perms;
+          '';
+        };
+        "fs_getattr_all_files" = {
+          summary = ''
+            Get the attributes of all files with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_dontaudit_getattr_all_files" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of all files with a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_type:file getattr;
+          '';
+        };
+        "fs_getattr_all_symlinks" = {
+          summary = ''
+            Get the attributes of all symbolic links with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_lnk_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_dontaudit_getattr_all_symlinks" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of all symbolic links with a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_type:lnk_file getattr;
+          '';
+        };
+        "fs_getattr_all_pipes" = {
+          summary = ''
+            Get the attributes of all named pipes with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_fifo_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_dontaudit_getattr_all_pipes" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of all named pipes with a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_type:fifo_file getattr;
+          '';
+        };
+        "fs_getattr_all_sockets" = {
+          summary = ''
+            Get the attributes of all named sockets with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_sock_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_dontaudit_getattr_all_sockets" = {
+          summary = ''
+            Do not audit attempts to get the attributes
+            of all named sockets with a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            dontaudit $1 filesystem_type:sock_file getattr;
+          '';
+        };
+        "fs_getattr_all_blk_files" = {
+          summary = ''
+            Get the attributes of all block device nodes with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_blk_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_getattr_all_chr_files" = {
+          summary = ''
+            Get the attributes of all character device nodes with
+            a filesystem type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_type;
+          '';
+          content = ''
+            getattr_chr_files_pattern($1, filesystem_type, filesystem_type)
+          '';
+        };
+        "fs_unconfined" = {
+          summary = "Unconfined access to filesystems";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute filesystem_unconfined_type;
+          '';
+          content = ''
+            typeattribute $1 filesystem_unconfined_type;
+          '';
+        };
+        "fs_search_bpf" = {
+          summary = "Search bpf dirs";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bpf_t;
+          '';
+          content = ''
+            allow $1 bpf_t:dir search;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(filesystem)
 

@@ -3,73 +3,67 @@
 { lib, ... }: {
   config.security.selinux.modules.hostname = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for changing the system host name.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute hostname in the hostname domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hostname_domtrans',`
-      	gen_require(`
-      		type hostname_t, hostname_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, hostname_exec_t, hostname_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute hostname in the hostname domain, and
-      ##	allow the specified role the hostname domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`hostname_run',`
-      	gen_require(`
-      		type hostname_t;
-      	')
-
-      	hostname_domtrans($1)
-      	role $2 types hostname_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute hostname in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`hostname_exec',`
-      	gen_require(`
-      		type hostname_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, hostname_exec_t)
-      ')
-    '';
+    interface = {
+      summary = "Policy for changing the system host name.";
+      exports = {
+        "hostname_domtrans" = {
+          summary = "Execute hostname in the hostname domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type hostname_t, hostname_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, hostname_exec_t, hostname_t)
+          '';
+        };
+        "hostname_run" = {
+          summary = ''
+            Execute hostname in the hostname domain, and
+            allow the specified role the hostname domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type hostname_t;
+          '';
+          content = ''
+            hostname_domtrans($1)
+            role $2 types hostname_t;
+          '';
+        };
+        "hostname_exec" = {
+          summary = "Execute hostname in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hostname_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, hostname_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(hostname)
 

@@ -3,140 +3,129 @@
 { lib, ... }: {
   config.security.selinux.modules.smokeping = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Smokeping network latency measurement.</summary>
+    interface = {
+      summary = "Smokeping network latency measurement.";
+      exports = {
+        "smokeping_domtrans" = {
+          summary = "Execute a domain transition to run smokeping.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type smokeping_t, smokeping_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, smokeping_exec_t, smokeping_t)
+          '';
+        };
+        "smokeping_initrc_domtrans" = {
+          summary = ''
+            Execute smokeping init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type smokeping_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, smokeping_initrc_exec_t)
+          '';
+        };
+        "smokeping_getattr_lib_files" = {
+          summary = "Get attributes of smokeping lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type smokeping_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            getattr_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
+          '';
+        };
+        "smokeping_read_lib_files" = {
+          summary = "Read smokeping lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type smokeping_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
+          '';
+        };
+        "smokeping_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            smokeping lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type smokeping_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
+          '';
+        };
+        "smokeping_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a smokeping environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type smokeping_t, smokeping_initrc_exec_t, smokeping_var_lib_t;
+            type smokeping_runtime_t;
+          '';
+          content = ''
+            allow $1 smokeping_t:process { ptrace signal_perms };
+            ps_process_pattern($1, smokeping_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run smokeping.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smokeping_domtrans',`
-      	gen_require(`
-      		type smokeping_t, smokeping_exec_t;
-      	')
+            init_startstop_service($1, $2, smokeping_t, smokeping_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, smokeping_exec_t, smokeping_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, smokeping_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute smokeping init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smokeping_initrc_domtrans',`
-      	gen_require(`
-      		type smokeping_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, smokeping_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get attributes of smokeping lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smokeping_getattr_lib_files',`
-      	gen_require(`
-      		type smokeping_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	getattr_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read smokeping lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smokeping_read_lib_files',`
-      	gen_require(`
-      		type smokeping_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	smokeping lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`smokeping_manage_lib_files',`
-      	gen_require(`
-      		type smokeping_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, smokeping_var_lib_t, smokeping_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a smokeping environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`smokeping_admin',`
-      	gen_require(`
-      		type smokeping_t, smokeping_initrc_exec_t, smokeping_var_lib_t;
-      		type smokeping_runtime_t;
-      	')
-
-      	allow $1 smokeping_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, smokeping_t)
-
-      	init_startstop_service($1, $2, smokeping_t, smokeping_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, smokeping_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, smokeping_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, smokeping_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(smokeping)
 

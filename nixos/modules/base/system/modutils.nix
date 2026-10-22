@@ -3,202 +3,190 @@
 { lib, ... }: {
   config.security.selinux.modules.modutils = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for kernel module utilities</summary>
+    interface = {
+      summary = "Policy for kernel module utilities";
+      exports = {
+        "modutils_getattr_module_deps" = {
+          summary = "Getattr the dependencies of kernel modules.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_dep_t;
+          '';
+          content = ''
+            files_search_kernel_modules($1)
+            allow $1 modules_dep_t:file getattr;
+          '';
+        };
+        "modutils_read_module_deps" = {
+          summary = "Read the dependencies of kernel modules.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_dep_t;
+          '';
+          content = ''
+            files_list_kernel_modules($1)
+            allow $1 modules_dep_t:file { map read_file_perms };
+          '';
+        };
+        "modutils_read_module_config" = {
+          summary = ''
+            Read the configuration options used when
+            loading modules.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_conf_t;
+          '';
+          content = ''
+            # This file type can be in /etc or
+            # /lib(64)?/modules
+            files_search_etc($1)
+            files_search_boot($1)
 
-      ######################################
-      ## <summary>
-      ##	Getattr the dependencies of kernel modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_getattr_module_deps',`
-      	gen_require(`
-      		type modules_dep_t;
-      	')
-
-      	files_search_kernel_modules($1)
-      	allow $1 modules_dep_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the dependencies of kernel modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_read_module_deps',`
-      	gen_require(`
-      		type modules_dep_t;
-      	')
-
-      	files_list_kernel_modules($1)
-      	allow $1 modules_dep_t:file { map read_file_perms };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the configuration options used when
-      ##	loading modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`modutils_read_module_config',`
-      	gen_require(`
-      		type modules_conf_t;
-      	')
-
-      	# This file type can be in /etc or
-      	# /lib(64)?/modules
-      	files_search_etc($1)
-      	files_search_boot($1)
-
-      	allow $1 modules_conf_t:dir list_dir_perms;
-      	allow $1 modules_conf_t:file read_file_perms;
-      	allow $1 modules_conf_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Rename a file with the configuration options used when
-      ##	loading modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_rename_module_config',`
-      	gen_require(`
-      		type modules_conf_t;
-      	')
-
-      	rename_files_pattern($1, modules_conf_t, modules_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Unlink a file with the configuration options used when
-      ##	loading modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_delete_module_config',`
-      	gen_require(`
-      		type modules_conf_t;
-      	')
-
-      	delete_files_pattern($1, modules_conf_t, modules_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage files with the configuration options used when
-      ##	loading modules.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_manage_module_config',`
-      	gen_require(`
-      		type modules_conf_t;
-      	')
-
-      	manage_files_pattern($1, modules_conf_t, modules_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute any modutil,
-      ##	like insmod, kmod, depmod or updates-modules,
-      ##	in the kmod domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_domtrans',`
-      	gen_require(`
-      		type kmod_t, kmod_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kmod_exec_t, kmod_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute any modutil,
-      ##	like insmod, kmod, depmod or updates-modules,
-      ##	in the kmod domain, and allow the specified role
-      ##	the kmod domain, and use the caller's terminal.
-      ##	Has a sigchld backchannel.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`modutils_run',`
-      	gen_require(`
-      		attribute_role kmod_roles;
-      	')
-
-      	modutils_domtrans($1)
-      	roleattribute $2 kmod_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute any modutil,
-      ##	like insmod, kmod, depmod or updates-modules,
-      ##	in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`modutils_exec',`
-      	gen_require(`
-      		type kmod_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, kmod_exec_t)
-      ')
-    '';
+            allow $1 modules_conf_t:dir list_dir_perms;
+            allow $1 modules_conf_t:file read_file_perms;
+            allow $1 modules_conf_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "modutils_rename_module_config" = {
+          summary = ''
+            Rename a file with the configuration options used when
+            loading modules.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_conf_t;
+          '';
+          content = ''
+            rename_files_pattern($1, modules_conf_t, modules_conf_t)
+          '';
+        };
+        "modutils_delete_module_config" = {
+          summary = ''
+            Unlink a file with the configuration options used when
+            loading modules.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_conf_t;
+          '';
+          content = ''
+            delete_files_pattern($1, modules_conf_t, modules_conf_t)
+          '';
+        };
+        "modutils_manage_module_config" = {
+          summary = ''
+            Manage files with the configuration options used when
+            loading modules.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type modules_conf_t;
+          '';
+          content = ''
+            manage_files_pattern($1, modules_conf_t, modules_conf_t)
+          '';
+        };
+        "modutils_domtrans" = {
+          summary = ''
+            Execute any modutil,
+            like insmod, kmod, depmod or updates-modules,
+            in the kmod domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kmod_t, kmod_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kmod_exec_t, kmod_t)
+          '';
+        };
+        "modutils_run" = {
+          summary = ''
+            Execute any modutil,
+            like insmod, kmod, depmod or updates-modules,
+            in the kmod domain, and allow the specified role
+            the kmod domain, and use the caller's terminal.
+            Has a sigchld backchannel.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role kmod_roles;
+          '';
+          content = ''
+            modutils_domtrans($1)
+            roleattribute $2 kmod_roles;
+          '';
+          rolecap = true;
+        };
+        "modutils_exec" = {
+          summary = ''
+            Execute any modutil,
+            like insmod, kmod, depmod or updates-modules,
+            in the caller domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kmod_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, kmod_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(modutils)
 

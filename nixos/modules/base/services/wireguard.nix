@@ -3,85 +3,80 @@
 { lib, ... }: {
   config.security.selinux.modules.wireguard = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>WireGuard VPN.</summary>
+    interface = {
+      summary = "WireGuard VPN.";
+      exports = {
+        "wireguard_domtrans" = {
+          summary = "Execute WireGuard in the wireguard domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type wireguard_t, wireguard_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, wireguard_exec_t, wireguard_t)
+          '';
+        };
+        "wireguard_run" = {
+          summary = ''
+            Execute WireGuard in the wireguard domain, and
+            allow the specified role the wireguard domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role wireguard_roles;
+          '';
+          content = ''
+            wireguard_domtrans($1)
+            roleattribute $2 wireguard_roles;
+          '';
+          rolecap = true;
+        };
+        "wireguard_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a WireGuard
+            environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type wireguard_t, wireguard_etc_t, wireguard_initrc_exec_t, wireguard_unit_t;
+          '';
+          content = ''
+            admin_process_pattern($1, wireguard_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute WireGuard in the wireguard domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`wireguard_domtrans',`
-      	gen_require(`
-      		type wireguard_t, wireguard_exec_t;
-      	')
+            init_startstop_service($1, $2, wireguard_t, wireguard_initrc_exec_t, wireguard_unit_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, wireguard_exec_t, wireguard_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute WireGuard in the wireguard domain, and
-      ##	allow the specified role the wireguard domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`wireguard_run',`
-      	gen_require(`
-      		attribute_role wireguard_roles;
-      	')
-
-      	wireguard_domtrans($1)
-      	roleattribute $2 wireguard_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a WireGuard
-      ##	environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`wireguard_admin',`
-      	gen_require(`
-      		type wireguard_t, wireguard_etc_t, wireguard_initrc_exec_t, wireguard_unit_t;
-      	')
-
-      	admin_process_pattern($1, wireguard_t)
-
-      	init_startstop_service($1, $2, wireguard_t, wireguard_initrc_exec_t, wireguard_unit_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, wireguard_etc_t)
-      ')
-    '';
+            files_search_etc($1)
+            admin_pattern($1, wireguard_etc_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(wireguard)
 

@@ -3,127 +3,114 @@
 { lib, ... }: {
   config.security.selinux.modules.aptcacher = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>apt-cacher, cache for Debian APT repositories.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute acngtool in the acngtool domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_domtrans_acngtool',`
-      	gen_require(`
-      		type acngtool_t, acngtool_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, acngtool_exec_t, acngtool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute acngtool in the acngtool domain, and
-      ##	allow the specified role the acngtool domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_run_acngtool',`
-      	gen_require(`
-      		attribute_role acngtool_roles;
-      	')
-
-      	aptcacher_domtrans_acngtool($1)
-      	roleattribute $2 acngtool_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to aptcacher using a unix
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_stream_connect',`
-      	gen_require(`
-      		type aptcacher_t, aptcacher_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, aptcacher_runtime_t, aptcacher_runtime_t, aptcacher_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create /var/log/apt-cacher-ng
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_filetrans_log_dir',`
-      	gen_require(`
-      		type aptcacher_log_t;
-      	')
-
-      	logging_log_filetrans($1, aptcacher_log_t, dir, "apt-cacher-ng")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create /var/cache/apt-cacher-ng
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_filetrans_cache_dir',`
-      	gen_require(`
-      		type aptcacher_cache_t;
-      	')
-
-      	files_var_filetrans($1, aptcacher_cache_t, dir, "apt-cacher-ng")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	create /etc/apt-cacher-ng
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`aptcacher_etc_filetrans_conf_dir',`
-      	gen_require(`
-      		type aptcacher_conf_t;
-      	')
-
-      	files_etc_filetrans($1, aptcacher_conf_t, dir, "apt-cacher-ng")
-      ')
-    '';
+    interface = {
+      summary = "apt-cacher, cache for Debian APT repositories.";
+      exports = {
+        "aptcacher_domtrans_acngtool" = {
+          summary = "Execute acngtool in the acngtool domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type acngtool_t, acngtool_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, acngtool_exec_t, acngtool_t)
+          '';
+        };
+        "aptcacher_run_acngtool" = {
+          summary = ''
+            Execute acngtool in the acngtool domain, and
+            allow the specified role the acngtool domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role acngtool_roles;
+          '';
+          content = ''
+            aptcacher_domtrans_acngtool($1)
+            roleattribute $2 acngtool_roles;
+          '';
+        };
+        "aptcacher_stream_connect" = {
+          summary = ''
+            Connect to aptcacher using a unix
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type aptcacher_t, aptcacher_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, aptcacher_runtime_t, aptcacher_runtime_t, aptcacher_t)
+          '';
+        };
+        "aptcacher_filetrans_log_dir" = {
+          summary = "create /var/log/apt-cacher-ng";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type aptcacher_log_t;
+          '';
+          content = ''
+            logging_log_filetrans($1, aptcacher_log_t, dir, "apt-cacher-ng")
+          '';
+        };
+        "aptcacher_filetrans_cache_dir" = {
+          summary = "create /var/cache/apt-cacher-ng";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type aptcacher_cache_t;
+          '';
+          content = ''
+            files_var_filetrans($1, aptcacher_cache_t, dir, "apt-cacher-ng")
+          '';
+        };
+        "aptcacher_etc_filetrans_conf_dir" = {
+          summary = "create /etc/apt-cacher-ng";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type aptcacher_conf_t;
+          '';
+          content = ''
+            files_etc_filetrans($1, aptcacher_conf_t, dir, "apt-cacher-ng")
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(aptcacher)
 

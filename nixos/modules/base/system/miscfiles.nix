@@ -3,1203 +3,1070 @@
 { lib, ... }: {
   config.security.selinux.modules.miscfiles = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Miscellaneous files.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Make the specified type usable as a cert file.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Make the specified type usable for cert files.
-      ##	This will also make the type usable for files, making
-      ##	calls to files_type() redundant.  Failure to use this interface
-      ##	for a temporary file may result in problems with
-      ##	cert management tools.
-      ##	</p>
-      ##	<p>
-      ##	Related interfaces:
-      ##	</p>
-      ##	<ul>
-      ##		<li>files_type()</li>
-      ##	</ul>
-      ##	<p>
-      ##	Example:
-      ##	</p>
-      ##	<p>
-      ##	type mycertfile_t;
-      ##	miscfiles_cert_type(mycertfile_t)
-      ##	allow mydomain_t mycertfile_t:file read_file_perms;
-      ##	miscfiles_search_generic_cert_dirs(mydomain_t)
-      ##	</p>
-      ## </desc>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to be used for files.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="none"/>
-      #
-      interface(`miscfiles_cert_type',`
-      	gen_require(`
-      		attribute cert_type;
-      	')
-
-      	typeattribute $1 cert_type;
-      	files_type($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make the specified type usable
-      ##	as a SSL/TLS private key file.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Make the specified type usable for SSL/TLS private key files.
-      ##	This will also make the type usable for files, making
-      ##	calls to files_type() redundant.  Failure to use this interface
-      ##	for a temporary file may result in problems with
-      ##	SSL/TLS private key management tools.
-      ##	</p>
-      ##	<p>
-      ##	Related interfaces:
-      ##	</p>
-      ##	<ul>
-      ##		<li>files_type()</li>
-      ##	</ul>
-      ##	<p>
-      ##	Example:
-      ##	</p>
-      ##	<p>
-      ##	type mytlsprivkeyfile_t;
-      ##	miscfiles_tls_privkey_type(mytlsprivkeyfile_t)
-      ##	allow mydomain_t mytlsprivkeyfile_t:file read_file_perms;
-      ##	miscfiles_search_tls_privkey_dirs(mydomain_t)
-      ##	</p>
-      ## </desc>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to be used for files.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="none"/>
-      #
-      interface(`miscfiles_tls_privkey_type',`
-      	gen_require(`
-      		attribute tls_privkey_type;
-      	')
-
-      	typeattribute $1 tls_privkey_type;
-      	files_type($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read all SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_all_certs',`
-      	gen_require(`
-      		attribute cert_type;
-      	')
-
-      	allow $1 cert_type:dir list_dir_perms;
-      	read_files_pattern($1, cert_type, cert_type)
-      	read_lnk_files_pattern($1, cert_type, cert_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search generic SSL/TLS directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_search_generic_cert_dirs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 cert_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read generic SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_generic_certs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	allow $1 cert_t:dir list_dir_perms;
-      	read_files_pattern($1, cert_t, cert_t)
-      	read_lnk_files_pattern($1, cert_t, cert_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read generic SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_mmap_generic_certs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	allow $1 cert_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read generic SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_dontaudit_read_generic_certs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	dontaudit $1 cert_t:dir list_dir_perms;
-      	dontaudit $1 cert_t:file read_file_perms;
-      	dontaudit $1 cert_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage generic SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_manage_generic_cert_dirs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	manage_dirs_pattern($1, cert_t, cert_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage generic SSL/TLS certificates.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_generic_cert_files',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	manage_files_pattern($1, cert_t, cert_t)
-      	read_lnk_files_pattern($1, cert_t, cert_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on generic SSL/TLS certificate directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_mounton_generic_cert_dirs',`
-      	gen_require(`
-      		type cert_t;
-      	')
-
-      	allow $1 cert_t:dir mounton;
-      ')
-
-
-      ########################################
-      ## <summary>
-      ##	Search SSL/TLS private key directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_search_tls_privkey_dirs',`
-      	gen_require(`
-      		type tls_privkey_t;
-      	')
-
-      	miscfiles_search_generic_cert_dirs($1)
-      	allow $1 tls_privkey_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read generic SSL/TLS private
-      ##	keys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_generic_tls_privkey',`
-      	gen_require(`
-      		type tls_privkey_t;
-      	')
-
-      	allow $1 tls_privkey_t:dir list_dir_perms;
-      	read_files_pattern($1, tls_privkey_t, tls_privkey_t)
-      	read_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage generic SSL/TLS private
-      ##	keys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_manage_generic_tls_privkey_dirs',`
-      	gen_require(`
-      		type tls_privkey_t;
-      	')
-
-      	manage_dirs_pattern($1, tls_privkey_t, tls_privkey_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage generic SSL/TLS private
-      ##	keys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_generic_tls_privkey_files',`
-      	gen_require(`
-      		type tls_privkey_t;
-      	')
-
-      	manage_files_pattern($1, tls_privkey_t, tls_privkey_t)
-      	read_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage generic SSL/TLS private
-      ##	keys.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_generic_tls_privkey_symlinks',`
-      	gen_require(`
-      		type tls_privkey_t;
-      	')
-
-      	manage_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fonts.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_fonts',`
-      	gen_require(`
-      		type fonts_t, fonts_cache_t;
-      	')
-
-      	# cjp: fonts can be in either of these dirs
-      	files_search_usr($1)
-      	libs_search_lib($1)
-
-      	allow $1 fonts_t:dir list_dir_perms;
-      	read_files_pattern($1, fonts_t, fonts_t)
-      	allow $1 fonts_t:file map;
-      	read_lnk_files_pattern($1, fonts_t, fonts_t)
-
-      	allow $1 fonts_cache_t:dir list_dir_perms;
-      	read_files_pattern($1, fonts_cache_t, fonts_cache_t)
-      	allow $1 fonts_cache_t:file map;
-      	read_lnk_files_pattern($1, fonts_cache_t, fonts_cache_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes on a fonts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_setattr_fonts_dirs',`
-      	gen_require(`
-      		type fonts_t;
-      	')
-
-      	allow $1 fonts_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to set the attributes
-      ##	on a fonts directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_dontaudit_setattr_fonts_dirs',`
-      	gen_require(`
-      		type fonts_t;
-      	')
-
-      	dontaudit $1 fonts_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to write fonts.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_dontaudit_write_fonts',`
-      	gen_require(`
-      		type fonts_t;
-      	')
-
-      	dontaudit $1 fonts_t:dir { setattr write };
-      	dontaudit $1 fonts_t:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete fonts.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_fonts',`
-      	gen_require(`
-      		type fonts_t;
-      	')
-
-      	# cjp: fonts can be in either of these dirs
-      	files_search_usr($1)
-      	libs_search_lib($1)
-
-      	manage_dirs_pattern($1, fonts_t, fonts_t)
-      	manage_files_pattern($1, fonts_t, fonts_t)
-      	manage_lnk_files_pattern($1, fonts_t, fonts_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch fonts directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_watch_fonts_dirs',`
-      	gen_require(`
-      		type fonts_t;
-      	')
-
-      	allow $1 fonts_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the attributes on a fonts cache directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_setattr_fonts_cache_dirs',`
-      	gen_require(`
-      		type fonts_cache_t;
-      	')
-
-      	allow $1 fonts_cache_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to set the attributes
-      ##	on a fonts cache directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_dontaudit_setattr_fonts_cache_dirs',`
-      	gen_require(`
-      		type fonts_cache_t;
-      	')
-
-      	dontaudit $1 fonts_cache_t:dir setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete fonts cache.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_fonts_cache',`
-      	gen_require(`
-      		type fonts_cache_t;
-      	')
-
-      	files_search_var($1)
-
-      	manage_dirs_pattern($1, fonts_cache_t, fonts_cache_t)
-      	manage_files_pattern($1, fonts_cache_t, fonts_cache_t)
-      	manage_lnk_files_pattern($1, fonts_cache_t, fonts_cache_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read hardware identification data.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_read_hwdata',`
-      	gen_require(`
-      		type hwdata_t;
-      	')
-
-      	allow $1 hwdata_t:dir list_dir_perms;
-      	read_files_pattern($1, hwdata_t, hwdata_t)
-      	read_lnk_files_pattern($1, hwdata_t, hwdata_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to get the attributes of localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_getattr_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 locale_t:dir list_dir_perms;
-      	allow $1 locale_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to setattr localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_setattr_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 locale_t:dir list_dir_perms;
-      	allow $1 locale_t:file setattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to read localization information.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Allow the specified domain to read the localization files.
-      ##	This is typically for time zone configuration files, such as
-      ##	/etc/localtime and files in /usr/share/zoneinfo.
-      ##	Typically, any domain which needs to know the GMT/UTC
-      ##	offset of the current timezone will need access
-      ##	to these files. Generally, it should be safe for any
-      ##	domain to read these files.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="read" weight="10"/>
-      #
-      interface(`miscfiles_read_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_read_etc_symlinks($1)
-      	files_search_usr($1)
-      	allow $1 locale_t:dir list_dir_perms;
-      	read_files_pattern($1, locale_t, locale_t)
-      	read_lnk_files_pattern($1, locale_t, locale_t)
-      	allow $1 locale_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to write localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_rw_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 locale_t:dir list_dir_perms;
-      	rw_files_pattern($1, locale_t, locale_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to relabel localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_relabel_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_search_usr($1)
-      	relabel_files_pattern($1, locale_t, locale_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to read legacy time localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_legacy_read_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	miscfiles_read_localization($1)
-      	allow $1 locale_t:file execute;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch time localization info
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_watch_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	allow $1 locale_t:dir watch;
-      	allow $1 locale_t:file watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search man pages.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_search_man_pages',`
-      	gen_require(`
-      		type man_t, man_cache_t;
-      	')
-
-      	allow $1 { man_cache_t man_t }:dir search_dir_perms;
-      	files_search_usr($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to search man pages.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_dontaudit_search_man_pages',`
-      	gen_require(`
-      		type man_t, man_cache_t;
-      	')
-
-      	dontaudit $1 { man_cache_t man_t }:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read man pages
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_man_pages',`
-      	gen_require(`
-      		type man_t, man_cache_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 { man_cache_t man_t }:dir list_dir_perms;
-      	read_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      	read_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Delete man pages
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      # cjp: added for tmpreaper
-      #
-      interface(`miscfiles_delete_man_pages',`
-      	gen_require(`
-      		type man_t, man_cache_t;
-      	')
-
-      	files_search_usr($1)
-      	allow $1 { man_cache_t man_t }:dir { list_dir_perms setattr_dir_perms };
-      	delete_dirs_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      	delete_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      	delete_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete man pages
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_manage_man_pages',`
-      	gen_require(`
-      		type man_t, man_cache_t;
-      	')
-
-      	files_search_usr($1)
-      	manage_dirs_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      	manage_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      	read_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read man cache content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_read_man_cache',`
-      	gen_require(`
-      		type man_cache_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 man_cache_t:dir list_dir_perms;
-      	allow $1 man_cache_t:file read_file_perms;
-      	allow $1 man_cache_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Map man cache content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_map_man_cache',`
-      	gen_require(`
-      		type man_cache_t;
-      	')
-
-      	allow $1 man_cache_t:file map;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	man cache content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_manage_man_cache',`
-      	gen_require(`
-      		type man_cache_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 man_cache_t:dir manage_dir_perms;
-      	allow $1 man_cache_t:file manage_file_perms;
-      	allow $1 man_cache_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Relabel from and to man cache.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_relabel_man_cache',`
-      	gen_require(`
-      		type man_cache_t;
-      	')
-
-      	relabel_dirs_pattern($1, man_cache_t, man_cache_t)
-      	relabel_files_pattern($1, man_cache_t, man_cache_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search public directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_search_public_dirs',`
-      	gen_require(`
-      		type public_content_t;
-      		type public_content_rw_t;
-      	')
-
-      	allow $1 public_content_t:dir search_dir_perms;
-      	allow $1 public_content_rw_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read public files used for file
-      ##	transfer services.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_read_public_files',`
-      	gen_require(`
-      		type public_content_t, public_content_rw_t;
-      	')
-
-      	allow $1 { public_content_t public_content_rw_t }:dir list_dir_perms;
-      	read_files_pattern($1, { public_content_t public_content_rw_t }, { public_content_t public_content_rw_t })
-      	read_lnk_files_pattern($1, { public_content_t public_content_rw_t }, { public_content_t public_content_rw_t })
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete public files
-      ##	and directories used for file transfer services.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_public_files',`
-      	gen_require(`
-      		type public_content_rw_t;
-      	')
-
-      	manage_dirs_pattern($1, public_content_rw_t, public_content_rw_t)
-      	manage_files_pattern($1, public_content_rw_t, public_content_rw_t)
-      	manage_lnk_files_pattern($1, public_content_rw_t, public_content_rw_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch public files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_watch_public_dirs',`
-      	gen_require(`
-      		type public_content_rw_t;
-      	')
-
-      	allow $1 public_content_rw_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on all public content directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_mounton_all_public_dirs',`
-      	gen_require(`
-      		type public_content_t;
-      		type public_content_rw_t;
-      	')
-
-      	allow $1 public_content_t:dir mounton;
-      	allow $1 public_content_rw_t:dir mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Mount on all public content files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_mounton_all_public_files',`
-      	gen_require(`
-      		type public_content_t;
-      		type public_content_rw_t;
-      	')
-
-      	allow $1 public_content_t:file mounton;
-      	allow $1 public_content_rw_t:file mounton;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transition to the specified sensitivity
-      ##	when creating all public content objects.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_rangetrans_all_public_content',`
-      	gen_require(`
-      		type public_content_t;
-      		type public_content_rw_t;
-      	')
-
-      	ifdef(`enable_mcs',`
-      		range_transition $1 public_content_t:dir_file_class_set $2;
-      		range_transition $1 public_content_rw_t:dir_file_class_set $2;
-      	')
-      	ifdef(`enable_mls',`
-      		range_transition $1 public_content_t:dir_file_class_set $2;
-      		range_transition $1 public_content_rw_t:dir_file_class_set $2;
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read TeX data
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_read_tetex_data',`
-      	gen_require(`
-      		type tetex_data_t;
-      	')
-
-      	files_search_var($1)
-      	files_search_var_lib($1)
-
-      	# cjp: TeX data can be in either of the above dirs
-      	allow $1 tetex_data_t:dir list_dir_perms;
-      	read_files_pattern($1, tetex_data_t, tetex_data_t)
-      	read_lnk_files_pattern($1, tetex_data_t, tetex_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute TeX data programs in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_exec_tetex_data',`
-      	gen_require(`
-      		type tetex_data_t;
-      	')
-
-      	files_search_var($1)
-      	files_search_var_lib($1)
-
-      	# cjp: TeX data can be in either of the above dirs
-      	allow $1 tetex_data_t:dir list_dir_perms;
-      	exec_files_pattern($1, tetex_data_t, tetex_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Let test files be an entry point for
-      ##	a specified domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_domain_entry_test_files',`
-      	gen_require(`
-      		type test_file_t;
-      	')
-
-      	domain_entry_file($1, test_file_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read test files and directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_read_test_files',`
-      	gen_require(`
-      		type test_file_t;
-      	')
-
-      	read_files_pattern($1, test_file_t, test_file_t)
-      	read_lnk_files_pattern($1, test_file_t, test_file_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute test files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_exec_test_files',`
-      	gen_require(`
-      		type test_file_t;
-      	')
-
-      	exec_files_pattern($1, test_file_t, test_file_t)
-      	read_lnk_files_pattern($1, test_file_t, test_file_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create files in etc directories
-      ##	with localization file type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`miscfiles_etc_filetrans_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	files_etc_filetrans($1, locale_t, file)
-
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete localization
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`miscfiles_manage_localization',`
-      	gen_require(`
-      		type locale_t;
-      	')
-
-      	manage_dirs_pattern($1, locale_t, locale_t)
-      	manage_files_pattern($1, locale_t, locale_t)
-      	manage_lnk_files_pattern($1, locale_t, locale_t)
-      ')
-    '';
+    interface = {
+      summary = "Miscellaneous files.";
+      exports = {
+        "miscfiles_cert_type" = {
+          summary = "Make the specified type usable as a cert file.";
+          desc = ''
+            <p>
+            Make the specified type usable for cert files.
+            This will also make the type usable for files, making
+            calls to files_type() redundant.  Failure to use this interface
+            for a temporary file may result in problems with
+            cert management tools.
+            </p>
+            <p>
+            Related interfaces:
+            </p>
+            <ul>
+            <li>files_type()</li>
+            </ul>
+            <p>
+            Example:
+            </p>
+            <p>
+            type mycertfile_t;
+            miscfiles_cert_type(mycertfile_t)
+            allow mydomain_t mycertfile_t:file read_file_perms;
+            miscfiles_search_generic_cert_dirs(mydomain_t)
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to be used for files.";
+            };
+          };
+          gen_require = ''
+            attribute cert_type;
+          '';
+          content = ''
+            typeattribute $1 cert_type;
+            files_type($1)
+          '';
+          infoflow = {
+            type = "none";
+          };
+        };
+        "miscfiles_tls_privkey_type" = {
+          summary = ''
+            Make the specified type usable
+            as a SSL/TLS private key file.
+          '';
+          desc = ''
+            <p>
+            Make the specified type usable for SSL/TLS private key files.
+            This will also make the type usable for files, making
+            calls to files_type() redundant.  Failure to use this interface
+            for a temporary file may result in problems with
+            SSL/TLS private key management tools.
+            </p>
+            <p>
+            Related interfaces:
+            </p>
+            <ul>
+            <li>files_type()</li>
+            </ul>
+            <p>
+            Example:
+            </p>
+            <p>
+            type mytlsprivkeyfile_t;
+            miscfiles_tls_privkey_type(mytlsprivkeyfile_t)
+            allow mydomain_t mytlsprivkeyfile_t:file read_file_perms;
+            miscfiles_search_tls_privkey_dirs(mydomain_t)
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to be used for files.";
+            };
+          };
+          gen_require = ''
+            attribute tls_privkey_type;
+          '';
+          content = ''
+            typeattribute $1 tls_privkey_type;
+            files_type($1)
+          '';
+          infoflow = {
+            type = "none";
+          };
+        };
+        "miscfiles_read_all_certs" = {
+          summary = "Read all SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute cert_type;
+          '';
+          content = ''
+            allow $1 cert_type:dir list_dir_perms;
+            read_files_pattern($1, cert_type, cert_type)
+            read_lnk_files_pattern($1, cert_type, cert_type)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_search_generic_cert_dirs" = {
+          summary = "Search generic SSL/TLS directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 cert_t:dir search_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_read_generic_certs" = {
+          summary = "Read generic SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            allow $1 cert_t:dir list_dir_perms;
+            read_files_pattern($1, cert_t, cert_t)
+            read_lnk_files_pattern($1, cert_t, cert_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_mmap_generic_certs" = {
+          summary = "Read generic SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            allow $1 cert_t:file map;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_dontaudit_read_generic_certs" = {
+          summary = "Do not audit attempts to read generic SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            dontaudit $1 cert_t:dir list_dir_perms;
+            dontaudit $1 cert_t:file read_file_perms;
+            dontaudit $1 cert_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_manage_generic_cert_dirs" = {
+          summary = "Manage generic SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, cert_t, cert_t)
+          '';
+        };
+        "miscfiles_manage_generic_cert_files" = {
+          summary = "Manage generic SSL/TLS certificates.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            manage_files_pattern($1, cert_t, cert_t)
+            read_lnk_files_pattern($1, cert_t, cert_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_mounton_generic_cert_dirs" = {
+          summary = "Mount on generic SSL/TLS certificate directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cert_t;
+          '';
+          content = ''
+            allow $1 cert_t:dir mounton;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_search_tls_privkey_dirs" = {
+          summary = "Search SSL/TLS private key directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tls_privkey_t;
+          '';
+          content = ''
+            miscfiles_search_generic_cert_dirs($1)
+            allow $1 tls_privkey_t:dir search_dir_perms;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_read_generic_tls_privkey" = {
+          summary = ''
+            Read generic SSL/TLS private
+            keys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tls_privkey_t;
+          '';
+          content = ''
+            allow $1 tls_privkey_t:dir list_dir_perms;
+            read_files_pattern($1, tls_privkey_t, tls_privkey_t)
+            read_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_manage_generic_tls_privkey_dirs" = {
+          summary = ''
+            Manage generic SSL/TLS private
+            keys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tls_privkey_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, tls_privkey_t, tls_privkey_t)
+          '';
+        };
+        "miscfiles_manage_generic_tls_privkey_files" = {
+          summary = ''
+            Manage generic SSL/TLS private
+            keys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tls_privkey_t;
+          '';
+          content = ''
+            manage_files_pattern($1, tls_privkey_t, tls_privkey_t)
+            read_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_manage_generic_tls_privkey_symlinks" = {
+          summary = ''
+            Manage generic SSL/TLS private
+            keys.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tls_privkey_t;
+          '';
+          content = ''
+            manage_lnk_files_pattern($1, tls_privkey_t, tls_privkey_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_read_fonts" = {
+          summary = "Read fonts.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_t, fonts_cache_t;
+          '';
+          content = ''
+            # cjp: fonts can be in either of these dirs
+            files_search_usr($1)
+            libs_search_lib($1)
+
+            allow $1 fonts_t:dir list_dir_perms;
+            read_files_pattern($1, fonts_t, fonts_t)
+            allow $1 fonts_t:file map;
+            read_lnk_files_pattern($1, fonts_t, fonts_t)
+
+            allow $1 fonts_cache_t:dir list_dir_perms;
+            read_files_pattern($1, fonts_cache_t, fonts_cache_t)
+            allow $1 fonts_cache_t:file map;
+            read_lnk_files_pattern($1, fonts_cache_t, fonts_cache_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_setattr_fonts_dirs" = {
+          summary = "Set the attributes on a fonts directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_t;
+          '';
+          content = ''
+            allow $1 fonts_t:dir setattr;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_dontaudit_setattr_fonts_dirs" = {
+          summary = ''
+            Do not audit attempts to set the attributes
+            on a fonts directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fonts_t;
+          '';
+          content = ''
+            dontaudit $1 fonts_t:dir setattr;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_dontaudit_write_fonts" = {
+          summary = "Do not audit attempts to write fonts.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fonts_t;
+          '';
+          content = ''
+            dontaudit $1 fonts_t:dir { setattr write };
+            dontaudit $1 fonts_t:file write;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_manage_fonts" = {
+          summary = "Create, read, write, and delete fonts.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_t;
+          '';
+          content = ''
+            # cjp: fonts can be in either of these dirs
+            files_search_usr($1)
+            libs_search_lib($1)
+
+            manage_dirs_pattern($1, fonts_t, fonts_t)
+            manage_files_pattern($1, fonts_t, fonts_t)
+            manage_lnk_files_pattern($1, fonts_t, fonts_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_watch_fonts_dirs" = {
+          summary = "Watch fonts directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_t;
+          '';
+          content = ''
+            allow $1 fonts_t:dir watch;
+          '';
+          rolecap = true;
+        };
+        "miscfiles_setattr_fonts_cache_dirs" = {
+          summary = "Set the attributes on a fonts cache directory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_cache_t;
+          '';
+          content = ''
+            allow $1 fonts_cache_t:dir setattr;
+          '';
+        };
+        "miscfiles_dontaudit_setattr_fonts_cache_dirs" = {
+          summary = ''
+            Do not audit attempts to set the attributes
+            on a fonts cache directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type fonts_cache_t;
+          '';
+          content = ''
+            dontaudit $1 fonts_cache_t:dir setattr;
+          '';
+        };
+        "miscfiles_manage_fonts_cache" = {
+          summary = "Create, read, write, and delete fonts cache.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fonts_cache_t;
+          '';
+          content = ''
+            files_search_var($1)
+
+            manage_dirs_pattern($1, fonts_cache_t, fonts_cache_t)
+            manage_files_pattern($1, fonts_cache_t, fonts_cache_t)
+            manage_lnk_files_pattern($1, fonts_cache_t, fonts_cache_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_read_hwdata" = {
+          summary = "Read hardware identification data.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type hwdata_t;
+          '';
+          content = ''
+            allow $1 hwdata_t:dir list_dir_perms;
+            read_files_pattern($1, hwdata_t, hwdata_t)
+            read_lnk_files_pattern($1, hwdata_t, hwdata_t)
+          '';
+        };
+        "miscfiles_getattr_localization" = {
+          summary = "Allow process to get the attributes of localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 locale_t:dir list_dir_perms;
+            allow $1 locale_t:file getattr;
+          '';
+        };
+        "miscfiles_setattr_localization" = {
+          summary = "Allow process to setattr localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 locale_t:dir list_dir_perms;
+            allow $1 locale_t:file setattr;
+          '';
+        };
+        "miscfiles_read_localization" = {
+          summary = "Allow process to read localization information.";
+          desc = ''
+            <p>
+            Allow the specified domain to read the localization files.
+            This is typically for time zone configuration files, such as
+            /etc/localtime and files in /usr/share/zoneinfo.
+            Typically, any domain which needs to know the GMT/UTC
+            offset of the current timezone will need access
+            to these files. Generally, it should be safe for any
+            domain to read these files.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_read_etc_symlinks($1)
+            files_search_usr($1)
+            allow $1 locale_t:dir list_dir_perms;
+            read_files_pattern($1, locale_t, locale_t)
+            read_lnk_files_pattern($1, locale_t, locale_t)
+            allow $1 locale_t:file map;
+          '';
+          infoflow = {
+            type = "read";
+            weight = "10";
+          };
+        };
+        "miscfiles_rw_localization" = {
+          summary = "Allow process to write localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 locale_t:dir list_dir_perms;
+            rw_files_pattern($1, locale_t, locale_t)
+          '';
+        };
+        "miscfiles_relabel_localization" = {
+          summary = "Allow process to relabel localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            relabel_files_pattern($1, locale_t, locale_t)
+          '';
+        };
+        "miscfiles_legacy_read_localization" = {
+          summary = "Allow process to read legacy time localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            miscfiles_read_localization($1)
+            allow $1 locale_t:file execute;
+          '';
+        };
+        "miscfiles_watch_localization" = {
+          summary = "Watch time localization info";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            allow $1 locale_t:dir watch;
+            allow $1 locale_t:file watch;
+          '';
+        };
+        "miscfiles_search_man_pages" = {
+          summary = "Search man pages.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_t, man_cache_t;
+          '';
+          content = ''
+            allow $1 { man_cache_t man_t }:dir search_dir_perms;
+            files_search_usr($1)
+          '';
+        };
+        "miscfiles_dontaudit_search_man_pages" = {
+          summary = "Do not audit attempts to search man pages.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type man_t, man_cache_t;
+          '';
+          content = ''
+            dontaudit $1 { man_cache_t man_t }:dir search_dir_perms;
+          '';
+        };
+        "miscfiles_read_man_pages" = {
+          summary = "Read man pages";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_t, man_cache_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 { man_cache_t man_t }:dir list_dir_perms;
+            read_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+            read_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+          '';
+          rolecap = true;
+        };
+        "miscfiles_delete_man_pages" = {
+          summary = "Delete man pages";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_t, man_cache_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            allow $1 { man_cache_t man_t }:dir { list_dir_perms setattr_dir_perms };
+            delete_dirs_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+            delete_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+            delete_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+          '';
+        };
+        "miscfiles_manage_man_pages" = {
+          summary = "Create, read, write, and delete man pages";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_t, man_cache_t;
+          '';
+          content = ''
+            files_search_usr($1)
+            manage_dirs_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+            manage_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+            read_lnk_files_pattern($1, { man_cache_t man_t }, { man_cache_t man_t })
+          '';
+        };
+        "miscfiles_read_man_cache" = {
+          summary = "Read man cache content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_cache_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 man_cache_t:dir list_dir_perms;
+            allow $1 man_cache_t:file read_file_perms;
+            allow $1 man_cache_t:lnk_file read_lnk_file_perms;
+          '';
+        };
+        "miscfiles_map_man_cache" = {
+          summary = "Map man cache content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_cache_t;
+          '';
+          content = ''
+            allow $1 man_cache_t:file map;
+          '';
+        };
+        "miscfiles_manage_man_cache" = {
+          summary = ''
+            Create, read, write, and delete
+            man cache content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_cache_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 man_cache_t:dir manage_dir_perms;
+            allow $1 man_cache_t:file manage_file_perms;
+            allow $1 man_cache_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "miscfiles_relabel_man_cache" = {
+          summary = "Relabel from and to man cache.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type man_cache_t;
+          '';
+          content = ''
+            relabel_dirs_pattern($1, man_cache_t, man_cache_t)
+            relabel_files_pattern($1, man_cache_t, man_cache_t)
+          '';
+        };
+        "miscfiles_search_public_dirs" = {
+          summary = "Search public directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_t;
+            type public_content_rw_t;
+          '';
+          content = ''
+            allow $1 public_content_t:dir search_dir_perms;
+            allow $1 public_content_rw_t:dir search_dir_perms;
+          '';
+        };
+        "miscfiles_read_public_files" = {
+          summary = ''
+            Read public files used for file
+            transfer services.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_t, public_content_rw_t;
+          '';
+          content = ''
+            allow $1 { public_content_t public_content_rw_t }:dir list_dir_perms;
+            read_files_pattern($1, { public_content_t public_content_rw_t }, { public_content_t public_content_rw_t })
+            read_lnk_files_pattern($1, { public_content_t public_content_rw_t }, { public_content_t public_content_rw_t })
+          '';
+          rolecap = true;
+        };
+        "miscfiles_manage_public_files" = {
+          summary = ''
+            Create, read, write, and delete public files
+            and directories used for file transfer services.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_rw_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, public_content_rw_t, public_content_rw_t)
+            manage_files_pattern($1, public_content_rw_t, public_content_rw_t)
+            manage_lnk_files_pattern($1, public_content_rw_t, public_content_rw_t)
+          '';
+          rolecap = true;
+        };
+        "miscfiles_watch_public_dirs" = {
+          summary = "Watch public files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_rw_t;
+          '';
+          content = ''
+            allow $1 public_content_rw_t:dir watch;
+          '';
+        };
+        "miscfiles_mounton_all_public_dirs" = {
+          summary = "Mount on all public content directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_t;
+            type public_content_rw_t;
+          '';
+          content = ''
+            allow $1 public_content_t:dir mounton;
+            allow $1 public_content_rw_t:dir mounton;
+          '';
+        };
+        "miscfiles_mounton_all_public_files" = {
+          summary = "Mount on all public content files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_t;
+            type public_content_rw_t;
+          '';
+          content = ''
+            allow $1 public_content_t:file mounton;
+            allow $1 public_content_rw_t:file mounton;
+          '';
+        };
+        "miscfiles_rangetrans_all_public_content" = {
+          summary = ''
+            Transition to the specified sensitivity
+            when creating all public content objects.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type public_content_t;
+            type public_content_rw_t;
+          '';
+          content = ''
+            ifdef(`enable_mcs',`
+                    range_transition $1 public_content_t:dir_file_class_set $2;
+                    range_transition $1 public_content_rw_t:dir_file_class_set $2;
+            ')
+            ifdef(`enable_mls',`
+                    range_transition $1 public_content_t:dir_file_class_set $2;
+                    range_transition $1 public_content_rw_t:dir_file_class_set $2;
+            ')
+          '';
+        };
+        "miscfiles_read_tetex_data" = {
+          summary = "Read TeX data";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tetex_data_t;
+          '';
+          content = ''
+            files_search_var($1)
+            files_search_var_lib($1)
+
+            # cjp: TeX data can be in either of the above dirs
+            allow $1 tetex_data_t:dir list_dir_perms;
+            read_files_pattern($1, tetex_data_t, tetex_data_t)
+            read_lnk_files_pattern($1, tetex_data_t, tetex_data_t)
+          '';
+        };
+        "miscfiles_exec_tetex_data" = {
+          summary = "Execute TeX data programs in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tetex_data_t;
+          '';
+          content = ''
+            files_search_var($1)
+            files_search_var_lib($1)
+
+            # cjp: TeX data can be in either of the above dirs
+            allow $1 tetex_data_t:dir list_dir_perms;
+            exec_files_pattern($1, tetex_data_t, tetex_data_t)
+          '';
+        };
+        "miscfiles_domain_entry_test_files" = {
+          summary = ''
+            Let test files be an entry point for
+            a specified domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type test_file_t;
+          '';
+          content = ''
+            domain_entry_file($1, test_file_t)
+          '';
+        };
+        "miscfiles_read_test_files" = {
+          summary = "Read test files and directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type test_file_t;
+          '';
+          content = ''
+            read_files_pattern($1, test_file_t, test_file_t)
+            read_lnk_files_pattern($1, test_file_t, test_file_t)
+          '';
+        };
+        "miscfiles_exec_test_files" = {
+          summary = "Execute test files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type test_file_t;
+          '';
+          content = ''
+            exec_files_pattern($1, test_file_t, test_file_t)
+            read_lnk_files_pattern($1, test_file_t, test_file_t)
+          '';
+        };
+        "miscfiles_etc_filetrans_localization" = {
+          summary = ''
+            Create files in etc directories
+            with localization file type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            files_etc_filetrans($1, locale_t, file)
+          '';
+        };
+        "miscfiles_manage_localization" = {
+          summary = "Create, read, write, and delete localization";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locale_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, locale_t, locale_t)
+            manage_files_pattern($1, locale_t, locale_t)
+            manage_lnk_files_pattern($1, locale_t, locale_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(miscfiles)
 

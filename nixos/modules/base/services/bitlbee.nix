@@ -3,74 +3,71 @@
 { lib, ... }: {
   config.security.selinux.modules.bitlbee = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Tunnels instant messaging traffic to a virtual IRC channel.</summary>
+    interface = {
+      summary = "Tunnels instant messaging traffic to a virtual IRC channel.";
+      exports = {
+        "bitlbee_read_config" = {
+          summary = "Read bitlbee configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type bitlbee_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 bitlbee_conf_t:dir list_dir_perms;
+            allow $1 bitlbee_conf_t:file read_file_perms;
+          '';
+        };
+        "bitlbee_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an bitlbee environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type bitlbee_t, bitlbee_conf_t, bitlbee_var_t;
+            type bitlbee_initrc_exec_t, bitlbee_runtime_t;
+            type bitlbee_log_t, bitlbee_tmp_t;
+          '';
+          content = ''
+            allow $1 bitlbee_t:process { ptrace signal_perms };
+            ps_process_pattern($1, bitlbee_t)
 
-      ########################################
-      ## <summary>
-      ##	Read bitlbee configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`bitlbee_read_config',`
-      	gen_require(`
-      		type bitlbee_conf_t;
-      	')
+            init_startstop_service($1, $2, bitlbee_t, bitlbee_initrc_exec_t)
 
-      	files_search_etc($1)
-      	allow $1 bitlbee_conf_t:dir list_dir_perms;
-      	allow $1 bitlbee_conf_t:file read_file_perms;
-      ')
+            files_search_etc($1)
+            admin_pattern($1, bitlbee_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an bitlbee environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`bitlbee_admin',`
-      	gen_require(`
-      		type bitlbee_t, bitlbee_conf_t, bitlbee_var_t;
-      		type bitlbee_initrc_exec_t, bitlbee_runtime_t;
-      		type bitlbee_log_t, bitlbee_tmp_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, bitlbee_log_t)
 
-      	allow $1 bitlbee_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, bitlbee_t)
+            files_search_tmp($1)
+            admin_pattern($1, bitlbee_tmp_t)
 
-      	init_startstop_service($1, $2, bitlbee_t, bitlbee_initrc_exec_t)
+            files_search_runtime($1)
+            admin_pattern($1, bitlbee_runtime_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, bitlbee_conf_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, bitlbee_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, bitlbee_tmp_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, bitlbee_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, bitlbee_var_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, bitlbee_var_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(bitlbee)
 

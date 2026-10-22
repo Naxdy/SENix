@@ -3,187 +3,173 @@
 { lib, ... }: {
   config.security.selinux.modules.mplayer = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Mplayer media player and encoder.</summary>
+    interface = {
+      summary = "Mplayer media player and encoder.";
+      exports = {
+        "mplayer_role" = {
+          type = "template";
+          summary = "Role access for mplayer";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role mencoder_roles, mplayer_roles;
+            type mencoder_t, mencoder_exec_t, mplayer_home_t;
+            type mplayer_t, mplayer_exec_t, mplayer_tmpfs_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for mplayer
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`mplayer_role',`
-      	gen_require(`
-      		attribute_role mencoder_roles, mplayer_roles;
-      		type mencoder_t, mencoder_exec_t, mplayer_home_t;
-      		type mplayer_t, mplayer_exec_t, mplayer_tmpfs_t;
-      	')
+            roleattribute $4 mencoder_roles;
+            roleattribute $4 mplayer_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $4 mencoder_roles;
-      	roleattribute $4 mplayer_roles;
+            domtrans_pattern($3, mencoder_exec_t, mencoder_t)
+            domtrans_pattern($3, mplayer_exec_t, mplayer_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            allow $3 { mplayer_t mencoder_t }:process { getsched ptrace signal_perms };
+            ps_process_pattern($3, { mplayer_t mencoder_t })
 
-      	domtrans_pattern($3, mencoder_exec_t, mencoder_t)
-      	domtrans_pattern($3, mplayer_exec_t, mplayer_t)
+            allow $2 mplayer_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 mplayer_home_t:file { manage_file_perms relabel_file_perms };
+            allow $2 mplayer_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, mplayer_home_t, dir, ".mplayer")
 
-      	allow $3 { mplayer_t mencoder_t }:process { getsched ptrace signal_perms };
-      	ps_process_pattern($3, { mplayer_t mencoder_t })
+            allow $2 mplayer_tmpfs_t:file { manage_file_perms relabel_file_perms };
+            allow $2 mplayer_tmpfs_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 mplayer_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 mplayer_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	allow $2 mplayer_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 mplayer_home_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 mplayer_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, mplayer_home_t, dir, ".mplayer")
-
-      	allow $2 mplayer_tmpfs_t:file { manage_file_perms relabel_file_perms };
-      	allow $2 mplayer_tmpfs_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	allow $2 mplayer_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 mplayer_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-
-      	optional_policy(`
-      		systemd_user_app_status($1, mencoder_t)
-      		systemd_user_app_status($1, mplayer_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Run mplayer in mplayer domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mplayer_domtrans',`
-      	gen_require(`
-      		type mplayer_t, mplayer_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mplayer_exec_t, mplayer_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mplayer in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`mplayer_exec',`
-      	gen_require(`
-      		type mplayer_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, mplayer_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read mplayer user home content files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mplayer_read_user_home_files',`
-      	gen_require(`
-      		type mplayer_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	read_files_pattern($1, mplayer_home_t, mplayer_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	generic mplayer home content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mplayer_manage_generic_home_content',`
-      	gen_require(`
-      		type mplayer_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 mplayer_home_t:dir manage_dir_perms;
-      	allow $1 mplayer_home_t:file manage_file_perms;
-      	allow $1 mplayer_home_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in user home
-      ##	directories with the generic mplayer
-      ##	home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mplayer_home_filetrans_mplayer_home',`
-      	gen_require(`
-      		type mplayer_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, mplayer_home_t, $2, $3)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, mencoder_t)
+                    systemd_user_app_status($1, mplayer_t)
+            ')
+          '';
+        };
+        "mplayer_domtrans" = {
+          summary = "Run mplayer in mplayer domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mplayer_t, mplayer_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mplayer_exec_t, mplayer_t)
+          '';
+        };
+        "mplayer_exec" = {
+          summary = "Execute mplayer in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mplayer_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, mplayer_exec_t)
+          '';
+        };
+        "mplayer_read_user_home_files" = {
+          summary = "Read mplayer user home content files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mplayer_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            read_files_pattern($1, mplayer_home_t, mplayer_home_t)
+          '';
+        };
+        "mplayer_manage_generic_home_content" = {
+          summary = ''
+            Create, read, write, and delete
+            generic mplayer home content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mplayer_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 mplayer_home_t:dir manage_dir_perms;
+            allow $1 mplayer_home_t:file manage_file_perms;
+            allow $1 mplayer_home_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "mplayer_home_filetrans_mplayer_home" = {
+          summary = ''
+            Create specified objects in user home
+            directories with the generic mplayer
+            home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type mplayer_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, mplayer_home_t, $2, $3)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mplayer)
 

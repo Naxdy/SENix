@@ -3,195 +3,179 @@
 { lib, ... }: {
   config.security.selinux.modules.acpi = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Advanced power management.</summary>
+    interface = {
+      summary = "Advanced power management.";
+      exports = {
+        "acpi_domtrans_client" = {
+          summary = "Execute apm in the apm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type acpi_t, acpi_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, acpi_exec_t, acpi_t)
+          '';
+        };
+        "acpi_run_client" = {
+          summary = ''
+            Execute apm in the apm domain
+            and allow the specified role
+            the apm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role acpi_roles;
+          '';
+          content = ''
+            acpi_domtrans_client($1)
+            roleattribute $2 acpi_roles;
+          '';
+        };
+        "acpi_use_fds" = {
+          summary = "Use apmd file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_t;
+          '';
+          content = ''
+            allow $1 acpid_t:fd use;
+          '';
+        };
+        "acpi_write_pipes" = {
+          summary = "Write apmd unnamed pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_t;
+          '';
+          content = ''
+            allow $1 acpid_t:fifo_file write;
+          '';
+        };
+        "acpi_rw_stream_sockets" = {
+          summary = ''
+            Read and write to apmd unix
+            stream sockets.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_t;
+          '';
+          content = ''
+            allow $1 acpid_t:unix_stream_socket { read write };
+          '';
+        };
+        "acpi_append_log" = {
+          summary = "Append apmd log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 acpid_log_t:file append_file_perms;
+          '';
+        };
+        "acpi_stream_connect" = {
+          summary = ''
+            Connect to apmd over an unix
+            stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_t, acpid_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, acpid_runtime_t, acpid_runtime_t, acpid_t)
+          '';
+        };
+        "acpi_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an apm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type acpid_t, acpid_initrc_exec_t, acpid_log_t;
+            type acpid_lock_t, acpid_runtime_t, acpid_var_lib_t;
+            type acpid_tmp_t;
+          '';
+          content = ''
+            allow $1 acpid_t:process { ptrace signal_perms };
+            ps_process_pattern($1, acpid_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute apm in the apm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_domtrans_client',`
-      	gen_require(`
-      		type acpi_t, acpi_exec_t;
-      	')
+            init_startstop_service($1, $2, acpid_t, acpid_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, acpi_exec_t, acpi_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, acpid_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute apm in the apm domain
-      ##	and allow the specified role
-      ##	the apm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_run_client',`
-      	gen_require(`
-      		attribute_role acpi_roles;
-      	')
+            files_search_locks($1)
+            admin_pattern($1, acpid_lock_t)
 
-      	acpi_domtrans_client($1)
-      	roleattribute $2 acpi_roles;
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, acpid_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Use apmd file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_use_fds',`
-      	gen_require(`
-      		type acpid_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, acpid_var_lib_t)
 
-      	allow $1 acpid_t:fd use;
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, acpid_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Write apmd unnamed pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_write_pipes',`
-      	gen_require(`
-      		type acpid_t;
-      	')
-
-      	allow $1 acpid_t:fifo_file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write to apmd unix
-      ##	stream sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_rw_stream_sockets',`
-      	gen_require(`
-      		type acpid_t;
-      	')
-
-      	allow $1 acpid_t:unix_stream_socket { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append apmd log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_append_log',`
-      	gen_require(`
-      		type acpid_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 acpid_log_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to apmd over an unix
-      ##	stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acpi_stream_connect',`
-      	gen_require(`
-      		type acpid_t, acpid_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, acpid_runtime_t, acpid_runtime_t, acpid_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an apm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`acpi_admin',`
-      	gen_require(`
-      		type acpid_t, acpid_initrc_exec_t, acpid_log_t;
-      		type acpid_lock_t, acpid_runtime_t, acpid_var_lib_t;
-      		type acpid_tmp_t;
-      	')
-
-      	allow $1 acpid_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, acpid_t)
-
-      	init_startstop_service($1, $2, acpid_t, acpid_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, acpid_log_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, acpid_lock_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, acpid_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, acpid_var_lib_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, acpid_tmp_t)
-
-      	acpi_run_client($1, $2)
-      ')
-    '';
+            acpi_run_client($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(acpi)
 

@@ -3,157 +3,149 @@
 { lib, ... }: {
   config.security.selinux.modules.openoffice = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Openoffice suite.</summary>
+    interface = {
+      summary = "Openoffice suite.";
+      exports = {
+        "ooffice_role" = {
+          type = "template";
+          summary = "Role access for openoffice.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role ooffice_roles;
+            type ooffice_t, ooffice_exec_t;
+          '';
+          content = ''
+            roleattribute $4 ooffice_roles;
 
-      ############################################################
-      ## <summary>
-      ##	Role access for openoffice.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`ooffice_role',`
-      	gen_require(`
-      		attribute_role ooffice_roles;
-      		type ooffice_t, ooffice_exec_t;
-      	')
+            allow ooffice_t $3:unix_stream_socket connectto;
 
-      	roleattribute $4 ooffice_roles;
+            domtrans_pattern($3, ooffice_exec_t, ooffice_t)
 
-      	allow ooffice_t $3:unix_stream_socket connectto;
+            allow $3 ooffice_t:process { ptrace signal_perms };
+            ps_process_pattern($3, ooffice_t)
 
-      	domtrans_pattern($3, ooffice_exec_t, ooffice_t)
+            optional_policy(`
+                    ooffice_dbus_chat($3)
+            ')
 
-      	allow $3 ooffice_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, ooffice_t)
-
-      	optional_policy(`
-      		ooffice_dbus_chat($3)
-      	')
-
-      	optional_policy(`
-      		systemd_user_app_status($1, ooffice_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Run openoffice in its own domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ooffice_domtrans',`
-      	gen_require(`
-      		type ooffice_t, ooffice_exec_t;
-      	')
-
-      	domtrans_pattern($1, ooffice_exec_t, ooffice_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to execute
-      ##	files in temporary directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ooffice_dontaudit_exec_tmp_files',`
-      	gen_require(`
-      		type ooffice_tmp_t;
-      	')
-
-      	dontaudit $1 ooffice_tmp_t:file exec_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write temporary
-      ##	openoffice files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ooffice_rw_tmp_files',`
-      	gen_require(`
-      		type ooffice_tmp_t;
-      	')
-
-      	rw_files_pattern($1, ooffice_tmp_t, ooffice_tmp_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Send and receive dbus messages
-      ##	from and to the openoffice
-      ##	domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ooffice_dbus_chat',`
-      	gen_require(`
-      		type ooffice_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 ooffice_t:dbus send_msg;
-      	allow ooffice_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to openoffice using a
-      ##	unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ooffice_stream_connect',`
-      	gen_require(`
-      		type ooffice_t, ooffice_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	stream_connect_pattern($1, ooffice_tmp_t, ooffice_tmp_t, ooffice_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, ooffice_t)
+            ')
+          '';
+        };
+        "ooffice_domtrans" = {
+          summary = "Run openoffice in its own domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ooffice_t, ooffice_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, ooffice_exec_t, ooffice_t)
+          '';
+        };
+        "ooffice_dontaudit_exec_tmp_files" = {
+          summary = ''
+            Do not audit attempts to execute
+            files in temporary directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type ooffice_tmp_t;
+          '';
+          content = ''
+            dontaudit $1 ooffice_tmp_t:file exec_file_perms;
+          '';
+        };
+        "ooffice_rw_tmp_files" = {
+          summary = ''
+            Read and write temporary
+            openoffice files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ooffice_tmp_t;
+          '';
+          content = ''
+            rw_files_pattern($1, ooffice_tmp_t, ooffice_tmp_t)
+          '';
+        };
+        "ooffice_dbus_chat" = {
+          summary = ''
+            Send and receive dbus messages
+            from and to the openoffice
+            domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ooffice_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 ooffice_t:dbus send_msg;
+            allow ooffice_t $1:dbus send_msg;
+          '';
+        };
+        "ooffice_stream_connect" = {
+          summary = ''
+            Connect to openoffice using a
+            unix domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ooffice_t, ooffice_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            stream_connect_pattern($1, ooffice_tmp_t, ooffice_tmp_t, ooffice_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openoffice)
 

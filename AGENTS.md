@@ -45,7 +45,7 @@
 
 - Policy modules are declared as `config.security.selinux.modules.<name>` in NixOS module files under `nixos/modules/`, each carrying:
   - `layer` (defaults to `senix`);
-  - `interface` (`.if`), `typeEnforcement` (`.te`), `fileContext` (`.fc`) `rules` with `@attr@` expansion over `storePaths`, or `fileContext.source` for a verbatim `.fc` pulled from the refpolicy;
+  - `exports` (declarative `.if`: module `summary`/`desc`/`required`, then each `interfaces.<name>` with `type` (`interface`/`template`), `summary`, `desc`, `params`, `gen_require`, `content`, `infoflow`, `rolecap`/`rolebase` — `nixos/build.nix` renders these back into the `.if` that `segenxml.py` documents), `typeEnforcement` (`.te`), `fileContext` (`.fc`) `rules` with `@attr@` expansion over `storePaths`, or `fileContext.source` for a verbatim `.fc` pulled from the refpolicy;
   - `name` defaults to the attribute name.
 - `nixos/build.nix` overlays every declared module onto the pinned refpolicy source (`security.selinux.refpolicy.src`) and compiles the whole policy (`make conf` → policy.xml → `.pp`). A module whose **name+layer** combination already exists in the refpolicy source replaces the refpolicy file; anything else is a SENix-only module, placed in a generated `senix` layer and added to `modules.conf`. The layer is auto-detected by scanning the refpolicy tree.
 - Module sources are materialized as store paths under `policy/modules/<layer>/` (`moduleSourceDrv`) so the build phase never has to copy huge inline strings (ARG_MAX).

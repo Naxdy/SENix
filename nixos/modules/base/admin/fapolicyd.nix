@@ -3,167 +3,153 @@
 { lib, ... }: {
   config.security.selinux.modules.fapolicyd = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>
-      ## The fapolicyd software framework controls the execution of applications based
-      ## on a user-defined policy. This is one of the most efficient ways to prevent
-      ## running untrusted and possibly malicious applications on the system.
-      ## </summary>
+    interface = {
+      summary = ''
+        The fapolicyd software framework controls the execution of applications based
+        on a user-defined policy. This is one of the most efficient ways to prevent
+        running untrusted and possibly malicious applications on the system.
+      '';
+      exports = {
+        "fapolicyd_mmap_read_config_files" = {
+          summary = "Read fapolicyd config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fapolicyd_config_t;
+          '';
+          content = ''
+            mmap_read_files_pattern($1, fapolicyd_config_t, fapolicyd_config_t)
+          '';
+        };
+        "fapolicyd_domtrans_fagenrules" = {
+          summary = "Execute fagenrules in the fagenrules_t domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fagenrules_t, fagenrules_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fagenrules_exec_t, fagenrules_t)
+          '';
+        };
+        "fapolicyd_run_fagenrules" = {
+          summary = ''
+            Execute fagenrules in the fagenrules domain,
+            and allow the specified roles the
+            fagenurles domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role fagenrules_roles;
+          '';
+          content = ''
+            fapolicyd_domtrans_fagenrules($1)
+            roleattribute $2 fagenrules_roles;
+          '';
+          rolecap = true;
+        };
+        "fapolicyd_domtrans_cli" = {
+          summary = "Execute fapolicyd-cli in the fapolicyc domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fapolicyc_t, fapolicyc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fapolicyc_exec_t, fapolicyc_t)
+          '';
+        };
+        "fapolicyd_run_cli" = {
+          summary = ''
+            Execute fapoliyd-cli in the fapolicyc domain,
+            and allow the specified roles the
+            fapolicyc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role fapolicyc_roles;
+          '';
+          content = ''
+            fapolicyd_domtrans_cli($1)
+            roleattribute $2 fapolicyc_roles;
+          '';
+          rolecap = true;
+        };
+        "fapolicyd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an fapolicyd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fagenrules_tmp_t;
+            type fapolicyd_config_t;
+            type fapolicyd_log_t;
+            type fapolicyd_runtime_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            admin_pattern($1, fagenrules_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Read fapolicyd config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fapolicyd_mmap_read_config_files',`
-      	gen_require(`
-      		type fapolicyd_config_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, fapolicyd_config_t)
 
-      	mmap_read_files_pattern($1, fapolicyd_config_t, fapolicyd_config_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, fapolicyd_log_t)
 
-      ######################################
-      ## <summary>
-      ##	Execute fagenrules in the fagenrules_t domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fapolicyd_domtrans_fagenrules',`
-      	gen_require(`
-      		type fagenrules_t, fagenrules_exec_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, fapolicyd_runtime_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fagenrules_exec_t, fagenrules_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute fagenrules in the fagenrules domain,
-      ##	and allow the specified roles the
-      ##	fagenurles domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fapolicyd_run_fagenrules',`
-      	gen_require(`
-      		attribute_role fagenrules_roles;
-      	')
-
-      	fapolicyd_domtrans_fagenrules($1)
-      	roleattribute $2 fagenrules_roles;
-      ')
-
-
-      #####################################
-      ## <summary>
-      ##	Execute fapolicyd-cli in the fapolicyc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fapolicyd_domtrans_cli',`
-      	gen_require(`
-      		type fapolicyc_t, fapolicyc_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fapolicyc_exec_t, fapolicyc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute fapoliyd-cli in the fapolicyc domain,
-      ##	and allow the specified roles the
-      ##	fapolicyc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fapolicyd_run_cli',`
-      	gen_require(`
-      		attribute_role fapolicyc_roles;
-      	')
-
-      	fapolicyd_domtrans_cli($1)
-      	roleattribute $2 fapolicyc_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an fapolicyd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fapolicyd_admin',`
-      	gen_require(`
-      		type fagenrules_tmp_t;
-      		type fapolicyd_config_t;
-      		type fapolicyd_log_t;
-      		type fapolicyd_runtime_t;
-      	')
-
-      	files_search_tmp($1)
-      	admin_pattern($1, fagenrules_tmp_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, fapolicyd_config_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, fapolicyd_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, fapolicyd_runtime_t)
-
-      	ifndef(`direct_sysadm_daemon',`
-      		fapolicyd_run_fagenrules($1, $2)
-      	')
-      	fapolicyd_run_cli($1, $2)
-      ')
-    '';
+            ifndef(`direct_sysadm_daemon',`
+                    fapolicyd_run_fagenrules($1, $2)
+            ')
+            fapolicyd_run_cli($1, $2)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fapolicyd)
 

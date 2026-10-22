@@ -3,154 +3,145 @@
 { lib, ... }: {
   config.security.selinux.modules.apcupsd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>APC UPS monitoring daemon.</summary>
+    interface = {
+      summary = "APC UPS monitoring daemon.";
+      exports = {
+        "apcupsd_domtrans" = {
+          summary = ''
+            Execute a domain transition to
+            run apcupsd.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type apcupsd_t, apcupsd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, apcupsd_exec_t, apcupsd_t)
+          '';
+        };
+        "apcupsd_initrc_domtrans" = {
+          summary = ''
+            Execute apcupsd server in the
+            apcupsd domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type apcupsd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, apcupsd_initrc_exec_t)
+          '';
+        };
+        "apcupsd_read_log" = {
+          summary = "Read apcupsd log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type apcupsd_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 apcupsd_log_t:dir list_dir_perms;
+            allow $1 apcupsd_log_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "apcupsd_append_log" = {
+          summary = "Append apcupsd log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type apcupsd_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 apcupsd_log_t:dir list_dir_perms;
+            allow $1 apcupsd_log_t:file append_file_perms;
+          '';
+        };
+        "apcupsd_cgi_script_domtrans" = {
+          summary = ''
+            Execute a domain transition to
+            run httpd_apcupsd_cgi_script.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type httpd_apcupsd_cgi_script_t, httpd_apcupsd_cgi_script_exec_t;
+          '';
+          content = ''
+            files_search_var($1)
+            domtrans_pattern($1, httpd_apcupsd_cgi_script_exec_t, httpd_apcupsd_cgi_script_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run apcupsd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`apcupsd_domtrans',`
-      	gen_require(`
-      		type apcupsd_t, apcupsd_exec_t;
-      	')
+            optional_policy(`
+                    apache_search_sys_content($1)
+            ')
+          '';
+        };
+        "apcupsd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an apcupsd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type apcupsd_t, apcupsd_tmp_t, apcupsd_log_t;
+            type apcupsd_runtime_t, apcupsd_initrc_exec_t, apcupsd_lock_t;
+          '';
+          content = ''
+            allow $1 apcupsd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, apcupsd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, apcupsd_exec_t, apcupsd_t)
-      ')
+            init_startstop_service($1, $2, apcupsd_t, apcupsd_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute apcupsd server in the
-      ##	apcupsd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`apcupsd_initrc_domtrans',`
-      	gen_require(`
-      		type apcupsd_initrc_exec_t;
-      	')
+            files_list_var($1)
+            admin_pattern($1, apcupsd_lock_t)
 
-      	init_labeled_script_domtrans($1, apcupsd_initrc_exec_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, apcupsd_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Read apcupsd log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`apcupsd_read_log',`
-      	gen_require(`
-      		type apcupsd_log_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, apcupsd_tmp_t)
 
-      	logging_search_logs($1)
-      	allow $1 apcupsd_log_t:dir list_dir_perms;
-      	allow $1 apcupsd_log_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append apcupsd log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`apcupsd_append_log',`
-      	gen_require(`
-      		type apcupsd_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 apcupsd_log_t:dir list_dir_perms;
-      	allow $1 apcupsd_log_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run httpd_apcupsd_cgi_script.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`apcupsd_cgi_script_domtrans',`
-      	gen_require(`
-      		type httpd_apcupsd_cgi_script_t, httpd_apcupsd_cgi_script_exec_t;
-      	')
-
-      	files_search_var($1)
-      	domtrans_pattern($1, httpd_apcupsd_cgi_script_exec_t, httpd_apcupsd_cgi_script_t)
-
-      	optional_policy(`
-      		apache_search_sys_content($1)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an apcupsd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`apcupsd_admin',`
-      	gen_require(`
-      		type apcupsd_t, apcupsd_tmp_t, apcupsd_log_t;
-      		type apcupsd_runtime_t, apcupsd_initrc_exec_t, apcupsd_lock_t;
-      	')
-
-      	allow $1 apcupsd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, apcupsd_t)
-
-      	init_startstop_service($1, $2, apcupsd_t, apcupsd_initrc_exec_t)
-
-      	files_list_var($1)
-      	admin_pattern($1, apcupsd_lock_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, apcupsd_log_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, apcupsd_tmp_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, apcupsd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, apcupsd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(apcupsd)
 

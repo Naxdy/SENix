@@ -3,162 +3,150 @@
 { lib, ... }: {
   config.security.selinux.modules.mono = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Run .NET server and client applications on Linux.</summary>
+    interface = {
+      summary = "Run .NET server and client applications on Linux.";
+      exports = {
+        "mono_role_template" = {
+          type = "template";
+          summary = "The role template for the mono module.";
+          desc = ''
+            <p>
+            This template creates a derived domains which are used
+            for mono applications.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute mono_domain;
+            type mono_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The role template for the mono module.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	This template creates a derived domains which are used
-      ##	for mono applications.
-      ##	</p>
-      ## </desc>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`mono_role_template',`
-      	gen_require(`
-      		attribute mono_domain;
-      		type mono_exec_t;
-      	')
+            type $1_mono_t, mono_domain;
+            domain_type($1_mono_t)
+            domain_entry_file($1_mono_t, mono_exec_t)
+            role $2 types $1_mono_t;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            domain_interactive_fd($1_mono_t)
+            application_type($1_mono_t)
 
-      	type $1_mono_t, mono_domain;
-      	domain_type($1_mono_t)
-      	domain_entry_file($1_mono_t, mono_exec_t)
-      	role $2 types $1_mono_t;
+            ########################################
+            #
+            # Policy
+            #
 
-      	domain_interactive_fd($1_mono_t)
-      	application_type($1_mono_t)
+            domtrans_pattern($3, mono_exec_t, $1_mono_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            allow $3 $1_mono_t:process { noatsecure ptrace signal_perms };
+            ps_process_pattern($3, $1_mono_t)
 
-      	domtrans_pattern($3, mono_exec_t, $1_mono_t)
+            corecmd_bin_domtrans($1_mono_t, $2)
 
-      	allow $3 $1_mono_t:process { noatsecure ptrace signal_perms };
-      	ps_process_pattern($3, $1_mono_t)
+            userdom_manage_user_tmpfs_files($1_mono_t)
 
-      	corecmd_bin_domtrans($1_mono_t, $2)
+            optional_policy(`
+                    fs_dontaudit_rw_tmpfs_files($1_mono_t)
 
-      	userdom_manage_user_tmpfs_files($1_mono_t)
-
-      	optional_policy(`
-      		fs_dontaudit_rw_tmpfs_files($1_mono_t)
-
-      		xserver_role($1, $1_mono_t, $3, $4)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mono in the mono domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mono_domtrans',`
-      	gen_require(`
-      		type mono_t, mono_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, mono_exec_t, mono_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mono in the mono domain, and
-      ##	allow the specified role the mono domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mono_run',`
-      	gen_require(`
-      		attribute_role mono_roles;
-      	')
-
-      	mono_domtrans($1)
-      	roleattribute $2 mono_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute mono in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mono_exec',`
-      	gen_require(`
-      		type mono_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, mono_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write mono shared memory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mono_rw_shm',`
-      	gen_require(`
-      		type mono_t;
-      	')
-
-      	allow $1 mono_t:shm rw_shm_perms;
-      ')
-    '';
+                    xserver_role($1, $1_mono_t, $3, $4)
+            ')
+          '';
+        };
+        "mono_domtrans" = {
+          summary = "Execute mono in the mono domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type mono_t, mono_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, mono_exec_t, mono_t)
+          '';
+        };
+        "mono_run" = {
+          summary = ''
+            Execute mono in the mono domain, and
+            allow the specified role the mono domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role mono_roles;
+          '';
+          content = ''
+            mono_domtrans($1)
+            roleattribute $2 mono_roles;
+          '';
+        };
+        "mono_exec" = {
+          summary = "Execute mono in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mono_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, mono_exec_t)
+          '';
+        };
+        "mono_rw_shm" = {
+          summary = "Read and write mono shared memory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type mono_t;
+          '';
+          content = ''
+            allow $1 mono_t:shm rw_shm_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mono)
 

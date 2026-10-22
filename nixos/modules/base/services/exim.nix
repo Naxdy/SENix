@@ -3,315 +3,285 @@
 { lib, ... }: {
   config.security.selinux.modules.exim = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Mail transfer agent.</summary>
+    interface = {
+      summary = "Mail transfer agent.";
+      exports = {
+        "exim_exec" = {
+          summary = "Execute exim in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, exim_exec_t)
+          '';
+        };
+        "exim_domtrans" = {
+          summary = "Execute a domain transition to run exim.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type exim_t, exim_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, exim_exec_t, exim_t)
+          '';
+        };
+        "exim_run" = {
+          summary = ''
+            Execute exim in the exim domain,
+            and allow the specified role
+            the exim domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role exim_roles;
+          '';
+          content = ''
+            exim_domtrans($1)
+            roleattribute $2 exim_roles;
+          '';
+          rolecap = true;
+        };
+        "exim_dontaudit_read_tmp_files" = {
+          summary = ''
+            Do not audit attempts to read exim
+            temporary tmp files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type exim_tmp_t;
+          '';
+          content = ''
+            dontaudit $1 exim_tmp_t:file read_file_perms;
+          '';
+        };
+        "exim_read_tmp_files" = {
+          summary = "Read exim temporary files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_tmp_t;
+          '';
+          content = ''
+            allow $1 exim_tmp_t:file read_file_perms;
+            files_search_tmp($1)
+          '';
+        };
+        "exim_read_log" = {
+          summary = "Read exim log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_log_t;
+          '';
+          content = ''
+            read_files_pattern($1, exim_log_t, exim_log_t)
+            logging_search_logs($1)
+          '';
+          rolecap = true;
+        };
+        "exim_append_log" = {
+          summary = "Append exim log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_log_t;
+          '';
+          content = ''
+            append_files_pattern($1, exim_log_t, exim_log_t)
+            logging_search_logs($1)
+          '';
+        };
+        "exim_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            exim log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_log_t;
+          '';
+          content = ''
+            manage_files_pattern($1, exim_log_t, exim_log_t)
+            logging_search_logs($1)
+          '';
+          rolecap = true;
+        };
+        "exim_manage_spool_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            exim spool directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_spool_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, exim_spool_t, exim_spool_t)
+            files_search_spool($1)
+          '';
+        };
+        "exim_read_spool_files" = {
+          summary = "Read exim spool files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_spool_t;
+          '';
+          content = ''
+            allow $1 exim_spool_t:file read_file_perms;
+            allow $1 exim_spool_t:dir list_dir_perms;
+            files_search_spool($1)
+          '';
+        };
+        "exim_manage_spool_files" = {
+          summary = ''
+            Create, read, write, and delete
+            exim spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_spool_t;
+          '';
+          content = ''
+            manage_files_pattern($1, exim_spool_t, exim_spool_t)
+            files_search_spool($1)
+          '';
+        };
+        "exim_read_var_lib_files" = {
+          summary = "Read exim var lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_var_lib_t;
+          '';
+          content = ''
+            read_files_pattern($1, exim_var_lib_t, exim_var_lib_t)
+            files_search_var_lib($1)
+          '';
+        };
+        "exim_manage_var_lib_files" = {
+          summary = "Create, read, and write exim var lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_var_lib_t;
+          '';
+          content = ''
+            manage_files_pattern($1, exim_var_lib_t, exim_var_lib_t)
+            files_search_var_lib($1)
+          '';
+        };
+        "exim_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an exim environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type exim_t, exim_spool_t, exim_log_t;
+            type exim_pid_t, exim_initrc_exec_t, exim_tmp_t;
+            type exim_keytab_t;
+          '';
+          content = ''
+            allow $1 exim_t:process { ptrace signal_perms };
+            ps_process_pattern($1, exim_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute exim in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_exec',`
-      	gen_require(`
-      		type exim_exec_t;
-      	')
+            init_startstop_service($1, $2, exim_t, exim_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, exim_exec_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, exim_keytab_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run exim.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_domtrans',`
-      	gen_require(`
-      		type exim_t, exim_exec_t;
-      	')
+            files_search_spool($1)
+            admin_pattern($1, exim_spool_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, exim_exec_t, exim_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, exim_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute exim in the exim domain,
-      ##	and allow the specified role
-      ##	the exim domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`exim_run',`
-      	gen_require(`
-      		attribute_role exim_roles;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, exim_pid_t)
 
-      	exim_domtrans($1)
-      	roleattribute $2 exim_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read exim
-      ##	temporary tmp files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_dontaudit_read_tmp_files',`
-      	gen_require(`
-      		type exim_tmp_t;
-      	')
-
-      	dontaudit $1 exim_tmp_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read exim temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_read_tmp_files',`
-      	gen_require(`
-      		type exim_tmp_t;
-      	')
-
-      	allow $1 exim_tmp_t:file read_file_perms;
-      	files_search_tmp($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read exim log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`exim_read_log',`
-      	gen_require(`
-      		type exim_log_t;
-      	')
-
-      	read_files_pattern($1, exim_log_t, exim_log_t)
-      	logging_search_logs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append exim log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_append_log',`
-      	gen_require(`
-      		type exim_log_t;
-      	')
-
-      	append_files_pattern($1, exim_log_t, exim_log_t)
-      	logging_search_logs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	exim log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`exim_manage_log',`
-      	gen_require(`
-      		type exim_log_t;
-      	')
-
-      	manage_files_pattern($1, exim_log_t, exim_log_t)
-      	logging_search_logs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	exim spool directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_manage_spool_dirs',`
-      	gen_require(`
-      		type exim_spool_t;
-      	')
-
-      	manage_dirs_pattern($1, exim_spool_t, exim_spool_t)
-      	files_search_spool($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read exim spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_read_spool_files',`
-      	gen_require(`
-      		type exim_spool_t;
-      	')
-
-      	allow $1 exim_spool_t:file read_file_perms;
-      	allow $1 exim_spool_t:dir list_dir_perms;
-      	files_search_spool($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	exim spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_manage_spool_files',`
-      	gen_require(`
-      		type exim_spool_t;
-      	')
-
-      	manage_files_pattern($1, exim_spool_t, exim_spool_t)
-      	files_search_spool($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read exim var lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_read_var_lib_files',`
-      	gen_require(`
-      		type exim_var_lib_t;
-      	')
-
-      	read_files_pattern($1, exim_var_lib_t, exim_var_lib_t)
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, and write exim var lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`exim_manage_var_lib_files',`
-      	gen_require(`
-      		type exim_var_lib_t;
-      	')
-
-      	manage_files_pattern($1, exim_var_lib_t, exim_var_lib_t)
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an exim environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`exim_admin',`
-      	gen_require(`
-      		type exim_t, exim_spool_t, exim_log_t;
-      		type exim_pid_t, exim_initrc_exec_t, exim_tmp_t;
-      		type exim_keytab_t;
-      	')
-
-      	allow $1 exim_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, exim_t)
-
-      	init_startstop_service($1, $2, exim_t, exim_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, exim_keytab_t)
-
-      	files_search_spool($1)
-      	admin_pattern($1, exim_spool_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, exim_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, exim_pid_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, exim_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, exim_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(exim)
 

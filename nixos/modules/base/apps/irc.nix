@@ -3,71 +3,70 @@
 { lib, ... }: {
   config.security.selinux.modules.irc = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>IRC client policy.</summary>
+    interface = {
+      summary = "IRC client policy.";
+      exports = {
+        "irc_role" = {
+          type = "template";
+          summary = "Role access for IRC.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role irc_roles;
+            type irc_t, irc_exec_t, irc_home_t;
+            type irc_tmp_t, irc_log_home_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for IRC.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`irc_role',`
-      	gen_require(`
-      		attribute_role irc_roles;
-      		type irc_t, irc_exec_t, irc_home_t;
-      		type irc_tmp_t, irc_log_home_t;
-      	')
+            roleattribute $4 irc_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $4 irc_roles;
+            domtrans_pattern($3, irc_exec_t, irc_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            ps_process_pattern($3, irc_t)
+            allow $3 irc_t:process { ptrace signal_perms };
 
-      	domtrans_pattern($3, irc_exec_t, irc_t)
+            allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            userdom_user_home_dir_filetrans($2, irc_home_t, dir, ".irssi")
+            userdom_user_home_dir_filetrans($2, irc_home_t, file, ".ircmotd")
+            userdom_user_home_dir_filetrans($2, irc_log_home_t, dir, "irclogs")
 
-      	ps_process_pattern($3, irc_t)
-      	allow $3 irc_t:process { ptrace signal_perms };
-
-      	allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { irc_home_t irc_log_home_t irc_tmp_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	userdom_user_home_dir_filetrans($2, irc_home_t, dir, ".irssi")
-      	userdom_user_home_dir_filetrans($2, irc_home_t, file, ".ircmotd")
-      	userdom_user_home_dir_filetrans($2, irc_log_home_t, dir, "irclogs")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, irc_t)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, irc_t)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(irc)
 

@@ -3,228 +3,211 @@
 { lib, ... }: {
   config.security.selinux.modules.glance = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>OpenStack image registry and delivery service.</summary>
+    interface = {
+      summary = "OpenStack image registry and delivery service.";
+      exports = {
+        "glance_domtrans_registry" = {
+          summary = ''
+            Execute a domain transition to
+            run glance registry.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type glance_registry_t, glance_registry_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, glance_registry_exec_t, glance_registry_t)
+          '';
+        };
+        "glance_domtrans_api" = {
+          summary = ''
+            Execute a domain transition to
+            run glance api.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type glance_api_t, glance_api_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, glance_api_exec_t, glance_api_t)
+          '';
+        };
+        "glance_read_log" = {
+          summary = "Read glance log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            read_files_pattern($1, glance_log_t, glance_log_t)
+          '';
+          rolecap = true;
+        };
+        "glance_append_log" = {
+          summary = "Append glance log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, glance_log_t, glance_log_t)
+          '';
+        };
+        "glance_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            glance log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_dirs_pattern($1, glance_log_t, glance_log_t)
+            manage_files_pattern($1, glance_log_t, glance_log_t)
+            manage_lnk_files_pattern($1, glance_log_t, glance_log_t)
+          '';
+        };
+        "glance_search_lib" = {
+          summary = "Search glance lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_var_lib_t;
+          '';
+          content = ''
+            allow $1 glance_var_lib_t:dir search_dir_perms;
+            files_search_var_lib($1)
+          '';
+        };
+        "glance_read_lib_files" = {
+          summary = "Read glance lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, glance_var_lib_t, glance_var_lib_t)
+          '';
+        };
+        "glance_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            glance lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, glance_var_lib_t, glance_var_lib_t)
+          '';
+        };
+        "glance_manage_lib_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            glance lib directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, glance_var_lib_t, glance_var_lib_t)
+          '';
+        };
+        "glance_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an glance environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type glance_registry_t, glance_api_t, glance_log_t;
+            type glance_var_lib_t, glance_runtime_t;
+            type glance_registry_initrc_exec_t, glance_api_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 { glance_api_t glance_registry_t }:process signal_perms;
+            ps_process_pattern($1, { glance_api_t glance_registry_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run glance registry.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_domtrans_registry',`
-      	gen_require(`
-      		type glance_registry_t, glance_registry_exec_t;
-      	')
+            init_startstop_service($1, $2, glance_api_t, glance_api_initrc_exec_t)
+            init_startstop_service($1, $2, glance_registry_t, glance_registry_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, glance_registry_exec_t, glance_registry_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, glance_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run glance api.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_domtrans_api',`
-      	gen_require(`
-      		type glance_api_t, glance_api_exec_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, glance_var_lib_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, glance_api_exec_t, glance_api_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read glance log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`glance_read_log',`
-      	gen_require(`
-      		type glance_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	read_files_pattern($1, glance_log_t, glance_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append glance log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_append_log',`
-      	gen_require(`
-      		type glance_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, glance_log_t, glance_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	glance log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_manage_log',`
-      	gen_require(`
-      		type glance_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	manage_dirs_pattern($1, glance_log_t, glance_log_t)
-      	manage_files_pattern($1, glance_log_t, glance_log_t)
-      	manage_lnk_files_pattern($1, glance_log_t, glance_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search glance lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_search_lib',`
-      	gen_require(`
-      		type glance_var_lib_t;
-      	')
-
-      	allow $1 glance_var_lib_t:dir search_dir_perms;
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read glance lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_read_lib_files',`
-      	gen_require(`
-      		type glance_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, glance_var_lib_t, glance_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	glance lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_manage_lib_files',`
-      	gen_require(`
-      		type glance_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, glance_var_lib_t, glance_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	glance lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`glance_manage_lib_dirs',`
-      	gen_require(`
-      		type glance_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, glance_var_lib_t, glance_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an glance environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`glance_admin',`
-      	gen_require(`
-      		type glance_registry_t, glance_api_t, glance_log_t;
-      		type glance_var_lib_t, glance_runtime_t;
-      		type glance_registry_initrc_exec_t, glance_api_initrc_exec_t;
-      	')
-
-      	allow $1 { glance_api_t glance_registry_t }:process signal_perms;
-      	ps_process_pattern($1, { glance_api_t glance_registry_t })
-
-      	init_startstop_service($1, $2, glance_api_t, glance_api_initrc_exec_t)
-      	init_startstop_service($1, $2, glance_registry_t, glance_registry_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, glance_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, glance_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, glance_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, glance_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(glance)
 

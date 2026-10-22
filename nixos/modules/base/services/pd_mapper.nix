@@ -3,17 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.pd_mapper = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>pd-mapper</summary>
-      ## <desc>
-      ## Qualcomm’s pd‑mapper service is the userspace Protection Domain mapper
-      ## that enables applications to access remote processors
-      ## (Wi‑Fi, modem, sensors, etc.)
-      ## on Qualcomm SoCs via the QRTR protocol.
-      ##
-      ## https://github.com/linux-msm/pd-mapper
-      ## </desc>
-    '';
+    interface = {
+      summary = "pd-mapper";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pd_mapper)
 

@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.mojomojo = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>MojoMojo Wiki.</summary>
-    '';
+    interface = {
+      summary = "MojoMojo Wiki.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mojomojo)
 

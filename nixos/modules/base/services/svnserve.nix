@@ -3,40 +3,40 @@
 { lib, ... }: {
   config.security.selinux.modules.svnserve = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Server for the svn repository access method.</summary>
+    interface = {
+      summary = "Server for the svn repository access method.";
+      exports = {
+        "svnserve_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an svnserve environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type svnserve_t, svnserve_initrc_exec_t, svnserve_runtime_t;
+          '';
+          content = ''
+            allow $1 svnserve_t:process { ptrace signal_perms };
+            ps_process_pattern($1, svnserve_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an svnserve environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`svnserve_admin',`
-      	gen_require(`
-      		type svnserve_t, svnserve_initrc_exec_t, svnserve_runtime_t;
-      	')
+            init_startstop_service($1, $2, svnserve_t, svnserve_initrc_exec_t)
 
-      	allow $1 svnserve_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, svnserve_t)
-
-      	init_startstop_service($1, $2, svnserve_t, svnserve_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, svnserve_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, svnserve_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(svnserve)
 

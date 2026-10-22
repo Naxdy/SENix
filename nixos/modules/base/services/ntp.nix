@@ -3,346 +3,313 @@
 { lib, ... }: {
   config.security.selinux.modules.ntp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Network time protocol daemon.</summary>
+    interface = {
+      summary = "Network time protocol daemon.";
+      exports = {
+        "ntp_stub" = {
+          summary = "NTP stub interface.  No access allowed.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type ntpd_t;
+          '';
+          content = "";
+        };
+        "ntp_read_config" = {
+          summary = "Read ntp.conf";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntp_conf_t;
+          '';
+          content = ''
+            allow $1 ntp_conf_t:file read_file_perms;
+          '';
+        };
+        "ntp_domtrans" = {
+          summary = "Execute ntp server in the ntpd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ntpd_t, ntpd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ntpd_exec_t, ntpd_t)
+          '';
+        };
+        "ntp_run" = {
+          summary = ''
+            Execute ntp in the ntp domain, and
+            allow the specified role the ntp domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role ntpd_roles;
+          '';
+          content = ''
+            ntp_domtrans($1)
+            roleattribute $2 ntpd_roles;
+          '';
+          rolecap = true;
+        };
+        "ntp_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            ntpd over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntpd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 ntpd_t:dbus send_msg;
+            allow ntpd_t $1:dbus send_msg;
+          '';
+        };
+        "ntp_domtrans_ntpdate" = {
+          summary = "Execute ntpdate server in the ntpd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ntpd_t, ntpdate_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ntpdate_exec_t, ntpd_t)
+          '';
+        };
+        "ntp_initrc_domtrans" = {
+          summary = ''
+            Execute ntpd init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ntpd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, ntpd_initrc_exec_t)
+          '';
+        };
+        "ntp_read_conf_files" = {
+          summary = "Read ntp conf files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntp_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, ntp_conf_t, ntp_conf_t)
+          '';
+        };
+        "ntp_read_drift_files" = {
+          summary = "Read ntp drift files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntp_drift_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, ntp_drift_t, ntp_drift_t)
+          '';
+        };
+        "ntp_filetrans_drift" = {
+          summary = "specified domain creates /var/lib/ntpsec/ with the correct type";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntp_drift_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            files_var_lib_filetrans($1, ntp_drift_t, dir, "ntpsec")
+          '';
+        };
+        "ntp_rw_shm" = {
+          summary = "Read and write ntpd shared memory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntpd_t, ntpd_tmpfs_t;
+          '';
+          content = ''
+            allow $1 ntpd_t:shm rw_shm_perms;
+            list_dirs_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
+            rw_files_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
+            read_lnk_files_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
+            fs_search_tmpfs($1)
+          '';
+        };
+        "ntp_enabledisable" = {
+          summary = "Allow specified domain to enable/disable ntpd unit";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          content = ''
+            ifdef(`init_systemd',`
+                    gen_require(`
+                            type ntpd_unit_t;
+                            class service { disable enable };
+                    ')
 
-      ########################################
-      ## <summary>
-      ##	NTP stub interface.  No access allowed.
-      ## </summary>
-      ## <param name="domain" unused="true">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_stub',`
-      	gen_require(`
-      		type ntpd_t;
-      	')
-      ')
+                    allow $1 ntpd_unit_t:service { disable enable };
+            ')
+          '';
+        };
+        "ntp_startstop" = {
+          summary = "Allow specified domain to start/stop ntpd unit";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          content = ''
+            ifdef(`init_systemd',`
+                    gen_require(`
+                            type ntpd_unit_t;
+                            class service { start stop };
+                    ')
 
-      ########################################
-      ## <summary>
-      ##	Read ntp.conf
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_read_config',`
-      	gen_require(`
-      		type ntp_conf_t;
-      	')
+                    allow $1 ntpd_unit_t:service { start stop };
+            ')
+          '';
+        };
+        "ntp_status" = {
+          summary = "Allow specified domain to get status of ntpd unit";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          content = ''
+            ifdef(`init_systemd',`
+                    gen_require(`
+                            type ntpd_unit_t;
+                            class service status;
+                    ')
 
-      	allow $1 ntp_conf_t:file read_file_perms;
-      ')
+                    allow $1 ntpd_unit_t:service status;
+            ')
+          '';
+        };
+        "ntp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ntp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ntpd_t, ntpd_tmp_t, ntpd_log_t;
+            type ntpd_key_t, ntpd_pid_t, ntp_conf_t;
+            type ntpd_initrc_exec_t, ntp_drift_t;
+            type ntpd_unit_t;
+          '';
+          content = ''
+            allow $1 ntpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ntpd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute ntp server in the ntpd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_domtrans',`
-      	gen_require(`
-      		type ntpd_t, ntpd_exec_t;
-      	')
+            init_startstop_service($1, $2, ntpd_t, ntpd_initrc_exec_t, ntpd_unit_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ntpd_exec_t, ntpd_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, { ntpd_key_t ntp_conf_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute ntp in the ntp domain, and
-      ##	allow the specified role the ntp domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ntp_run',`
-      	gen_require(`
-      		attribute_role ntpd_roles;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, ntpd_log_t)
 
-      	ntp_domtrans($1)
-      	roleattribute $2 ntpd_roles;
-      ')
+            files_list_tmp($1)
+            admin_pattern($1, ntpd_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	ntpd over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_dbus_chat',`
-      	gen_require(`
-      		type ntpd_t;
-      		class dbus send_msg;
-      	')
+            files_list_var_lib($1)
+            admin_pattern($1, ntp_drift_t)
 
-      	allow $1 ntpd_t:dbus send_msg;
-      	allow ntpd_t $1:dbus send_msg;
-      ')
+            files_list_runtime($1)
+            admin_pattern($1, ntpd_pid_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute ntpdate server in the ntpd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_domtrans_ntpdate',`
-      	gen_require(`
-      		type ntpd_t, ntpdate_exec_t;
-      	')
+            ntp_run($1, $2)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ntpdate_exec_t, ntpd_t)
-      ')
+            ifdef(`init_systemd',`
+                    gen_require(`
+                            class dbus send_msg;
+                    ')
 
-      ########################################
-      ## <summary>
-      ##	Execute ntpd init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_initrc_domtrans',`
-      	gen_require(`
-      		type ntpd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, ntpd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##      Read ntp conf files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_read_conf_files',`
-      	gen_require(`
-      		type ntp_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, ntp_conf_t, ntp_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read ntp drift files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_read_drift_files',`
-      	gen_require(`
-      		type ntp_drift_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, ntp_drift_t, ntp_drift_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	specified domain creates /var/lib/ntpsec/ with the correct type
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_filetrans_drift',`
-      	gen_require(`
-      		type ntp_drift_t;
-      	')
-
-      	files_search_var_lib($1)
-      	files_var_lib_filetrans($1, ntp_drift_t, dir, "ntpsec")
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write ntpd shared memory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_rw_shm',`
-      	gen_require(`
-      		type ntpd_t, ntpd_tmpfs_t;
-      	')
-
-      	allow $1 ntpd_t:shm rw_shm_perms;
-      	list_dirs_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
-      	rw_files_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
-      	read_lnk_files_pattern($1, ntpd_tmpfs_t, ntpd_tmpfs_t)
-      	fs_search_tmpfs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow specified domain to enable/disable ntpd unit
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_enabledisable',`
-      	ifdef(`init_systemd',`
-      		gen_require(`
-      			type ntpd_unit_t;
-      			class service { disable enable };
-      		')
-
-      		allow $1 ntpd_unit_t:service { disable enable };
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow specified domain to start/stop ntpd unit
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_startstop',`
-      	ifdef(`init_systemd',`
-      		gen_require(`
-      			type ntpd_unit_t;
-      			class service { start stop };
-      		')
-
-      		allow $1 ntpd_unit_t:service { start stop };
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow specified domain to get status of ntpd unit
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ntp_status',`
-      	ifdef(`init_systemd',`
-      		gen_require(`
-      			type ntpd_unit_t;
-      			class service status;
-      		')
-
-      		allow $1 ntpd_unit_t:service status;
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ntp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ntp_admin',`
-      	gen_require(`
-      		type ntpd_t, ntpd_tmp_t, ntpd_log_t;
-      		type ntpd_key_t, ntpd_pid_t, ntp_conf_t;
-      		type ntpd_initrc_exec_t, ntp_drift_t;
-      		type ntpd_unit_t;
-      	')
-
-      	allow $1 ntpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ntpd_t)
-
-      	init_startstop_service($1, $2, ntpd_t, ntpd_initrc_exec_t, ntpd_unit_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { ntpd_key_t ntp_conf_t })
-
-      	logging_list_logs($1)
-      	admin_pattern($1, ntpd_log_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, ntpd_tmp_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, ntp_drift_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, ntpd_pid_t)
-
-      	ntp_run($1, $2)
-
-      	ifdef(`init_systemd',`
-      		gen_require(`
-      			class dbus send_msg;
-      		')
-
-      		allow $1 ntpd_t:dbus send_msg;
-      		allow ntpd_t $1:dbus send_msg;
-      	')
-      ')
-    '';
+                    allow $1 ntpd_t:dbus send_msg;
+                    allow ntpd_t $1:dbus send_msg;
+            ')
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ntp)
 

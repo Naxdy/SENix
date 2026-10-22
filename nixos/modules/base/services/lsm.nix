@@ -3,38 +3,39 @@
 { lib, ... }: {
   config.security.selinux.modules.lsm = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Storage array management library.</summary>
+    interface = {
+      summary = "Storage array management library.";
+      exports = {
+        "lsmd_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            an lsmd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type lsmd_t, lsmd_runtime_t;
+          '';
+          content = ''
+            allow $1 lsmd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, lsmd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to administrate
-      ##	an lsmd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`lsmd_admin',`
-      	gen_require(`
-      		type lsmd_t, lsmd_runtime_t;
-      	')
-
-      	allow $1 lsmd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, lsmd_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, lsmd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, lsmd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(lsm)
 

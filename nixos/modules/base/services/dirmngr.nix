@@ -3,178 +3,163 @@
 { lib, ... }: {
   config.security.selinux.modules.dirmngr = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Server for managing and downloading certificate revocation lists.</summary>
+    interface = {
+      summary = "Server for managing and downloading certificate revocation lists.";
+      exports = {
+        "dirmngr_role" = {
+          type = "template";
+          summary = "Role access for dirmngr.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type dirmngr_t, dirmngr_exec_t;
+            type dirmngr_tmp_t;
+          '';
+          content = ''
+            role $4 types dirmngr_t;
 
-      ############################################################
-      ## <summary>
-      ##	Role access for dirmngr.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`dirmngr_role',`
-      	gen_require(`
-      		type dirmngr_t, dirmngr_exec_t;
-      		type dirmngr_tmp_t;
-      	')
+            domtrans_pattern($3, dirmngr_exec_t, dirmngr_t)
 
-      	role $4 types dirmngr_t;
+            allow $3 dirmngr_t:process { ptrace signal_perms };
+            ps_process_pattern($3, dirmngr_t)
 
-      	domtrans_pattern($3, dirmngr_exec_t, dirmngr_t)
+            allow dirmngr_t $3:fd use;
+            allow dirmngr_t $3:fifo_file rw_inherited_fifo_file_perms;
 
-      	allow $3 dirmngr_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, dirmngr_t)
+            allow $2 dirmngr_tmp_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	allow dirmngr_t $3:fd use;
-      	allow dirmngr_t $3:fifo_file rw_inherited_fifo_file_perms;
+            optional_policy(`
+                    systemd_user_app_status($1, dirmngr_t)
+                    systemd_user_app_socket_create($1, dirmngr_t, dirmngr_tmp_t)
+            ')
+          '';
+        };
+        "dirmngr_delete_tmp_named_sockets" = {
+          summary = "unlink dirmngr_tmp_t sock_file";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "domain allowed access";
+            };
+          };
+          gen_require = ''
+            type dirmngr_tmp_t;
+          '';
+          content = ''
+            allow $1 dirmngr_tmp_t:sock_file delete_sock_file_perms;
+          '';
+        };
+        "dirmngr_domtrans" = {
+          summary = "Execute dirmngr in the dirmngr domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dirmngr_t, dirmngr_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dirmngr_exec_t, dirmngr_t)
+          '';
+        };
+        "dirmngr_exec" = {
+          summary = "Execute the dirmngr in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dirmngr_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, dirmngr_exec_t)
+          '';
+        };
+        "dirmngr_stream_connect" = {
+          summary = "Connect to dirmngr socket";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type dirmngr_t, dirmngr_tmp_t;
+          '';
+          content = ''
+            gpg_search_agent_tmp_dirs($1)
+            allow $1 dirmngr_tmp_t:sock_file rw_sock_file_perms;
+            allow $1 dirmngr_t:unix_stream_socket connectto;
+            userdom_search_user_runtime($1)
+            userdom_search_user_home_dirs($1)
+          '';
+        };
+        "dirmngr_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an dirmngr environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dirmngr_t, dirmngr_initrc_exec_t, dirmngr_runtime_t;
+            type dirmngr_conf_t, dirmngr_var_lib_t, dirmngr_log_t;
+          '';
+          content = ''
+            allow $1 dirmngr_t:process { ptrace signal_perms };
+            ps_process_pattern($1, dirmngr_t)
 
-      	allow $2 dirmngr_tmp_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            init_startstop_service($1, $2, dirmngr_t, dirmngr_initrc_exec_t)
 
-      	optional_policy(`
-      		systemd_user_app_status($1, dirmngr_t)
-      		systemd_user_app_socket_create($1, dirmngr_t, dirmngr_tmp_t)
-      	')
-      ')
+            files_search_etc($1)
+            admin_pattern($1, dirmngr_conf_t)
 
-      ############################################################
-      ## <summary>
-      ##	unlink dirmngr_tmp_t sock_file
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dirmngr_delete_tmp_named_sockets',`
-      	gen_require(`
-      		type dirmngr_tmp_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, dirmngr_log_t)
 
-      	allow $1 dirmngr_tmp_t:sock_file delete_sock_file_perms;
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, dirmngr_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute dirmngr in the dirmngr domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dirmngr_domtrans',`
-      	gen_require(`
-      		type dirmngr_t, dirmngr_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dirmngr_exec_t, dirmngr_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the dirmngr in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dirmngr_exec',`
-      	gen_require(`
-      		type dirmngr_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, dirmngr_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to dirmngr socket
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dirmngr_stream_connect',`
-      	gen_require(`
-      		type dirmngr_t, dirmngr_tmp_t;
-      	')
-
-      	gpg_search_agent_tmp_dirs($1)
-      	allow $1 dirmngr_tmp_t:sock_file rw_sock_file_perms;
-      	allow $1 dirmngr_t:unix_stream_socket connectto;
-      	userdom_search_user_runtime($1)
-      	userdom_search_user_home_dirs($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an dirmngr environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dirmngr_admin',`
-      	gen_require(`
-      		type dirmngr_t, dirmngr_initrc_exec_t, dirmngr_runtime_t;
-      		type dirmngr_conf_t, dirmngr_var_lib_t, dirmngr_log_t;
-      	')
-
-      	allow $1 dirmngr_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, dirmngr_t)
-
-      	init_startstop_service($1, $2, dirmngr_t, dirmngr_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, dirmngr_conf_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, dirmngr_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, dirmngr_runtime_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, dirmngr_var_lib_t)
-      ')
-    '';
+            files_search_var_lib($1)
+            admin_pattern($1, dirmngr_var_lib_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dirmngr)
 

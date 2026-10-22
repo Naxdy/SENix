@@ -3,40 +3,40 @@
 { lib, ... }: {
   config.security.selinux.modules.sensord = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Sensor information logging daemon.</summary>
+    interface = {
+      summary = "Sensor information logging daemon.";
+      exports = {
+        "sensord_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an sensord environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type sensord_t, sensord_initrc_exec_t, sensord_runtime_t;
+          '';
+          content = ''
+            allow $1 sensord_t:process { ptrace signal_perms };
+            ps_process_pattern($1, sensord_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an sensord environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sensord_admin',`
-      	gen_require(`
-      		type sensord_t, sensord_initrc_exec_t, sensord_runtime_t;
-      	')
+            init_startstop_service($1, $2, sensord_t, sensord_initrc_exec_t)
 
-      	allow $1 sensord_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, sensord_t)
-
-      	init_startstop_service($1, $2, sensord_t, sensord_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, sensord_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, sensord_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sensord)
 

@@ -3,50 +3,48 @@
 { lib, ... }: {
   config.security.selinux.modules.slrnpull = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Service for downloading news feeds the slrn newsreader.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Search slrnpull spool directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`slrnpull_search_spool',`
-      	gen_require(`
-      		type slrnpull_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	allow $1 slrnpull_spool_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	slrnpull spool content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`slrnpull_manage_spool',`
-      	gen_require(`
-      		type slrnpull_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	manage_dirs_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
-      	manage_files_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
-      	manage_lnk_files_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
-      ')
-    '';
+    interface = {
+      summary = "Service for downloading news feeds the slrn newsreader.";
+      exports = {
+        "slrnpull_search_spool" = {
+          summary = "Search slrnpull spool directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slrnpull_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            allow $1 slrnpull_spool_t:dir search_dir_perms;
+          '';
+        };
+        "slrnpull_manage_spool" = {
+          summary = ''
+            Create, read, write, and delete
+            slrnpull spool content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type slrnpull_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            manage_dirs_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
+            manage_files_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
+            manage_lnk_files_pattern($1, slrnpull_spool_t, slrnpull_spool_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(slrnpull)
 

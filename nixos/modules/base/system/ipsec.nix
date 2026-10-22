@@ -3,431 +3,373 @@
 { lib, ... }: {
   config.security.selinux.modules.ipsec = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>TCP/IP encryption</summary>
+    interface = {
+      summary = "TCP/IP encryption";
+      exports = {
+        "ipsec_domtrans" = {
+          summary = "Execute ipsec in the ipsec domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ipsec_t, ipsec_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, ipsec_exec_t, ipsec_t)
+          '';
+        };
+        "ipsec_stream_connect" = {
+          summary = "Connect to IPSEC using a unix domain stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_t, ipsec_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, ipsec_runtime_t, ipsec_runtime_t, ipsec_t)
+          '';
+        };
+        "ipsec_domtrans_mgmt" = {
+          summary = "Execute ipsec in the ipsec mgmt domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_mgmt_t, ipsec_mgmt_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, ipsec_mgmt_exec_t, ipsec_mgmt_t)
+          '';
+        };
+        "ipsec_stream_connect_racoon" = {
+          summary = "Connect to racoon using a unix domain stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type racoon_t, ipsec_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, ipsec_runtime_t, ipsec_runtime_t, racoon_t)
+          '';
+        };
+        "ipsec_getattr_key_sockets" = {
+          summary = "Get the attributes of an IPSEC key socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_t;
+          '';
+          content = ''
+            allow $1 ipsec_t:key_socket getattr;
+          '';
+        };
+        "ipsec_exec_mgmt" = {
+          summary = "Execute the IPSEC management program in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_exec_t;
+          '';
+          content = ''
+            can_exec($1, ipsec_exec_t)
+          '';
+        };
+        "ipsec_signal_mgmt" = {
+          summary = "Send ipsec mgmt a general signal.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_mgmt_t;
+          '';
+          content = ''
+            allow $1 ipsec_mgmt_t:process signal;
+          '';
+        };
+        "ipsec_signull_mgmt" = {
+          summary = "Send ipsec mgmt a null signal.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_mgmt_t;
+          '';
+          content = ''
+            allow $1 ipsec_mgmt_t:process signull;
+          '';
+        };
+        "ipsec_kill_mgmt" = {
+          summary = "Send ipsec mgmt a kill signal.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_mgmt_t;
+          '';
+          content = ''
+            allow $1 ipsec_mgmt_t:process sigkill;
+          '';
+        };
+        "ipsec_mgmt_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            ipsec-mgmt over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_mgmt_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 ipsec_mgmt_t:dbus send_msg;
+            allow ipsec_mgmt_t $1:dbus send_msg;
+          '';
+        };
+        "ipsec_read_config" = {
+          summary = "Read the IPSEC configuration";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_conf_file_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 ipsec_conf_file_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "ipsec_match_default_spd" = {
+          summary = "Match the default SPD entry.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_spd_t;
+          '';
+          content = ''
+            allow $1 ipsec_spd_t:association polmatch;
+            allow $1 self:association sendto;
+          '';
+        };
+        "ipsec_setcontext_default_spd" = {
+          summary = ''
+            Set the context of a SPD entry to
+            the default context.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_spd_t;
+          '';
+          content = ''
+            allow $1 ipsec_spd_t:association setcontext;
+          '';
+        };
+        "ipsec_write_runtime_files" = {
+          summary = "Write ipsec runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            write_files_pattern($1, ipsec_runtime_t, ipsec_runtime_t)
+          '';
+        };
+        "ipsec_manage_runtime_files" = {
+          summary = "Create, read, write, and delete the IPSEC runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, ipsec_runtime_t, ipsec_runtime_t)
+          '';
+        };
+        "ipsec_domtrans_racoon" = {
+          summary = "Execute racoon in the racoon domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type racoon_t, racoon_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, racoon_exec_t, racoon_t)
+          '';
+        };
+        "ipsec_run_racoon" = {
+          summary = "Execute racoon and allow the specified role the domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type racoon_t;
+          '';
+          content = ''
+            ipsec_domtrans_racoon($1)
+            role $2 types racoon_t;
+          '';
+          rolecap = true;
+        };
+        "ipsec_domtrans_setkey" = {
+          summary = "Execute setkey in the setkey domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type setkey_t, setkey_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, setkey_exec_t, setkey_t)
+          '';
+        };
+        "ipsec_run_setkey" = {
+          summary = "Execute setkey and allow the specified role the domains.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access..";
+            };
+          };
+          gen_require = ''
+            type setkey_t;
+          '';
+          content = ''
+            ipsec_domtrans_setkey($1)
+            role $2 types setkey_t;
+          '';
+          rolecap = true;
+        };
+        "ipsec_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an ipsec environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ipsec_t, ipsec_initrc_exec_t, ipsec_conf_file_t;
+            type ipsec_key_file_t, ipsec_log_t, ipsec_tmp_t;
+            type ipsec_runtime_t, ipsec_mgmt_lock_t;
+            type ipsec_mgmt_runtime_t, racoon_tmp_t;
+            type ipsec_unit_t;
+          '';
+          content = ''
+            allow $1 ipsec_t:process { ptrace signal_perms };
+            ps_process_pattern($1, ipsec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute ipsec in the ipsec domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_domtrans',`
-      	gen_require(`
-      		type ipsec_t, ipsec_exec_t;
-      	')
+            init_startstop_service($1, $2, ipsec_t, ipsec_initrc_exec_t, ipsec_unit_t)
 
-      	domtrans_pattern($1, ipsec_exec_t, ipsec_t)
-      ')
+            ipsec_exec_mgmt($1)
+            ipsec_stream_connect($1)
+            # for lsof
+            ipsec_getattr_key_sockets($1)
 
-      ########################################
-      ## <summary>
-      ##	Connect to IPSEC using a unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_stream_connect',`
-      	gen_require(`
-      		type ipsec_t, ipsec_runtime_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, { ipsec_conf_file_t ipsec_key_file_t })
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, ipsec_runtime_t, ipsec_runtime_t, ipsec_t)
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, { ipsec_tmp_t racoon_tmp_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute ipsec in the ipsec mgmt domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_domtrans_mgmt',`
-      	gen_require(`
-      		type ipsec_mgmt_t, ipsec_mgmt_exec_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, { ipsec_runtime_t ipsec_mgmt_runtime_t })
 
-      	domtrans_pattern($1, ipsec_mgmt_exec_t, ipsec_mgmt_t)
-      ')
+            files_search_locks($1)
+            admin_pattern($1, ipsec_mgmt_lock_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to racoon using a unix domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_stream_connect_racoon',`
-      	gen_require(`
-      		type racoon_t, ipsec_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, ipsec_runtime_t, ipsec_runtime_t, racoon_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Get the attributes of an IPSEC key socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_getattr_key_sockets',`
-      	gen_require(`
-      		type ipsec_t;
-      	')
-
-      	allow $1 ipsec_t:key_socket getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the IPSEC management program in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_exec_mgmt',`
-      	gen_require(`
-      		type ipsec_exec_t;
-      	')
-
-      	can_exec($1, ipsec_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send ipsec mgmt a general signal.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`ipsec_signal_mgmt',`
-      	gen_require(`
-      		type ipsec_mgmt_t;
-      	')
-
-      	allow $1 ipsec_mgmt_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send ipsec mgmt a null signal.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`ipsec_signull_mgmt',`
-      	gen_require(`
-      		type ipsec_mgmt_t;
-      	')
-
-      	allow $1 ipsec_mgmt_t:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send ipsec mgmt a kill signal.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      #
-      interface(`ipsec_kill_mgmt',`
-      	gen_require(`
-      		type ipsec_mgmt_t;
-      	')
-
-      	allow $1 ipsec_mgmt_t:process sigkill;
-      ')
-
-      ######################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	ipsec-mgmt over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_mgmt_dbus_chat',`
-      	gen_require(`
-      		type ipsec_mgmt_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 ipsec_mgmt_t:dbus send_msg;
-      	allow ipsec_mgmt_t $1:dbus send_msg;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the IPSEC configuration
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ipsec_read_config',`
-      	gen_require(`
-      		type ipsec_conf_file_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 ipsec_conf_file_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Match the default SPD entry.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_match_default_spd',`
-      	gen_require(`
-      		type ipsec_spd_t;
-      	')
-
-      	allow $1 ipsec_spd_t:association polmatch;
-      	allow $1 self:association sendto;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set the context of a SPD entry to
-      ##	the default context.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_setcontext_default_spd',`
-      	gen_require(`
-      		type ipsec_spd_t;
-      	')
-
-      	allow $1 ipsec_spd_t:association setcontext;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write ipsec runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_write_runtime_files',`
-      	gen_require(`
-      		type ipsec_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	write_files_pattern($1, ipsec_runtime_t, ipsec_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete the IPSEC runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_manage_runtime_files',`
-      	gen_require(`
-      		type ipsec_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, ipsec_runtime_t, ipsec_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute racoon in the racoon domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_domtrans_racoon',`
-      	gen_require(`
-      		type racoon_t, racoon_exec_t;
-      	')
-
-      	domtrans_pattern($1, racoon_exec_t, racoon_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute racoon and allow the specified role the domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ipsec_run_racoon',`
-      	gen_require(`
-      		type racoon_t;
-      	')
-
-      	ipsec_domtrans_racoon($1)
-      	role $2 types racoon_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute setkey in the setkey domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`ipsec_domtrans_setkey',`
-      	gen_require(`
-      		type setkey_t, setkey_exec_t;
-      	')
-
-      	domtrans_pattern($1, setkey_exec_t, setkey_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute setkey and allow the specified role the domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access..
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ipsec_run_setkey',`
-      	gen_require(`
-      		type setkey_t;
-      	')
-
-      	ipsec_domtrans_setkey($1)
-      	role $2 types setkey_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an ipsec environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`ipsec_admin',`
-      	gen_require(`
-      		type ipsec_t, ipsec_initrc_exec_t, ipsec_conf_file_t;
-      		type ipsec_key_file_t, ipsec_log_t, ipsec_tmp_t;
-      		type ipsec_runtime_t, ipsec_mgmt_lock_t;
-      		type ipsec_mgmt_runtime_t, racoon_tmp_t;
-      		type ipsec_unit_t;
-      	')
-
-      	allow $1 ipsec_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, ipsec_t)
-
-      	init_startstop_service($1, $2, ipsec_t, ipsec_initrc_exec_t, ipsec_unit_t)
-
-      	ipsec_exec_mgmt($1)
-      	ipsec_stream_connect($1)
-      	# for lsof
-      	ipsec_getattr_key_sockets($1)
-
-      	files_search_etc($1)
-      	admin_pattern($1, { ipsec_conf_file_t ipsec_key_file_t })
-
-      	files_search_tmp($1)
-      	admin_pattern($1, { ipsec_tmp_t racoon_tmp_t })
-
-      	files_search_runtime($1)
-      	admin_pattern($1, { ipsec_runtime_t ipsec_mgmt_runtime_t })
-
-      	files_search_locks($1)
-      	admin_pattern($1, ipsec_mgmt_lock_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, ipsec_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, ipsec_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(ipsec)
 

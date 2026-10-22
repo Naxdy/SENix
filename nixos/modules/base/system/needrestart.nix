@@ -3,59 +3,53 @@
 { lib, ... }: {
   config.security.selinux.modules.needrestart = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for needrestart utility.</summary>
-      ##
-      ## <desc>
-      ## Utility to restart daemons after system updates
-      ## </desc>
-
-      ########################################
-      ## <summary>
-      ##      Execute needrestart in the user role
-      ## </summary>
-      ## <param name="domain">
-      ##      <summary>
-      ##      Domain allowed to transition.
-      ##      </summary>
-      ## </param>
-      ## <param name="role">
-      ##      <summary>
-      ##      Role allowed access.
-      ##      </summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`needrestart_run',`
-      	gen_require(`
-      		attribute_role needrestart_roles;
-      		type needrestart_exec_t, needrestart_t;
-      	')
-
-      	domtrans_pattern($1, needrestart_exec_t, needrestart_t)
-      	roleattribute $2 needrestart_roles;
-      	systemd_run_passwd_agent(needrestart_t, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute needrestart programs in the needrestart domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`needrestart_domtrans',`
-      	gen_require(`
-      		type needrestart_t, needrestart_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, needrestart_exec_t, needrestart_t)
-      ')
-    '';
+    interface = {
+      summary = "Policy for needrestart utility.";
+      exports = {
+        "needrestart_run" = {
+          summary = "Execute needrestart in the user role";
+          desc = ''
+            Utility to restart daemons after system updates
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role needrestart_roles;
+            type needrestart_exec_t, needrestart_t;
+          '';
+          content = ''
+            domtrans_pattern($1, needrestart_exec_t, needrestart_t)
+            roleattribute $2 needrestart_roles;
+            systemd_run_passwd_agent(needrestart_t, $2)
+          '';
+          rolecap = true;
+        };
+        "needrestart_domtrans" = {
+          summary = "Execute needrestart programs in the needrestart domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type needrestart_t, needrestart_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, needrestart_exec_t, needrestart_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(needrestart)
 

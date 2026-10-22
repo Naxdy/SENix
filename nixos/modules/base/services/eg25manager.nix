@@ -3,21 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.eg25manager = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Manager daemon for the Quectel EG25 modem</summary>
-      ##
-      ## <desc>
-      ## eg25-manager (Debian package eg25-manager) is a daemon aimed at configuring
-      ## and monitoring the Quectel EG25 modem on a running system. It is used on the
-      ## PinePhone (Pro) and performs the
-      ## following functions:
-      ##   * power on/off
-      ##   * startup configuration using AT commands
-      ##   * AGPS data upload
-      ##   * status monitoring (and restart if it becomes unavailable)
-      ## Homepage: https://gitlab.com/mobian1/eg25-manager
-      ## </desc>
-    '';
+    interface = {
+      summary = "Manager daemon for the Quectel EG25 modem";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(eg25manager)
 

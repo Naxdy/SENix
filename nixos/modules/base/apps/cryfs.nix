@@ -3,63 +3,62 @@
 { lib, ... }: {
   config.security.selinux.modules.cryfs = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>CryFS and similar other tools which mount encrypted directories using FUSE.</summary>
+    interface = {
+      summary = "CryFS and similar other tools which mount encrypted directories using FUSE.";
+      exports = {
+        "cryfs_role" = {
+          type = "template";
+          summary = "Role access for CryFS.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role cryfs_roles;
+            type cryfs_t, cryfs_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Role access for CryFS.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`cryfs_role',`
-      	gen_require(`
-      		attribute_role cryfs_roles;
-      		type cryfs_t, cryfs_exec_t;
-      	')
+            roleattribute $4 cryfs_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $4 cryfs_roles;
+            domtrans_pattern($3, cryfs_exec_t, cryfs_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            allow $3 cryfs_t:process signal_perms;
+            ps_process_pattern($3, cryfs_t)
 
-      	domtrans_pattern($3, cryfs_exec_t, cryfs_t)
-
-      	allow $3 cryfs_t:process signal_perms;
-      	ps_process_pattern($3, cryfs_t)
-
-      	optional_policy(`
-      		systemd_user_app_status($1, cryfs_t)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, cryfs_t)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cryfs)
 

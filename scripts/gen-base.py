@@ -5,7 +5,10 @@ For every module in the Reference Policy source tree (every combination of
 ``<module>.{if,te,fc}`` under ``policy/modules/<layer>/``) this writes a NixOS
 module to ``nixos/modules/base/<layer>/<module>.nix`` carrying:
 
-* ``interface``     -- the verbatim contents of the module's ``.if`` file,
+* ``exports``        -- the module's ``.if`` parsed into the declarative schema
+  (module ``summary``/``desc``/``required``, its interfaces/templates with
+  ``summary``, ``desc``, ``params``, ``gen_require``, ``content``, ``infoflow``,
+  ``rolecap``/``rolebase``),
 * ``typeEnforcement``-- the verbatim contents of the module's ``.te`` file,
 * ``fileContext.rules`` -- the module's ``.fc`` rules parsed into an attribute
   set of ``path = "rule"`` (a list when several rules share one path).
@@ -14,18 +17,21 @@ Every layer directory additionally gets an indexing ``default.nix`` that imports
 all of its modules, and ``nixos/modules/base/default.nix`` imports every layer,
 so the whole tree can be pulled in with a single ``imports = [ ./base ];``.
 
-The ``.if``/``.te`` bodies are left as-is on purpose: they still require the
-Reference Policy's ``m4`` pre-processing (``interface`` templates, ``gen_bool``
-and friends are only expanded at build time).  Only the ``distro_*`` conditional
-blocks are stripped, since they are dead code for our ``DISTRO=nixos`` build and
-our rule syntax cannot represent them.  ``.fc`` files, whose rules *do* have to
-lose their conditionals (the attribute set cannot express them), are instead
+The ``.if`` macros still require the Reference Policy's ``m4``
+pre-processing at build time (``gen_bool`` and friends are expanded there).
+Every ``ifdef``/``ifndef`` is kept verbatim inside the interface ``content``:
+refpolicy places them in macro bodies, and the build's m4 selects each branch
+with the same defines, while ``ifelse(...)`` also conditions on a macro
+parameter and can only be evaluated per caller.  The ``.te`` bodies keep their non-distro
+conditionals for ``m4``, and only ``distro_*`` blocks are stripped because they
+are dead code for our ``DISTRO=nixos`` build.  ``.fc`` files, whose rules *do*
+have to lose their conditionals (the attribute set cannot express them), are
 fully resolved against the `ACTIVE_DEFINES` of our build.  `/usr` is rewritten to
 a `/nix/store/[^/]+` glob, except for the modules listed in `STRIP_USR`, whose
 upstream `/usr` rules are emitted commented out as a reference for the
 hand-written store rules.
 
-The output is byte-for-byte what ``nixfmt`` 1.4.0 (the version pinned by the
+The output is byte-for-byte what ``nixfmt`` 1.5.0 (the version pinned by the
 repo's treefmt) produces, so the generated tree is always clean under
 ``nix checks.x86_64-linux.treefmt``.
 
@@ -116,7 +122,7 @@ USR_SUBST = ("/usr", "/nix/store/[^/]+")
 
 #: m4 symbols that are defined for our build (`DISTRO=nixos SYSTEMD=y UBAC=y
 #: TYPE=mcs`).  Only used when resolving every conditional, i.e. for `.fc`
-#: files, which have no `m4` stage in front of them once embedded in Nix.
+#: files, whose rules are compiled directly with no `m4` stage in front of them.
 ACTIVE_DEFINES = {
     "distro_nixos",
     "init_systemd",
@@ -130,6 +136,19 @@ HOME_MACROS = ("HOME_DIR", "HOME_ROOT")
 
 #: File-type flag token that may precede the context in a `.fc` rule.
 FLAGS_RE = re.compile(r"^-+[a-zA-Z]*$")
+
+#: One XML documentation comment line (`## ...`), the same form `segenxml.py`
+#: consumes when it builds `policy.xml` from the exported `.if`.
+DOC_COMMENT_RE = re.compile(r"^\s*##\s+(.*?)\s*$")
+
+#: An exported macro declaration, `interface(\`name',\`...')` or
+#: `template(\`name',\`...')`.
+MACRO_RE = re.compile(r"^\s*(interface|template)\(`(\w*)'")
+
+#: A `gen_require` block opening line, and its closing quote line. Refpolicy
+#: puts the outer macro's closing quote at column zero and this one indented.
+GEN_REQUIRE_OPEN_RE = re.compile(r"^gen_require\(")
+GEN_REQUIRE_CLOSE_RE = re.compile(r"^\s*'\)\s*$")
 
 
 # --------------------------------------------------------------------------
@@ -243,6 +262,275 @@ def expand_conditionals(text: str, resolve_all: bool) -> str:
         out.append(c)
         i += 1
     return "".join(out)
+
+
+# --------------------------------------------------------------------------
+# `.if` parsing
+# --------------------------------------------------------------------------
+
+
+@dataclass
+class ParamDoc:
+    key: str  # positional name (`$1`), derived from the document order
+    name: str
+    description: str
+    optional: bool = False
+    unused: bool = False
+
+
+@dataclass
+class Infoflow:
+    type: str
+    weight: str | None = None
+
+
+@dataclass
+class Docs:
+    summary: str | None = None
+    desc: str | None = None
+    params: list[ParamDoc] = field(default_factory=list)
+    infoflow: Infoflow | None = None
+    rolecap: bool = False
+    rolebase: bool = False
+    required: str | None = None
+
+
+@dataclass
+class Interface:
+    name: str
+    type: str  # `interface` or `template`
+    docs: Docs
+    gen_require: str | None  # body inside `gen_require(...)`, already dedented
+    content: str  # body following the `gen_require` block, already dedented
+
+
+def parse_docs(fragments: list[str]) -> Docs:
+    """Parse the XML doc-comment fragments attached to a module or a macro.
+
+    Fragments are the contents of `##` lines (as `segenxml.py` extracts them),
+    so inline tags such as `<summary>Foo.</summary>` are supported. Parameter
+    keys are positional (`$1`, `$2`, ...) because refpolicy parameter names in
+    the docs are symbolic and the actual macro variable is its ordinal.
+    """
+    docs = Docs()
+    mode: str | None = None
+    buf: list[str] = []
+    param: ParamDoc | None = None
+
+    for fragment in fragments:
+        if m := re.match(r"^<summary>(.*)</summary>$", fragment):
+            if param is not None:
+                param.description = m.group(1)
+            else:
+                docs.summary = m.group(1)
+            mode = None
+            continue
+
+        if fragment.startswith("<summary>"):
+            mode = "summary"
+            buf = []
+            continue
+        if fragment == "</summary>":
+            text = "\n".join(buf).rstrip()
+            if param is not None:
+                param.description = text
+            else:
+                docs.summary = text
+            mode = None
+            buf = []
+            continue
+
+        if m := re.match(r'^<param\s+name="([^"]+)"([^>]*)>$', fragment):
+            param = ParamDoc(
+                key=f"${len(docs.params) + 1}",
+                name=m.group(1),
+                description="Parameter descriptions are missing!",
+                optional='optional="true"' in m.group(2),
+                unused='unused="true"' in m.group(2),
+            )
+            docs.params.append(param)
+            mode = "param"
+            buf = []
+            continue
+        if fragment == "</param>":
+            mode = None
+            param = None
+            buf = []
+            continue
+
+        if fragment.startswith("<desc>"):
+            mode = "desc"
+            rest = fragment[len("<desc>") :]
+            buf = [rest] if rest.strip() else []
+            continue
+        if fragment.startswith("</desc>"):
+            docs.desc = "\n".join(buf).rstrip()
+            mode = None
+            buf = []
+            continue
+
+        if re.match(r'^<required\s+val="true">$', fragment):
+            mode = "required"
+            buf = []
+            continue
+        if fragment == "</required>":
+            docs.required = "\n".join(buf).rstrip()
+            mode = None
+            buf = []
+            continue
+
+        if m := re.match(r"^<infoflow\b([^>]*)/>$", fragment):
+            attrs = m.group(1)
+            kind = re.search(r'type="([^"]+)"', attrs)
+            weight = re.search(r'weight="([^"]+)"', attrs)
+            docs.infoflow = Infoflow(
+                type=kind.group(1) if kind else "none",
+                weight=weight.group(1) if weight else None,
+            )
+            continue
+        if fragment == "<rolecap/>":
+            docs.rolecap = True
+            continue
+        if fragment == "<rolebase/>":
+            docs.rolebase = True
+            continue
+
+        if mode in ("summary", "desc", "required"):
+            buf.append(fragment)
+
+    if docs.summary is None:
+        docs.summary = "Summary is missing!"
+    if docs.desc == "":
+        docs.desc = None
+    return docs
+
+
+def dedent_one(lines: list[str]) -> list[str]:
+    """Drop a macro body's outer indentation, keeping nested indentation.
+
+    Refpolicy bodies are mostly one tab deep, but a few modules use 4- to
+    8-space indentation instead. Strip whatever the first nonblank line uses
+    (tabs expand to 8 spaces) so nested indentation is preserved relative to
+    it; column-zero nested closing lines stay at column zero.
+    """
+    expanded = [line.expandtabs(8) for line in lines]
+    first = next((line for line in expanded if line.strip()), "")
+    base = len(first) - len(first.lstrip(" "))
+    return [
+        line[base:] if line.strip() and line.startswith(" " * base) else line
+        for line in expanded
+    ]
+
+
+def quote_depth(line: str, depth: int) -> int:
+    """Advance an m4 quote level over one line (`` ` `` opens, `'` closes)."""
+    for char in line:
+        if char == "`":
+            depth += 1
+        elif char == "'" and depth:
+            depth -= 1
+    return depth
+
+
+def parse_if(text: str, module: str) -> tuple[Docs, list[Interface]]:
+    """Parse a module's exported macros (`.if`) into declarative structures.
+
+    Macro bodies are kept verbatim, m4 conditionals included, because the
+    build's `m4` stage sees the rendered `.if` and selects their branches with
+    the same defines. Body lines lose only their outer indentation; the
+    `gen_require` block is split out of the body so it renders as its own
+    element, matching the `exports.interfaces` schema.
+    """
+    # `dnl` comments are kept too: refpolicy's only `.if` `dnl` sits inside a
+    # macro body (`ifelse(...,` dnl else`), where the build's m4 still consumes
+    # it, so removing it here would not reproduce the body verbatim.
+    # Every m4 conditional in refpolicy's `.if` sits inside a macro body (none
+    # wraps a module header or an interface declaration), and the build's m4
+    # stage evaluates them with the same defines. Keep them verbatim in the
+    # interface `content` so its branch selection is m4's, not the generator's.
+    # That also keeps `ifelse(...)`, which additionally conditions on a macro
+    # parameter (`ifelse(`$2',...`) and can only be evaluated per caller.
+
+    lines = text.split("\n")
+    header: Docs | None = None
+    pending: list[str] = []
+    interfaces: list[Interface] = []
+    header_done = False
+    i = 0
+
+    while i < len(lines):
+        raw = lines[i]
+        if m := DOC_COMMENT_RE.match(raw):
+            pending.append(m.group(1))
+            i += 1
+            continue
+        if not raw.strip():
+            i += 1
+            continue
+        if pending and not header_done:
+            header = parse_docs(pending)
+            pending = []
+            header_done = True
+            continue  # re-process this line with the header out of the way
+        header_done = True
+
+        if m := MACRO_RE.match(raw):
+            docs = parse_docs(pending)
+            pending = []
+            start = i + 1
+            end = start
+            # A macro body can contain nested quoted calls whose closing line
+            # (`tunable_policy(...\n')`) also sits at column zero; only the
+            # apostrophe that brings the m4 quote depth back to zero closes
+            # the outer macro. Track the depth instead of trusting the first
+            # `')` line.
+            depth = quote_depth(raw, 0)
+            while end < len(lines):
+                depth = quote_depth(lines[end], depth)
+                if depth == 0:
+                    break
+                end += 1
+            if end >= len(lines):
+                raise ValueError(f"{module}.if: unclosed macro {m.group(2)!r}")
+            body = dedent_one(lines[start:end])
+            while body and not body[0].strip():
+                body = body[1:]
+
+            gen_require: str | None = None
+            if body and GEN_REQUIRE_OPEN_RE.match(body[0]):
+                close = 1
+                while close < len(body) and not GEN_REQUIRE_CLOSE_RE.match(body[close]):
+                    close += 1
+                if close >= len(body):
+                    raise ValueError(f"{module}.if: unclosed gen_require")
+                inner = body[1:close]
+                while inner and not inner[-1].strip():
+                    inner = inner[:-1]
+                gen_require = "\n".join(inner)
+                body = body[close + 1 :]
+                while body and not body[0].strip():
+                    body = body[1:]
+
+            while body and not body[-1].strip():
+                body = body[:-1]
+            interfaces.append(
+                Interface(
+                    name=m.group(2),
+                    type=m.group(1),
+                    docs=docs,
+                    gen_require=gen_require,
+                    content="\n".join(body),
+                )
+            )
+            i = end + 1
+            continue
+        i += 1
+
+    if not header_done and pending:
+        header = parse_docs(pending)
+    if header is None:
+        raise ValueError(f"{module}.if: missing module header")
+    return header, interfaces
 
 
 # --------------------------------------------------------------------------
@@ -417,7 +705,7 @@ def render_rules(sections: list[Section], module: str) -> str:
 def render_assignment(
     rule: Rule, rules: list[str], indent: int = 8, commented: bool = False
 ) -> str:
-    """Render one `path = ...;` binding, wrapped exactly like nixfmt 1.4.0.
+    """Render one `path = ...;` binding, wrapped exactly like nixfmt 1.5.0.
 
     nixfmt keeps a binding on a single line while its *content* (key, ` = `,
     value and `;`, but not the line's indentation) fits in 100 columns; beyond
@@ -518,18 +806,136 @@ def render_index(paths: list[str]) -> str:
     return "\n".join(out) + "\n"
 
 
-def render_module(module: str, layer: str, interface: str, te: str, rules: str) -> str:
+def strip_common_indent(value: str) -> str:
+    """Remove a string block's common indentation, as nixfmt and Nix do.
+
+    Nix evaluates an indented `''` string by dropping the shallowest
+    nonblank line's indentation; nested lines keep their relative indentation.
+    Bodies parsed from `.if` are already relative (outer indentation was
+    stripped), but a `gen_require` block's contents are all one level deep;
+    normalizing here lets the renderer re-indent the block to nixfmt's
+    canonical depth instead of stacking one more level on every line.
+    """
+    lines = [line.expandtabs(8) for line in value.split("\n")]
+    nonblank = [line for line in lines if line.strip()]
+    base = min(len(line) - len(line.lstrip(" ")) for line in nonblank) if nonblank else 0
+    return "\n".join(
+        line[base:] if line.strip() and line.startswith(" " * base) else ("" if not line.strip() else line)
+        for line in lines
+    )
+
+
+def render_string(key: str, value: str, indent: int, force_block: bool = False) -> str:
+    """Render a Nix string binding, wrapped exactly like nixfmt.
+
+    A single-line value fits a `key = "...";` binding; a multiline one (or any
+    value with ``force_block``) becomes a `''` block whose contents sit two
+    columns deeper than the binding and whose closing quote aligns with it.
+    """
+    pad = " " * indent
+    if force_block or "\n" in value:
+        return "\n".join(
+            [
+                f"{pad}{key} = ''",
+                nix_indented(strip_common_indent(value), indent + 2),
+                f"{pad}'';",
+            ]
+        )
+    return f"{pad}{key} = {nix_dq(value)};"
+
+
+def render_docs_fields(
+    docs: Docs,
+    indent: int,
+    *,
+    include_required: bool = False,
+) -> list[str]:
+    """Render the XML doc-comment fields shared by module and macro entries.
+
+    The order follows refpolicy's own `.if` layout: `<summary>`, an optional
+    `<desc>`, then (module header only) `<required>`.
+    """
+    pad = " " * indent
+    out = [render_string("summary", docs.summary, indent)]
+    if docs.desc is not None:
+        out.append(render_string("desc", docs.desc, indent, force_block=True))
+    if include_required and docs.required is not None:
+        out.append(render_string("required", docs.required, indent, force_block=True))
+    return out
+
+
+def render_exports(docs: Docs, interfaces: list[Interface], indent: int = 4) -> list[str]:
+    """Render `exports` with the declarative schema: module docs, then macros."""
+    pad = " " * indent
+    ifpad = " " * (indent + 2)
+    out = [f"{pad}interface = {{"]
+    out.extend(render_docs_fields(docs, indent + 2, include_required=True))
+
+    if interfaces:
+        out.append(f"{ifpad}exports = {{")
+        for item in interfaces:
+            mpad = " " * (indent + 4)
+            tpad = " " * (indent + 6)
+            out.append(f'{mpad}"{item.name}" = {{')
+            if item.type != "interface":
+                out.append(render_string("type", item.type, indent + 6))
+            out.extend(render_docs_fields(item.docs, indent + 6))
+
+            if item.docs.params:
+                out.append(f"{tpad}params = {{")
+                for param in item.docs.params:
+                    ppad = " " * (indent + 8)
+                    vpad = " " * (indent + 10)
+                    out.append(f'{ppad}"{param.key}" = {{')
+                    out.append(render_string("name", param.name, indent + 10))
+                    out.append(render_string("description", param.description, indent + 10))
+                    if param.optional:
+                        out.append(f"{vpad}optional = true;")
+                    if param.unused:
+                        out.append(f"{vpad}unused = true;")
+                    out.append(f"{ppad}}};")
+                out.append(f"{tpad}}};")
+
+            if item.gen_require is not None:
+                out.append(render_string("gen_require", item.gen_require, indent + 6, force_block=True))
+            out.append(
+                render_string("content", item.content, indent + 6, force_block=bool(item.content.strip()))
+            )
+
+            if item.docs.infoflow is not None:
+                infoflow = item.docs.infoflow
+                out.append(f"{tpad}infoflow = {{")
+                out.append(render_string("type", infoflow.type, indent + 8))
+                if infoflow.weight is not None:
+                    out.append(render_string("weight", infoflow.weight, indent + 8))
+                out.append(f"{tpad}}};")
+            if item.docs.rolecap:
+                out.append(f"{tpad}rolecap = true;")
+            if item.docs.rolebase:
+                out.append(f"{tpad}rolebase = true;")
+            out.append(f"{mpad}}};")
+        out.append(f"{ifpad}}};")
+
+    out.append(f"{pad}}};")
+    return out
+
+
+def render_module(
+    module: str,
+    layer: str,
+    docs: Docs,
+    interfaces: list[Interface],
+    te: str,
+    rules: str,
+) -> str:
     out = [
         "# Generated by scripts/gen-base.py from the Reference Policy source.",
         "# Do not edit manually; re-run the generator instead.",
         "{ lib, ... }: {",
         f"  config.security.selinux.modules.{module} = {{",
         f'    layer = "{layer}";',
-        "    interface = lib.mkBefore ''",
     ]
-    if interface:
-        out.append(nix_indented(interface))
-    out.append("    '';")
+    out.extend(render_exports(docs, interfaces))
     out.append("    typeEnforcement = lib.mkBefore ''")
     if te:
         out.append(nix_indented(te))
@@ -626,7 +1032,7 @@ def main() -> int:
             if not fc_path.exists():
                 print(f"skip {layer}/{module}: no .fc", file=sys.stderr)
                 continue
-            interface = base.with_suffix(".if").read_text()
+            docs, interfaces = parse_if(base.with_suffix(".if").read_text(), module)
             te = base.with_suffix(".te").read_text()
             strip_usr = any(fnmatch.fnmatch(module, pattern) for pattern in STRIP_USR)
             rules = render_rules(
@@ -635,7 +1041,8 @@ def main() -> int:
             content = render_module(
                 module,
                 layer,
-                expand_conditionals(interface, resolve_all=False),
+                docs,
+                interfaces,
                 expand_conditionals(te, resolve_all=False),
                 rules,
             )

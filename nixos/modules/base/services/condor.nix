@@ -3,96 +3,94 @@
 { lib, ... }: {
   config.security.selinux.modules.condor = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>High-Throughput Computing System.</summary>
+    interface = {
+      summary = "High-Throughput Computing System.";
+      exports = {
+        "condor_domain_template" = {
+          type = "template";
+          summary = "The template to define a condor domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute condor_domain;
+            type condor_master_t;
+          '';
+          content = ''
+            #############################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a condor domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`condor_domain_template',`
-      	gen_require(`
-      		attribute condor_domain;
-      		type condor_master_t;
-      	')
+            type condor_$1_t, condor_domain;
+            type condor_$1_exec_t;
+            domain_type(condor_$1_t)
+            domain_entry_file(condor_$1_t, condor_$1_exec_t)
+            role system_r types condor_$1_t;
 
-      	#############################
-      	#
-      	# Declarations
-      	#
+            #############################
+            #
+            # Policy
+            #
 
-      	type condor_$1_t, condor_domain;
-      	type condor_$1_exec_t;
-      	domain_type(condor_$1_t)
-      	domain_entry_file(condor_$1_t, condor_$1_exec_t)
-      	role system_r types condor_$1_t;
+            domtrans_pattern(condor_master_t, condor_$1_exec_t, condor_$1_t)
+            allow condor_master_t condor_$1_exec_t:file ioctl;
 
-      	#############################
-      	#
-      	# Policy
-      	#
+            auth_use_nsswitch(condor_$1_t)
+          '';
+        };
+        "condor_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an condor environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute condor_domain;
+            type condor_initrc_exec_t, condor_log_t;
+            type condor_var_lib_t, condor_var_lock_t, condor_schedd_tmp_t;
+            type condor_runtime_t, condor_startd_tmp_t, condor_conf_t;
+          '';
+          content = ''
+            allow $1 condor_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, condor_domain)
 
-      	domtrans_pattern(condor_master_t, condor_$1_exec_t, condor_$1_t)
-      	allow condor_master_t condor_$1_exec_t:file ioctl;
+            init_startstop_service($1, $2, condor_domain, condor_initrc_exec_t)
 
-      	auth_use_nsswitch(condor_$1_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, condor_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an condor environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`condor_admin',`
-      	gen_require(`
-      		attribute condor_domain;
-      		type condor_initrc_exec_t, condor_log_t;
-      		type condor_var_lib_t, condor_var_lock_t, condor_schedd_tmp_t;
-      		type condor_runtime_t, condor_startd_tmp_t, condor_conf_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, condor_log_t)
 
-      	allow $1 condor_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, condor_domain)
+            files_search_locks($1)
+            admin_pattern($1, condor_var_lock_t)
 
-      	init_startstop_service($1, $2, condor_domain, condor_initrc_exec_t)
+            files_search_var_lib($1)
+            admin_pattern($1, condor_var_lib_t)
 
-      	files_search_etc($1)
-      	admin_pattern($1, condor_conf_t)
+            files_search_runtime($1)
+            admin_pattern($1, condor_runtime_t)
 
-      	logging_search_logs($1)
-      	admin_pattern($1, condor_log_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, condor_var_lock_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, condor_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, condor_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, { condor_schedd_tmp_t condor_startd_tmp_t })
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, { condor_schedd_tmp_t condor_startd_tmp_t })
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(condor)
 

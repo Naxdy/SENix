@@ -3,143 +3,139 @@
 { lib, ... }: {
   config.security.selinux.modules.qmail = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Qmail Mail Server.</summary>
+    interface = {
+      summary = "Qmail Mail Server.";
+      exports = {
+        "qmail_child_domain_template" = {
+          type = "template";
+          summary = "Template for qmail parent/sub-domain pairs.";
+          params = {
+            "$1" = {
+              name = "child_prefix";
+              description = "The prefix of the child domain.";
+            };
+            "$2" = {
+              name = "parent_domain";
+              description = "The name of the parent domain.";
+            };
+          };
+          gen_require = ''
+            attribute qmail_child_domain;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	Template for qmail parent/sub-domain pairs.
-      ## </summary>
-      ## <param name="child_prefix">
-      ##	<summary>
-      ##	The prefix of the child domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="parent_domain">
-      ##	<summary>
-      ##	The name of the parent domain.
-      ##	</summary>
-      ## </param>
-      #
-      template(`qmail_child_domain_template',`
-      	gen_require(`
-      		attribute qmail_child_domain;
-      	')
+            type $1_t, qmail_child_domain;
+            type $1_exec_t;
+            domain_type($1_t)
+            domain_entry_file($1_t, $1_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            role system_r types $1_t;
 
-      	type $1_t, qmail_child_domain;
-      	type $1_exec_t;
-      	domain_type($1_t)
-      	domain_entry_file($1_t, $1_exec_t)
+            ########################################
+            #
+            # Policy
+            #
 
-      	role system_r types $1_t;
+            domtrans_pattern($2, $1_exec_t, $1_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            kernel_read_system_state($2)
+          '';
+        };
+        "qmail_domtrans_inject" = {
+          summary = "Transition to qmail_inject_t.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type qmail_inject_t, qmail_inject_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, qmail_inject_exec_t, qmail_inject_t)
 
-      	domtrans_pattern($2, $1_exec_t, $1_t)
+            ifdef(`distro_debian',`
+                    files_search_usr($1)
+                    corecmd_search_bin($1)
+            ',`
+                    files_search_var($1)
+            ')
+          '';
+        };
+        "qmail_domtrans_queue" = {
+          summary = "Transition to qmail_queue_t.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type qmail_queue_t, qmail_queue_exec_t;
+          '';
+          content = ''
+            domtrans_pattern($1, qmail_queue_exec_t, qmail_queue_t)
 
-      	kernel_read_system_state($2)
-      ')
+            ifdef(`distro_debian',`
+                    files_search_usr($1)
+                    corecmd_search_bin($1)
+            ',`
+                    files_search_var($1)
+            ')
+          '';
+        };
+        "qmail_read_config" = {
+          summary = "Read qmail configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type qmail_etc_t;
+          '';
+          content = ''
+            files_search_var($1)
+            allow $1 qmail_etc_t:dir list_dir_perms;
+            allow $1 qmail_etc_t:file read_file_perms;
+            allow $1 qmail_etc_t:lnk_file read_lnk_file_perms;
 
-      ########################################
-      ## <summary>
-      ##	Transition to qmail_inject_t.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qmail_domtrans_inject',`
-      	gen_require(`
-      		type qmail_inject_t, qmail_inject_exec_t;
-      	')
-
-      	domtrans_pattern($1, qmail_inject_exec_t, qmail_inject_t)
-
-      	
-      		files_search_var($1)
-      	
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Transition to qmail_queue_t.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qmail_domtrans_queue',`
-      	gen_require(`
-      		type qmail_queue_t, qmail_queue_exec_t;
-      	')
-
-      	domtrans_pattern($1, qmail_queue_exec_t, qmail_queue_t)
-
-      	
-      		files_search_var($1)
-      	
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read qmail configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`qmail_read_config',`
-      	gen_require(`
-      		type qmail_etc_t;
-      	')
-
-      	files_search_var($1)
-      	allow $1 qmail_etc_t:dir list_dir_perms;
-      	allow $1 qmail_etc_t:file read_file_perms;
-      	allow $1 qmail_etc_t:lnk_file read_lnk_file_perms;
-
-      	
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Define the specified domain as a
-      ##	qmail-smtp service.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      ## <param name="entrypoint">
-      ##	<summary>
-      ##	The type associated with the process program.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`qmail_smtpd_service_domain',`
-      	gen_require(`
-      		type qmail_smtpd_t;
-      	')
-
-      	domtrans_pattern(qmail_smtpd_t, $2, $1)
-      ')
-    '';
+            ifdef(`distro_debian',`
+                    files_search_etc($1)
+            ')
+          '';
+          rolecap = true;
+        };
+        "qmail_smtpd_service_domain" = {
+          summary = ''
+            Define the specified domain as a
+            qmail-smtp service.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+            "$2" = {
+              name = "entrypoint";
+              description = "The type associated with the process program.";
+            };
+          };
+          gen_require = ''
+            type qmail_smtpd_t;
+          '';
+          content = ''
+            domtrans_pattern(qmail_smtpd_t, $2, $1)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(qmail)
 

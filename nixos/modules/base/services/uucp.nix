@@ -3,133 +3,123 @@
 { lib, ... }: {
   config.security.selinux.modules.uucp = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Unix to Unix Copy.</summary>
+    interface = {
+      summary = "Unix to Unix Copy.";
+      exports = {
+        "uucp_domtrans" = {
+          summary = "Execute uucico in the uucpd_t domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type uucpd_t, uucpd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, uucpd_exec_t, uucpd_t)
+          '';
+        };
+        "uucp_append_log" = {
+          summary = "Append uucp log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uucpd_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 uucpd_log_t:dir list_dir_perms;
+            append_files_pattern($1, uucpd_log_t, uucpd_log_t)
+          '';
+        };
+        "uucp_manage_spool" = {
+          summary = ''
+            Create, read, write, and delete
+            uucp spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uucpd_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            manage_dirs_pattern($1, uucpd_spool_t, uucpd_spool_t)
+            manage_files_pattern($1, uucpd_spool_t, uucpd_spool_t)
+            manage_lnk_files_pattern($1, uucpd_spool_t, uucpd_spool_t)
+          '';
+        };
+        "uucp_domtrans_uux" = {
+          summary = "Execute uux in the uux_t domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type uux_t, uux_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, uux_exec_t, uux_t)
+          '';
+        };
+        "uucp_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an uucp environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type uucpd_t, uucpd_tmp_t, uucpd_log_t;
+            type uucpd_spool_t, uucpd_ro_t, uucpd_rw_t;
+            type uucpd_runtime_t, uucpd_initrc_exec_t;
+          '';
+          content = ''
+            init_startstop_service($1, $2, uucpd_t, uucpd_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute uucico in the uucpd_t domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uucp_domtrans',`
-      	gen_require(`
-      		type uucpd_t, uucpd_exec_t;
-      	')
+            allow $1 uucpd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, uucpd_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, uucpd_exec_t, uucpd_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, uucpd_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Append uucp log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uucp_append_log',`
-      	gen_require(`
-      		type uucpd_log_t;
-      	')
+            files_list_spool($1)
+            admin_pattern($1, uucpd_spool_t)
 
-      	logging_search_logs($1)
-      	allow $1 uucpd_log_t:dir list_dir_perms;
-      	append_files_pattern($1, uucpd_log_t, uucpd_log_t)
-      ')
+            admin_pattern($1, { uucpd_rw_t uucpd_ro_t })
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	uucp spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uucp_manage_spool',`
-      	gen_require(`
-      		type uucpd_spool_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, uucpd_tmp_t)
 
-      	files_search_spool($1)
-      	manage_dirs_pattern($1, uucpd_spool_t, uucpd_spool_t)
-      	manage_files_pattern($1, uucpd_spool_t, uucpd_spool_t)
-      	manage_lnk_files_pattern($1, uucpd_spool_t, uucpd_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute uux in the uux_t domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uucp_domtrans_uux',`
-      	gen_require(`
-      		type uux_t, uux_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, uux_exec_t, uux_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an uucp environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`uucp_admin',`
-      	gen_require(`
-      		type uucpd_t, uucpd_tmp_t, uucpd_log_t;
-      		type uucpd_spool_t, uucpd_ro_t, uucpd_rw_t;
-      		type uucpd_runtime_t, uucpd_initrc_exec_t;
-      	')
-
-      	init_startstop_service($1, $2, uucpd_t, uucpd_initrc_exec_t)
-
-      	allow $1 uucpd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, uucpd_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, uucpd_log_t)
-
-      	files_list_spool($1)
-      	admin_pattern($1, uucpd_spool_t)
-
-      	admin_pattern($1, { uucpd_rw_t uucpd_ro_t })
-
-      	files_list_tmp($1)
-      	admin_pattern($1, uucpd_tmp_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, uucpd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, uucpd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(uucp)
 

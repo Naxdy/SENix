@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.mediawiki = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Open source wiki package written in PHP.</summary>
-    '';
+    interface = {
+      summary = "Open source wiki package written in PHP.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mediawiki)
 

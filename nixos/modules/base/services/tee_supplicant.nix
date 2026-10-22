@@ -3,38 +3,37 @@
 { lib, ... }: {
   config.security.selinux.modules.tee_supplicant = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>tee_supplicant</summary>
-      ##
-      ## <desc>
-      ## qtee_supplicant is a userspace supplicant daemon that
-      ## services callback requests from QTEE via the Linux TEE subsystem.
-      ## It communicates with QTEE through /dev/tee0 and provides normal-world 
-      ## services required by trusted applications running in QTEE.
-      ##
-      ## https://github.com/qualcomm/minkipc/tree/main/qtee_supplicant
-      ## </desc>
-
-      #####################
-      ## <summary>
-      ##  Allow the specified domain to create
-      ##  objects in /var/lib with an automatic
-      ##  transition to the tee_supplicant var lib type.
-      ## </summary>
-      ## <param name="domain">
-      ##  <summary>
-      ##  Domain allowed access.
-      ##  </summary>
-      ## </param>
-      #
-      interface(`tee_supplicant_var_lib_filetrans',`
-             gen_require(`
-                     type tee_supplicant_var_lib_t;
-             ')
-
-             files_var_lib_filetrans($1, tee_supplicant_var_lib_t, dir, "qtee_supplicant")
-      ')
-    '';
+    interface = {
+      summary = "tee_supplicant";
+      exports = {
+        "tee_supplicant_var_lib_filetrans" = {
+          summary = ''
+            Allow the specified domain to create
+            objects in /var/lib with an automatic
+            transition to the tee_supplicant var lib type.
+          '';
+          desc = ''
+            qtee_supplicant is a userspace supplicant daemon that
+            services callback requests from QTEE via the Linux TEE subsystem.
+            It communicates with QTEE through /dev/tee0 and provides normal-world
+            services required by trusted applications running in QTEE.
+            https://github.com/qualcomm/minkipc/tree/main/qtee_supplicant
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tee_supplicant_var_lib_t;
+          '';
+          content = ''
+            files_var_lib_filetrans($1, tee_supplicant_var_lib_t, dir, "qtee_supplicant")
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tee_supplicant)
 

@@ -3,86 +3,84 @@
 { lib, ... }: {
   config.security.selinux.modules.docportal = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for Docportal, the portal frontend service for Flatpak, Snap, etc.</summary>
+    interface = {
+      summary = "Policy for Docportal, the portal frontend service for Flatpak, Snap, etc.";
+      exports = {
+        "docportal_role" = {
+          type = "template";
+          summary = ''
+            Role access for docportal (user-service mode).
+            Call this from unprivuser.te / staff.te etc
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = "The prefix of the user role (e.g., \"user\" for user_r).";
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role (e.g., user_t).";
+            };
+            "$3" = {
+              name = "systemd_exec_domain";
+              description = ''
+                systemd exec domain for execute and transition access
+                (e.g., user_systemd_t).
+              '';
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access (e.g., user_r).";
+            };
+          };
+          gen_require = ''
+            type docportal_exec_t;
+            attribute docportal_domain;
+          '';
+          content = ''
+            type $1_docportal_t;
+            typeattribute $1_docportal_t docportal_domain;
+            role $4 types $1_docportal_t;
+            application_domain($1_docportal_t, docportal_exec_t)
+            domtrans_pattern($3, docportal_exec_t, $1_docportal_t)
+            allow $1_docportal_t $3:fd use;
 
-      ########################################
-      ## <summary>
-      ##	Role access for docportal (user-service mode).
-      ##	Call this from unprivuser.te / staff.te etc
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., "user" for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role (e.g., user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="systemd_exec_domain">
-      ##	<summary>
-      ##	systemd exec domain for execute and transition access
-      ##	(e.g., user_systemd_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access (e.g., user_r).
-      ##	</summary>
-      ## </param>
-      #
-      template(`docportal_role',`
-      	gen_require(`
-      		type docportal_exec_t;
-      		attribute docportal_domain;
-      	')
+            ps_process_pattern($3, $1_docportal_t)
+            allow $3 $1_docportal_t:process { sigkill signal signull };
 
-      	type $1_docportal_t;
-      	typeattribute $1_docportal_t docportal_domain;
-      	role $4 types $1_docportal_t;
-      	application_domain($1_docportal_t, docportal_exec_t)
-      	domtrans_pattern($3, docportal_exec_t, $1_docportal_t)
-      	allow $1_docportal_t $3:fd use;
+            allow $1_docportal_t self:process signal;
+            allow $1_docportal_t self:fifo_file rw_fifo_file_perms;
+            allow $1_docportal_t $3:unix_stream_socket { read write };
 
-      	ps_process_pattern($3, $1_docportal_t)
-      	allow $3 $1_docportal_t:process { sigkill signal signull };
+            optional_policy(`
+                    gen_require(`
+                            class dbus send_msg;
+                    ')
 
-      	allow $1_docportal_t self:process signal;
-      	allow $1_docportal_t self:fifo_file rw_fifo_file_perms;
-      	allow $1_docportal_t $3:unix_stream_socket { read write };
-
-      	optional_policy(`
-      		gen_require(`
-      			class dbus send_msg;
-      		')
-
-      		allow $1_docportal_t $2:dbus send_msg;
-      		allow $2 $1_docportal_t:dbus send_msg;
-      		dbus_all_session_bus_client($1_docportal_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run docportal.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docportal_domtrans',`
-      	gen_require(`
-      		type $1_docportal_t, docportal_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, docportal_exec_t, $1_docportal_t)
-      ')
-    '';
+                    allow $1_docportal_t $2:dbus send_msg;
+                    allow $2 $1_docportal_t:dbus send_msg;
+                    dbus_all_session_bus_client($1_docportal_t)
+            ')
+          '';
+        };
+        "docportal_domtrans" = {
+          summary = "Execute a domain transition to run docportal.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type $1_docportal_t, docportal_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, docportal_exec_t, $1_docportal_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(docportal)
 

@@ -163,13 +163,252 @@ in
                 '';
               };
               interface = mkOption {
-                type = types.nullOr types.lines;
+                type = types.nullOr (
+                  types.submodule {
+                    options = {
+                      summary = mkOption {
+                        type = types.str;
+                        example = ''
+                          Policy for kernel threads, proc filesystem,
+                          and unlabeled processes and objects.
+                        '';
+                        description = ''
+                          Summary description of this module, for the generated docs.
+                        '';
+                      };
+                      desc = mkOption {
+                        type = types.nullOr types.lines;
+                        default = null;
+                        example = ''
+                          <p>
+                            Policy for kernel threads, proc filesystem,
+                            and unlabeled processes and objects.
+                          </p>
+                        '';
+                        description = ''
+                          Long-form description of this module, for the generated docs.
+
+                          Contents are XML fragments (e.g. `<p>...</p>`), placed inside the
+                          module's `<desc>` element.
+                        '';
+                      };
+
+                      required = mkOption {
+                        type = types.nullOr types.str;
+                        default = null;
+                        example = ''
+                          This module has initial SIDs.
+                        '';
+                        description = ''
+                          Setting this to anything other than `null` marks this module as "required",
+                          with the reason provided by this option.
+                        '';
+                      };
+
+                      exports = mkOption {
+                        type = types.attrsOf (
+                          types.submodule {
+                            options = {
+                              type = mkOption {
+                                type = types.enum [
+                                  "interface"
+                                  "template"
+                                ];
+                                default = "interface";
+                                example = "template";
+                                description = ''
+                                  The kind of exported macro this entry is.
+
+                                  One module can export both `interface(...)` and
+                                  `template(...)` macros, so the kind is declared per entry.
+                                '';
+                              };
+                              summary = mkOption {
+                                type = types.str;
+                                example = ''
+                                  Allows the kernel to start userland processes
+                                  by dynamic transitions to the specified domain.
+                                '';
+                                description = ''
+                                  Summary description of this interface, for the generated docs.
+                                '';
+                              };
+                              desc = mkOption {
+                                type = types.nullOr types.lines;
+                                default = null;
+                                example = ''
+                                  <p>
+                                    Allows the kernel to start userland processes
+                                    by dynamic transitions to the specified domain.
+                                  </p>
+                                '';
+                                description = ''
+                                  Long-form description of this interface, for the generated docs.
+
+                                  Contents are XML fragments (e.g. `<p>...</p>`), placed inside
+                                  the interface's `<desc>` element.
+                                '';
+                              };
+
+                              params = mkOption {
+                                type = types.attrsOf (
+                                  types.submodule {
+                                    options = {
+                                      name = mkOption {
+                                        type = types.str;
+                                        description = ''
+                                          The symbolic name of this parameter, as used in the docs.
+                                        '';
+                                      };
+                                      description = mkOption {
+                                        type = types.str;
+                                        description = ''
+                                          The description of this parameter.
+                                        '';
+                                      };
+                                      optional = mkOption {
+                                        type = types.bool;
+                                        default = false;
+                                        description = ''
+                                          Whether this parameter is optional.
+                                        '';
+                                      };
+                                      unused = mkOption {
+                                        type = types.bool;
+                                        default = false;
+                                        description = ''
+                                          Whether the interface does not actually use this parameter.
+                                        '';
+                                      };
+                                    };
+                                  }
+                                );
+                                default = { };
+                                example = lib.literalExpression ''
+                                  {
+                                    "$1" = {
+                                      name = "domain";
+                                      description ="The process type entered by the kernel.";
+                                    };
+                                  }
+                                '';
+                                description = ''
+                                  An attribute set of parameters this interface supports.
+
+                                  Attribute names are the variable names used within the interface body, following the schema of `$n`
+                                  where `n` is a nonzero positive integer incrementing with parameter count.
+                                '';
+                              };
+
+                              gen_require = mkOption {
+                                type = types.nullOr types.lines;
+                                default = null;
+                                example = ''
+                                  type kernel_t;
+                                '';
+                                description = ''
+                                  Contents of the `gen_require` block at the start of this interface.
+                                '';
+                              };
+
+                              content = mkOption {
+                                type = types.lines;
+                                example = ''
+                                  domain_dyntrans_type(kernel_t)
+                                  allow kernel_t self:process setcurrent;
+                                  allow kernel_t $1:process dyntransition;
+                                '';
+                                description = ''
+                                  Main body contents of this interface.
+                                '';
+                              };
+
+                              infoflow = mkOption {
+                                type = types.nullOr (
+                                  types.submodule {
+                                    options = {
+                                      type = mkOption {
+                                        type = types.enum [
+                                          "none"
+                                          "read"
+                                          "write"
+                                          "both"
+                                        ];
+                                        description = ''
+                                          The direction of information flow this interface grants.
+                                        '';
+                                      };
+                                      weight = mkOption {
+                                        type = types.nullOr (
+                                          types.enum [
+                                            "1"
+                                            "2"
+                                            "3"
+                                            "4"
+                                            "5"
+                                            "6"
+                                            "7"
+                                            "8"
+                                            "9"
+                                            "10"
+                                          ]
+                                        );
+                                        default = null;
+                                        description = ''
+                                          The weight of this information flow, for the generated docs.
+
+                                          The docs DTD allows 1..10.
+                                        '';
+                                      };
+                                    };
+                                  }
+                                );
+                                default = null;
+                                description = ''
+                                  Information flow of this interface, for the generated docs.
+
+                                  Declared as `<infoflow type="…" weight="…"/>`; a `none` flow has
+                                  no weight.
+                                '';
+                              };
+
+                              # The docs XML distinguishes interfaces whose content touches a
+                              # role (`rolecap`) or that declare a role base (`rolebase`).
+                              rolecap = mkOption {
+                                type = types.bool;
+                                default = false;
+                                description = ''
+                                  Whether this interface grants a role capability.
+                                '';
+                              };
+                              rolebase = mkOption {
+                                type = types.bool;
+                                default = false;
+                                description = ''
+                                  Whether this interface declares a role base.
+                                '';
+                              };
+                            };
+                          }
+                        );
+                        default = { };
+                        description = ''
+                          Interfaces / macros exported by this module.
+
+                          Attribute names are the names of the individual interfaces.
+                        '';
+                      };
+                    };
+                  }
+                );
                 default = null;
                 description = ''
-                  Interface (`.if`) rules for this module.
+                  Exported macros / (`.if`) declarations for this module, with their documentation.
 
-                  Note that the rule must start with a `<summary>` doc comment, or else the module
-                  won't be included in the final policy.
+                  The module summary must be provided, or else the module won't be included in
+                  the final policy; `sedoctool.py` registers a module in `modules.conf` only when
+                  its XML documentation carries a `<summary>`. The interface entries are
+                  themselves documented through `summary`, `desc` and `params`.
                 '';
               };
               typeEnforcement = mkOption {

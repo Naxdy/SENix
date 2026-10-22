@@ -3,216 +3,194 @@
 { lib, ... }: {
   config.security.selinux.modules.xen = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Xen hypervisor.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	xend image directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_manage_image_dirs',`
-      	gen_require(`
-      		type xen_state_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, xen_state_t, xen_state_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read xend image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_read_image_files',`
-      	gen_require(`
-      		type xen_image_t, xen_state_t;
-      	')
-
-      	files_list_var_lib($1)
-      	list_dirs_pattern($1, xen_state_t, xen_state_t)
-      	read_files_pattern($1, { xen_state_t xen_image_t }, xen_image_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write xend image files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_rw_image_files',`
-      	gen_require(`
-      		type xen_image_t, xen_state_t;
-      	')
-
-      	files_list_var_lib($1)
-      	allow $1 xen_state_t:dir search_dir_perms;
-      	rw_files_pattern($1, xen_image_t, xen_image_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append xend log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_append_log',`
-      	gen_require(`
-      		type xen_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, xen_log_t, xen_log_t)
-      	dontaudit $1 xen_log_t:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	xend log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_manage_log',`
-      	gen_require(`
-      		type xen_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	manage_dirs_pattern($1, xen_log_t, xen_log_t)
-      	manage_files_pattern($1, xen_log_t, xen_log_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read xenstored runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_read_xenstored_runtime_files',`
-      	gen_require(`
-      		type xenstored_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	read_files_pattern($1, xenstored_runtime_t, xenstored_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to xenstored with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_stream_connect_xenstore',`
-      	gen_require(`
-      		type xenstored_t, xenstored_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, xenstored_runtime_t, xenstored_runtime_t, xenstored_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create in a xen_runtime_t directory
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private type">
-      ##	<summary>
-      ##	The type of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_runtime_filetrans',`
-      	gen_require(`
-      		type xen_runtime_t;
-      	')
-
-      	filetrans_pattern($1, xen_runtime_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run xm.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_domtrans_xm',`
-      	gen_require(`
-      		type xm_t, xm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, xm_exec_t, xm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to xm with a unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`xen_stream_connect_xm',`
-      	gen_require(`
-      		type xm_t, xenstored_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, xenstored_runtime_t, xenstored_runtime_t, xm_t)
-      ')
-    '';
+    interface = {
+      summary = "Xen hypervisor.";
+      exports = {
+        "xen_manage_image_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            xend image directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xen_state_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, xen_state_t, xen_state_t)
+          '';
+        };
+        "xen_read_image_files" = {
+          summary = "Read xend image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xen_image_t, xen_state_t;
+          '';
+          content = ''
+            files_list_var_lib($1)
+            list_dirs_pattern($1, xen_state_t, xen_state_t)
+            read_files_pattern($1, { xen_state_t xen_image_t }, xen_image_t)
+          '';
+        };
+        "xen_rw_image_files" = {
+          summary = "Read and write xend image files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xen_image_t, xen_state_t;
+          '';
+          content = ''
+            files_list_var_lib($1)
+            allow $1 xen_state_t:dir search_dir_perms;
+            rw_files_pattern($1, xen_image_t, xen_image_t)
+          '';
+        };
+        "xen_append_log" = {
+          summary = "Append xend log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xen_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, xen_log_t, xen_log_t)
+            dontaudit $1 xen_log_t:file write;
+          '';
+        };
+        "xen_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            xend log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xen_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_dirs_pattern($1, xen_log_t, xen_log_t)
+            manage_files_pattern($1, xen_log_t, xen_log_t)
+          '';
+        };
+        "xen_read_xenstored_runtime_files" = {
+          summary = "Read xenstored runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenstored_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            read_files_pattern($1, xenstored_runtime_t, xenstored_runtime_t)
+          '';
+        };
+        "xen_stream_connect_xenstore" = {
+          summary = ''
+            Connect to xenstored with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xenstored_t, xenstored_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, xenstored_runtime_t, xenstored_runtime_t, xenstored_t)
+          '';
+        };
+        "xen_runtime_filetrans" = {
+          summary = "Create in a xen_runtime_t directory";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private type";
+              description = "The type of the object to be created.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+          };
+          gen_require = ''
+            type xen_runtime_t;
+          '';
+          content = ''
+            filetrans_pattern($1, xen_runtime_t, $2, $3)
+          '';
+        };
+        "xen_domtrans_xm" = {
+          summary = "Execute a domain transition to run xm.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type xm_t, xm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, xm_exec_t, xm_t)
+          '';
+        };
+        "xen_stream_connect_xm" = {
+          summary = ''
+            Connect to xm with a unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type xm_t, xenstored_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, xenstored_runtime_t, xenstored_runtime_t, xm_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(xen)
 

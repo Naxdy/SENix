@@ -3,104 +3,97 @@
 { lib, ... }: {
   config.security.selinux.modules.tuned = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Dynamic adaptive system tuning daemon.</summary>
+    interface = {
+      summary = "Dynamic adaptive system tuning daemon.";
+      exports = {
+        "tuned_domtrans" = {
+          summary = "Execute a domain transition to run tuned.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type tuned_t, tuned_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, tuned_exec_t, tuned_t)
+          '';
+        };
+        "tuned_exec" = {
+          summary = "Execute tuned in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type tuned_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, tuned_exec_t)
+          '';
+        };
+        "tuned_initrc_domtrans" = {
+          summary = ''
+            Execute tuned init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type tuned_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, tuned_initrc_exec_t)
+          '';
+        };
+        "tuned_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an tuned environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type tuned_t, tuned_runtime_t, tuned_initrc_exec_t;
+            type tuned_etc_t, tuned_rw_etc_t, tuned_log_t;
+          '';
+          content = ''
+            allow $1 tuned_t:process { ptrace signal_perms };
+            ps_process_pattern($1, tuned_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run tuned.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tuned_domtrans',`
-      	gen_require(`
-      		type tuned_t, tuned_exec_t;
-      	')
+            init_startstop_service($1, $2, tuned_t, tuned_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, tuned_exec_t, tuned_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, { tuned_etc_t tuned_rw_etc_t })
 
-      #######################################
-      ## <summary>
-      ##	Execute tuned in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tuned_exec',`
-      	gen_require(`
-      		type tuned_exec_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, tuned_log_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, tuned_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute tuned init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tuned_initrc_domtrans',`
-      	gen_require(`
-      		type tuned_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, tuned_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an tuned environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`tuned_admin',`
-      	gen_require(`
-      		type tuned_t, tuned_runtime_t, tuned_initrc_exec_t;
-      		type tuned_etc_t, tuned_rw_etc_t, tuned_log_t;
-      	')
-
-      	allow $1 tuned_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, tuned_t)
-
-      	init_startstop_service($1, $2, tuned_t, tuned_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, { tuned_etc_t tuned_rw_etc_t })
-
-      	logging_search_logs($1)
-      	admin_pattern($1, tuned_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, tuned_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, tuned_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tuned)
 

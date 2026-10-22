@@ -3,492 +3,444 @@
 { lib, ... }: {
   config.security.selinux.modules.rpc = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Remote Procedure Call Daemon.</summary>
+    interface = {
+      summary = "Remote Procedure Call Daemon.";
+      exports = {
+        "rpc_stub" = {
+          summary = "RPC stub interface.  No access allowed.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = "";
+        };
+        "rpc_domain_template" = {
+          type = "template";
+          summary = "The template to define a rpc domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute rpc_domain;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      ########################################
-      ## <summary>
-      ##	RPC stub interface.  No access allowed.
-      ## </summary>
-      ## <param name="domain" unused="true">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_stub',`
-      	gen_require(`
-      		type exports_t;
-      	')
-      ')
+            type $1_t, rpc_domain;
+            type $1_exec_t;
+            init_daemon_domain($1_t, $1_exec_t)
 
-      #######################################
-      ## <summary>
-      ##	The template to define a rpc domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`rpc_domain_template',`
-      	gen_require(`
-      		attribute rpc_domain;
-      	')
+            domain_use_interactive_fds($1_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	type $1_t, rpc_domain;
-      	type $1_exec_t;
-      	init_daemon_domain($1_t, $1_exec_t)
+            auth_use_nsswitch($1_t)
+          '';
+        };
+        "rpc_list_exports" = {
+          summary = "List export files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = ''
+            allow $1 exports_t:dir list_dir_perms;
+          '';
+        };
+        "rpc_dontaudit_getattr_exports" = {
+          summary = ''
+            Do not audit attempts to get
+            attributes of export files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = ''
+            dontaudit $1 exports_t:file getattr;
+          '';
+        };
+        "rpc_read_exports" = {
+          summary = "Read export files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = ''
+            allow $1 exports_t:file read_file_perms;
+          '';
+        };
+        "rpc_create_exports" = {
+          summary = "Create export files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = ''
+            create_files_pattern($1, exports_t, exports_t)
+          '';
+        };
+        "rpc_write_exports" = {
+          summary = "Write export files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type exports_t;
+          '';
+          content = ''
+            allow $1 exports_t:file write;
+          '';
+        };
+        "rpc_domtrans_nfsd" = {
+          summary = "Execute nfsd in the nfsd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nfsd_t, nfsd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, nfsd_exec_t, nfsd_t)
+          '';
+        };
+        "rpc_initrc_domtrans_nfsd" = {
+          summary = ''
+            Execute nfsd init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nfsd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, nfsd_initrc_exec_t)
+          '';
+        };
+        "rpc_domtrans_rpcd" = {
+          summary = "Execute rpcd in the rpcd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpcd_t, rpcd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rpcd_exec_t, rpcd_t)
+          '';
+        };
+        "rpc_initrc_domtrans_rpcd" = {
+          summary = ''
+            Execute rpcd init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rpcd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, rpcd_initrc_exec_t)
+          '';
+        };
+        "rpc_read_rpcd_state" = {
+          summary = ''
+            Read the process state (/proc/pid) of
+            rpcd.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rpcd_t;
+          '';
+          content = ''
+            ps_process_pattern($1, rpcd_t)
+          '';
+        };
+        "rpc_use_nfsd_fds" = {
+          summary = ''
+            Inherit and use file descriptors from
+            nfsd.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_t;
+          '';
+          content = ''
+            allow $1 nfsd_t:fd use;
+          '';
+        };
+        "rpc_read_nfs_content" = {
+          summary = "Read nfs exported content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_ro_t, nfsd_rw_t;
+          '';
+          content = ''
+            allow $1 { nfsd_ro_t nfsd_rw_t }:dir list_dir_perms;
+            allow $1 { nfsd_ro_t nfsd_rw_t }:file read_file_perms;
+            allow $1 { nfsd_ro_t nfsd_rw_t }:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "rpc_manage_nfs_rw_content" = {
+          summary = ''
+            Create, read, write, and delete
+            nfs exported read write content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_rw_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, nfsd_rw_t, nfsd_rw_t)
+            manage_files_pattern($1, nfsd_rw_t, nfsd_rw_t)
+            manage_lnk_files_pattern($1, nfsd_rw_t, nfsd_rw_t)
+          '';
+          rolecap = true;
+        };
+        "rpc_manage_nfs_ro_content" = {
+          summary = ''
+            Create, read, write, and delete
+            nfs exported read only content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_ro_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, nfsd_ro_t, nfsd_ro_t)
+            manage_files_pattern($1, nfsd_ro_t, nfsd_ro_t)
+            manage_lnk_files_pattern($1, nfsd_ro_t, nfsd_ro_t)
+          '';
+          rolecap = true;
+        };
+        "rpc_tcp_rw_nfs_sockets" = {
+          summary = "Read and write to nfsd tcp sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_t;
+          '';
+          content = ''
+            allow $1 nfsd_t:tcp_socket rw_socket_perms;
+          '';
+        };
+        "rpc_udp_rw_nfs_sockets" = {
+          summary = "Read and write to nfsd udp sockets.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nfsd_t;
+          '';
+          content = ''
+            allow $1 nfsd_t:udp_socket rw_socket_perms;
+          '';
+        };
+        "rpc_search_nfs_state_data" = {
+          summary = "Search nfs lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type var_lib_nfs_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 var_lib_nfs_t:dir search;
+          '';
+        };
+        "rpc_create_nfs_state_data_dirs" = {
+          summary = "Create nfs lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type var_lib_nfs_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            create_dirs_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
+          '';
+        };
+        "rpc_read_nfs_state_data" = {
+          summary = "Read nfs lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type var_lib_nfs_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
+          '';
+        };
+        "rpc_manage_nfs_state_data" = {
+          summary = ''
+            Create, read, write, and delete
+            nfs lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type var_lib_nfs_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
+          '';
+        };
+        "rpc_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an rpc environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute rpc_domain;
+            type nfsd_initrc_exec_t, rpcd_initrc_exec_t, exports_t;
+            type var_lib_nfs_t, rpcd_runtime_t, gssd_tmp_t;
+            type nfsd_ro_t, nfsd_rw_t, gssd_keytab_t;
+            type nfsd_t, rpcd_t;
+          '';
+          content = ''
+            allow $1 rpc_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, rpc_domain)
 
-      	domain_use_interactive_fds($1_t)
+            init_startstop_service($1, $2, nfsd_t, nfsd_initrc_exec_t)
+            init_startstop_service($1, $2, rpcd_t, rpcd_initrc_exec_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            files_list_etc($1)
+            admin_pattern($1, { gssd_keytab_t exports_t })
 
-      	auth_use_nsswitch($1_t)
-      ')
+            files_list_var_lib($1)
+            admin_pattern($1, var_lib_nfs_t)
 
-      ########################################
-      ## <summary>
-      ##	List export files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_list_exports',`
-      	gen_require(`
-      		type exports_t;
-      	')
+            files_list_runtime($1)
+            admin_pattern($1, rpcd_runtime_t)
 
-      	allow $1 exports_t:dir list_dir_perms;
-      ')
+            files_list_all($1)
+            admin_pattern($1, { nfsd_ro_t nfsd_rw_t })
 
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to get
-      ##	attributes of export files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_dontaudit_getattr_exports',`
-      	gen_require(`
-      		type exports_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, gssd_tmp_t)
 
-      	dontaudit $1 exports_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read export files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_read_exports',`
-      	gen_require(`
-      		type exports_t;
-      	')
-
-      	allow $1 exports_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create export files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_create_exports',`
-      	gen_require(`
-      		type exports_t;
-      	')
-
-      	create_files_pattern($1, exports_t, exports_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write export files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_write_exports',`
-      	gen_require(`
-      		type exports_t;
-      	')
-
-      	allow $1 exports_t:file write;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute nfsd in the nfsd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_domtrans_nfsd',`
-      	gen_require(`
-      		type nfsd_t, nfsd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, nfsd_exec_t, nfsd_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute nfsd init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_initrc_domtrans_nfsd',`
-      	gen_require(`
-      		type nfsd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, nfsd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rpcd in the rpcd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_domtrans_rpcd',`
-      	gen_require(`
-      		type rpcd_t, rpcd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rpcd_exec_t, rpcd_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Execute rpcd init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_initrc_domtrans_rpcd',`
-      	gen_require(`
-      		type rpcd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, rpcd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read the process state (/proc/pid) of
-      ##	rpcd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_read_rpcd_state',`
-      	gen_require(`
-      		type rpcd_t;
-      	')
-
-      	ps_process_pattern($1, rpcd_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Inherit and use file descriptors from
-      ##	nfsd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_use_nfsd_fds',`
-      	gen_require(`
-      		type nfsd_t;
-      	')
-
-      	allow $1 nfsd_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read nfs exported content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpc_read_nfs_content',`
-      	gen_require(`
-      		type nfsd_ro_t, nfsd_rw_t;
-      	')
-
-      	allow $1 { nfsd_ro_t nfsd_rw_t }:dir list_dir_perms;
-      	allow $1 { nfsd_ro_t nfsd_rw_t }:file read_file_perms;
-      	allow $1 { nfsd_ro_t nfsd_rw_t }:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	nfs exported read write content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpc_manage_nfs_rw_content',`
-      	gen_require(`
-      		type nfsd_rw_t;
-      	')
-
-      	manage_dirs_pattern($1, nfsd_rw_t, nfsd_rw_t)
-      	manage_files_pattern($1, nfsd_rw_t, nfsd_rw_t)
-      	manage_lnk_files_pattern($1, nfsd_rw_t, nfsd_rw_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	nfs exported read only content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpc_manage_nfs_ro_content',`
-      	gen_require(`
-      		type nfsd_ro_t;
-      	')
-
-      	manage_dirs_pattern($1, nfsd_ro_t, nfsd_ro_t)
-      	manage_files_pattern($1, nfsd_ro_t, nfsd_ro_t)
-      	manage_lnk_files_pattern($1, nfsd_ro_t, nfsd_ro_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write to nfsd tcp sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_tcp_rw_nfs_sockets',`
-      	gen_require(`
-      		type nfsd_t;
-      	')
-
-      	allow $1 nfsd_t:tcp_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write to nfsd udp sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_udp_rw_nfs_sockets',`
-      	gen_require(`
-      		type nfsd_t;
-      	')
-
-      	allow $1 nfsd_t:udp_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search nfs lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_search_nfs_state_data',`
-      	gen_require(`
-      		type var_lib_nfs_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 var_lib_nfs_t:dir search;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create nfs lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_create_nfs_state_data_dirs',`
-      	gen_require(`
-      		type var_lib_nfs_t;
-      	')
-
-      	files_search_var_lib($1)
-      	create_dirs_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read nfs lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_read_nfs_state_data',`
-      	gen_require(`
-      		type var_lib_nfs_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	nfs lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rpc_manage_nfs_state_data',`
-      	gen_require(`
-      		type var_lib_nfs_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, var_lib_nfs_t, var_lib_nfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an rpc environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rpc_admin',`
-      	gen_require(`
-      		attribute rpc_domain;
-      		type nfsd_initrc_exec_t, rpcd_initrc_exec_t, exports_t;
-      		type var_lib_nfs_t, rpcd_runtime_t, gssd_tmp_t;
-      		type nfsd_ro_t, nfsd_rw_t, gssd_keytab_t;
-      		type nfsd_t, rpcd_t;
-      	')
-
-      	allow $1 rpc_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, rpc_domain)
-
-      	init_startstop_service($1, $2, nfsd_t, nfsd_initrc_exec_t)
-      	init_startstop_service($1, $2, rpcd_t, rpcd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, { gssd_keytab_t exports_t })
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, var_lib_nfs_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, rpcd_runtime_t)
-
-      	files_list_all($1)
-      	admin_pattern($1, { nfsd_ro_t nfsd_rw_t })
-
-      	files_list_tmp($1)
-      	admin_pattern($1, gssd_tmp_t)
-
-      	fs_rw_nfsd_fs($1)
-      ')
-    '';
+            fs_rw_nfsd_fs($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rpc)
 

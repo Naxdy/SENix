@@ -3,40 +3,40 @@
 { lib, ... }: {
   config.security.selinux.modules.transproxy = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Portable Transparent Proxy Solution.</summary>
+    interface = {
+      summary = "Portable Transparent Proxy Solution.";
+      exports = {
+        "transproxy_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an transproxy environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type transproxy_t, transproxy_initrc_exec_t, transproxy_runtime_t;
+          '';
+          content = ''
+            allow $1 transproxy_t:process { ptrace signal_perms };
+            ps_process_pattern($1, transproxy_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an transproxy environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`transproxy_admin',`
-      	gen_require(`
-      		type transproxy_t, transproxy_initrc_exec_t, transproxy_runtime_t;
-      	')
+            init_startstop_service($1, $2, transproxy_t, transproxy_initrc_exec_t)
 
-      	allow $1 transproxy_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, transproxy_t)
-
-      	init_startstop_service($1, $2, transproxy_t, transproxy_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, transproxy_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, transproxy_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(transproxy)
 

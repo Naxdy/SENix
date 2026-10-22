@@ -3,174 +3,160 @@
 { lib, ... }: {
   config.security.selinux.modules.chromium = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Chromium browser</summary>
+    interface = {
+      summary = "Chromium browser";
+      exports = {
+        "chromium_role" = {
+          type = "template";
+          summary = "Role access for chromium";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type chromium_t;
+            type chromium_sandbox_t;
+            type chromium_naclhelper_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            role $4 types chromium_t;
+            role $4 types chromium_sandbox_t;
+            role $4 types chromium_naclhelper_t;
 
-      #######################################
-      ## <summary>
-      ## 	Role access for chromium
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`chromium_role',`
-      	gen_require(`
-      		type chromium_t;
-      		type chromium_sandbox_t;
-      		type chromium_naclhelper_t;
-      		class dbus send_msg;
-      	')
+            # Transition from the user domain to the derived domain
+            chromium_domtrans($3)
 
-      	role $4 types chromium_t;
-      	role $4 types chromium_sandbox_t;
-      	role $4 types chromium_naclhelper_t;
+            # Allow ps to show chromium processes and allow the user to signal it
+            ps_process_pattern($3, chromium_t)
 
-      	# Transition from the user domain to the derived domain
-      	chromium_domtrans($3)
+            allow $3 chromium_t:process signal_perms;
+            allow $3 chromium_sandbox_t:process signal_perms;
+            allow $3 chromium_naclhelper_t:process signal_perms;
+            allow chromium_t $3:process { signal signull };
+            allow chromium_t $3:unix_stream_socket { read write };
 
-      	# Allow ps to show chromium processes and allow the user to signal it
-      	ps_process_pattern($3, chromium_t)
+            allow $2 chromium_t:fifo_file write;
 
-      	allow $3 chromium_t:process signal_perms;
-      	allow $3 chromium_sandbox_t:process signal_perms;
-      	allow $3 chromium_naclhelper_t:process signal_perms;
-      	allow chromium_t $3:process { signal signull };
-      	allow chromium_t $3:unix_stream_socket { read write };
+            allow $3 chromium_t:unix_stream_socket connectto;
 
-      	allow $2 chromium_t:fifo_file write;
+            # for /tmp/.ICE-unix/* sockets
+            allow chromium_t $3:unix_stream_socket connectto;
 
-      	allow $3 chromium_t:unix_stream_socket connectto;
+            allow chromium_sandbox_t $3:fd use;
+            allow chromium_naclhelper_t $3:fd use;
 
-      	# for /tmp/.ICE-unix/* sockets
-      	allow chromium_t $3:unix_stream_socket connectto;
+            allow $3 chromium_t:dbus send_msg;
+            allow chromium_t $3:dbus send_msg;
 
-      	allow chromium_sandbox_t $3:fd use;
-      	allow chromium_naclhelper_t $3:fd use;
-
-      	allow $3 chromium_t:dbus send_msg;
-      	allow chromium_t $3:dbus send_msg;
-
-      	optional_policy(`
-      		systemd_user_app_status($1, chromium_t)
-      	')
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Read-write access to Chromiums' temporary fifo files
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chromium_rw_tmp_pipes',`
-      	gen_require(`
-      		type chromium_tmp_t;
-      	')
-
-      	rw_fifo_files_pattern($1, chromium_tmp_t, chromium_tmp_t)
-      ')
-
-      ##############################################
-      ## <summary>
-      ##	Automatically use the specified type for resources created in chromium's
-      ##	temporary locations
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain that creates the resource(s)
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	Private file type.
-      ##	</summary>
-      ## </param>
-      ## <param name="class">
-      ##	<summary>
-      ##	Type of the resource created
-      ##	</summary>
-      ## </param>
-      ## <param name="filename" optional="true">
-      ##	<summary>
-      ##	The name of the resource being created
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chromium_tmp_filetrans',`
-      	gen_require(`
-      		type chromium_tmp_t;
-      	')
-
-      	search_dirs_pattern($1, chromium_tmp_t, chromium_tmp_t)
-      	filetrans_pattern($1, chromium_tmp_t, $2, $3, $4)
-      ')
-
-      #######################################
-      ## <summary>
-      ## 	Execute a domain transition to the chromium domain (chromium_t)
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chromium_domtrans',`
-      	gen_require(`
-      		type chromium_t;
-      		type chromium_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, chromium_exec_t, chromium_t)
-      ')
-
-      #######################################
-      ## <summary>
-      ## 	Execute chromium in the chromium domain and allow the specified role to access the chromium domain
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      interface(`chromium_run',`
-      	gen_require(`
-      		type chromium_t;
-      	')
-
-      	chromium_domtrans($1)
-      	role $2 types chromium_t;
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, chromium_t)
+            ')
+          '';
+        };
+        "chromium_rw_tmp_pipes" = {
+          summary = "Read-write access to Chromiums' temporary fifo files";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type chromium_tmp_t;
+          '';
+          content = ''
+            rw_fifo_files_pattern($1, chromium_tmp_t, chromium_tmp_t)
+          '';
+        };
+        "chromium_tmp_filetrans" = {
+          summary = ''
+            Automatically use the specified type for resources created in chromium's
+            temporary locations
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain that creates the resource(s)";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "Private file type.";
+            };
+            "$3" = {
+              name = "class";
+              description = "Type of the resource created";
+            };
+            "$4" = {
+              name = "filename";
+              description = "The name of the resource being created";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type chromium_tmp_t;
+          '';
+          content = ''
+            search_dirs_pattern($1, chromium_tmp_t, chromium_tmp_t)
+            filetrans_pattern($1, chromium_tmp_t, $2, $3, $4)
+          '';
+        };
+        "chromium_domtrans" = {
+          summary = "Execute a domain transition to the chromium domain (chromium_t)";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+          };
+          gen_require = ''
+            type chromium_t;
+            type chromium_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, chromium_exec_t, chromium_t)
+          '';
+        };
+        "chromium_run" = {
+          summary = "Execute chromium in the chromium domain and allow the specified role to access the chromium domain";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type chromium_t;
+          '';
+          content = ''
+            chromium_domtrans($1)
+            role $2 types chromium_t;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(chromium)
 

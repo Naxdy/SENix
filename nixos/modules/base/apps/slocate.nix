@@ -3,29 +3,28 @@
 { lib, ... }: {
   config.security.selinux.modules.slocate = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Update database for mlocate.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Read locate lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`locate_read_lib_files',`
-      	gen_require(`
-      		type locate_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, locate_var_lib_t, locate_var_lib_t)
-      	allow $1 locate_var_lib_t:dir list_dir_perms;
-      ')
-    '';
+    interface = {
+      summary = "Update database for mlocate.";
+      exports = {
+        "locate_read_lib_files" = {
+          summary = "Read locate lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type locate_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, locate_var_lib_t, locate_var_lib_t)
+            allow $1 locate_var_lib_t:dir list_dir_perms;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(slocate)
 

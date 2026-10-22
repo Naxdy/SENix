@@ -3,90 +3,85 @@
 { lib, ... }: {
   config.security.selinux.modules.portmap = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>RPC port mapping service.</summary>
+    interface = {
+      summary = "RPC port mapping service.";
+      exports = {
+        "portmap_domtrans_helper" = {
+          summary = "Execute portmap helper in the helper domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type portmap_helper_t, portmap_helper_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, portmap_helper_exec_t, portmap_helper_t)
+          '';
+        };
+        "portmap_run_helper" = {
+          summary = ''
+            Execute portmap helper in the helper
+            domain, and allow the specified role
+            the helper domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role portmap_helper_roles;
+          '';
+          content = ''
+            portmap_domtrans_helper($1)
+            roleattribute $2 portmap_helper_roles;
+          '';
+          rolecap = true;
+        };
+        "portmap_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an portmap environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type portmap_t, portmap_initrc_exec_t, portmap_helper_t;
+            type portmap_runtime_t, portmap_tmp_t;
+          '';
+          content = ''
+            allow $1 { portmap_t portmap_helper_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { portmap_t portmap_helper_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute portmap helper in the helper domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`portmap_domtrans_helper',`
-      	gen_require(`
-      		type portmap_helper_t, portmap_helper_exec_t;
-      	')
+            init_startstop_service($1, $2, portmap_t, portmap_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, portmap_helper_exec_t, portmap_helper_t)
-      ')
+            files_search_runtime($1)
+            admin_pattern($1, portmap_runtime_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute portmap helper in the helper
-      ##	domain, and allow the specified role
-      ##	the helper domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`portmap_run_helper',`
-      	gen_require(`
-      		attribute_role portmap_helper_roles;
-      	')
-
-      	portmap_domtrans_helper($1)
-      	roleattribute $2 portmap_helper_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an portmap environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`portmap_admin',`
-      	gen_require(`
-      		type portmap_t, portmap_initrc_exec_t, portmap_helper_t;
-      		type portmap_runtime_t, portmap_tmp_t;
-      	')
-
-      	allow $1 { portmap_t portmap_helper_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { portmap_t portmap_helper_t })
-
-      	init_startstop_service($1, $2, portmap_t, portmap_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, portmap_runtime_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, portmap_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, portmap_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(portmap)
 

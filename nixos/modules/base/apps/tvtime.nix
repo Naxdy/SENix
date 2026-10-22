@@ -3,61 +3,60 @@
 { lib, ... }: {
   config.security.selinux.modules.tvtime = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>High quality television application.</summary>
+    interface = {
+      summary = "High quality television application.";
+      exports = {
+        "tvtime_role" = {
+          type = "template";
+          summary = "Role access for tvtime";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role tvtime_roles;
+            type tvtime_t, tvtime_exec_t, tvtime_tmp_t;
+            type tvtime_home_t, tvtime_tmpfs_t;
+          '';
+          content = ''
+            roleattribute $4 tvtime_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for tvtime
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`tvtime_role',`
-      	gen_require(`
-      		attribute_role tvtime_roles;
-      		type tvtime_t, tvtime_exec_t, tvtime_tmp_t;
-      		type tvtime_home_t, tvtime_tmpfs_t;
-      	')
+            domtrans_pattern($3, tvtime_exec_t, tvtime_t)
 
-      	roleattribute $4 tvtime_roles;
+            ps_process_pattern($3, tvtime_t)
+            allow $3 tvtime_t:process { ptrace signal_perms };
 
-      	domtrans_pattern($3, tvtime_exec_t, tvtime_t)
+            allow $2 { tvtime_home_t tvtime_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { tvtime_home_t tvtime_tmpfs_t tvtime_tmp_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { tvtime_home_t tvtime_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 tvtime_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            allow $2 tvtime_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            userdom_user_home_dir_filetrans($2, tvtime_home_t, dir, ".tvtime")
 
-      	ps_process_pattern($3, tvtime_t)
-      	allow $3 tvtime_t:process { ptrace signal_perms };
-
-      	allow $2 { tvtime_home_t tvtime_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { tvtime_home_t tvtime_tmpfs_t tvtime_tmp_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { tvtime_home_t tvtime_tmpfs_t }:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	allow $2 tvtime_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	allow $2 tvtime_tmpfs_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-      	userdom_user_home_dir_filetrans($2, tvtime_home_t, dir, ".tvtime")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, tvtime_t)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, tvtime_t)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tvtime)
 

@@ -3,66 +3,63 @@
 { lib, ... }: {
   config.security.selinux.modules.snort = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Snort network intrusion detection system.</summary>
+    interface = {
+      summary = "Snort network intrusion detection system.";
+      exports = {
+        "snort_domtrans" = {
+          summary = "Execute a domain transition to run snort.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type snort_t, snort_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, snort_exec_t, snort_t)
+          '';
+        };
+        "snort_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an snort environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type snort_t, snort_runtime_t, snort_log_t;
+            type snort_etc_t, snort_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 snort_t:process { ptrace signal_perms };
+            ps_process_pattern($1, snort_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run snort.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`snort_domtrans',`
-      	gen_require(`
-      		type snort_t, snort_exec_t;
-      	')
+            init_startstop_service($1, $2, snort_t, snort_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, snort_exec_t, snort_t)
-      ')
+            admin_pattern($1, snort_etc_t)
+            files_search_etc($1)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an snort environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`snort_admin',`
-      	gen_require(`
-      		type snort_t, snort_runtime_t, snort_log_t;
-      		type snort_etc_t, snort_initrc_exec_t;
-      	')
+            admin_pattern($1, snort_log_t)
+            logging_search_logs($1)
 
-      	allow $1 snort_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, snort_t)
-
-      	init_startstop_service($1, $2, snort_t, snort_initrc_exec_t)
-
-      	admin_pattern($1, snort_etc_t)
-      	files_search_etc($1)
-
-      	admin_pattern($1, snort_log_t)
-      	logging_search_logs($1)
-
-      	admin_pattern($1, snort_runtime_t)
-      	files_search_runtime($1)
-      ')
-    '';
+            admin_pattern($1, snort_runtime_t)
+            files_search_runtime($1)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(snort)
 

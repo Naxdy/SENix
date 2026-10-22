@@ -3,173 +3,153 @@
 { lib, ... }: {
   config.security.selinux.modules.procmail = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Procmail mail delivery agent.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute procmail with a domain transition.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_domtrans',`
-      	gen_require(`
-      		type procmail_exec_t, procmail_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, procmail_exec_t, procmail_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute procmail in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_exec',`
-      	gen_require(`
-      		type procmail_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, procmail_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	procmail home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_manage_home_files',`
-      	gen_require(`
-      		type procmail_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 procmail_home_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read procmail user home content files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_read_home_files',`
-      	gen_require(`
-      		type procmail_home_t;
-
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 procmail_home_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel procmail home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_relabel_home_files',`
-      	gen_require(`
-      		type procmail_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 procmail_home_t:file relabel_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in user home
-      ##	directories with the procmail home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_home_filetrans_procmail_home',`
-      	gen_require(`
-      		type procmail_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, procmail_home_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read procmail tmp files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_read_tmp_files',`
-      	gen_require(`
-      		type procmail_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 procmail_tmp_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write procmail tmp files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`procmail_rw_tmp_files',`
-      	gen_require(`
-      		type procmail_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	rw_files_pattern($1, procmail_tmp_t, procmail_tmp_t)
-      ')
-    '';
+    interface = {
+      summary = "Procmail mail delivery agent.";
+      exports = {
+        "procmail_domtrans" = {
+          summary = "Execute procmail with a domain transition.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type procmail_exec_t, procmail_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, procmail_exec_t, procmail_t)
+          '';
+        };
+        "procmail_exec" = {
+          summary = "Execute procmail in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, procmail_exec_t)
+          '';
+        };
+        "procmail_manage_home_files" = {
+          summary = ''
+            Create, read, write, and delete
+            procmail home files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 procmail_home_t:file manage_file_perms;
+          '';
+        };
+        "procmail_read_home_files" = {
+          summary = "Read procmail user home content files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 procmail_home_t:file read_file_perms;
+          '';
+        };
+        "procmail_relabel_home_files" = {
+          summary = "Relabel procmail home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 procmail_home_t:file relabel_file_perms;
+          '';
+        };
+        "procmail_home_filetrans_procmail_home" = {
+          summary = ''
+            Create objects in user home
+            directories with the procmail home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type procmail_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, procmail_home_t, $2, $3)
+          '';
+        };
+        "procmail_read_tmp_files" = {
+          summary = "Read procmail tmp files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 procmail_tmp_t:file read_file_perms;
+          '';
+        };
+        "procmail_rw_tmp_files" = {
+          summary = "Read and write procmail tmp files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type procmail_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            rw_files_pattern($1, procmail_tmp_t, procmail_tmp_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(procmail)
 

@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.updfstab = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Red Hat utility to change fstab.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute updfstab in the updfstab domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`updfstab_domtrans',`
-      	gen_require(`
-      		type updfstab_t, updfstab_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, updfstab_exec_t, updfstab_t)
-      ')
-    '';
+    interface = {
+      summary = "Red Hat utility to change fstab.";
+      exports = {
+        "updfstab_domtrans" = {
+          summary = "Execute updfstab in the updfstab domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type updfstab_t, updfstab_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, updfstab_exec_t, updfstab_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(updfstab)
 

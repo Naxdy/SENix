@@ -3,54 +3,51 @@
 { lib, ... }: {
   config.security.selinux.modules.rkhunter = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>rkhunter - rootkit checker.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run rkhunter.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rkhunter_domtrans',`
-      	gen_require(`
-      		type rkhunter_t, rkhunter_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rkhunter_exec_t, rkhunter_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rkhunter in the rkhunter domain,
-      ##	and allow the specified role
-      ##	the rkhunter domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rkhunter_run',`
-      	gen_require(`
-      		attribute_role rkhunter_roles;
-      	')
-
-      	rkhunter_domtrans($1)
-      	roleattribute $2 rkhunter_roles;
-      ')
-    '';
+    interface = {
+      summary = "rkhunter - rootkit checker.";
+      exports = {
+        "rkhunter_domtrans" = {
+          summary = "Execute a domain transition to run rkhunter.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rkhunter_t, rkhunter_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rkhunter_exec_t, rkhunter_t)
+          '';
+        };
+        "rkhunter_run" = {
+          summary = ''
+            Execute rkhunter in the rkhunter domain,
+            and allow the specified role
+            the rkhunter domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role rkhunter_roles;
+          '';
+          content = ''
+            rkhunter_domtrans($1)
+            roleattribute $2 rkhunter_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rkhunter)
 

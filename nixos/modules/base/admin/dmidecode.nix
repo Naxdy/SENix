@@ -3,55 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.dmidecode = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Decode DMI data for x86/ia64 bioses.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute dmidecode in the dmidecode domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`dmidecode_domtrans',`
-      	gen_require(`
-      		type dmidecode_t, dmidecode_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dmidecode_exec_t, dmidecode_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute dmidecode in the dmidecode
-      ##	domain, and allow the specified
-      ##	role the dmidecode domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`dmidecode_run',`
-      	gen_require(`
-      		attribute_role dmidecode_roles;
-      	')
-
-      	dmidecode_domtrans($1)
-      	roleattribute $2 dmidecode_roles;
-      ')
-    '';
+    interface = {
+      summary = "Decode DMI data for x86/ia64 bioses.";
+      exports = {
+        "dmidecode_domtrans" = {
+          summary = "Execute dmidecode in the dmidecode domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dmidecode_t, dmidecode_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dmidecode_exec_t, dmidecode_t)
+          '';
+        };
+        "dmidecode_run" = {
+          summary = ''
+            Execute dmidecode in the dmidecode
+            domain, and allow the specified
+            role the dmidecode domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role dmidecode_roles;
+          '';
+          content = ''
+            dmidecode_domtrans($1)
+            roleattribute $2 dmidecode_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dmidecode)
 

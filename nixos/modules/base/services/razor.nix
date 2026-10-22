@@ -3,153 +3,143 @@
 { lib, ... }: {
   config.security.selinux.modules.razor = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>A distributed, collaborative, spam detection and filtering network.</summary>
+    interface = {
+      summary = "A distributed, collaborative, spam detection and filtering network.";
+      exports = {
+        "razor_common_domain_template" = {
+          type = "template";
+          summary = "The template to define a razor domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute razor_domain;
+            type razor_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The template to define a razor domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`razor_common_domain_template',`
-      	gen_require(`
-      		attribute razor_domain;
-      		type razor_exec_t;
-      	')
+            type $1_t, razor_domain;
+            domain_type($1_t)
+            domain_entry_file($1_t, razor_exec_t)
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Declarations
+            #
 
-      	type $1_t, razor_domain;
-      	domain_type($1_t)
-      	domain_entry_file($1_t, razor_exec_t)
+            auth_use_nsswitch($1_t)
+          '';
+        };
+        "razor_role" = {
+          type = "template";
+          summary = "Role access for razor.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role razor_roles;
+            type razor_t, razor_exec_t, razor_home_t;
+            type razor_tmp_t;
+          '';
+          content = ''
+            roleattribute $4 razor_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            domtrans_pattern($3, razor_exec_t, razor_t)
 
-      	auth_use_nsswitch($1_t)
-      ')
+            ps_process_pattern($3, razor_t)
+            allow $3 razor_t:process signal;
 
-      ########################################
-      ## <summary>
-      ##	Role access for razor.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`razor_role',`
-      	gen_require(`
-      		attribute_role razor_roles;
-      		type razor_t, razor_exec_t, razor_home_t;
-      		type razor_tmp_t;
-      	')
+            allow $2 { razor_home_t razor_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { razor_home_t razor_tmp_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 razor_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-      	roleattribute $4 razor_roles;
+            userdom_user_home_dir_filetrans($2, razor_home_t, dir, ".razor")
 
-      	domtrans_pattern($3, razor_exec_t, razor_t)
-
-      	ps_process_pattern($3, razor_t)
-      	allow $3 razor_t:process signal;
-
-      	allow $2 { razor_home_t razor_tmp_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { razor_home_t razor_tmp_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 razor_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-
-      	userdom_user_home_dir_filetrans($2, razor_home_t, dir, ".razor")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, razor_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute razor in the system razor domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`razor_domtrans',`
-      	gen_require(`
-      		type system_razor_t, razor_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, razor_exec_t, system_razor_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	razor home content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`razor_manage_home_content',`
-      	gen_require(`
-      		type razor_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 razor_home_t:dir manage_dir_perms;
-      	allow $1 razor_home_t:file manage_file_perms;
-      	allow $1 razor_home_t:lnk_file manage_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read razor lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`razor_read_lib_files',`
-      	gen_require(`
-      		type razor_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, razor_var_lib_t, razor_var_lib_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, razor_t)
+            ')
+          '';
+        };
+        "razor_domtrans" = {
+          summary = "Execute razor in the system razor domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type system_razor_t, razor_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, razor_exec_t, system_razor_t)
+          '';
+        };
+        "razor_manage_home_content" = {
+          summary = ''
+            Create, read, write, and delete
+            razor home content.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type razor_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 razor_home_t:dir manage_dir_perms;
+            allow $1 razor_home_t:file manage_file_perms;
+            allow $1 razor_home_t:lnk_file manage_lnk_file_perms;
+          '';
+        };
+        "razor_read_lib_files" = {
+          summary = "Read razor lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type razor_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, razor_var_lib_t, razor_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(razor)
 

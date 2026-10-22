@@ -3,156 +3,140 @@
 { lib, ... }: {
   config.security.selinux.modules.vmware = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>VMWare Workstation virtual machines.</summary>
+    interface = {
+      summary = "VMWare Workstation virtual machines.";
+      exports = {
+        "vmware_role" = {
+          type = "template";
+          summary = "Role access for vmware.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            type vmware_t, vmware_exec_t, vmware_file_t;
+            type vmware_conf_t, vmware_tmp_t, vmware_tmpfs_t;
+          '';
+          content = ''
+            role $4 types vmware_t;
 
-      ########################################
-      ## <summary>
-      ##	Role access for vmware.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`vmware_role',`
-      	gen_require(`
-      		type vmware_t, vmware_exec_t, vmware_file_t;
-      		type vmware_conf_t, vmware_tmp_t, vmware_tmpfs_t;
-      	')
+            domtrans_pattern($3, vmware_exec_t, vmware_t)
 
-      	role $4 types vmware_t;
+            ps_process_pattern($3, vmware_t)
+            allow $3 vmware_t:process { ptrace signal_perms };
 
-      	domtrans_pattern($3, vmware_exec_t, vmware_t)
+            allow $2 { vmware_tmp_t vmware_file_t }:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 { vmware_conf_t vmware_file_t vmware_tmp_t vmware_tmpfs_t }:file { manage_file_perms relabel_file_perms };
+            allow $2 { vmware_tmp_t vmware_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
+            allow $2 vmware_tmpfs_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 vmware_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
+            userdom_user_home_dir_filetrans($2, vmware_file_t, dir, ".vmware")
+            userdom_user_home_dir_filetrans($2, vmware_file_t, dir, "vmware")
 
-      	ps_process_pattern($3, vmware_t)
-      	allow $3 vmware_t:process { ptrace signal_perms };
-
-      	allow $2 { vmware_tmp_t vmware_file_t }:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 { vmware_conf_t vmware_file_t vmware_tmp_t vmware_tmpfs_t }:file { manage_file_perms relabel_file_perms };
-      	allow $2 { vmware_tmp_t vmware_tmpfs_t }:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-      	allow $2 vmware_tmpfs_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
-      	allow $2 vmware_tmpfs_t:fifo_file { manage_fifo_file_perms relabel_fifo_file_perms };
-      	userdom_user_home_dir_filetrans($2, vmware_file_t, dir, ".vmware")
-      	userdom_user_home_dir_filetrans($2, vmware_file_t, dir, "vmware")
-
-      	optional_policy(`
-      		systemd_user_app_status($1, vmware_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute vmware host executables
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vmware_exec_host',`
-      	gen_require(`
-      		type vmware_host_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, vmware_host_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute vmware guest executables
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vmware_exec_guest',`
-      	gen_require(`
-      		type vmware_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, vmware_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read vmware system configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vmware_read_system_config',`
-      	gen_require(`
-      		type vmware_sys_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 vmware_sys_conf_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append vmware system configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vmware_append_system_config',`
-      	gen_require(`
-      		type vmware_sys_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 vmware_sys_conf_t:file append_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append vmware log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vmware_append_log',`
-      	gen_require(`
-      		type vmware_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, vmware_log_t, vmware_log_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, vmware_t)
+            ')
+          '';
+        };
+        "vmware_exec_host" = {
+          summary = "Execute vmware host executables";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vmware_host_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, vmware_host_exec_t)
+          '';
+        };
+        "vmware_exec_guest" = {
+          summary = "Execute vmware guest executables";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vmware_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, vmware_exec_t)
+          '';
+        };
+        "vmware_read_system_config" = {
+          summary = "Read vmware system configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vmware_sys_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 vmware_sys_conf_t:file read_file_perms;
+          '';
+        };
+        "vmware_append_system_config" = {
+          summary = "Append vmware system configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vmware_sys_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 vmware_sys_conf_t:file append_file_perms;
+          '';
+        };
+        "vmware_append_log" = {
+          summary = "Append vmware log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type vmware_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, vmware_log_t, vmware_log_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vmware)
 

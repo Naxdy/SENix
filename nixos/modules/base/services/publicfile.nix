@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.publicfile = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>publicfile supplies files to the public through HTTP and FTP.</summary>
-    '';
+    interface = {
+      summary = "publicfile supplies files to the public through HTTP and FTP.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(publicfile)
 

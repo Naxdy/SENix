@@ -3,180 +3,167 @@
 { lib, ... }: {
   config.security.selinux.modules.uuidd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>UUID generation daemon.</summary>
+    interface = {
+      summary = "UUID generation daemon.";
+      exports = {
+        "uuidd_domtrans" = {
+          summary = "Execute uuidd in the uuidd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type uuidd_t, uuidd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, uuidd_exec_t, uuidd_t)
+          '';
+        };
+        "uuidd_initrc_domtrans" = {
+          summary = ''
+            Execute uuidd init scripts in
+            the initrc domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, uuidd_initrc_exec_t)
+          '';
+        };
+        "uuidd_search_lib" = {
+          summary = "Search uuidd lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 uuidd_var_lib_t:dir search_dir_perms;
+          '';
+        };
+        "uuidd_read_lib_files" = {
+          summary = "Read uuidd lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
+          '';
+        };
+        "uuidd_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            uuidd lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
+          '';
+        };
+        "uuidd_manage_lib_dirs" = {
+          summary = ''
+            Create, read, write, and delete
+            uuidd lib directories.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_dirs_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
+          '';
+        };
+        "uuidd_stream_connect_manager" = {
+          summary = ''
+            Connect to uuidd with an unix
+            domain stream socket.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_t, uuidd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, uuidd_runtime_t, uuidd_runtime_t, uuidd_t)
+          '';
+        };
+        "uuidd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an uuidd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type uuidd_t, uuidd_initrc_exec_t;
+            type uuidd_runtime_t, uuidd_var_lib_t;
+          '';
+          content = ''
+            allow $1 uuidd_t:process signal_perms;
+            ps_process_pattern($1, uuidd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute uuidd in the uuidd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_domtrans',`
-      	gen_require(`
-      		type uuidd_t, uuidd_exec_t;
-      	')
+            init_startstop_service($1, $2, uuidd_t, uuidd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, uuidd_exec_t, uuidd_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, uuidd_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute uuidd init scripts in
-      ##	the initrc domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_initrc_domtrans',`
-      	gen_require(`
-      		type uuidd_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, uuidd_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search uuidd lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_search_lib',`
-      	gen_require(`
-      		type uuidd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 uuidd_var_lib_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read uuidd lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_read_lib_files',`
-      	gen_require(`
-      		type uuidd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	uuidd lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_manage_lib_files',`
-      	gen_require(`
-      		type uuidd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	uuidd lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_manage_lib_dirs',`
-      	gen_require(`
-      		type uuidd_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_dirs_pattern($1, uuidd_var_lib_t, uuidd_var_lib_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to uuidd with an unix
-      ##	domain stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`uuidd_stream_connect_manager',`
-      	gen_require(`
-      		type uuidd_t, uuidd_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, uuidd_runtime_t, uuidd_runtime_t, uuidd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an uuidd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`uuidd_admin',`
-      	gen_require(`
-      		type uuidd_t, uuidd_initrc_exec_t;
-      		type uuidd_runtime_t, uuidd_var_lib_t;
-      	')
-
-      	allow $1 uuidd_t:process signal_perms;
-      	ps_process_pattern($1, uuidd_t)
-
-      	init_startstop_service($1, $2, uuidd_t, uuidd_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, uuidd_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, uuidd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, uuidd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(uuidd)
 

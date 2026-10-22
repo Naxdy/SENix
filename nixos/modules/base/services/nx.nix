@@ -3,100 +3,90 @@
 { lib, ... }: {
   config.security.selinux.modules.nx = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>NX remote desktop.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Transition to nx server.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nx_spec_domtrans_server',`
-      	gen_require(`
-      		type nx_server_t, nx_server_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	spec_domtrans_pattern($1, nx_server_exec_t, nx_server_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read nx home directory content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nx_read_home_files',`
-      	gen_require(`
-      		type nx_server_ssh_home_t, nx_server_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, { nx_server_var_lib_t nx_server_ssh_home_t }, nx_server_ssh_home_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search nx lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nx_search_var_lib',`
-      	gen_require(`
-      		type nx_server_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	allow $1 nx_server_var_lib_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in nx lib
-      ##	directories with a private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private type">
-      ##	<summary>
-      ##	The type of the object to be created.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##	<summary>
-      ##	The object class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`nx_var_lib_filetrans',`
-      	gen_require(`
-      		type nx_server_var_lib_t;
-      	')
-
-      	filetrans_pattern($1, nx_server_var_lib_t, $2, $3, $4)
-      ')
-    '';
+    interface = {
+      summary = "NX remote desktop.";
+      exports = {
+        "nx_spec_domtrans_server" = {
+          summary = "Transition to nx server.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type nx_server_t, nx_server_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            spec_domtrans_pattern($1, nx_server_exec_t, nx_server_t)
+          '';
+        };
+        "nx_read_home_files" = {
+          summary = "Read nx home directory content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nx_server_ssh_home_t, nx_server_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, { nx_server_var_lib_t nx_server_ssh_home_t }, nx_server_ssh_home_t)
+          '';
+        };
+        "nx_search_var_lib" = {
+          summary = "Search nx lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type nx_server_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 nx_server_var_lib_t:dir search_dir_perms;
+          '';
+        };
+        "nx_var_lib_filetrans" = {
+          summary = ''
+            Create specified objects in nx lib
+            directories with a private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private type";
+              description = "The type of the object to be created.";
+            };
+            "$3" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type nx_server_var_lib_t;
+          '';
+          content = ''
+            filetrans_pattern($1, nx_server_var_lib_t, $2, $3, $4)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(nx)
 

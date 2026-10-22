@@ -3,124 +3,124 @@
 { lib, ... }: {
   config.security.selinux.modules.mcs = {
     layer = "kernel";
-    interface = lib.mkBefore ''
-      ## <summary>Multicategory security policy</summary>
-      ## <required val="true">
-      ##	Contains attributes used in MCS policy.
-      ## </required>
-
-      ########################################
-      ## <summary>
-      ##	Constrain by category access control (MCS).
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Constrain the specified type by category based
-      ##	access control (MCS) This prevents this domain from
-      ##	interacting with subjects and operating on objects
-      ##	that it otherwise would be able to interact
-      ##	with or operate on respectively.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Type to be constrained by MCS.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="none"/>
-      #
-      interface(`mcs_constrained',`
-      	gen_require(`
-      		attribute mcs_constrained_type;
-      	')
-
-      	typeattribute $1 mcs_constrained_type;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	This domain is allowed to read files and directories
-      ##	regardless of their MCS category set.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain target for user exemption.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mcs_file_read_all',`
-      	refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	This domain is allowed to write files and directories
-      ##	regardless of their MCS category set.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain target for user exemption.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mcs_file_write_all',`
-      	refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	This domain is allowed to sigkill and sigstop
-      ##	all domains regardless of their MCS category set.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain target for user exemption.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`mcs_killall',`
-      	refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	This domain is allowed to ptrace
-      ##	all domains regardless of their MCS
-      ##	category set.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain target for user exemption.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mcs_ptrace_all',`
-      	refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make specified domain MCS trusted
-      ##	for setting any category set for
-      ##	the processes it executes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain target for user exemption.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`mcs_process_set_categories',`
-      	gen_require(`
-      		attribute mcssetcats;
-      	')
-
-      	typeattribute $1 mcssetcats;
-      ')
-    '';
+    interface = {
+      summary = "Multicategory security policy";
+      required = ''
+        Contains attributes used in MCS policy.
+      '';
+      exports = {
+        "mcs_constrained" = {
+          summary = "Constrain by category access control (MCS).";
+          desc = ''
+            <p>
+            Constrain the specified type by category based
+            access control (MCS) This prevents this domain from
+            interacting with subjects and operating on objects
+            that it otherwise would be able to interact
+            with or operate on respectively.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Type to be constrained by MCS.";
+            };
+          };
+          gen_require = ''
+            attribute mcs_constrained_type;
+          '';
+          content = ''
+            typeattribute $1 mcs_constrained_type;
+          '';
+          infoflow = {
+            type = "none";
+          };
+        };
+        "mcs_file_read_all" = {
+          summary = ''
+            This domain is allowed to read files and directories
+            regardless of their MCS category set.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain target for user exemption.";
+            };
+          };
+          content = ''
+            refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
+          '';
+          rolecap = true;
+        };
+        "mcs_file_write_all" = {
+          summary = ''
+            This domain is allowed to write files and directories
+            regardless of their MCS category set.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain target for user exemption.";
+            };
+          };
+          content = ''
+            refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
+          '';
+          rolecap = true;
+        };
+        "mcs_killall" = {
+          summary = ''
+            This domain is allowed to sigkill and sigstop
+            all domains regardless of their MCS category set.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain target for user exemption.";
+            };
+          };
+          content = ''
+            refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
+          '';
+          rolecap = true;
+        };
+        "mcs_ptrace_all" = {
+          summary = ''
+            This domain is allowed to ptrace
+            all domains regardless of their MCS
+            category set.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain target for user exemption.";
+            };
+          };
+          content = ''
+            refpolicywarn(`$0() has been deprecated, please remove mcs_constrained() instead.')
+          '';
+        };
+        "mcs_process_set_categories" = {
+          summary = ''
+            Make specified domain MCS trusted
+            for setting any category set for
+            the processes it executes.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain target for user exemption.";
+            };
+          };
+          gen_require = ''
+            attribute mcssetcats;
+          '';
+          content = ''
+            typeattribute $1 mcssetcats;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(mcs)
 

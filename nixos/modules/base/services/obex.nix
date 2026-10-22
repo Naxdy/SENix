@@ -3,96 +3,92 @@
 { lib, ... }: {
   config.security.selinux.modules.obex = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>D-Bus service providing high-level OBEX client and server side functionality.</summary>
+    interface = {
+      summary = "D-Bus service providing high-level OBEX client and server side functionality.";
+      exports = {
+        "obex_role_template" = {
+          type = "template";
+          summary = "The role template for obex.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user domain (e.g., user
+                is the prefix for user_t).
+              '';
+            };
+            "$2" = {
+              name = "user_role";
+              description = "The role associated with the user domain.";
+            };
+            "$3" = {
+              name = "user_domain";
+              description = "The type of the user domain.";
+            };
+          };
+          gen_require = ''
+            attribute_role obex_roles;
+            type obex_t, obex_exec_t;
+          '';
+          content = ''
+            ########################################
+            #
+            # Declarations
+            #
 
-      #######################################
-      ## <summary>
-      ##	The role template for obex.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user domain (e.g., user
-      ##	is the prefix for user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_role">
-      ##	<summary>
-      ##	The role associated with the user domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	The type of the user domain.
-      ##	</summary>
-      ## </param>
-      #
-      template(`obex_role_template',`
-      	gen_require(`
-      		attribute_role obex_roles;
-      		type obex_t, obex_exec_t;
-      	')
+            roleattribute $2 obex_roles;
 
-      	########################################
-      	#
-      	# Declarations
-      	#
+            ########################################
+            #
+            # Policy
+            #
 
-      	roleattribute $2 obex_roles;
+            allow $3 obex_t:process { ptrace signal_perms };
+            ps_process_pattern($3, obex_t)
 
-      	########################################
-      	#
-      	# Policy
-      	#
+            dbus_spec_session_domain($1, obex_t, obex_exec_t)
 
-      	allow $3 obex_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, obex_t)
-
-      	dbus_spec_session_domain($1, obex_t, obex_exec_t)
-
-      	obex_dbus_chat($3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute obex in the obex domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`obex_domtrans',`
-      	gen_require(`
-      		type obex_t, obex_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, obex_exec_t, obex_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	obex over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`obex_dbus_chat',`
-      	gen_require(`
-      		type obex_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 obex_t:dbus send_msg;
-      	allow obex_t $1:dbus send_msg;
-      ')
-    '';
+            obex_dbus_chat($3)
+          '';
+        };
+        "obex_domtrans" = {
+          summary = "Execute obex in the obex domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type obex_t, obex_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, obex_exec_t, obex_t)
+          '';
+        };
+        "obex_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            obex over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type obex_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 obex_t:dbus send_msg;
+            allow obex_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(obex)
 

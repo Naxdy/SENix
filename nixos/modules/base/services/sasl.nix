@@ -3,121 +3,109 @@
 { lib, ... }: {
   config.security.selinux.modules.sasl = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>SASL authentication server.</summary>
+    interface = {
+      summary = "SASL authentication server.";
+      exports = {
+        "sasl_connect" = {
+          summary = "Connect to SASL.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type saslauthd_t, saslauthd_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, saslauthd_runtime_t, saslauthd_runtime_t, saslauthd_t)
+          '';
+        };
+        "sasl_read_keytab" = {
+          summary = "Read SASL keytab files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type saslauthd_keytab_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            read_files_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
+          '';
+        };
+        "sasl_mmap_read_keytab" = {
+          summary = "Memory map and read SASL keytab files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type saslauthd_keytab_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            mmap_read_files_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
+          '';
+        };
+        "sasl_lock_keytab" = {
+          summary = "Lock SASL keytab files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type saslauthd_keytab_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            search_dirs_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
+            allow $1 saslauthd_keytab_t:file lock;
+          '';
+        };
+        "sasl_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an sasl environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type saslauthd_t, saslauthd_runtime_t, saslauthd_initrc_exec_t;
+            type saslauthd_keytab_t;
+          '';
+          content = ''
+            allow $1 saslauthd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, saslauthd_t)
 
-      ########################################
-      ## <summary>
-      ##	Connect to SASL.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sasl_connect',`
-      	gen_require(`
-      		type saslauthd_t, saslauthd_runtime_t;
-      	')
+            init_startstop_service($1, $2, saslauthd_t, saslauthd_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, saslauthd_runtime_t, saslauthd_runtime_t, saslauthd_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, saslauthd_keytab_t)
 
-      ########################################
-      ## <summary>
-      ##	Read SASL keytab files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sasl_read_keytab',`
-      	gen_require(`
-      		type saslauthd_keytab_t;
-      	')
-
-      	files_search_etc($1)
-      	read_files_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Memory map and read SASL keytab files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sasl_mmap_read_keytab',`
-      	gen_require(`
-      		type saslauthd_keytab_t;
-      	')
-
-      	files_search_etc($1)
-      	mmap_read_files_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Lock SASL keytab files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`sasl_lock_keytab',`
-      	gen_require(`
-      		type saslauthd_keytab_t;
-      	')
-
-      	files_search_etc($1)
-      	search_dirs_pattern($1, saslauthd_keytab_t, saslauthd_keytab_t)
-      	allow $1 saslauthd_keytab_t:file lock;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an sasl environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`sasl_admin',`
-      	gen_require(`
-      		type saslauthd_t, saslauthd_runtime_t, saslauthd_initrc_exec_t;
-      		type saslauthd_keytab_t;
-      	')
-
-      	allow $1 saslauthd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, saslauthd_t)
-
-      	init_startstop_service($1, $2, saslauthd_t, saslauthd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, saslauthd_keytab_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, saslauthd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, saslauthd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(sasl)
 

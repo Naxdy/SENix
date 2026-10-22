@@ -3,121 +3,113 @@
 { lib, ... }: {
   config.security.selinux.modules.kdump = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Kernel crash dumping mechanism.</summary>
+    interface = {
+      summary = "Kernel crash dumping mechanism.";
+      exports = {
+        "kdump_domtrans" = {
+          summary = "Execute kdump in the kdump domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kdump_t, kdump_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, kdump_exec_t, kdump_t)
+          '';
+        };
+        "kdump_initrc_domtrans" = {
+          summary = ''
+            Execute kdump init scripts in
+            the init script domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type kdump_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, kdump_initrc_exec_t)
+          '';
+        };
+        "kdump_read_config" = {
+          summary = "Read kdump configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kdump_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 kdump_etc_t:file read_file_perms;
+          '';
+        };
+        "kdump_manage_config" = {
+          summary = ''
+            Create, read, write, and delete
+            kdmup configuration files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type kdump_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 kdump_etc_t:file manage_file_perms;
+          '';
+        };
+        "kdump_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an kdump environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type kdump_t, kdump_etc_t, kdumpctl_tmp_t;
+            type kdump_initrc_exec_t, kdumpctl_t;
+          '';
+          content = ''
+            allow $1 { kdump_t kdumpctl_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { kdump_t kdumpctl_t })
 
-      ######################################
-      ## <summary>
-      ##	Execute kdump in the kdump domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kdump_domtrans',`
-      	gen_require(`
-      		type kdump_t, kdump_exec_t;
-      	')
+            init_startstop_service($1, $2, kdump_t, kdump_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, kdump_exec_t, kdump_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, kdump_etc_t)
 
-      #######################################
-      ## <summary>
-      ##	Execute kdump init scripts in
-      ##	the init script domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kdump_initrc_domtrans',`
-      	gen_require(`
-      		type kdump_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, kdump_initrc_exec_t)
-      ')
-
-      #####################################
-      ## <summary>
-      ##	Read kdump configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kdump_read_config',`
-      	gen_require(`
-      		type kdump_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 kdump_etc_t:file read_file_perms;
-      ')
-
-      ####################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	kdmup configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`kdump_manage_config',`
-      	gen_require(`
-      		type kdump_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 kdump_etc_t:file manage_file_perms;
-      ')
-
-      ######################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an kdump environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`kdump_admin',`
-      	gen_require(`
-      		type kdump_t, kdump_etc_t, kdumpctl_tmp_t;
-      		type kdump_initrc_exec_t, kdumpctl_t;
-      	')
-
-      	allow $1 { kdump_t kdumpctl_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { kdump_t kdumpctl_t })
-
-      	init_startstop_service($1, $2, kdump_t, kdump_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, kdump_etc_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, kdumpctl_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, kdumpctl_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(kdump)
 

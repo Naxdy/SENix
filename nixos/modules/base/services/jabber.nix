@@ -3,94 +3,91 @@
 { lib, ... }: {
   config.security.selinux.modules.jabber = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Jabber instant messaging servers.</summary>
+    interface = {
+      summary = "Jabber instant messaging servers.";
+      exports = {
+        "jabber_domain_template" = {
+          type = "template";
+          summary = "The template to define a jabber domain.";
+          params = {
+            "$1" = {
+              name = "domain_prefix";
+              description = "Domain prefix to be used.";
+            };
+          };
+          gen_require = ''
+            attribute jabberd_domain;
+          '';
+          content = ''
+            type $1_t, jabberd_domain;
+            type $1_exec_t;
+            init_daemon_domain($1_t, $1_exec_t)
+          '';
+        };
+        "jabber_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            jabber lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type jabberd_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, jabberd_var_lib_t, jabberd_var_lib_t)
+          '';
+        };
+        "jabber_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an jabber environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute jabberd_domain;
+            type jabberd_lock_t, jabberd_log_t, jabberd_spool_t;
+            type jabberd_var_lib_t, jabberd_runtime_t, jabberd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 jabberd_domain:process { ptrace signal_perms };
+            ps_process_pattern($1, jabberd_domain)
 
-      #######################################
-      ## <summary>
-      ##	The template to define a jabber domain.
-      ## </summary>
-      ## <param name="domain_prefix">
-      ##	<summary>
-      ##	Domain prefix to be used.
-      ##	</summary>
-      ## </param>
-      #
-      template(`jabber_domain_template',`
-      	gen_require(`
-      		attribute jabberd_domain;
-      	')
+            init_startstop_service($1, $2, jabberd_domain, jabberd_initrc_exec_t)
 
-      	type $1_t, jabberd_domain;
-      	type $1_exec_t;
-      	init_daemon_domain($1_t, $1_exec_t)
-      ')
+            files_search_locks($1)
+            admin_pattern($1, jabberd_lock_t)
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	jabber lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`jabber_manage_lib_files',`
-      	gen_require(`
-      		type jabberd_var_lib_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, jabberd_log_t)
 
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, jabberd_var_lib_t, jabberd_var_lib_t)
-      ')
+            files_search_spool($1)
+            admin_pattern($1, jabberd_spool_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an jabber environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`jabber_admin',`
-      	gen_require(`
-      		attribute jabberd_domain;
-      		type jabberd_lock_t, jabberd_log_t, jabberd_spool_t;
-      		type jabberd_var_lib_t, jabberd_runtime_t, jabberd_initrc_exec_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, jabberd_var_lib_t)
 
-      	allow $1 jabberd_domain:process { ptrace signal_perms };
-      	ps_process_pattern($1, jabberd_domain)
-
-      	init_startstop_service($1, $2, jabberd_domain, jabberd_initrc_exec_t)
-
-      	files_search_locks($1)
-      	admin_pattern($1, jabberd_lock_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, jabberd_log_t)
-
-      	files_search_spool($1)
-      	admin_pattern($1, jabberd_spool_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, jabberd_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, jabberd_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, jabberd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(jabber)
 

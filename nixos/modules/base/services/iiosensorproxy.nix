@@ -3,29 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.iiosensorproxy = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>IIO sensors to D-Bus proxy</summary>
-      ##
-      ## <desc>
-      ## Industrial I/O subsystem is intended to provide support for devices
-      ## that in some sense are analog to digital or digital to analog converters
-      ## .
-      ## Devices that fall into this category are:
-      ##  * ADCs
-      ##  * Accelerometers
-      ##  * Gyros
-      ##  * IMUs
-      ##  * Capacitance to Digital Converters (CDCs)
-      ##  * Pressure Sensors
-      ##  * Color, Light and Proximity Sensors
-      ##  * Temperature Sensors
-      ##  * Magnetometers
-      ##  * DACs
-      ##  * DDS (Direct Digital Synthesis)
-      ##  * PLLs (Phase Locked Loops)
-      ##  * Variable/Programmable Gain Amplifiers (VGA, PGA)
-      ## </desc>
-    '';
+    interface = {
+      summary = "IIO sensors to D-Bus proxy";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(iiosensorproxy)
 

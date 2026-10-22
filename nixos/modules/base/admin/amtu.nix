@@ -3,82 +3,77 @@
 { lib, ... }: {
   config.security.selinux.modules.amtu = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Abstract Machine Test Utility.</summary>
+    interface = {
+      summary = "Abstract Machine Test Utility.";
+      exports = {
+        "amtu_domtrans" = {
+          summary = "Execute a domain transition to run Amtu.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type amtu_t, amtu_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, amtu_exec_t, amtu_t)
+          '';
+        };
+        "amtu_run" = {
+          summary = ''
+            Execute a domain transition to run
+            Amtu, and allow the specified role
+            the Amtu domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role amtu_roles;
+          '';
+          content = ''
+            amtu_domtrans($1)
+            roleattribute $2 amtu_roles;
+          '';
+        };
+        "amtu_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an amtu environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type amtu_t, amtu_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 amtu_t:process { ptrace signal_perms };
+            ps_process_pattern($1, amtu_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run Amtu.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amtu_domtrans',`
-      	gen_require(`
-      		type amtu_t, amtu_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, amtu_exec_t, amtu_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	Amtu, and allow the specified role
-      ##	the Amtu domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amtu_run',`
-      	gen_require(`
-      		attribute_role amtu_roles;
-      	')
-
-      	amtu_domtrans($1)
-      	roleattribute $2 amtu_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an amtu environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`amtu_admin',`
-      	gen_require(`
-      		type amtu_t, amtu_initrc_exec_t;
-      	')
-
-      	allow $1 amtu_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, amtu_t)
-
-      	init_startstop_service($1, $2, amtu_t, amtu_initrc_exec_t)
-      ')
-    '';
+            init_startstop_service($1, $2, amtu_t, amtu_initrc_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(amtu)
 

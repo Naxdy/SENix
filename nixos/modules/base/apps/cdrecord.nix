@@ -3,74 +3,70 @@
 { lib, ... }: {
   config.security.selinux.modules.cdrecord = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>Record audio or data Compact Discs from a master.</summary>
+    interface = {
+      summary = "Record audio or data Compact Discs from a master.";
+      exports = {
+        "cdrecord_role" = {
+          type = "template";
+          summary = "Role access for cdrecord.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role cdrecord_roles;
+            type cdrecord_t, cdrecord_exec_t;
+          '';
+          content = ''
+            roleattribute $4 cdrecord_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for cdrecord.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`cdrecord_role',`
-      	gen_require(`
-      		attribute_role cdrecord_roles;
-      		type cdrecord_t, cdrecord_exec_t;
-      	')
+            domtrans_pattern($3, cdrecord_exec_t, cdrecord_t)
 
-      	roleattribute $4 cdrecord_roles;
+            allow cdrecord_t $3:unix_stream_socket rw_socket_perms;
 
-      	domtrans_pattern($3, cdrecord_exec_t, cdrecord_t)
+            allow $3 cdrecord_t:process { ptrace signal_perms };
+            ps_process_pattern($3, cdrecord_t)
 
-      	allow cdrecord_t $3:unix_stream_socket rw_socket_perms;
-
-      	allow $3 cdrecord_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, cdrecord_t)
-
-      	optional_policy(`
-      		systemd_user_app_status($1, cdrecord_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute cdrecord in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cdrecord_exec',`
-      	gen_require(`
-      		type cdrecord_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, cdrecord_exec_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, cdrecord_t)
+            ')
+          '';
+        };
+        "cdrecord_exec" = {
+          summary = "Execute cdrecord in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cdrecord_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, cdrecord_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cdrecord)
 

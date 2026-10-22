@@ -3,94 +3,88 @@
 { lib, ... }: {
   config.security.selinux.modules.opensm = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>OpenSM is a software implementation of an InfiniBand subnet manager.</summary>
+    interface = {
+      summary = "OpenSM is a software implementation of an InfiniBand subnet manager.";
+      exports = {
+        "opensm_domtrans" = {
+          summary = "Execute opensm in the opensm domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type opensm_t, opensm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, opensm_exec_t, opensm_t)
+          '';
+        };
+        "opensm_run" = {
+          summary = ''
+            Execute opensm in the opensm domain, and
+            allow the specified role the opensm domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type opensm_t;
+          '';
+          content = ''
+            opensm_domtrans($1)
+            role $2 types opensm_t;
+          '';
+          rolecap = true;
+        };
+        "opensm_admin" = {
+          summary = ''
+            All of the rules required to administrate
+            an opensm environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type opensm_t;
+            type opensm_conf_t, opensm_cache_t;
+            type opensm_log_t;
+          '';
+          content = ''
+            opensm_run($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Execute opensm in the opensm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`opensm_domtrans',`
-      	gen_require(`
-      		type opensm_t, opensm_exec_t;
-      	')
+            allow $1 opensm_t:process { ptrace signal_perms };
+            ps_process_pattern($1, opensm_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, opensm_exec_t, opensm_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, opensm_conf_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute opensm in the opensm domain, and
-      ##	allow the specified role the opensm domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`opensm_run',`
-      	gen_require(`
-      		type opensm_t;
-      	')
+            files_search_var($1)
+            admin_pattern($1, opensm_cache_t)
 
-      	opensm_domtrans($1)
-      	role $2 types opensm_t;
-      ')
-
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to administrate
-      ##	an opensm environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`opensm_admin',`
-      	gen_require(`
-      		type opensm_t;
-      		type opensm_conf_t, opensm_cache_t;
-      		type opensm_log_t;
-      	')
-
-      	opensm_run($1, $2)
-
-      	allow $1 opensm_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, opensm_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, opensm_conf_t)
-
-      	files_search_var($1)
-      	admin_pattern($1, opensm_cache_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, opensm_log_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, opensm_log_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(opensm)
 

@@ -3,287 +3,262 @@
 { lib, ... }: {
   config.security.selinux.modules.rsync = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Fast incremental file transfer for synchronization.</summary>
+    interface = {
+      summary = "Fast incremental file transfer for synchronization.";
+      exports = {
+        "rsync_entry_type" = {
+          summary = ''
+            Make rsync executable file an
+            entry point for the specified domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The domain for which rsync_exec_t is an entrypoint.";
+            };
+          };
+          gen_require = ''
+            type rsync_exec_t;
+          '';
+          content = ''
+            domain_entry_file($1, rsync_exec_t)
+          '';
+        };
+        "rsync_entry_spec_domtrans" = {
+          summary = "Execute a rsync in a specified domain.";
+          desc = ''
+            <p>
+            Execute a rsync in a specified domain.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "source_domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "Domain to transition to.";
+            };
+          };
+          gen_require = ''
+            type rsync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domain_auto_transition_pattern($1, rsync_exec_t, $2)
+          '';
+        };
+        "rsync_entry_domtrans" = {
+          summary = "Execute a rsync in a specified domain.";
+          desc = ''
+            <p>
+            Execute a rsync in a specified domain.
+            </p>
+            <p>
+            No interprocess communication (signals, pipes,
+            etc.) is provided by this interface since
+            the domains are not owned by this module.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "source_domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "target_domain";
+              description = "Domain to transition to.";
+            };
+          };
+          gen_require = ''
+            type rsync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domain_auto_transition_pattern($1, rsync_exec_t, $2)
+          '';
+        };
+        "rsync_domtrans" = {
+          summary = "Execute the rsync program in the rsync domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rsync_t, rsync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rsync_exec_t, rsync_t)
+          '';
+        };
+        "rsync_run" = {
+          summary = ''
+            Execute rsync in the rsync domain, and
+            allow the specified role the rsync domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role rsync_roles;
+          '';
+          content = ''
+            rsync_domtrans($1)
+            roleattribute $2 rsync_roles;
+          '';
+        };
+        "rsync_exec" = {
+          summary = "Execute rsync in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rsync_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, rsync_exec_t)
+          '';
+        };
+        "rsync_read_config" = {
+          summary = "Read rsync config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rsync_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 rsync_etc_t:file read_file_perms;
+          '';
+        };
+        "rsync_write_config" = {
+          summary = "Write rsync config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rsync_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 rsync_etc_t:file write_file_perms;
+          '';
+        };
+        "rsync_manage_config_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rsync config files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rsync_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            manage_files_pattern($1, rsync_etc_t, rsync_etc_t)
+          '';
+        };
+        "rsync_etc_filetrans_config" = {
+          summary = ''
+            Create specified objects in etc directories
+            with rsync etc type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type rsync_etc_t;
+          '';
+          content = ''
+            files_etc_filetrans($1, rsync_etc_t, $2, $3)
+          '';
+        };
+        "rsync_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an rsync environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+              unused = true;
+            };
+          };
+          gen_require = ''
+            type rsync_t, rsync_etc_t, rsync_data_t;
+            type rsync_log_t, rsync_tmp_t, rsync_runtime_t;
+          '';
+          content = ''
+            allow $1 rsync_t:process { ptrace signal_perms };
+            ps_process_pattern($1, rsync_t)
 
-      ########################################
-      ## <summary>
-      ##	Make rsync executable file an
-      ##	entry point for the specified domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The domain for which rsync_exec_t is an entrypoint.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_entry_type',`
-      	gen_require(`
-      		type rsync_exec_t;
-      	')
+            files_search_etc($1)
+            admin_pattern($1, rsync_etc_t)
 
-      	domain_entry_file($1, rsync_exec_t)
-      ')
+            admin_pattern($1, rsync_data_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a rsync in a specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute a rsync in a specified domain.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ## </desc>
-      ## <param name="source_domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	Domain to transition to.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_entry_spec_domtrans',`
-      	gen_require(`
-      		type rsync_exec_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, rsync_log_t)
 
-      	corecmd_search_bin($1)
-      	domain_auto_transition_pattern($1, rsync_exec_t, $2)
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, rsync_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a rsync in a specified domain.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Execute a rsync in a specified domain.
-      ##	</p>
-      ##	<p>
-      ##	No interprocess communication (signals, pipes,
-      ##	etc.) is provided by this interface since
-      ##	the domains are not owned by this module.
-      ##	</p>
-      ## </desc>
-      ## <param name="source_domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="target_domain">
-      ##	<summary>
-      ##	Domain to transition to.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_entry_domtrans',`
-      	gen_require(`
-      		type rsync_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domain_auto_transition_pattern($1, rsync_exec_t, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute the rsync program in the rsync domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_domtrans',`
-      	gen_require(`
-      		type rsync_t, rsync_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rsync_exec_t, rsync_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rsync in the rsync domain, and
-      ##	allow the specified role the rsync domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_run',`
-      	gen_require(`
-      		attribute_role rsync_roles;
-      	')
-
-      	rsync_domtrans($1)
-      	roleattribute $2 rsync_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute rsync in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_exec',`
-      	gen_require(`
-      		type rsync_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, rsync_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rsync config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_read_config',`
-      	gen_require(`
-      		type rsync_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 rsync_etc_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write rsync config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_write_config',`
-      	gen_require(`
-      		type rsync_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 rsync_etc_t:file write_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rsync config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_manage_config_files',`
-      	gen_require(`
-      		type rsync_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	manage_files_pattern($1, rsync_etc_t, rsync_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create specified objects in etc directories
-      ##	with rsync etc type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rsync_etc_filetrans_config',`
-      	gen_require(`
-      		type rsync_etc_t;
-      	')
-
-      	files_etc_filetrans($1, rsync_etc_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an rsync environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role" unused="true">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rsync_admin',`
-      	gen_require(`
-      		type rsync_t, rsync_etc_t, rsync_data_t;
-      		type rsync_log_t, rsync_tmp_t, rsync_runtime_t;
-      	')
-
-      	allow $1 rsync_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, rsync_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, rsync_etc_t)
-
-      	admin_pattern($1, rsync_data_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, rsync_log_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, rsync_tmp_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, rsync_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, rsync_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rsync)
 

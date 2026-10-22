@@ -3,268 +3,242 @@
 { lib, ... }: {
   config.security.selinux.modules.amavis = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>High-performance interface between an email server and content checkers.</summary>
+    interface = {
+      summary = "High-performance interface between an email server and content checkers.";
+      exports = {
+        "amavis_domtrans" = {
+          summary = "Execute a domain transition to run amavis.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type amavis_t, amavis_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, amavis_exec_t, amavis_t)
+          '';
+        };
+        "amavis_initrc_domtrans" = {
+          summary = "Execute amavis server in the amavis domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type amavis_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, amavis_initrc_exec_t)
+          '';
+        };
+        "amavis_read_spool_files" = {
+          summary = "Read amavis spool files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            read_files_pattern($1, amavis_spool_t, amavis_spool_t)
+          '';
+        };
+        "amavis_manage_spool_files" = {
+          summary = ''
+            Create, read, write, and delete
+            amavis spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            manage_dirs_pattern($1, amavis_spool_t, amavis_spool_t)
+            manage_files_pattern($1, amavis_spool_t, amavis_spool_t)
+          '';
+        };
+        "amavis_spool_filetrans" = {
+          summary = ''
+            Create objects in the amavis spool directories
+            with a private type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "private_type";
+              description = "Private file type.";
+            };
+            "$3" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$4" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type amavis_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            filetrans_pattern($1, amavis_spool_t, $2, $3, $4)
+          '';
+        };
+        "amavis_search_lib" = {
+          summary = "Search amavis lib directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_var_lib_t;
+          '';
+          content = ''
+            allow $1 amavis_var_lib_t:dir search_dir_perms;
+            files_search_var_lib($1)
+          '';
+        };
+        "amavis_read_lib_files" = {
+          summary = "Read amavis lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_var_lib_t;
+          '';
+          content = ''
+            read_files_pattern($1, amavis_var_lib_t, amavis_var_lib_t)
+            allow $1 amavis_var_lib_t:dir list_dir_perms;
+            files_search_var_lib($1)
+          '';
+        };
+        "amavis_manage_lib_files" = {
+          summary = ''
+            Create, read, write, and delete
+            amavis lib files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_var_lib_t;
+          '';
+          content = ''
+            manage_files_pattern($1, amavis_var_lib_t, amavis_var_lib_t)
+            files_search_var_lib($1)
+          '';
+        };
+        "amavis_setattr_runtime_files" = {
+          summary = "Set attributes of amavis runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_runtime_t;
+          '';
+          content = ''
+            allow $1 amavis_runtime_t:file setattr_file_perms;
+            files_search_runtime($1)
+          '';
+        };
+        "amavis_create_runtime_files" = {
+          summary = "Create amavis runtime files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_runtime_t;
+          '';
+          content = ''
+            create_files_pattern($1, amavis_runtime_t, amavis_runtime_t)
+            files_search_runtime($1)
+          '';
+        };
+        "amavis_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an amavis environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type amavis_t, amavis_tmp_t, amavis_var_log_t;
+            type amavis_spool_t, amavis_var_lib_t, amavis_runtime_t;
+            type amavis_etc_t, amavis_quarantine_t, amavis_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 amavis_t:process { ptrace signal_perms };
+            ps_process_pattern($1, amavis_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run amavis.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_domtrans',`
-      	gen_require(`
-      		type amavis_t, amavis_exec_t;
-      	')
+            init_startstop_service($1, $2, amavis_t, amavis_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, amavis_exec_t, amavis_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, amavis_etc_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute amavis server in the amavis domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_initrc_domtrans',`
-      	gen_require(`
-      		type amavis_initrc_exec_t;
-      	')
+            admin_pattern($1, amavis_quarantine_t)
 
-      	init_labeled_script_domtrans($1, amavis_initrc_exec_t)
-      ')
+            files_list_spool($1)
+            admin_pattern($1, amavis_spool_t)
 
-      ########################################
-      ## <summary>
-      ##	Read amavis spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_read_spool_files',`
-      	gen_require(`
-      		type amavis_spool_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, amavis_tmp_t)
 
-      	files_search_spool($1)
-      	read_files_pattern($1, amavis_spool_t, amavis_spool_t)
-      ')
+            files_list_var_lib($1)
+            admin_pattern($1, amavis_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	amavis spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_manage_spool_files',`
-      	gen_require(`
-      		type amavis_spool_t;
-      	')
+            logging_list_logs($1)
+            admin_pattern($1, amavis_var_log_t)
 
-      	files_search_spool($1)
-      	manage_dirs_pattern($1, amavis_spool_t, amavis_spool_t)
-      	manage_files_pattern($1, amavis_spool_t, amavis_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the amavis spool directories
-      ##	with a private type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="private_type">
-      ##	<summary>
-      ##	Private file type.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_spool_filetrans',`
-      	gen_require(`
-      		type amavis_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	filetrans_pattern($1, amavis_spool_t, $2, $3, $4)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search amavis lib directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_search_lib',`
-      	gen_require(`
-      		type amavis_var_lib_t;
-      	')
-
-      	allow $1 amavis_var_lib_t:dir search_dir_perms;
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read amavis lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_read_lib_files',`
-      	gen_require(`
-      		type amavis_var_lib_t;
-      	')
-
-      	read_files_pattern($1, amavis_var_lib_t, amavis_var_lib_t)
-      	allow $1 amavis_var_lib_t:dir list_dir_perms;
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	amavis lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_manage_lib_files',`
-      	gen_require(`
-      		type amavis_var_lib_t;
-      	')
-
-      	manage_files_pattern($1, amavis_var_lib_t, amavis_var_lib_t)
-      	files_search_var_lib($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Set attributes of amavis runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_setattr_runtime_files',`
-      	gen_require(`
-      		type amavis_runtime_t;
-      	')
-
-      	allow $1 amavis_runtime_t:file setattr_file_perms;
-      	files_search_runtime($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create amavis runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`amavis_create_runtime_files',`
-      	gen_require(`
-      		type amavis_runtime_t;
-      	')
-
-      	create_files_pattern($1, amavis_runtime_t, amavis_runtime_t)
-      	files_search_runtime($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an amavis environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`amavis_admin',`
-      	gen_require(`
-      		type amavis_t, amavis_tmp_t, amavis_var_log_t;
-      		type amavis_spool_t, amavis_var_lib_t, amavis_runtime_t;
-      		type amavis_etc_t, amavis_quarantine_t, amavis_initrc_exec_t;
-      	')
-
-      	allow $1 amavis_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, amavis_t)
-
-      	init_startstop_service($1, $2, amavis_t, amavis_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, amavis_etc_t)
-
-      	admin_pattern($1, amavis_quarantine_t)
-
-      	files_list_spool($1)
-      	admin_pattern($1, amavis_spool_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, amavis_tmp_t)
-
-      	files_list_var_lib($1)
-      	admin_pattern($1, amavis_var_lib_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, amavis_var_log_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, amavis_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, amavis_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(amavis)
 

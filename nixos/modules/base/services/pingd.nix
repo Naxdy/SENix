@@ -3,102 +3,95 @@
 { lib, ... }: {
   config.security.selinux.modules.pingd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Pingd of the Whatsup cluster node up/down detection utility.</summary>
+    interface = {
+      summary = "Pingd of the Whatsup cluster node up/down detection utility.";
+      exports = {
+        "pingd_domtrans" = {
+          summary = "Execute a domain transition to run pingd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type pingd_t, pingd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, pingd_exec_t, pingd_t)
+          '';
+        };
+        "pingd_read_config" = {
+          summary = "Read pingd etc configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pingd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 pingd_etc_t:file read_file_perms;
+          '';
+        };
+        "pingd_manage_config" = {
+          summary = ''
+            Create, read, write, and delete
+            pingd etc configuration files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pingd_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 pingd_etc_t:file manage_file_perms;
+          '';
+        };
+        "pingd_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pingd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pingd_t, pingd_etc_t, pingd_modules_t;
+            type pingd_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 pingd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pingd_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run pingd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pingd_domtrans',`
-      	gen_require(`
-      		type pingd_t, pingd_exec_t;
-      	')
+            init_startstop_service($1, $2, pingd_t, pingd_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, pingd_exec_t, pingd_t)
-      ')
+            files_list_etc($1)
+            admin_pattern($1, pingd_etc_t)
 
-      #######################################
-      ## <summary>
-      ##	Read pingd etc configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pingd_read_config',`
-      	gen_require(`
-      		type pingd_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 pingd_etc_t:file read_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	pingd etc configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pingd_manage_config',`
-      	gen_require(`
-      		type pingd_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 pingd_etc_t:file manage_file_perms;
-      ')
-
-      #######################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pingd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pingd_admin',`
-      	gen_require(`
-      		type pingd_t, pingd_etc_t, pingd_modules_t;
-      		type pingd_initrc_exec_t;
-      	')
-
-      	allow $1 pingd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pingd_t)
-
-      	init_startstop_service($1, $2, pingd_t, pingd_initrc_exec_t)
-
-      	files_list_etc($1)
-      	admin_pattern($1, pingd_etc_t)
-
-      	files_list_usr($1)
-      	admin_pattern($1, pingd_modules_t)
-      ')
-    '';
+            files_list_usr($1)
+            admin_pattern($1, pingd_modules_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pingd)
 

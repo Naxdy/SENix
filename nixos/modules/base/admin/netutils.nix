@@ -3,315 +3,280 @@
 { lib, ... }: {
   config.security.selinux.modules.netutils = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Network analysis utilities</summary>
+    interface = {
+      summary = "Network analysis utilities";
+      exports = {
+        "netutils_domtrans" = {
+          summary = "Execute network utilities in the netutils domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type netutils_t, netutils_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, netutils_exec_t, netutils_t)
+          '';
+        };
+        "netutils_run" = {
+          summary = ''
+            Execute network utilities in the netutils domain, and
+            allow the specified role the netutils domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type netutils_t;
+          '';
+          content = ''
+            netutils_domtrans($1)
+            role $2 types netutils_t;
+          '';
+          rolecap = true;
+        };
+        "netutils_exec" = {
+          summary = "Execute network utilities in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type netutils_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, netutils_exec_t)
+          '';
+        };
+        "netutils_signal" = {
+          summary = "Send generic signals to network utilities.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type netutils_t;
+          '';
+          content = ''
+            allow $1 netutils_t:process signal;
+          '';
+        };
+        "netutils_domtrans_ping" = {
+          summary = "Execute ping in the ping domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type ping_t, ping_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, ping_exec_t, ping_t)
+          '';
+        };
+        "netutils_kill_ping" = {
+          summary = "Send a kill (SIGKILL) signal to ping.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ping_t;
+          '';
+          content = ''
+            allow $1 ping_t:process sigkill;
+          '';
+        };
+        "netutils_signal_ping" = {
+          summary = "Send generic signals to ping.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ping_t;
+          '';
+          content = ''
+            allow $1 ping_t:process signal;
+          '';
+        };
+        "netutils_run_ping" = {
+          summary = ''
+            Execute ping in the ping domain, and
+            allow the specified role the ping domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ping_t;
+          '';
+          content = ''
+            netutils_domtrans_ping($1)
+            role $2 types ping_t;
+          '';
+          rolecap = true;
+        };
+        "netutils_run_ping_cond" = {
+          summary = ''
+            Conditionally execute ping in the ping domain, and
+            allow the specified role the ping domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type ping_t;
+            bool user_ping;
+          '';
+          content = ''
+            role $2 types ping_t;
 
-      ########################################
-      ## <summary>
-      ##	Execute network utilities in the netutils domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_domtrans',`
-      	gen_require(`
-      		type netutils_t, netutils_exec_t;
-      	')
+            if ( user_ping ) {
+                    netutils_domtrans_ping($1)
+            }
+          '';
+          rolecap = true;
+        };
+        "netutils_exec_ping" = {
+          summary = "Execute ping in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type ping_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, ping_exec_t)
+          '';
+        };
+        "netutils_domtrans_traceroute" = {
+          summary = "Execute traceroute in the traceroute domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type traceroute_t, traceroute_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, traceroute_exec_t, traceroute_t)
+          '';
+        };
+        "netutils_run_traceroute" = {
+          summary = ''
+            Execute traceroute in the traceroute domain, and
+            allow the specified role the traceroute domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type traceroute_t;
+          '';
+          content = ''
+            netutils_domtrans_traceroute($1)
+            role $2 types traceroute_t;
+          '';
+          rolecap = true;
+        };
+        "netutils_run_traceroute_cond" = {
+          summary = ''
+            Conditionally execute traceroute in the traceroute domain, and
+            allow the specified role the traceroute domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type traceroute_t;
+            bool user_ping;
+          '';
+          content = ''
+            role $2 types traceroute_t;
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, netutils_exec_t, netutils_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute network utilities in the netutils domain, and
-      ##	allow the specified role the netutils domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`netutils_run',`
-      	gen_require(`
-      		type netutils_t;
-      	')
-
-      	netutils_domtrans($1)
-      	role $2 types netutils_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute network utilities in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_exec',`
-      	gen_require(`
-      		type netutils_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, netutils_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to network utilities.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_signal',`
-      	gen_require(`
-      		type netutils_t;
-      	')
-
-      	allow $1 netutils_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute ping in the ping domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_domtrans_ping',`
-      	gen_require(`
-      		type ping_t, ping_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, ping_exec_t, ping_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send a kill (SIGKILL) signal to ping.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_kill_ping',`
-      	gen_require(`
-      		type ping_t;
-      	')
-
-      	allow $1 ping_t:process sigkill;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send generic signals to ping.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_signal_ping',`
-      	gen_require(`
-      		type ping_t;
-      	')
-
-      	allow $1 ping_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute ping in the ping domain, and
-      ##	allow the specified role the ping domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`netutils_run_ping',`
-      	gen_require(`
-      		type ping_t;
-      	')
-
-      	netutils_domtrans_ping($1)
-      	role $2 types ping_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Conditionally execute ping in the ping domain, and
-      ##	allow the specified role the ping domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`netutils_run_ping_cond',`
-      	gen_require(`
-      		type ping_t;
-      		bool user_ping;
-      	')
-
-      	role $2 types ping_t;
-
-      	if ( user_ping ) {
-      		netutils_domtrans_ping($1)
-      	}
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute ping in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_exec_ping',`
-      	gen_require(`
-      		type ping_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, ping_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute traceroute in the traceroute domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_domtrans_traceroute',`
-      	gen_require(`
-      		type traceroute_t, traceroute_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, traceroute_exec_t, traceroute_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute traceroute in the traceroute domain, and
-      ##	allow the specified role the traceroute domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`netutils_run_traceroute',`
-      	gen_require(`
-      		type traceroute_t;
-      	')
-
-      	netutils_domtrans_traceroute($1)
-      	role $2 types traceroute_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Conditionally execute traceroute in the traceroute domain, and
-      ##	allow the specified role the traceroute domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`netutils_run_traceroute_cond',`
-      	gen_require(`
-      		type traceroute_t;
-      		bool user_ping;
-      	')
-
-      	role $2 types traceroute_t;
-
-      	if( user_ping ) {
-      		netutils_domtrans_traceroute($1)
-      	}
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute traceroute in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`netutils_exec_traceroute',`
-      	gen_require(`
-      		type traceroute_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, traceroute_exec_t)
-      ')
-    '';
+            if( user_ping ) {
+                    netutils_domtrans_traceroute($1)
+            }
+          '';
+          rolecap = true;
+        };
+        "netutils_exec_traceroute" = {
+          summary = "Execute traceroute in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type traceroute_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, traceroute_exec_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(netutils)
 

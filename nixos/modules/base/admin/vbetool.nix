@@ -3,54 +3,51 @@
 { lib, ... }: {
   config.security.selinux.modules.vbetool = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>run real-mode video BIOS code to alter hardware state.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute vbetool in the vbetool domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vbetool_domtrans',`
-      	gen_require(`
-      		type vbetool_t, vbetool_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, vbetool_exec_t, vbetool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute vbetool in the vbetool
-      ##	domain, and allow the specified
-      ##	role the vbetool domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`vbetool_run',`
-      	gen_require(`
-      		attribute_role vbetool_roles;
-      	')
-
-      	vbetool_domtrans($1)
-      	roleattribute $2 vbetool_roles;
-      ')
-    '';
+    interface = {
+      summary = "run real-mode video BIOS code to alter hardware state.";
+      exports = {
+        "vbetool_domtrans" = {
+          summary = "Execute vbetool in the vbetool domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type vbetool_t, vbetool_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, vbetool_exec_t, vbetool_t)
+          '';
+        };
+        "vbetool_run" = {
+          summary = ''
+            Execute vbetool in the vbetool
+            domain, and allow the specified
+            role the vbetool domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role vbetool_roles;
+          '';
+          content = ''
+            vbetool_domtrans($1)
+            roleattribute $2 vbetool_roles;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(vbetool)
 

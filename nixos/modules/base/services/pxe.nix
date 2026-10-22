@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.pxe = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Server for the PXE network boot protocol.</summary>
+    interface = {
+      summary = "Server for the PXE network boot protocol.";
+      exports = {
+        "pxe_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an pxe environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type pxe_t, pxe_initrc_exec_t, pxe_log_t;
+            type pxe_runtime_t;
+          '';
+          content = ''
+            allow $1 pxe_t:process { ptrace signal_perms };
+            ps_process_pattern($1, pxe_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an pxe environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`pxe_admin',`
-      	gen_require(`
-      		type pxe_t, pxe_initrc_exec_t, pxe_log_t;
-      		type pxe_runtime_t;
-      	')
+            init_startstop_service($1, $2, pxe_t, pxe_initrc_exec_t)
 
-      	allow $1 pxe_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, pxe_t)
+            logging_search_logs($1)
+            admin_pattern($1, pxe_log_t)
 
-      	init_startstop_service($1, $2, pxe_t, pxe_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, pxe_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, pxe_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, pxe_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pxe)
 

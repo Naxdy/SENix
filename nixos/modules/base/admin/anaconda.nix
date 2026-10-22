@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.anaconda = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Anaconda installer.</summary>
-    '';
+    interface = {
+      summary = "Anaconda installer.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(anaconda)
 

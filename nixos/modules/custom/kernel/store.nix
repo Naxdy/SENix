@@ -1,17 +1,15 @@
 { ... }: {
   config.security.selinux.modules.senix_store = {
     layer = "kernel";
-    interface = ''
-      ## <summary>
-      ## SENix custom module.
-      ## </summary>
-      ## <required val="true">
-      ## Required in the base module: this module declares the `fs_use_xattr
-      ## fuse;` statement, which is only valid in the base (checkmodule rejects
-      ## it in a loadable module), routing SELinux labels through the metafs
-      ## overlay.
-      ## </required>
-    '';
+    interface = {
+      summary = "SENix custom module.";
+      required = ''
+        Required in the base module: this module declares the `fs_use_xattr
+        fuse;` statement, which is only valid in the base (checkmodule rejects
+        it in a loadable module), routing SELinux labels through the metafs
+        overlay.
+      '';
+    };
     typeEnforcement = ''
       policy_module(senix_store)
 

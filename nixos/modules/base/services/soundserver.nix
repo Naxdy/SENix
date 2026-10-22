@@ -3,54 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.soundserver = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>sound server for network audio server programs, nasd, yiff, etc</summary>
+    interface = {
+      summary = "sound server for network audio server programs, nasd, yiff, etc";
+      exports = {
+        "soundserver_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an soundd environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type soundd_t, soundd_etc_t, soundd_initrc_exec_t;
+            type soundd_tmp_t, soundd_runtime_t, soundd_tmpfs_t;
+            type soundd_state_t;
+          '';
+          content = ''
+            allow $1 soundd_t:process { ptrace signal_perms };
+            ps_process_pattern($1, soundd_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an soundd environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`soundserver_admin',`
-      	gen_require(`
-      		type soundd_t, soundd_etc_t, soundd_initrc_exec_t;
-      		type soundd_tmp_t, soundd_runtime_t, soundd_tmpfs_t;
-      		type soundd_state_t;
-      	')
+            init_startstop_service($1, $2, soundd_t, soundd_initrc_exec_t)
 
-      	allow $1 soundd_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, soundd_t)
+            files_list_etc($1)
+            admin_pattern($1, soundd_etc_t)
 
-      	init_startstop_service($1, $2, soundd_t, soundd_initrc_exec_t)
+            files_list_tmp($1)
+            admin_pattern($1, soundd_tmp_t)
 
-      	files_list_etc($1)
-      	admin_pattern($1, soundd_etc_t)
+            fs_list_tmpfs($1)
+            admin_pattern($1, soundd_tmpfs_t)
 
-      	files_list_tmp($1)
-      	admin_pattern($1, soundd_tmp_t)
+            files_list_var($1)
+            admin_pattern($1, soundd_state_t)
 
-      	fs_list_tmpfs($1)
-      	admin_pattern($1, soundd_tmpfs_t)
-
-      	files_list_var($1)
-      	admin_pattern($1, soundd_state_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, soundd_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, soundd_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(soundserver)
 

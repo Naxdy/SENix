@@ -3,153 +3,142 @@
 { lib, ... }: {
   config.security.selinux.modules.prelude = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Prelude hybrid intrusion detection system.</summary>
+    interface = {
+      summary = "Prelude hybrid intrusion detection system.";
+      exports = {
+        "prelude_domtrans" = {
+          summary = "Execute a domain transition to run prelude.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type prelude_t, prelude_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, prelude_exec_t, prelude_t)
+          '';
+        };
+        "prelude_domtrans_audisp" = {
+          summary = ''
+            Execute a domain transition to
+            run prelude audisp.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type prelude_audisp_t, prelude_audisp_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, prelude_audisp_exec_t, prelude_audisp_t)
+          '';
+        };
+        "prelude_signal_audisp" = {
+          summary = "Send generic signals to prelude audisp.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelude_audisp_t;
+          '';
+          content = ''
+            allow $1 prelude_audisp_t:process signal;
+          '';
+        };
+        "prelude_read_spool" = {
+          summary = "Read prelude spool files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelude_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            read_files_pattern($1, prelude_spool_t, prelude_spool_t)
+          '';
+        };
+        "prelude_manage_spool" = {
+          summary = ''
+            Create, read, write, and delete
+            prelude manager spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelude_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            manage_dirs_pattern($1, prelude_spool_t, prelude_spool_t)
+            manage_files_pattern($1, prelude_spool_t, prelude_spool_t)
+          '';
+        };
+        "prelude_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an prelude environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type prelude_t, prelude_spool_t, prelude_lml_runtime_t;
+            type prelude_runtime_t, prelude_var_lib_t, prelude_log_t;
+            type prelude_audisp_t, prelude_audisp_runtime_t;
+            type prelude_initrc_exec_t, prelude_lml_t, prelude_lml_tmp_t;
+            type prelude_correlator_t;
+          '';
+          content = ''
+            allow $1 { prelude_t prelude_audisp_t prelude_lml_t prelude_correlator_t }:process { ptrace signal_perms };
+            ps_process_pattern($1, { prelude_t prelude_audisp_t prelude_lml_t prelude_correlator_t })
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run prelude.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelude_domtrans',`
-      	gen_require(`
-      		type prelude_t, prelude_exec_t;
-      	')
+            init_startstop_service($1, $2, prelude_t, prelude_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, prelude_exec_t, prelude_t)
-      ')
+            files_search_spool($1)
+            admin_pattern($1, prelude_spool_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to
-      ##	run prelude audisp.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelude_domtrans_audisp',`
-      	gen_require(`
-      		type prelude_audisp_t, prelude_audisp_exec_t;
-      	')
+            logging_search_logs($1)
+            admin_pattern($1, prelude_log_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, prelude_audisp_exec_t, prelude_audisp_t)
-      ')
+            files_search_var_lib($1)
+            admin_pattern($1, prelude_var_lib_t)
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to prelude audisp.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelude_signal_audisp',`
-      	gen_require(`
-      		type prelude_audisp_t;
-      	')
+            files_search_runtime($1)
+            admin_pattern($1, { prelude_audisp_runtime_t prelude_runtime_t prelude_lml_runtime_t })
 
-      	allow $1 prelude_audisp_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read prelude spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelude_read_spool',`
-      	gen_require(`
-      		type prelude_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	read_files_pattern($1, prelude_spool_t, prelude_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	prelude manager spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`prelude_manage_spool',`
-      	gen_require(`
-      		type prelude_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	manage_dirs_pattern($1, prelude_spool_t, prelude_spool_t)
-      	manage_files_pattern($1, prelude_spool_t, prelude_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an prelude environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`prelude_admin',`
-      	gen_require(`
-      		type prelude_t, prelude_spool_t, prelude_lml_runtime_t;
-      		type prelude_runtime_t, prelude_var_lib_t, prelude_log_t;
-      		type prelude_audisp_t, prelude_audisp_runtime_t;
-      		type prelude_initrc_exec_t, prelude_lml_t, prelude_lml_tmp_t;
-      		type prelude_correlator_t;
-      	')
-
-      	allow $1 { prelude_t prelude_audisp_t prelude_lml_t prelude_correlator_t }:process { ptrace signal_perms };
-      	ps_process_pattern($1, { prelude_t prelude_audisp_t prelude_lml_t prelude_correlator_t })
-
-      	init_startstop_service($1, $2, prelude_t, prelude_initrc_exec_t)
-
-      	files_search_spool($1)
-      	admin_pattern($1, prelude_spool_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, prelude_log_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, prelude_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, { prelude_audisp_runtime_t prelude_runtime_t prelude_lml_runtime_t })
-
-      	files_search_tmp($1)
-      	admin_pattern($1, prelude_lml_tmp_t)
-      ')
-    '';
+            files_search_tmp($1)
+            admin_pattern($1, prelude_lml_tmp_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(prelude)
 

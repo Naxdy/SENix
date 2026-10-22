@@ -3,89 +3,83 @@
 { lib, ... }: {
   config.security.selinux.modules.cvs = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Concurrent versions system.</summary>
+    interface = {
+      summary = "Concurrent versions system.";
+      exports = {
+        "cvs_read_data" = {
+          summary = "Read CVS data and metadata content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cvs_data_t;
+          '';
+          content = ''
+            list_dirs_pattern($1, cvs_data_t, cvs_data_t)
+            read_files_pattern($1, cvs_data_t, cvs_data_t)
+            read_lnk_files_pattern($1, cvs_data_t, cvs_data_t)
+          '';
+        };
+        "cvs_exec" = {
+          summary = "Execute cvs in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type cvs_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, cvs_exec_t)
+          '';
+        };
+        "cvs_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an cvs environment
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type cvs_t, cvs_tmp_t, cvs_initrc_exec_t;
+            type cvs_data_t, cvs_runtime_t, cvs_keytab_t;
+          '';
+          content = ''
+            allow $1 cvs_t:process { ptrace signal_perms };
+            ps_process_pattern($1, cvs_t)
 
-      ########################################
-      ## <summary>
-      ##	Read CVS data and metadata content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cvs_read_data',`
-      	gen_require(`
-      		type cvs_data_t;
-      	')
+            init_startstop_service($1, $2, cvs_t, cvs_initrc_exec_t)
 
-      	list_dirs_pattern($1, cvs_data_t, cvs_data_t)
-      	read_files_pattern($1, cvs_data_t, cvs_data_t)
-      	read_lnk_files_pattern($1, cvs_data_t, cvs_data_t)
-      ')
+            files_search_etc($1)
+            admin_pattern($1, cvs_keytab_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute cvs in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`cvs_exec',`
-      	gen_require(`
-      		type cvs_exec_t;
-      	')
+            files_list_tmp($1)
+            admin_pattern($1, cvs_tmp_t)
 
-      	corecmd_search_bin($1)
-      	can_exec($1, cvs_exec_t)
-      ')
+            files_search_usr($1)
+            admin_pattern($1, cvs_data_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an cvs environment
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`cvs_admin',`
-      	gen_require(`
-      		type cvs_t, cvs_tmp_t, cvs_initrc_exec_t;
-      		type cvs_data_t, cvs_runtime_t, cvs_keytab_t;
-      	')
-
-      	allow $1 cvs_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, cvs_t)
-
-      	init_startstop_service($1, $2, cvs_t, cvs_initrc_exec_t)
-
-      	files_search_etc($1)
-      	admin_pattern($1, cvs_keytab_t)
-
-      	files_list_tmp($1)
-      	admin_pattern($1, cvs_tmp_t)
-
-      	files_search_usr($1)
-      	admin_pattern($1, cvs_data_t)
-
-      	files_list_runtime($1)
-      	admin_pattern($1, cvs_runtime_t)
-      ')
-    '';
+            files_list_runtime($1)
+            admin_pattern($1, cvs_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(cvs)
 

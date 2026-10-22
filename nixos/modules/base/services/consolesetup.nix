@@ -3,112 +3,105 @@
 { lib, ... }: {
   config.security.selinux.modules.consolesetup = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>console font and keymap setup program for debian</summary>
-
-      ########################################
-      ## <summary>
-      ##  Execute console-setup in the consolesetup domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`consolesetup_domtrans', `
-          gen_require(`
-              type consolesetup_t, consolesetup_exec_t;
-          ')
-
-          corecmd_search_bin($1)
-          domtrans_pattern($1, consolesetup_exec_t, consolesetup_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##  Read console-setup configuration files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`consolesetup_read_conf',`
-      	gen_require(`
-              type consolesetup_conf_t;
-      	')
-
-          files_search_etc($1)
-          allow $1 consolesetup_conf_t:dir list_dir_perms;
-          allow $1 consolesetup_conf_t:file read_file_perms;
-          allow $1 consolesetup_conf_t:lnk_file read_lnk_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##  Execute console-setup configuration files
-      ##  in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`consolesetup_exec_conf', `
-          gen_require(`
-              type consolesetup_conf_t;
-          ')
-
-          files_search_etc($1)
-          exec_files_pattern($1, consolesetup_conf_t, consolesetup_conf_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##  Allow the caller to manage
-      ##  consolesetup_runtime_t files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`consolesetup_manage_runtime', `
-          gen_require(`
-              type consolesetup_runtime_t;
-          ')
-
-          files_search_runtime($1)
-          manage_dirs_pattern($1, consolesetup_runtime_t, consolesetup_runtime_t)
-          manage_files_pattern($1, consolesetup_runtime_t, consolesetup_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##  Create a console-setup directory in
-      ##  the runtime directory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`consolesetup_runtime_filetrans_runtime_dir', `
-          gen_require(`
-              type consolesetup_runtime_t;
-          ')
-
-          files_runtime_filetrans($1, consolesetup_runtime_t, dir, "console-setup")
-      ')
-    '';
+    interface = {
+      summary = "console font and keymap setup program for debian";
+      exports = {
+        "consolesetup_domtrans" = {
+          summary = "Execute console-setup in the consolesetup domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type consolesetup_t, consolesetup_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, consolesetup_exec_t, consolesetup_t)
+          '';
+        };
+        "consolesetup_read_conf" = {
+          summary = "Read console-setup configuration files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type consolesetup_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 consolesetup_conf_t:dir list_dir_perms;
+            allow $1 consolesetup_conf_t:file read_file_perms;
+            allow $1 consolesetup_conf_t:lnk_file read_lnk_file_perms;
+          '';
+          rolecap = true;
+        };
+        "consolesetup_exec_conf" = {
+          summary = ''
+            Execute console-setup configuration files
+            in the caller domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type consolesetup_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            exec_files_pattern($1, consolesetup_conf_t, consolesetup_conf_t)
+          '';
+        };
+        "consolesetup_manage_runtime" = {
+          summary = ''
+            Allow the caller to manage
+            consolesetup_runtime_t files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type consolesetup_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_dirs_pattern($1, consolesetup_runtime_t, consolesetup_runtime_t)
+            manage_files_pattern($1, consolesetup_runtime_t, consolesetup_runtime_t)
+          '';
+          rolecap = true;
+        };
+        "consolesetup_runtime_filetrans_runtime_dir" = {
+          summary = ''
+            Create a console-setup directory in
+            the runtime directory.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type consolesetup_runtime_t;
+          '';
+          content = ''
+            files_runtime_filetrans($1, consolesetup_runtime_t, dir, "console-setup")
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(consolesetup)
 

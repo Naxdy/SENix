@@ -3,49 +3,47 @@
 { lib, ... }: {
   config.security.selinux.modules.fprintd = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>DBus fingerprint reader service.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run fprintd.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fprintd_domtrans',`
-      	gen_require(`
-      		type fprintd_t, fprintd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fprintd_exec_t, fprintd_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send and receive messages from
-      ##	fprintd over dbus.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fprintd_dbus_chat',`
-      	gen_require(`
-      		type fprintd_t;
-      		class dbus send_msg;
-      	')
-
-      	allow $1 fprintd_t:dbus send_msg;
-      	allow fprintd_t $1:dbus send_msg;
-      ')
-    '';
+    interface = {
+      summary = "DBus fingerprint reader service.";
+      exports = {
+        "fprintd_domtrans" = {
+          summary = "Execute a domain transition to run fprintd.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fprintd_t, fprintd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fprintd_exec_t, fprintd_t)
+          '';
+        };
+        "fprintd_dbus_chat" = {
+          summary = ''
+            Send and receive messages from
+            fprintd over dbus.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fprintd_t;
+            class dbus send_msg;
+          '';
+          content = ''
+            allow $1 fprintd_t:dbus send_msg;
+            allow fprintd_t $1:dbus send_msg;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fprintd)
 

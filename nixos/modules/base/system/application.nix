@@ -3,215 +3,198 @@
 { lib, ... }: {
   config.security.selinux.modules.application = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for user executable applications.</summary>
+    interface = {
+      summary = "Policy for user executable applications.";
+      exports = {
+        "application_type" = {
+          summary = "Make the specified type usable as an application domain.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to be used as a domain type.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            typeattribute $1 application_domain_type;
 
-      ########################################
-      ## <summary>
-      ##	Make the specified type usable as an application domain.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to be used as a domain type.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_type',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
+            # start with basic domain
+            domain_type($1)
+          '';
+        };
+        "application_executable_file" = {
+          summary = ''
+            Make the specified type usable for files
+            that are executables, such as binary programs.
+            This does not include shared libraries.
+          '';
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Type to be used for files.";
+            };
+          };
+          gen_require = ''
+            attribute application_exec_type;
+          '';
+          content = ''
+            typeattribute $1 application_exec_type;
 
-      	typeattribute $1 application_domain_type;
+            corecmd_executable_file($1)
+          '';
+        };
+        "application_exec" = {
+          summary = "Execute application executables in the caller domain.";
+          params = {
+            "$1" = {
+              name = "type";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute application_exec_type;
+          '';
+          content = ''
+            can_exec($1, application_exec_type)
+          '';
+        };
+        "application_exec_all" = {
+          summary = "Execute all executable files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          content = ''
+            corecmd_dontaudit_exec_all_executables($1)
+            corecmd_exec_bin($1)
+            corecmd_exec_shell($1)
+            corecmd_exec_chroot($1)
 
-      	# start with basic domain
-      	domain_type($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Make the specified type usable for files
-      ##	that are executables, such as binary programs.
-      ##	This does not include shared libraries.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Type to be used for files.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_executable_file',`
-      	gen_require(`
-      		attribute application_exec_type;
-      	')
-
-      	typeattribute $1 application_exec_type;
-
-      	corecmd_executable_file($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ## Execute application executables in the caller domain.
-      ## </summary>
-      ## <param name="type">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_exec',`
-      	gen_require(`
-      		attribute application_exec_type;
-      	')
-
-      	can_exec($1, application_exec_type)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute all executable files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`application_exec_all',`
-      	corecmd_dontaudit_exec_all_executables($1)
-      	corecmd_exec_bin($1)
-      	corecmd_exec_shell($1)
-      	corecmd_exec_chroot($1)
-
-      	application_exec($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create a domain for applications.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Create a domain for applications.  Typically these are
-      ##	programs that are run interactively.
-      ##	</p>
-      ##	<p>
-      ##	The types will be made usable as a domain and file, making
-      ##	calls to domain_type() and files_type() redundant.
-      ##	</p>
-      ## </desc>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Type to be used as an application domain.
-      ##	</summary>
-      ## </param>
-      ## <param name="entry_point">
-      ##	<summary>
-      ##	Type of the program to be used as an entry point to this domain.
-      ##	</summary>
-      ## </param>
-      ## <infoflow type="none"/>
-      #
-      interface(`application_domain',`
-      	application_type($1)
-      	application_executable_file($2)
-      	domain_entry_file($1, $2)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send null signals to all application domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_signull',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
-
-      	allow $1 application_domain_type:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to send null signals
-      ##	to all application domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_dontaudit_signull',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
-
-      	dontaudit $1 application_domain_type:process signull;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send general signals to all application domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_signal',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
-
-      	allow $1 application_domain_type:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to send general signals
-      ##	to all application domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_dontaudit_signal',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
-
-      	dontaudit $1 application_domain_type:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to send kill signals
-      ##	to all application domains.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`application_dontaudit_sigkill',`
-      	gen_require(`
-      		attribute application_domain_type;
-      	')
-
-      	dontaudit $1 application_domain_type:process sigkill;
-      ')
-    '';
+            application_exec($1)
+          '';
+          rolecap = true;
+        };
+        "application_domain" = {
+          summary = "Create a domain for applications.";
+          desc = ''
+            <p>
+            Create a domain for applications.  Typically these are
+            programs that are run interactively.
+            </p>
+            <p>
+            The types will be made usable as a domain and file, making
+            calls to domain_type() and files_type() redundant.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Type to be used as an application domain.";
+            };
+            "$2" = {
+              name = "entry_point";
+              description = "Type of the program to be used as an entry point to this domain.";
+            };
+          };
+          content = ''
+            application_type($1)
+            application_executable_file($2)
+            domain_entry_file($1, $2)
+          '';
+          infoflow = {
+            type = "none";
+          };
+        };
+        "application_signull" = {
+          summary = "Send null signals to all application domains.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            allow $1 application_domain_type:process signull;
+          '';
+        };
+        "application_dontaudit_signull" = {
+          summary = ''
+            Do not audit attempts to send null signals
+            to all application domains.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            dontaudit $1 application_domain_type:process signull;
+          '';
+        };
+        "application_signal" = {
+          summary = "Send general signals to all application domains.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            allow $1 application_domain_type:process signal;
+          '';
+        };
+        "application_dontaudit_signal" = {
+          summary = ''
+            Do not audit attempts to send general signals
+            to all application domains.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            dontaudit $1 application_domain_type:process signal;
+          '';
+        };
+        "application_dontaudit_sigkill" = {
+          summary = ''
+            Do not audit attempts to send kill signals
+            to all application domains.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            attribute application_domain_type;
+          '';
+          content = ''
+            dontaudit $1 application_domain_type:process sigkill;
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(application)
 

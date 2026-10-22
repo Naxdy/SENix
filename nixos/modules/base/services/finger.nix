@@ -3,28 +3,27 @@
 { lib, ... }: {
   config.security.selinux.modules.finger = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Finger user information service.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute fingerd in the fingerd domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`finger_domtrans',`
-      	gen_require(`
-      		type fingerd_t, fingerd_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fingerd_exec_t, fingerd_t)
-      ')
-    '';
+    interface = {
+      summary = "Finger user information service.";
+      exports = {
+        "finger_domtrans" = {
+          summary = "Execute fingerd in the fingerd domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fingerd_t, fingerd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fingerd_exec_t, fingerd_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(finger)
 

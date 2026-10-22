@@ -3,44 +3,44 @@
 { lib, ... }: {
   config.security.selinux.modules.openhpi = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Open source implementation of the Service Availability Forum Hardware Platform Interface.</summary>
+    interface = {
+      summary = "Open source implementation of the Service Availability Forum Hardware Platform Interface.";
+      exports = {
+        "openhpi_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an openhpi environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type openhpid_t, openhpid_initrc_exec_t, openhpid_var_lib_t;
+            type openhpid_runtime_t;
+          '';
+          content = ''
+            allow $1 openhpid_t:process { ptrace signal_perms };
+            ps_process_pattern($1, openhpid_t)
 
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an openhpi environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`openhpi_admin',`
-      	gen_require(`
-      		type openhpid_t, openhpid_initrc_exec_t, openhpid_var_lib_t;
-      		type openhpid_runtime_t;
-      	')
+            init_startstop_service($1, $2, openhpid_t, openhpid_initrc_exec_t)
 
-      	allow $1 openhpid_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, openhpid_t)
+            files_search_var_lib($1)
+            admin_pattern($1, openhpid_var_lib_t)
 
-      	init_startstop_service($1, $2, openhpid_t, openhpid_initrc_exec_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, openhpid_var_lib_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, openhpid_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, openhpid_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(openhpi)
 

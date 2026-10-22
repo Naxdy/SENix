@@ -3,160 +3,144 @@
 { lib, ... }: {
   config.security.selinux.modules.rwho = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Who is logged in on other machines?</summary>
+    interface = {
+      summary = "Who is logged in on other machines?";
+      exports = {
+        "rwho_domtrans" = {
+          summary = "Execute a domain transition to run rwho.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type rwho_t, rwho_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, rwho_exec_t, rwho_t)
+          '';
+        };
+        "rwho_search_log" = {
+          summary = "Search rwho log directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 rwho_log_t:dir search_dir_perms;
+          '';
+        };
+        "rwho_read_log_files" = {
+          summary = "Read rwho log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 rwho_log_t:dir list_dir_perms;
+            allow $1 rwho_log_t:file read_file_perms;
+          '';
+        };
+        "rwho_search_spool" = {
+          summary = "Search rwho spool directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            allow $1 rwho_spool_t:dir search_dir_perms;
+          '';
+        };
+        "rwho_read_spool_files" = {
+          summary = "Read rwho spool files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            read_files_pattern($1, rwho_spool_t, rwho_spool_t)
+          '';
+        };
+        "rwho_manage_spool_files" = {
+          summary = ''
+            Create, read, write, and delete
+            rwho spool files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_spool_t;
+          '';
+          content = ''
+            files_search_spool($1)
+            manage_files_pattern($1, rwho_spool_t, rwho_spool_t)
+          '';
+        };
+        "rwho_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an rwho environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type rwho_t, rwho_log_t, rwho_spool_t;
+            type rwho_initrc_exec_t;
+          '';
+          content = ''
+            allow $1 rwho_t:process { ptrace signal_perms };
+            ps_process_pattern($1, rwho_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run rwho.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_domtrans',`
-      	gen_require(`
-      		type rwho_t, rwho_exec_t;
-      	')
+            init_startstop_service($1, $2, rwho_t, rwho_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, rwho_exec_t, rwho_t)
-      ')
+            logging_list_logs($1)
+            admin_pattern($1, rwho_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Search rwho log directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_search_log',`
-      	gen_require(`
-      		type rwho_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 rwho_log_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rwho log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_read_log_files',`
-      	gen_require(`
-      		type rwho_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 rwho_log_t:dir list_dir_perms;
-      	allow $1 rwho_log_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Search rwho spool directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_search_spool',`
-      	gen_require(`
-      		type rwho_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	allow $1 rwho_spool_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read rwho spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_read_spool_files',`
-      	gen_require(`
-      		type rwho_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	read_files_pattern($1, rwho_spool_t, rwho_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	rwho spool files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`rwho_manage_spool_files',`
-      	gen_require(`
-      		type rwho_spool_t;
-      	')
-
-      	files_search_spool($1)
-      	manage_files_pattern($1, rwho_spool_t, rwho_spool_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an rwho environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`rwho_admin',`
-      	gen_require(`
-      		type rwho_t, rwho_log_t, rwho_spool_t;
-      		type rwho_initrc_exec_t;
-      	')
-
-      	allow $1 rwho_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, rwho_t)
-
-      	init_startstop_service($1, $2, rwho_t, rwho_initrc_exec_t)
-
-      	logging_list_logs($1)
-      	admin_pattern($1, rwho_log_t)
-
-      	files_list_spool($1)
-      	admin_pattern($1, rwho_spool_t)
-      ')
-    '';
+            files_list_spool($1)
+            admin_pattern($1, rwho_spool_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(rwho)
 

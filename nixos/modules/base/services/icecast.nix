@@ -3,178 +3,161 @@
 { lib, ... }: {
   config.security.selinux.modules.icecast = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>ShoutCast compatible streaming media server.</summary>
+    interface = {
+      summary = "ShoutCast compatible streaming media server.";
+      exports = {
+        "icecast_domtrans" = {
+          summary = "Execute a domain transition to run icecast.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type icecast_t, icecast_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, icecast_exec_t, icecast_t)
+          '';
+        };
+        "icecast_signal" = {
+          summary = "Send generic signals to icecast.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type icecast_t;
+          '';
+          content = ''
+            allow $1 icecast_t:process signal;
+          '';
+        };
+        "icecast_initrc_domtrans" = {
+          summary = "Execute icecast server in the icecast domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type icecast_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, icecast_initrc_exec_t)
+          '';
+        };
+        "icecast_manage_pid_files" = {
+          summary = ''
+            Create, read, write, and delete
+            icecast pid files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type icecast_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            manage_files_pattern($1, icecast_runtime_t, icecast_runtime_t)
+          '';
+        };
+        "icecast_read_log" = {
+          summary = "Read icecast log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type icecast_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            read_files_pattern($1, icecast_log_t, icecast_log_t)
+          '';
+          rolecap = true;
+        };
+        "icecast_append_log" = {
+          summary = "Append icecast log files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type icecast_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            append_files_pattern($1, icecast_log_t, icecast_log_t)
+          '';
+        };
+        "icecast_manage_log" = {
+          summary = ''
+            Create, read, write, and delete
+            icecast log files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allow access.";
+            };
+          };
+          gen_require = ''
+            type icecast_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            manage_files_pattern($1, icecast_log_t, icecast_log_t)
+          '';
+        };
+        "icecast_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an icecast environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type icecast_t, icecast_initrc_exec_t, icecast_log_t;
+            type icecast_runtime_t;
+          '';
+          content = ''
+            init_startstop_service($1, $2, icecast_t, icecast_initrc_exec_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run icecast.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_domtrans',`
-      	gen_require(`
-      		type icecast_t, icecast_exec_t;
-      	')
+            allow $1 icecast_t:process { ptrace signal_perms };
+            ps_process_pattern($1, icecast_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, icecast_exec_t, icecast_t)
-      ')
+            logging_search_logs($1)
+            admin_pattern($1, icecast_log_t)
 
-      ########################################
-      ## <summary>
-      ##	Send generic signals to icecast.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_signal',`
-      	gen_require(`
-      		type icecast_t;
-      	')
-
-      	allow $1 icecast_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute icecast server in the icecast domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_initrc_domtrans',`
-      	gen_require(`
-      		type icecast_initrc_exec_t;
-      	')
-
-      	init_labeled_script_domtrans($1, icecast_initrc_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	icecast pid files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_manage_pid_files',`
-      	gen_require(`
-      		type icecast_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	manage_files_pattern($1, icecast_runtime_t, icecast_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read icecast log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`icecast_read_log',`
-      	gen_require(`
-      		type icecast_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	read_files_pattern($1, icecast_log_t, icecast_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Append icecast log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_append_log',`
-      	gen_require(`
-      		type icecast_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	append_files_pattern($1, icecast_log_t, icecast_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	icecast log files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allow access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`icecast_manage_log',`
-      	gen_require(`
-      		type icecast_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	manage_files_pattern($1, icecast_log_t, icecast_log_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an icecast environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`icecast_admin',`
-      	gen_require(`
-      		type icecast_t, icecast_initrc_exec_t, icecast_log_t;
-      		type icecast_runtime_t;
-      	')
-
-      	init_startstop_service($1, $2, icecast_t, icecast_initrc_exec_t)
-
-      	allow $1 icecast_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, icecast_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, icecast_log_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, icecast_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, icecast_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(icecast)
 

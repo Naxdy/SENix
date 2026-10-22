@@ -3,258 +3,228 @@
 { lib, ... }: {
   config.security.selinux.modules.alsa = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Advanced Linux Sound Architecture utilities.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run Alsa.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_domtrans',`
-      	gen_require(`
-      		type alsa_t, alsa_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, alsa_exec_t, alsa_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run
-      ##	Alsa, and allow the specified role
-      ##	the Alsa domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_run',`
-      	gen_require(`
-      		attribute_role alsa_roles;
-      	')
-
-      	alsa_domtrans($1)
-      	roleattribute $2 alsa_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write Alsa semaphores.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_rw_semaphores',`
-      	gen_require(`
-      		type alsa_t;
-      	')
-
-      	allow $1 alsa_t:sem rw_sem_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write Alsa shared memory.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_rw_shared_mem',`
-      	gen_require(`
-      		type alsa_t;
-      	')
-
-      	allow $1 alsa_t:shm rw_shm_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read Alsa configuration content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_read_config',`
-      	gen_require(`
-      		type alsa_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 alsa_etc_t:dir list_dir_perms;
-      	read_files_pattern($1, alsa_etc_t, alsa_etc_t)
-      	read_lnk_files_pattern($1, alsa_etc_t, alsa_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage Alsa config files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_manage_config',`
-      	gen_require(`
-      		type alsa_etc_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 alsa_etc_t:dir list_dir_perms;
-      	manage_files_pattern($1, alsa_etc_t, alsa_etc_t)
-      	read_lnk_files_pattern($1, alsa_etc_t, alsa_etc_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	alsa home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_manage_home_files',`
-      	gen_require(`
-      		type alsa_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 alsa_home_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read Alsa home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_read_home_files',`
-      	gen_require(`
-      		type alsa_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 alsa_home_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel alsa home files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_relabel_home_files',`
-      	gen_require(`
-      		type alsa_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	allow $1 alsa_home_t:file relabel_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in user home
-      ##	directories with the generic alsa
-      ##	home type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object_class">
-      ##	<summary>
-      ##	Class of the object being created.
-      ##	</summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##	<summary>
-      ##	The name of the object being created.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_home_filetrans_alsa_home',`
-      	gen_require(`
-      		type alsa_home_t;
-      	')
-
-      	userdom_user_home_dir_filetrans($1, alsa_home_t, $2, $3)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read Alsa lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_read_lib',`
-      	gen_require(`
-      		type alsa_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	read_files_pattern($1, alsa_var_lib_t, alsa_var_lib_t)
-      ')
-
-      #########################################
-      ## <summary>
-      ##	Write Alsa lib files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`alsa_write_lib',`
-      	gen_require(`
-      		type alsa_var_lib_t;
-      	')
-
-      	files_search_var_lib($1)
-      	write_files_pattern($1, alsa_var_lib_t, alsa_var_lib_t)
-      ')
-    '';
+    interface = {
+      summary = "Advanced Linux Sound Architecture utilities.";
+      exports = {
+        "alsa_domtrans" = {
+          summary = "Execute a domain transition to run Alsa.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type alsa_t, alsa_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, alsa_exec_t, alsa_t)
+          '';
+        };
+        "alsa_run" = {
+          summary = ''
+            Execute a domain transition to run
+            Alsa, and allow the specified role
+            the Alsa domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role alsa_roles;
+          '';
+          content = ''
+            alsa_domtrans($1)
+            roleattribute $2 alsa_roles;
+          '';
+        };
+        "alsa_rw_semaphores" = {
+          summary = "Read and write Alsa semaphores.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_t;
+          '';
+          content = ''
+            allow $1 alsa_t:sem rw_sem_perms;
+          '';
+        };
+        "alsa_rw_shared_mem" = {
+          summary = "Read and write Alsa shared memory.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_t;
+          '';
+          content = ''
+            allow $1 alsa_t:shm rw_shm_perms;
+          '';
+        };
+        "alsa_read_config" = {
+          summary = "Read Alsa configuration content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 alsa_etc_t:dir list_dir_perms;
+            read_files_pattern($1, alsa_etc_t, alsa_etc_t)
+            read_lnk_files_pattern($1, alsa_etc_t, alsa_etc_t)
+          '';
+        };
+        "alsa_manage_config" = {
+          summary = "Manage Alsa config files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_etc_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 alsa_etc_t:dir list_dir_perms;
+            manage_files_pattern($1, alsa_etc_t, alsa_etc_t)
+            read_lnk_files_pattern($1, alsa_etc_t, alsa_etc_t)
+          '';
+        };
+        "alsa_manage_home_files" = {
+          summary = ''
+            Create, read, write, and delete
+            alsa home files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 alsa_home_t:file manage_file_perms;
+          '';
+        };
+        "alsa_read_home_files" = {
+          summary = "Read Alsa home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 alsa_home_t:file read_file_perms;
+          '';
+        };
+        "alsa_relabel_home_files" = {
+          summary = "Relabel alsa home files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            allow $1 alsa_home_t:file relabel_file_perms;
+          '';
+        };
+        "alsa_home_filetrans_alsa_home" = {
+          summary = ''
+            Create objects in user home
+            directories with the generic alsa
+            home type.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object_class";
+              description = "Class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type alsa_home_t;
+          '';
+          content = ''
+            userdom_user_home_dir_filetrans($1, alsa_home_t, $2, $3)
+          '';
+        };
+        "alsa_read_lib" = {
+          summary = "Read Alsa lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            read_files_pattern($1, alsa_var_lib_t, alsa_var_lib_t)
+          '';
+        };
+        "alsa_write_lib" = {
+          summary = "Write Alsa lib files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type alsa_var_lib_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            write_files_pattern($1, alsa_var_lib_t, alsa_var_lib_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(alsa)
 

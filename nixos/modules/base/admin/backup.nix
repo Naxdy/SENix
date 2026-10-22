@@ -3,75 +3,71 @@
 { lib, ... }: {
   config.security.selinux.modules.backup = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>System backup scripts.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute backup in the backup domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`backup_domtrans',`
-      	gen_require(`
-      		type backup_t, backup_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, backup_exec_t, backup_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute backup in the backup
-      ##	domain, and allow the specified
-      ##	role the backup domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`backup_run',`
-      	gen_require(`
-      		attribute_role backup_roles;
-      	')
-
-      	backup_domtrans($1)
-      	roleattribute $2 backup_roles;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, and write backup
-      ##	store files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`backup_manage_store_files',`
-      	gen_require(`
-      		type backup_store_t;
-      	')
-
-      	files_search_var($1)
-      	manage_files_pattern($1, backup_store_t, backup_store_t)
-      ')
-    '';
+    interface = {
+      summary = "System backup scripts.";
+      exports = {
+        "backup_domtrans" = {
+          summary = "Execute backup in the backup domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type backup_t, backup_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, backup_exec_t, backup_t)
+          '';
+        };
+        "backup_run" = {
+          summary = ''
+            Execute backup in the backup
+            domain, and allow the specified
+            role the backup domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role backup_roles;
+          '';
+          content = ''
+            backup_domtrans($1)
+            roleattribute $2 backup_roles;
+          '';
+          rolecap = true;
+        };
+        "backup_manage_store_files" = {
+          summary = ''
+            Create, read, and write backup
+            store files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type backup_store_t;
+          '';
+          content = ''
+            files_search_var($1)
+            manage_files_pattern($1, backup_store_t, backup_store_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(backup)
 

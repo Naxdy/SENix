@@ -3,233 +3,212 @@
 { lib, ... }: {
   config.security.selinux.modules.pipewire = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>PipeWire multimedia daemon.</summary>
+    interface = {
+      summary = "PipeWire multimedia daemon.";
+      exports = {
+        "pipewire_role" = {
+          type = "template";
+          summary = ''
+            Role access for PipeWire (user-service mode).
+            Call this from unprivuser.te / staff.te in the same
+            way pulseaudio_role is called.
+          '';
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = "The prefix of the user role (e.g., \"user\" for user_r).";
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role (e.g., user_t).";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = ''
+                User exec domain for execute and transition access
+                (e.g., user_application_exec_domain).
+              '';
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access (e.g., user_r).";
+            };
+          };
+          gen_require = ''
+            attribute_role pipewire_roles;
+            type pipewire_t, pipewire_exec_t;
+            type pipewire_home_t, pipewire_tmpfs_t, pipewire_runtime_t;
+          '';
+          content = ''
+            roleattribute $4 pipewire_roles;
 
-      ########################################
-      ## <summary>
-      ##	Role access for PipeWire (user-service mode).
-      ##	Call this from unprivuser.te / staff.te in the same
-      ##	way pulseaudio_role is called.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., "user" for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role (e.g., user_t).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access
-      ##	(e.g., user_application_exec_domain).
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access (e.g., user_r).
-      ##	</summary>
-      ## </param>
-      #
-      template(`pipewire_role',`
-      	gen_require(`
-      		attribute_role pipewire_roles;
-      		type pipewire_t, pipewire_exec_t;
-      		type pipewire_home_t, pipewire_tmpfs_t, pipewire_runtime_t;
-      	')
+            domtrans_pattern($2, pipewire_exec_t, pipewire_t)
+            domtrans_pattern($3, pipewire_exec_t, pipewire_t)
 
-      	roleattribute $4 pipewire_roles;
+            allow $3 pipewire_t:process { ptrace signal_perms };
+            ps_process_pattern($3, pipewire_t)
 
-      	domtrans_pattern($2, pipewire_exec_t, pipewire_t)
-      	domtrans_pattern($3, pipewire_exec_t, pipewire_t)
+            pipewire_client($2)
+            pipewire_client($3)
 
-      	allow $3 pipewire_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, pipewire_t)
+            allow pipewire_t $3:unix_stream_socket connectto;
+            allow pipewire_t $3:process signull;
 
-      	pipewire_client($2)
-      	pipewire_client($3)
+            # Allow the user domain to manage and relabel pipewire home state files
+            # (e.g. restorecon after reinstall, stale file cleanup).
+            allow $2 pipewire_home_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 pipewire_home_t:file { mmap_manage_file_perms relabel_file_perms };
+            allow $2 pipewire_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
 
-      	allow pipewire_t $3:unix_stream_socket connectto;
-      	allow pipewire_t $3:process signull;
+            # Allow the user domain to manage and relabel runtime sock files
+            # (e.g. stale socket cleanup after daemon crash).
+            allow $2 pipewire_runtime_t:dir { manage_dir_perms relabel_dir_perms };
+            allow $2 pipewire_runtime_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
 
-      	# Allow the user domain to manage and relabel pipewire home state files
-      	# (e.g. restorecon after reinstall, stale file cleanup).
-      	allow $2 pipewire_home_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 pipewire_home_t:file { mmap_manage_file_perms relabel_file_perms };
-      	allow $2 pipewire_home_t:lnk_file { manage_lnk_file_perms relabel_lnk_file_perms };
+            allow $2 pipewire_tmpfs_t:file relabel_file_perms;
 
-      	# Allow the user domain to manage and relabel runtime sock files
-      	# (e.g. stale socket cleanup after daemon crash).
-      	allow $2 pipewire_runtime_t:dir { manage_dir_perms relabel_dir_perms };
-      	allow $2 pipewire_runtime_t:sock_file { manage_sock_file_perms relabel_sock_file_perms };
-
-      	allow $2 pipewire_tmpfs_t:file relabel_file_perms;
-
-      	optional_policy(`
-      		systemd_user_app_status($1, pipewire_t)
-      		systemd_user_app_socket_create($1, pipewire_t, pipewire_runtime_t)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow full pipewire access to the main client facilities
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_client',`
-      	gen_require(`
-      		type pipewire_runtime_t;
-      	')
-
-      	allow $1 pipewire_runtime_t:dir list_dir_perms;
-      	pipewire_stream_connect($1)
-      	pipewire_use_fds($1)
-      	pipewire_mmap_rw_tmpfs_files($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run the PipeWire daemon.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_domtrans',`
-      	gen_require(`
-      		type pipewire_t, pipewire_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, pipewire_exec_t, pipewire_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create pipewire user socket /run/user/$UID/pipewire-0
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_manage_user_dirs',`
-      	gen_require(`
-      		type pipewire_runtime_t;
-      	')
-
-      	allow $1 pipewire_runtime_t:dir manage_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	unlink pipewire user socket /run/user/$UID/pipewire-0
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_delete_user_sockets',`
-      	gen_require(`
-      		type pipewire_runtime_t;
-      	')
-
-      	userdom_rw_user_runtime_dirs($1)
-      	delete_sock_files_pattern($1, pipewire_runtime_t, pipewire_runtime_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Connect to the PipeWire daemon over a Unix stream socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_stream_connect',`
-      	gen_require(`
-      		type pipewire_t, pipewire_runtime_t;
-      	')
-
-      	files_search_runtime($1)
-      	stream_connect_pattern($1, pipewire_runtime_t, pipewire_runtime_t, pipewire_t)
-      	allow $1 pipewire_t:unix_stream_socket rw_socket_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow a domain to use file descriptors passed from PipeWire.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_use_fds',`
-      	gen_require(`
-      		type pipewire_t;
-      	')
-
-      	allow $1 pipewire_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow a domain to read, write, and map PipeWire shared memory (tmpfs) files.
-      ##	These are memfd files passed between the daemon and its clients for
-      ##	zero-copy audio buffer sharing.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_mmap_rw_tmpfs_files',`
-      	gen_require(`
-      		type pipewire_tmpfs_t;
-      	')
-
-      	fs_search_tmpfs($1)
-      	mmap_rw_files_pattern($1, pipewire_tmpfs_t, pipewire_tmpfs_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow a domain to read PipeWire home directory content.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`pipewire_read_home_files',`
-      	gen_require(`
-      		type pipewire_home_t;
-      	')
-
-      	userdom_search_user_home_dirs($1)
-      	read_files_pattern($1, pipewire_home_t, pipewire_home_t)
-      	read_lnk_files_pattern($1, pipewire_home_t, pipewire_home_t)
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, pipewire_t)
+                    systemd_user_app_socket_create($1, pipewire_t, pipewire_runtime_t)
+            ')
+          '';
+        };
+        "pipewire_client" = {
+          summary = "Allow full pipewire access to the main client facilities";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_runtime_t;
+          '';
+          content = ''
+            allow $1 pipewire_runtime_t:dir list_dir_perms;
+            pipewire_stream_connect($1)
+            pipewire_use_fds($1)
+            pipewire_mmap_rw_tmpfs_files($1)
+          '';
+        };
+        "pipewire_domtrans" = {
+          summary = "Execute a domain transition to run the PipeWire daemon.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type pipewire_t, pipewire_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, pipewire_exec_t, pipewire_t)
+          '';
+        };
+        "pipewire_manage_user_dirs" = {
+          summary = "Create pipewire user socket /run/user/$UID/pipewire-0";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_runtime_t;
+          '';
+          content = ''
+            allow $1 pipewire_runtime_t:dir manage_dir_perms;
+          '';
+        };
+        "pipewire_delete_user_sockets" = {
+          summary = "unlink pipewire user socket /run/user/$UID/pipewire-0";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_runtime_t;
+          '';
+          content = ''
+            userdom_rw_user_runtime_dirs($1)
+            delete_sock_files_pattern($1, pipewire_runtime_t, pipewire_runtime_t)
+          '';
+        };
+        "pipewire_stream_connect" = {
+          summary = "Connect to the PipeWire daemon over a Unix stream socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_t, pipewire_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            stream_connect_pattern($1, pipewire_runtime_t, pipewire_runtime_t, pipewire_t)
+            allow $1 pipewire_t:unix_stream_socket rw_socket_perms;
+          '';
+        };
+        "pipewire_use_fds" = {
+          summary = "Allow a domain to use file descriptors passed from PipeWire.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_t;
+          '';
+          content = ''
+            allow $1 pipewire_t:fd use;
+          '';
+        };
+        "pipewire_mmap_rw_tmpfs_files" = {
+          summary = ''
+            Allow a domain to read, write, and map PipeWire shared memory (tmpfs) files.
+            These are memfd files passed between the daemon and its clients for
+            zero-copy audio buffer sharing.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_tmpfs_t;
+          '';
+          content = ''
+            fs_search_tmpfs($1)
+            mmap_rw_files_pattern($1, pipewire_tmpfs_t, pipewire_tmpfs_t)
+          '';
+        };
+        "pipewire_read_home_files" = {
+          summary = "Allow a domain to read PipeWire home directory content.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type pipewire_home_t;
+          '';
+          content = ''
+            userdom_search_user_home_dirs($1)
+            read_files_pattern($1, pipewire_home_t, pipewire_home_t)
+            read_lnk_files_pattern($1, pipewire_home_t, pipewire_home_t)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(pipewire)
 

@@ -3,106 +3,93 @@
 { lib, ... }: {
   config.security.selinux.modules.getty = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Manages physical or virtual terminals.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute gettys in the getty domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`getty_domtrans',`
-      	gen_require(`
-      		type getty_t, getty_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, getty_exec_t, getty_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Inherit and use getty file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`getty_use_fds',`
-      	gen_require(`
-      		type getty_t;
-      	')
-
-      	allow $1 getty_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to read getty log file.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`getty_read_log',`
-      	gen_require(`
-      		type getty_log_t;
-      	')
-
-      	logging_search_logs($1)
-      	allow $1 getty_log_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to read getty config file.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`getty_read_config',`
-      	gen_require(`
-      		type getty_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 getty_conf_t:file read_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Allow process to edit getty config file.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`getty_rw_config',`
-      	gen_require(`
-      		type getty_conf_t;
-      	')
-
-      	files_search_etc($1)
-      	allow $1 getty_conf_t:file rw_file_perms;
-      ')
-    '';
+    interface = {
+      summary = "Manages physical or virtual terminals.";
+      exports = {
+        "getty_domtrans" = {
+          summary = "Execute gettys in the getty domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type getty_t, getty_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, getty_exec_t, getty_t)
+          '';
+        };
+        "getty_use_fds" = {
+          summary = "Inherit and use getty file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type getty_t;
+          '';
+          content = ''
+            allow $1 getty_t:fd use;
+          '';
+        };
+        "getty_read_log" = {
+          summary = "Allow process to read getty log file.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type getty_log_t;
+          '';
+          content = ''
+            logging_search_logs($1)
+            allow $1 getty_log_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "getty_read_config" = {
+          summary = "Allow process to read getty config file.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type getty_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 getty_conf_t:file read_file_perms;
+          '';
+          rolecap = true;
+        };
+        "getty_rw_config" = {
+          summary = "Allow process to edit getty config file.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type getty_conf_t;
+          '';
+          content = ''
+            files_search_etc($1)
+            allow $1 getty_conf_t:file rw_file_perms;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(getty)
 

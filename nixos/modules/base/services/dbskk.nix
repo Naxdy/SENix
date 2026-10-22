@@ -3,9 +3,9 @@
 { lib, ... }: {
   config.security.selinux.modules.dbskk = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Dictionary server for the SKK Japanese input method system.</summary>
-    '';
+    interface = {
+      summary = "Dictionary server for the SKK Japanese input method system.";
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(dbskk)
 

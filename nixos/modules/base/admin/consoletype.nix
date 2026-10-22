@@ -3,77 +3,69 @@
 { lib, ... }: {
   config.security.selinux.modules.consoletype = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>
-      ##	Determine of the console connected to the controlling terminal.
-      ## </summary>
+    interface = {
+      summary = "Determine of the console connected to the controlling terminal.";
+      exports = {
+        "consoletype_domtrans" = {
+          summary = "Execute consoletype in the consoletype domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type consoletype_t, consoletype_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, consoletype_exec_t, consoletype_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute consoletype in the consoletype domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`consoletype_domtrans',`
-      	gen_require(`
-      		type consoletype_t, consoletype_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, consoletype_exec_t, consoletype_t)
-
-              dontaudit consoletype_t $1:socket_class_set { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute consoletype in the consoletype domain, and
-      ##	allow the specified role the consoletype domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`consoletype_run',`
-      	gen_require(`
-      		type consoletype_t;
-      	')
-
-      	consoletype_domtrans($1)
-      	role $2 types consoletype_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute consoletype in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`consoletype_exec',`
-      	gen_require(`
-      		type consoletype_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, consoletype_exec_t)
-      ')
-    '';
+            dontaudit consoletype_t $1:socket_class_set { read write };
+          '';
+        };
+        "consoletype_run" = {
+          summary = ''
+            Execute consoletype in the consoletype domain, and
+            allow the specified role the consoletype domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type consoletype_t;
+          '';
+          content = ''
+            consoletype_domtrans($1)
+            role $2 types consoletype_t;
+          '';
+        };
+        "consoletype_exec" = {
+          summary = "Execute consoletype in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type consoletype_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, consoletype_exec_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(consoletype)
 

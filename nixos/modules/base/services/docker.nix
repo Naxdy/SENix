@@ -3,245 +3,229 @@
 { lib, ... }: {
   config.security.selinux.modules.docker = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Policy for docker</summary>
+    interface = {
+      summary = "Policy for docker";
+      exports = {
+        "docker_domtrans_cli" = {
+          summary = "Execute docker CLI in the docker CLI domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dockerc_t, dockerc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dockerc_exec_t, dockerc_t)
+          '';
+        };
+        "docker_run_cli" = {
+          summary = ''
+            Execute docker CLI in the docker CLI
+            domain, and allow the specified role
+            the docker CLI domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the docker domain.";
+            };
+          };
+          gen_require = ''
+            type dockerc_t;
+          '';
+          content = ''
+            role $2 types dockerc_t;
 
-      ########################################
-      ## <summary>
-      ##	Execute docker CLI in the docker CLI domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_domtrans_cli',`
-      	gen_require(`
-      		type dockerc_t, dockerc_exec_t;
-      	')
+            docker_domtrans_cli($1)
+          '';
+        };
+        "docker_domtrans_user_daemon" = {
+          summary = "Execute docker in the docker user domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dockerd_user_t, dockerd_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dockerd_exec_t, dockerd_user_t)
+          '';
+        };
+        "docker_run_user_daemon" = {
+          summary = ''
+            Execute docker in the docker user
+            domain, and allow the specified
+            role the docker user domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "The role to be allowed the docker domain.";
+            };
+          };
+          gen_require = ''
+            type dockerd_user_t;
+          '';
+          content = ''
+            role $2 types dockerd_user_t;
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dockerc_exec_t, dockerc_t)
-      ')
+            docker_domtrans_user_daemon($1)
+          '';
+        };
+        "docker_domtrans_user_cli" = {
+          summary = ''
+            Execute docker CLI in the docker CLI
+            user domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dockerc_user_t, dockerc_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, dockerc_exec_t, dockerc_user_t)
+          '';
+        };
+        "docker_run_user_cli" = {
+          summary = ''
+            Execute docker CLI in the docker CLI
+            user domain, and allow the specified
+            role the docker CLI user domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = ''
+                The role to be allowed the docker
+                user domain.
+              '';
+            };
+          };
+          gen_require = ''
+            type dockerc_user_t;
+          '';
+          content = ''
+            role $2 types dockerc_user_t;
 
-      ########################################
-      ## <summary>
-      ##	Execute docker CLI in the docker CLI
-      ##	domain, and allow the specified role
-      ##	the docker CLI domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the docker domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_run_cli',`
-      	gen_require(`
-      		type dockerc_t;
-      	')
+            docker_domtrans_user_cli($1)
+          '';
+        };
+        "docker_user_role" = {
+          type = "template";
+          summary = "Role access for rootless docker.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type dockerd_user_t;
+            type dockerd_exec_t;
+          '';
+          content = ''
+            role $4 types dockerd_user_t;
 
-      	role $2 types dockerc_t;
+            docker_run_user_daemon($3, $4)
+            docker_run_user_cli($3, $4)
 
-      	docker_domtrans_cli($1)
-      ')
+            ifdef(`init_systemd',`
+                    systemd_user_daemon_domain($1, dockerd_exec_t, dockerd_user_t)
+                    systemd_user_send_systemd_notify($1, dockerd_user_t)
+            ')
 
-      ########################################
-      ## <summary>
-      ##	Execute docker in the docker user domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_domtrans_user_daemon',`
-      	gen_require(`
-      		type dockerd_user_t, dockerd_exec_t;
-      	')
+            optional_policy(`
+                    dbus_spec_session_bus_client($1, dockerd_user_t)
+            ')
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dockerd_exec_t, dockerd_user_t)
-      ')
+            optional_policy(`
+                    rootlesskit_role($1, $2, $3, $4)
+            ')
+          '';
+          rolecap = true;
+        };
+        "docker_signal_user_daemon" = {
+          summary = "Send signals to the rootless docker daemon.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type dockerd_user_t;
+          '';
+          content = ''
+            allow $1 dockerd_user_t:process signal;
+          '';
+        };
+        "docker_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate a docker
+            environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          content = ''
+            docker_run_cli($1, $2)
 
-      ########################################
-      ## <summary>
-      ##	Execute docker in the docker user
-      ##	domain, and allow the specified
-      ##	role the docker user domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the docker domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_run_user_daemon',`
-      	gen_require(`
-      		type dockerd_user_t;
-      	')
-
-      	role $2 types dockerd_user_t;
-
-      	docker_domtrans_user_daemon($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute docker CLI in the docker CLI
-      ##	user domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_domtrans_user_cli',`
-      	gen_require(`
-      		type dockerc_user_t, dockerc_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, dockerc_exec_t, dockerc_user_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute docker CLI in the docker CLI
-      ##	user domain, and allow the specified
-      ##	role the docker CLI user domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	The role to be allowed the docker
-      ##	user domain.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_run_user_cli',`
-      	gen_require(`
-      		type dockerc_user_t;
-      	')
-
-      	role $2 types dockerc_user_t;
-
-      	docker_domtrans_user_cli($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Role access for rootless docker.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      template(`docker_user_role',`
-      	gen_require(`
-      		type dockerd_user_t;
-      		type dockerd_exec_t;
-      	')
-
-      	role $4 types dockerd_user_t;
-
-      	docker_run_user_daemon($3, $4)
-      	docker_run_user_cli($3, $4)
-
-      	ifdef(`init_systemd',`
-      		systemd_user_daemon_domain($1, dockerd_exec_t, dockerd_user_t)
-      		systemd_user_send_systemd_notify($1, dockerd_user_t)
-      	')
-
-      	optional_policy(`
-      		dbus_spec_session_bus_client($1, dockerd_user_t)
-      	')
-
-      	optional_policy(`
-      		rootlesskit_role($1, $2, $3, $4)
-      	')
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send signals to the rootless docker daemon.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`docker_signal_user_daemon',`
-      	gen_require(`
-      		type dockerd_user_t;
-      	')
-
-      	allow $1 dockerd_user_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate a docker
-      ##	environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`docker_admin',`
-      	docker_run_cli($1, $2)
-
-      	optional_policy(`
-      		rootlesskit_run($1, $2)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    rootlesskit_run($1, $2)
+            ')
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(docker)
 

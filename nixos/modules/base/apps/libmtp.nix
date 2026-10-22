@@ -3,53 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.libmtp = {
     layer = "apps";
-    interface = lib.mkBefore ''
-      ## <summary>libmtp: An Initiatior implementation of the Media Transfer Protocol (MTP).</summary>
+    interface = {
+      summary = "libmtp: An Initiatior implementation of the Media Transfer Protocol (MTP).";
+      exports = {
+        "libmtp_role" = {
+          type = "template";
+          summary = "Role access for libmtp.";
+          params = {
+            "$1" = {
+              name = "role_prefix";
+              description = ''
+                The prefix of the user role (e.g., user
+                is the prefix for user_r).
+              '';
+            };
+            "$2" = {
+              name = "user_domain";
+              description = "User domain for the role.";
+            };
+            "$3" = {
+              name = "user_exec_domain";
+              description = "User exec domain for execute and transition access.";
+            };
+            "$4" = {
+              name = "role";
+              description = "Role allowed access";
+            };
+          };
+          gen_require = ''
+            attribute_role libmtp_roles;
+            type libmtp_t, libmtp_exec_t;
+          '';
+          content = ''
+            roleattribute $4 libmtp_roles;
 
-      ###########################################################
-      ## <summary>
-      ##	Role access for libmtp.
-      ## </summary>
-      ## <param name="role_prefix">
-      ##	<summary>
-      ##	The prefix of the user role (e.g., user
-      ##	is the prefix for user_r).
-      ##	</summary>
-      ## </param>
-      ## <param name="user_domain">
-      ##	<summary>
-      ##	User domain for the role.
-      ##	</summary>
-      ## </param>
-      ## <param name="user_exec_domain">
-      ##	<summary>
-      ##	User exec domain for execute and transition access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access
-      ##	</summary>
-      ## </param>
-      #
-      template(`libmtp_role',`
-      	gen_require(`
-      		attribute_role libmtp_roles;
-      		type libmtp_t, libmtp_exec_t;
-      	')
+            domtrans_pattern($3, libmtp_exec_t, libmtp_t)
 
-      	roleattribute $4 libmtp_roles;
+            allow $3 libmtp_t:process { ptrace signal_perms };
+            ps_process_pattern($3, libmtp_t)
 
-      	domtrans_pattern($3, libmtp_exec_t, libmtp_t)
-
-      	allow $3 libmtp_t:process { ptrace signal_perms };
-      	ps_process_pattern($3, libmtp_t)
-
-      	optional_policy(`
-      		systemd_user_app_status($1, libmtp_t)
-      	')
-      ')
-    '';
+            optional_policy(`
+                    systemd_user_app_status($1, libmtp_t)
+            ')
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(libmtp)
 

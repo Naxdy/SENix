@@ -3,55 +3,52 @@
 { lib, ... }: {
   config.security.selinux.modules.tzdata = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Time zone updater.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute a domain transition to run tzdata.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`tzdata_domtrans',`
-      	gen_require(`
-      		type tzdata_t, tzdata_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, tzdata_exec_t, tzdata_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute tzdata in the tzdata domain,
-      ##	and allow the specified role
-      ##	the tzdata domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`tzdata_run',`
-      	gen_require(`
-      		attribute_role tzdata_roles;
-      	')
-
-      	tzdata_domtrans($1)
-      	roleattribute $2 tzdata_roles;
-      ')
-    '';
+    interface = {
+      summary = "Time zone updater.";
+      exports = {
+        "tzdata_domtrans" = {
+          summary = "Execute a domain transition to run tzdata.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type tzdata_t, tzdata_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, tzdata_exec_t, tzdata_t)
+          '';
+        };
+        "tzdata_run" = {
+          summary = ''
+            Execute tzdata in the tzdata domain,
+            and allow the specified role
+            the tzdata domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            attribute_role tzdata_roles;
+          '';
+          content = ''
+            tzdata_domtrans($1)
+            roleattribute $2 tzdata_roles;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(tzdata)
 

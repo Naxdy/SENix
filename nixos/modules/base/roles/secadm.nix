@@ -3,58 +3,54 @@
 { lib, ... }: {
   config.security.selinux.modules.secadm = {
     layer = "roles";
-    interface = lib.mkBefore ''
-      ## <summary>Security administrator role</summary>
-
-      ########################################
-      ## <summary>
-      ##	Change to the security administrator role.
-      ## </summary>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`secadm_role_change',`
-      	gen_require(`
-      		role secadm_r;
-      	')
-
-      	allow $1 secadm_r;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Change from the security administrator role.
-      ## </summary>
-      ## <desc>
-      ##	<p>
-      ##	Change from the security administrator role to
-      ##	the specified role.
-      ##	</p>
-      ##	<p>
-      ##	This is an interface to support third party modules
-      ##	and its use is not allowed in upstream reference
-      ##	policy.
-      ##	</p>
-      ## </desc>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`secadm_role_change_to_template',`
-      	gen_require(`
-      		role secadm_r;
-      	')
-
-      	allow secadm_r $1;
-      ')
-    '';
+    interface = {
+      summary = "Security administrator role";
+      exports = {
+        "secadm_role_change" = {
+          summary = "Change to the security administrator role.";
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role secadm_r;
+          '';
+          content = ''
+            allow $1 secadm_r;
+          '';
+          rolecap = true;
+        };
+        "secadm_role_change_to_template" = {
+          summary = "Change from the security administrator role.";
+          desc = ''
+            <p>
+            Change from the security administrator role to
+            the specified role.
+            </p>
+            <p>
+            This is an interface to support third party modules
+            and its use is not allowed in upstream reference
+            policy.
+            </p>
+          '';
+          params = {
+            "$1" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            role secadm_r;
+          '';
+          content = ''
+            allow secadm_r $1;
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(secadm)
 

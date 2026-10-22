@@ -3,59 +3,56 @@
 { lib, ... }: {
   config.security.selinux.modules.fcoe = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Fibre Channel over Ethernet utilities.</summary>
+    interface = {
+      summary = "Fibre Channel over Ethernet utilities.";
+      exports = {
+        "fcoe_dgram_send_fcoemon" = {
+          summary = "Send to fcoemon with a unix dgram socket.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fcoemon_t, fcoemon_runtime_t;
+          '';
+          content = ''
+            files_search_runtime($1)
+            dgram_send_pattern($1, fcoemon_runtime_t, fcoemon_runtime_t, fcoemon_t)
+          '';
+        };
+        "fcoe_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an fcoemon environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fcoemon_t, fcoemon_initrc_exec_t, fcoemon_runtime_t;
+          '';
+          content = ''
+            allow $1 fcoemon_t:process { ptrace signal_perms };
+            ps_process_pattern($1, fcoemon_t)
 
-      #######################################
-      ## <summary>
-      ##	Send to fcoemon with a unix dgram socket.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fcoe_dgram_send_fcoemon',`
-      	gen_require(`
-      		type fcoemon_t, fcoemon_runtime_t;
-      	')
+            init_startstop_service($1, $2, fcoemon_t, fcoemon_initrc_exec_t)
 
-      	files_search_runtime($1)
-      	dgram_send_pattern($1, fcoemon_runtime_t, fcoemon_runtime_t, fcoemon_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an fcoemon environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fcoe_admin',`
-      	gen_require(`
-      		type fcoemon_t, fcoemon_initrc_exec_t, fcoemon_runtime_t;
-      	')
-
-      	allow $1 fcoemon_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, fcoemon_t)
-
-      	init_startstop_service($1, $2, fcoemon_t, fcoemon_initrc_exec_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, fcoemon_runtime_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, fcoemon_runtime_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fcoe)
 

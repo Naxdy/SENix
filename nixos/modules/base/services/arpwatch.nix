@@ -3,163 +3,155 @@
 { lib, ... }: {
   config.security.selinux.modules.arpwatch = {
     layer = "services";
-    interface = lib.mkBefore ''
-      ## <summary>Ethernet activity monitor.</summary>
+    interface = {
+      summary = "Ethernet activity monitor.";
+      exports = {
+        "arpwatch_initrc_domtrans" = {
+          summary = ''
+            Execute arpwatch server in the
+            arpwatch domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_initrc_exec_t;
+          '';
+          content = ''
+            init_labeled_script_domtrans($1, arpwatch_initrc_exec_t)
+          '';
+        };
+        "arpwatch_search_data" = {
+          summary = "Search arpwatch data file directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_data_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            allow $1 arpwatch_data_t:dir search_dir_perms;
+          '';
+        };
+        "arpwatch_manage_data_files" = {
+          summary = ''
+            Create, read, write, and delete
+            arpwatch data files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_data_t;
+          '';
+          content = ''
+            files_search_var_lib($1)
+            manage_files_pattern($1, arpwatch_data_t, arpwatch_data_t)
+          '';
+        };
+        "arpwatch_rw_tmp_files" = {
+          summary = ''
+            Read and write arpwatch temporary
+            files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 arpwatch_tmp_t:file rw_file_perms;
+          '';
+        };
+        "arpwatch_manage_tmp_files" = {
+          summary = ''
+            Create, read, write, and delete
+            arpwatch temporary files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_tmp_t;
+          '';
+          content = ''
+            files_search_tmp($1)
+            allow $1 arpwatch_tmp_t:file manage_file_perms;
+          '';
+        };
+        "arpwatch_dontaudit_rw_packet_sockets" = {
+          summary = ''
+            Do not audit attempts to read and
+            write arpwatch packet sockets.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_t;
+          '';
+          content = ''
+            dontaudit $1 arpwatch_t:packet_socket { read write };
+          '';
+        };
+        "arpwatch_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an arpwatch environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type arpwatch_t, arpwatch_tmp_t, arpwatch_initrc_exec_t;
+            type arpwatch_data_t, arpwatch_pid_t, arpwatch_unit_t;
+          '';
+          content = ''
+            admin_process_pattern($1, arpwatch_t)
 
-      ########################################
-      ## <summary>
-      ##	Execute arpwatch server in the
-      ##	arpwatch domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_initrc_domtrans',`
-      	gen_require(`
-      		type arpwatch_initrc_exec_t;
-      	')
+            init_startstop_service($1, $2, arpwatch_t, arpwatch_initrc_exec_t, arpwatch_unit_t)
 
-      	init_labeled_script_domtrans($1, arpwatch_initrc_exec_t)
-      ')
+            files_search_tmp($1)
+            admin_pattern($1, arpwatch_tmp_t)
 
-      ########################################
-      ## <summary>
-      ##	Search arpwatch data file directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_search_data',`
-      	gen_require(`
-      		type arpwatch_data_t;
-      	')
+            files_search_var_lib($1)
+            admin_pattern($1, arpwatch_data_t)
 
-      	files_search_var_lib($1)
-      	allow $1 arpwatch_data_t:dir search_dir_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	arpwatch data files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_manage_data_files',`
-      	gen_require(`
-      		type arpwatch_data_t;
-      	')
-
-      	files_search_var_lib($1)
-      	manage_files_pattern($1, arpwatch_data_t, arpwatch_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read and write arpwatch temporary
-      ##	files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_rw_tmp_files',`
-      	gen_require(`
-      		type arpwatch_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 arpwatch_tmp_t:file rw_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	arpwatch temporary files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_manage_tmp_files',`
-      	gen_require(`
-      		type arpwatch_tmp_t;
-      	')
-
-      	files_search_tmp($1)
-      	allow $1 arpwatch_tmp_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Do not audit attempts to read and
-      ##	write arpwatch packet sockets.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`arpwatch_dontaudit_rw_packet_sockets',`
-      	gen_require(`
-      		type arpwatch_t;
-      	')
-
-      	dontaudit $1 arpwatch_t:packet_socket { read write };
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an arpwatch environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`arpwatch_admin',`
-      	gen_require(`
-      		type arpwatch_t, arpwatch_tmp_t, arpwatch_initrc_exec_t;
-      		type arpwatch_data_t, arpwatch_pid_t, arpwatch_unit_t;
-      	')
-
-      	admin_process_pattern($1, arpwatch_t)
-
-      	init_startstop_service($1, $2, arpwatch_t, arpwatch_initrc_exec_t, arpwatch_unit_t)
-
-      	files_search_tmp($1)
-      	admin_pattern($1, arpwatch_tmp_t)
-
-      	files_search_var_lib($1)
-      	admin_pattern($1, arpwatch_data_t)
-
-      	files_search_runtime($1)
-      	admin_pattern($1, arpwatch_pid_t)
-      ')
-    '';
+            files_search_runtime($1)
+            admin_pattern($1, arpwatch_pid_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(arpwatch)
 

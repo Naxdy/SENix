@@ -3,121 +3,117 @@
 { lib, ... }: {
   config.security.selinux.modules.acct = {
     layer = "admin";
-    interface = lib.mkBefore ''
-      ## <summary>Berkeley process accounting.</summary>
+    interface = {
+      summary = "Berkeley process accounting.";
+      exports = {
+        "acct_domtrans" = {
+          summary = ''
+            Transition to the accounting
+            management domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type acct_t, acct_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, acct_exec_t, acct_t)
+          '';
+        };
+        "acct_exec" = {
+          summary = ''
+            Execute accounting management tools
+            in the caller domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acct_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            can_exec($1, acct_exec_t)
+          '';
+        };
+        "acct_exec_data" = {
+          summary = ''
+            Execute accounting management data
+            in the caller domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acct_data_t;
+          '';
+          content = ''
+            files_search_var($1)
+            can_exec($1, acct_data_t)
+          '';
+        };
+        "acct_manage_data" = {
+          summary = ''
+            Create, read, write, and delete
+            process accounting data.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type acct_data_t;
+          '';
+          content = ''
+            files_search_var($1)
+            manage_files_pattern($1, acct_data_t, acct_data_t)
+            manage_lnk_files_pattern($1, acct_data_t, acct_data_t)
+          '';
+        };
+        "acct_admin" = {
+          summary = ''
+            All of the rules required to
+            administrate an acct environment.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type acct_t, acct_initrc_exec_t, acct_data_t;
+          '';
+          content = ''
+            allow $1 acct_t:process { ptrace signal_perms };
+            ps_process_pattern($1, acct_t)
 
-      ########################################
-      ## <summary>
-      ##	Transition to the accounting
-      ##	management domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acct_domtrans',`
-      	gen_require(`
-      		type acct_t, acct_exec_t;
-      	')
+            init_startstop_service($1, $2, acct_t, acct_initrc_exec_t)
 
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, acct_exec_t, acct_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute accounting management tools
-      ##	in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acct_exec',`
-      	gen_require(`
-      		type acct_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	can_exec($1, acct_exec_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute accounting management data
-      ##	in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acct_exec_data',`
-      	gen_require(`
-      		type acct_data_t;
-      	')
-
-      	files_search_var($1)
-      	can_exec($1, acct_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete
-      ##	process accounting data.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`acct_manage_data',`
-      	gen_require(`
-      		type acct_data_t;
-      	')
-
-      	files_search_var($1)
-      	manage_files_pattern($1, acct_data_t, acct_data_t)
-      	manage_lnk_files_pattern($1, acct_data_t, acct_data_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	All of the rules required to
-      ##	administrate an acct environment.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`acct_admin',`
-      	gen_require(`
-      		type acct_t, acct_initrc_exec_t, acct_data_t;
-      	')
-
-      	allow $1 acct_t:process { ptrace signal_perms };
-      	ps_process_pattern($1, acct_t)
-
-      	init_startstop_service($1, $2, acct_t, acct_initrc_exec_t)
-
-      	logging_search_logs($1)
-      	admin_pattern($1, acct_data_t)
-      ')
-    '';
+            logging_search_logs($1)
+            admin_pattern($1, acct_data_t)
+          '';
+          rolecap = true;
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(acct)
 

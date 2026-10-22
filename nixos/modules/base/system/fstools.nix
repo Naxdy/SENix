@@ -3,358 +3,312 @@
 { lib, ... }: {
   config.security.selinux.modules.fstools = {
     layer = "system";
-    interface = lib.mkBefore ''
-      ## <summary>Tools for filesystem management, such as mkfs and fsck.</summary>
-
-      ########################################
-      ## <summary>
-      ##	Execute fs tools in the fstools domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_domtrans',`
-      	gen_require(`
-      		type fsadm_t, fsadm_exec_t;
-      	')
-
-      	corecmd_search_bin($1)
-      	domtrans_pattern($1, fsadm_exec_t, fsadm_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute fs tools in the fstools domain, and
-      ##	allow the specified role the fs tools domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed to transition.
-      ##	</summary>
-      ## </param>
-      ## <param name="role">
-      ##	<summary>
-      ##	Role allowed access.
-      ##	</summary>
-      ## </param>
-      ## <rolecap/>
-      #
-      interface(`fstools_run',`
-      	gen_require(`
-      		type fsadm_t;
-      	')
-
-      	fstools_domtrans($1)
-      	role $2 types fsadm_t;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Execute fsadm in the caller domain.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_exec',`
-      	gen_require(`
-      		type fsadm_exec_t;
-      	')
-
-      	can_exec($1, fsadm_exec_t)
-      	corecmd_search_bin($1)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Send signal to fsadm process
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_signal',`
-      	gen_require(`
-      		type fsadm_t;
-      	')
-
-      	allow $1 fsadm_t:process signal;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Inherit fstools file descriptors.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	The type of the process performing this action.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_use_fds',`
-      	gen_require(`
-      		type fsadm_t;
-      	')
-
-      	allow $1 fsadm_t:fd use;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fstools unnamed pipes.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_read_pipes',`
-      	gen_require(`
-      		type fsadm_t;
-      	')
-
-      	allow $1 fsadm_t:fifo_file read_fifo_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Read fsadm_db_t files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_read_fsadm_db_files',`
-      	gen_require(`
-      		type fsadm_db_t;
-      	')
-
-      	read_files_pattern($1, fsadm_db_t, fsadm_db_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage all fsadm_db_t files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_manage_fsadm_db_files',`
-      	gen_require(`
-      		type fsadm_db_t;
-      	')
-
-      	manage_dirs_pattern($1, fsadm_db_t, fsadm_db_t)
-      	manage_files_pattern($1, fsadm_db_t, fsadm_db_t)
-      	manage_sock_files_pattern($1, fsadm_db_t, fsadm_db_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Watch fsadm_db_t directories.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_watch_fsadm_db_dirs',`
-      	gen_require(`
-      		type fsadm_db_t;
-      	')
-
-      	allow $1 fsadm_db_t:dir watch;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel a file to the type used by the
-      ##	filesystem tools programs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_relabelto_entry_files',`
-      	gen_require(`
-      		type fsadm_exec_t;
-      	')
-
-      	allow $1 fsadm_exec_t:file relabelto;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete a file used by the
-      ##	filesystem tools programs.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_manage_entry_files',`
-      	gen_require(`
-      		type fsadm_exec_t;
-      	')
-
-      	allow $1 fsadm_exec_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Write to fsadm_log_t
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_write_log',`
-      	gen_require(`
-      		type fsadm_log_t;
-      	')
-
-      	allow $1 fsadm_log_t:file write_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create, read, write, and delete filesystem tools
-      ##	runtime files.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_manage_runtime_files',`
-      	gen_require(`
-      		type fsadm_run_t;
-      	')
-
-      	manage_files_pattern($1, fsadm_run_t, fsadm_run_t)
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Getattr swapfile
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_getattr_swap_files',`
-      	gen_require(`
-      		type swapfile_t;
-      	')
-
-      	allow $1 swapfile_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Ignore access to a swapfile.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain to not audit.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_dontaudit_getattr_swap_files',`
-      	gen_require(`
-      		type swapfile_t;
-      	')
-
-      	dontaudit $1 swapfile_t:file getattr;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Relabel to swapfile.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_relabelto_swap_files',`
-      	gen_require(`
-      		type swapfile_t;
-      	')
-
-      	allow $1 swapfile_t:file relabelto;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Manage swapfile.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      #
-      interface(`fstools_manage_swap_files',`
-      	gen_require(`
-      		type swapfile_t;
-      	')
-
-      	allow $1 swapfile_t:file manage_file_perms;
-      ')
-
-      ########################################
-      ## <summary>
-      ##	Create objects in the runtime directory with an automatic type transition to the fsadm runtime type.
-      ## </summary>
-      ## <param name="domain">
-      ##	<summary>
-      ##	Domain allowed access.
-      ##	</summary>
-      ## </param>
-      ## <param name="object">
-      ##      <summary>
-      ##      The object class of the object being created.
-      ##      </summary>
-      ## </param>
-      ## <param name="name" optional="true">
-      ##      <summary>
-      ##      The name of the object being created.
-      ##      </summary>
-      ## </param>
-      #
-      interface(`fstools_runtime_filetrans',`
-      	gen_require(`
-      		type fsadm_run_t;
-      	')
-
-      	files_runtime_filetrans($1, fsadm_run_t, $2, $3)
-      ')
-    '';
+    interface = {
+      summary = "Tools for filesystem management, such as mkfs and fsck.";
+      exports = {
+        "fstools_domtrans" = {
+          summary = "Execute fs tools in the fstools domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+          };
+          gen_require = ''
+            type fsadm_t, fsadm_exec_t;
+          '';
+          content = ''
+            corecmd_search_bin($1)
+            domtrans_pattern($1, fsadm_exec_t, fsadm_t)
+          '';
+        };
+        "fstools_run" = {
+          summary = ''
+            Execute fs tools in the fstools domain, and
+            allow the specified role the fs tools domain.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed to transition.";
+            };
+            "$2" = {
+              name = "role";
+              description = "Role allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_t;
+          '';
+          content = ''
+            fstools_domtrans($1)
+            role $2 types fsadm_t;
+          '';
+          rolecap = true;
+        };
+        "fstools_exec" = {
+          summary = "Execute fsadm in the caller domain.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_exec_t;
+          '';
+          content = ''
+            can_exec($1, fsadm_exec_t)
+            corecmd_search_bin($1)
+          '';
+        };
+        "fstools_signal" = {
+          summary = "Send signal to fsadm process";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_t;
+          '';
+          content = ''
+            allow $1 fsadm_t:process signal;
+          '';
+        };
+        "fstools_use_fds" = {
+          summary = "Inherit fstools file descriptors.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "The type of the process performing this action.";
+            };
+          };
+          gen_require = ''
+            type fsadm_t;
+          '';
+          content = ''
+            allow $1 fsadm_t:fd use;
+          '';
+        };
+        "fstools_read_pipes" = {
+          summary = "Read fstools unnamed pipes.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_t;
+          '';
+          content = ''
+            allow $1 fsadm_t:fifo_file read_fifo_file_perms;
+          '';
+        };
+        "fstools_read_fsadm_db_files" = {
+          summary = "Read fsadm_db_t files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_db_t;
+          '';
+          content = ''
+            read_files_pattern($1, fsadm_db_t, fsadm_db_t)
+          '';
+        };
+        "fstools_manage_fsadm_db_files" = {
+          summary = "Manage all fsadm_db_t files.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_db_t;
+          '';
+          content = ''
+            manage_dirs_pattern($1, fsadm_db_t, fsadm_db_t)
+            manage_files_pattern($1, fsadm_db_t, fsadm_db_t)
+            manage_sock_files_pattern($1, fsadm_db_t, fsadm_db_t)
+          '';
+        };
+        "fstools_watch_fsadm_db_dirs" = {
+          summary = "Watch fsadm_db_t directories.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_db_t;
+          '';
+          content = ''
+            allow $1 fsadm_db_t:dir watch;
+          '';
+        };
+        "fstools_relabelto_entry_files" = {
+          summary = ''
+            Relabel a file to the type used by the
+            filesystem tools programs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_exec_t;
+          '';
+          content = ''
+            allow $1 fsadm_exec_t:file relabelto;
+          '';
+        };
+        "fstools_manage_entry_files" = {
+          summary = ''
+            Create, read, write, and delete a file used by the
+            filesystem tools programs.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_exec_t;
+          '';
+          content = ''
+            allow $1 fsadm_exec_t:file manage_file_perms;
+          '';
+        };
+        "fstools_write_log" = {
+          summary = "Write to fsadm_log_t";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_log_t;
+          '';
+          content = ''
+            allow $1 fsadm_log_t:file write_file_perms;
+          '';
+        };
+        "fstools_manage_runtime_files" = {
+          summary = ''
+            Create, read, write, and delete filesystem tools
+            runtime files.
+          '';
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type fsadm_run_t;
+          '';
+          content = ''
+            manage_files_pattern($1, fsadm_run_t, fsadm_run_t)
+          '';
+        };
+        "fstools_getattr_swap_files" = {
+          summary = "Getattr swapfile";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type swapfile_t;
+          '';
+          content = ''
+            allow $1 swapfile_t:file getattr;
+          '';
+        };
+        "fstools_dontaudit_getattr_swap_files" = {
+          summary = "Ignore access to a swapfile.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain to not audit.";
+            };
+          };
+          gen_require = ''
+            type swapfile_t;
+          '';
+          content = ''
+            dontaudit $1 swapfile_t:file getattr;
+          '';
+        };
+        "fstools_relabelto_swap_files" = {
+          summary = "Relabel to swapfile.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type swapfile_t;
+          '';
+          content = ''
+            allow $1 swapfile_t:file relabelto;
+          '';
+        };
+        "fstools_manage_swap_files" = {
+          summary = "Manage swapfile.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+          };
+          gen_require = ''
+            type swapfile_t;
+          '';
+          content = ''
+            allow $1 swapfile_t:file manage_file_perms;
+          '';
+        };
+        "fstools_runtime_filetrans" = {
+          summary = "Create objects in the runtime directory with an automatic type transition to the fsadm runtime type.";
+          params = {
+            "$1" = {
+              name = "domain";
+              description = "Domain allowed access.";
+            };
+            "$2" = {
+              name = "object";
+              description = "The object class of the object being created.";
+            };
+            "$3" = {
+              name = "name";
+              description = "The name of the object being created.";
+              optional = true;
+            };
+          };
+          gen_require = ''
+            type fsadm_run_t;
+          '';
+          content = ''
+            files_runtime_filetrans($1, fsadm_run_t, $2, $3)
+          '';
+        };
+      };
+    };
     typeEnforcement = lib.mkBefore ''
       policy_module(fstools)
 
