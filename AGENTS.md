@@ -77,6 +77,7 @@ When adding new rules to SENix modules, always follow these guidelines:
 - systemd is overridden `withSelinux`; the kernel gets `SECURITY_SELINUX` (`boot.kernelPatches`), `security.lsm = ["selinux"]`; `loop` is loaded early in both the host and initrd.
 - `nixpkgs.overlays` re-builds a fixed set of packages with their SELinux flags (`withSelinux`/`selinuxSupport`) behind `overlayPackages` (coreutils excluded until upstream bootstrap supports it).
 - `/etc/selinux/config` and `semanage.conf` are generated; `metafs`, `libselinux`, `policycoreutils` are installed into the system.
+- `linux-pam` is rebuilt with `libselinux` (`security.pam.package`) so `pam_selinux.so` exists, and the `systemd-user` PAM stack carries `pam_selinux.so close`/`nottys open` (mirroring Fedora's `systemd-user` stack). That stack is how `systemd --user` leaves `init_t`: the policy's `default_contexts` maps `system_r:init_t` to the seuser's per-role manager domain (`user_r:user_systemd_t` for the default `user_u`). The store is mounted `nosuid`, so the exec-context handoff also needs `init_nosuid_domain(systemd_user_session_type)` (`process2 nosuid_transition` from `init_t`).
 
 ## Runtime tests
 

@@ -642,6 +642,32 @@ in
       }
     );
 
+    # `pam_selinux` is the PAM module that sets the session's default exec
+    # context from the policy's `default_contexts`. The user manager relies on
+    # it: `system_r:init_t` is mapped to the per-role manager domain
+    # (`user_systemd_t` for `user_u`), so PAM's `open` call is what enters the
+    # domain before `systemd --user` execs. nixpkgs builds linux-pam with
+    # `-Dselinux=disabled`, which drops `pam_selinux.so` entirely — the
+    # Fedora stack carries `pam_selinux.so close`/`nottys open` in
+    # `systemd-user` for exactly this transition.
+    security.pam.package = lib.mkDefault (
+      pkgs.linux-pam.overrideAttrs (old: {
+        buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libselinux ];
+        # `pam_sepermit`'s lock dir is compiled from `localstatedir`; keep the
+        # runtime path `/run/sepermit`, but install the empty dir relative to
+        # the prefix (meson's `install_emptydir()` would otherwise write it
+        # into the build sandbox's absolute `/var`).
+        mesonFlags = lib.filter (flag: flag != "-Dselinux=disabled") (old.mesonFlags or [ ]) ++ [
+          "-Dselinux=enabled"
+          "-Dlocalstatedir=/run"
+        ];
+        postPatch = (old.postPatch or "") + ''
+          substituteInPlace modules/module-meson.build \
+            --replace-fail "sepermit_lockdir," "'run/sepermit',"
+        '';
+      })
+    );
+
     boot.kernelPatches = [
       {
         name = "selinux";
@@ -1030,6 +1056,32 @@ in
         script = ''
           setfiles -F /etc/selinux/targeted/contexts/files/file_contexts /run/current-system
         '';
+      };
+    };
+
+    # The `systemd-user` PAM stack is what places `systemd --user` into its
+    # per-role manager domain: `pam_selinux.so nottys open` computes the
+    # default exec context from `/etc/selinux/<type>/contexts`, whose
+    # `system_r:init_t` entry maps to e.g. `user_u:user_r:user_systemd_t`.
+    # Fedora's stack (`systemd-user`) carries the same close/open pair, placed
+    # ahead of the session modules; `close` restores the caller's context, and
+    # `open` sets the exec context for the manager the service execs next.
+    security.pam.services.systemd-user.rules.session = {
+      selinux-close = {
+        # Relative orders; NixOS's generated source rules start at 10100.
+        order = config.security.pam.services.systemd-user.rules.session.env.order - 100;
+        control = "required";
+        modulePath = "${config.security.pam.package}/lib/security/pam_selinux.so";
+        args = [ "close" ];
+      };
+      selinux-open = {
+        order = config.security.pam.services.systemd-user.rules.session.env.order - 50;
+        control = "required";
+        modulePath = "${config.security.pam.package}/lib/security/pam_selinux.so";
+        args = [
+          "nottys"
+          "open"
+        ];
       };
     };
   };

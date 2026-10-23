@@ -5,5 +5,6 @@
     ./fail2ban.nix
     ./nscd.nix
     ./policykit.nix
+    ./xserver.nix
   ];
 }
