@@ -1,6 +1,7 @@
 {
   crane,
   stdenv,
+  lib,
   pkgs,
 }:
 let
@@ -19,13 +20,20 @@ let
     ]
   );
 
+  cargoWorkspaceToml = fromTOML (builtins.readFile ../../Cargo.toml);
   cargoToml = fromTOML (builtins.readFile ./Cargo.toml);
 
   craneArgs = {
     pname = cargoToml.package.name;
-    version = cargoToml.package.version;
+    version = cargoWorkspaceToml.workspace.package.version;
 
-    src = craneLib.cleanCargoSource ./.;
+    src = lib.fileset.toSource {
+      root = ../../.;
+      fileset = lib.fileset.unions [
+        (craneLib.fileset.commonCargoSources ../../.)
+        (craneLib.fileset.commonCargoSources ./.)
+      ];
+    };
   };
 
   cargoArtifacts = craneLib.buildDepsOnly craneArgs;

@@ -94,9 +94,8 @@
       );
 
       packages = forEachSupportedSystem (
-        { pkgs, ... }: {
-          metafs = pkgs.pkgsStatic.callPackage ./pkgs/metafs { inherit crane; };
-        }
+        { pkgs, ... }:
+        pkgs.pkgsStatic.callPackage ./pkgs.nix { inherit crane; }
       );
 
       overlays.default = final: prev: {

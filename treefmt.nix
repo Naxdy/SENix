@@ -1,7 +1,7 @@
 { rustToolchain }:
 { ... }:
 let
-  cargoToml = builtins.fromTOML (builtins.readFile ./pkgs/metafs/Cargo.toml);
+  cargoToml = builtins.fromTOML (builtins.readFile ./Cargo.toml);
 in
 {
   programs = {
@@ -10,8 +10,10 @@ in
     rustfmt = {
       enable = true;
       package = rustToolchain;
-      edition = cargoToml.package.edition;
+      edition = cargoToml.workspace.package.edition;
     };
+
+    taplo.enable = true;
 
     typos = {
       enable = true;
