@@ -4,7 +4,7 @@ edition = "2024"
 
 [workspace]
 resolver = "2"
-members = ["pkgs/metafs"]
+members = ["pkgs/metafs", "pkgs/sepol2nix"]
 
 [workspace.lints.clippy]
 pedantic = { level = "warn", priority = -3 }
@@ -20,3 +20,4 @@ libc = "0.2"
 log = "0.4"
 mimalloc = { version = "0.1.52", features = ["override"] }
 nix = { version = "0.31", features = ["fs", "feature", "process", "term"] }
+regex = "1"

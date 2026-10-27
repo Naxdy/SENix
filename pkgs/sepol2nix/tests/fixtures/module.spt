@@ -1,0 +1,33 @@
+########################################
+#
+# Fixture support file.
+#
+
+# shiftn(num,list...)
+define(`shiftn',`ifelse($1,0,`shift($*)',`shiftn(decr($1),shift(shift($*)))')')
+
+# build_option(option_name,true,[false])
+define(`build_option',`dnl
+changequote([,])dnl
+[ifdef(`$1',`]
+changequote(`,')dnl
+$2
+changequote([,])dnl
+[',`]
+changequote(`,')dnl
+$3
+changequote([,])dnl
+[')]
+changequote(`,')dnl
+')
+
+# A bare-bodied definition.
+define(`fixture_depth',0)
+
+ifdef(`enable_fixture',`
+divert(1)
+Block: $1
+divert(0)dnl
+',`
+errprint(`fixture disabled' __endline__)
+')

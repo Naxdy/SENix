@@ -1,0 +1,80 @@
+policy_module(fixture,1.2.3)
+
+attribute fixture_type;
+attribute_role fixture_roles;
+role fixture_r;
+roleattribute fixture_r fixture_roles;
+type fixture_t, fixture_type;
+type fixture_exec_t, fixture_type;
+type fixture_alias_t alias fixture_alias_real_t;
+typealias fixture_t alias fixture_t_alias;
+typebounds fixture_t fixture_domain_t;
+expandattribute fixture_type true;
+permissive fixture_t;
+neveraudit fixture_t;
+bool fixture_bool true;
+tunable fixture_tunable false;
+policycap extended_socket_class;
+
+allow fixture_t fixture_exec_t:file { read execute };
+auditallow fixture_t fixture_exec_t:file write;
+dontaudit fixture_t fixture_exec_t:dir { search };
+neverallow ~fixture_type self:capability sys_module;
+allow { fixture_t fixture_alias_t } fixture_exec_t:process *;
+allow fixture_r fixture_roles;
+
+allowxperm fixture_t fixture_exec_t:file ioctl { 0x5401 0x5402-0x5404 };
+neverallowxperm fixture_t fixture_exec_t:file ioctl ~{ 0x5401 };
+
+type_transition fixture_t fixture_exec_t:process fixture_exec_t "helper";
+type_member fixture_t fixture_exec_t:file fixture_t;
+type_change fixture_t fixture_exec_t:file fixture_t;
+range_transition fixture_t fixture_exec_t:process s0-s0:c0.c1023;
+role_transition fixture_r fixture_roles:process fixture_r;
+
+gen_bool(fixture_generated_bool, false)
+gen_tunable(fixture_generated_tunable, true)
+
+gen_require(`
+	type fixture_required_t;
+	class file { read };
+	role fixture_required_r;
+	attribute fixture_required_attr;
+	attribute_role fixture_required_role_attr;
+	user fixture_u;
+	bool fixture_required_bool;
+	tunable fixture_required_tunable;
+	sensitivity s0;
+	category c0;
+')
+
+optional {
+	allow fixture_t fixture_required_t:file read;
+} else {
+	dontaudit fixture_t fixture_required_t:file read;
+}
+
+if (fixture_bool) {
+	allow fixture_t self:process { execmem };
+} else {
+	allow fixture_t self:process { fork };
+}
+
+optional_policy(`
+	allow fixture_t fixture_exec_t:file read;
+')
+
+tunable_policy(`fixture_tunable && !fixture_bool',`
+	allow fixture_t fixture_exec_t:dir search;
+',`
+	dontaudit fixture_t fixture_exec_t:dir search;
+')
+
+ifdef(`enable_mls',`
+	attribute fixture_mls_type;
+')
+ifndef(`enable_mcs',`
+	allow fixture_t fixture_exec_t:file getattr;
+')
+
+dnl a trailing m4 comment

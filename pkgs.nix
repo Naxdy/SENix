@@ -31,6 +31,9 @@ let
       fileset = lib.fileset.unions [
         (craneLib.fileset.commonCargoSources ./pkgs/metafs)
         (craneLib.fileset.commonCargoSources ./.)
+        # Parse fixtures are not Rust sources, so `commonCargoSources` drops
+        # them; `include_str!` needs them at compile time.
+        ./pkgs/sepol2nix/tests
       ];
     };
   };
@@ -53,7 +56,8 @@ let
       // args
       // {
         passthru.tests = {
-          test = craneLib.cargoTest packageArgs;
+          # The test suite evaluates generated expressions, so it needs Nix.
+          test = craneLib.cargoTest (packageArgs // { nativeBuildInputs = [ pkgs.nix ]; });
 
           clippy = craneLib.cargoClippy packageArgs;
         };
@@ -76,4 +80,8 @@ in
         ln -s "$out/bin/${cargoToml.package.name}" "$out/bin/mount.fuse.${cargoToml.package.name}"
       '';
     };
+
+  sepol2nix = mkSenixPackage {
+    pname = "sepol2nix";
+  };
 }

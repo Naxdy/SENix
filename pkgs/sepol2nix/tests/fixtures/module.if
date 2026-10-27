@@ -1,0 +1,65 @@
+## <summary>
+##	Fixture module exercising the interface grammar.
+## </summary>
+## <desc>
+##	<p>Describes parameters with spaces and parentheses.</p>
+## </desc>
+## <required val="true">
+##	Needs initial SIDs.
+## </required>
+
+########################################
+## <summary>
+##	Allow a domain to use the fixture.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	The source type.
+##	</summary>
+## </param>
+## <param name="objectclass(es)" optional="true" unused="true">
+##	<summary>
+##	Which object classes to allow.
+##	</summary>
+## </param>
+## <infoflow type="read" weight="2"/>
+## <rolecap/>
+#
+interface(`fixture_use',`
+	gen_require(`
+		type fixture_t;
+	')
+
+	allow $1 fixture_t:file read;
+	ps_process_pattern($1, fixture_t)
+')
+
+########################################
+## <summary>
+##	A template with a leading require.
+## </summary>
+## <param name="domain">
+##	<summary>
+##	The domain.
+##	</summary>
+## </param>
+## <param name="role">
+##	<summary>
+##	The role, unused.
+##	</summary>
+## </param>
+## <rolebase/>
+#
+template(`fixture_role_template',`
+	gen_require(`
+		attribute_role fixture_roles;
+		type fixture_t;
+	')
+
+	role $2 types fixture_t;
+	roleattribute $2 fixture_roles;
+
+	if (fixture_bool) {
+		allow $1 fixture_t:file read;
+	}
+')

@@ -95,7 +95,11 @@
 
       packages = forEachSupportedSystem (
         { pkgs, ... }:
-        pkgs.pkgsStatic.callPackage ./pkgs.nix { inherit crane; }
+        builtins.removeAttrs (pkgs.pkgsStatic.callPackage ./pkgs.nix { inherit crane; }) [
+          "override"
+          "overrideAttrs"
+          "overrideDerivation"
+        ]
       );
 
       overlays.default = final: prev: {

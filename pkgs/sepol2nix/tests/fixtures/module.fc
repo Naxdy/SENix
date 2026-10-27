@@ -1,0 +1,29 @@
+#
+# Fixture file contexts.
+#
+#
+# /etc
+#
+/etc(/.*)?			gen_context(system_u:object_r:fixture_etc_t,s0)
+/etc/fixture\.conf	--	gen_context(system_u:object_r:fixture_etc_t,s0)
+/etc/fixture\.sock	-s	<<none>>
+
+#
+# /usr
+#
+/usr/bin/fixture	--	gen_context(system_u:object_r:fixture_exec_t,s0)
+/usr/lib/fixture(/.*)?		gen_context(system_u:object_r:fixture_lib_t,s0)
+
+#
+# home
+#
+HOME_ROOT/\.fixture			--	gen_context(system_u:object_r:fixture_home_t,s0)
+HOME_DIR/\.fixture(/.*)?		<<none>>
+
+ifdef(`distro_redhat',`
+/etc/redhat-release	--	gen_context(system_u:object_r:fixture_etc_t,s0)
+')
+
+ifndef(`distro_suse',`
+/etc/suse-release	--	<<none>>
+')

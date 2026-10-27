@@ -1,0 +1,22 @@
+[package]
+name = "sepol2nix"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "sepol2nix"
+path = "src/lib.rs"
+
+[[bin]]
+name = "sepol2nix"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+mimalloc.workspace = true
+
+[dev-dependencies]
+regex.workspace = true
+
+[lints]
+workspace = true
