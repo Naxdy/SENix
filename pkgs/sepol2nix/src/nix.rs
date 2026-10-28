@@ -4,7 +4,8 @@
 //!
 //! * [`InterfaceFile`] renders the `security.selinux.modules.<name>.interface`
 //!   value (`summary`, `desc`, `required`, `exports`),
-//! * [`TypeEnforcementFile`] renders the `typeEnforcement` string.
+//! * [`TypeEnforcementFile`] renders the `typeEnforcement` string; wrapping it
+//!   in `lib.mkBefore` is the caller's job.
 //! * [`FileContextFile`] renders the `fileContext.rules` attribute set.
 //!
 //! Rendering is streaming: [`AsNixExpr::write_nix`] writes into a [`NixWriter`],
@@ -334,7 +335,22 @@ impl<'a> NixWriter<'a> {
         buffer.finish()
     }
 
+    /// Writes a commented line at the current depth: `# ` then `extra` spaces.
+    fn comment_line(&mut self, extra: usize, args: fmt::Arguments<'_>) -> fmt::Result {
+        self.pad()?;
+        self.out.write_str("# ")?;
+        for _ in 0..extra {
+            self.out.write_str(" ")?;
+        }
+        self.out.write_fmt(args)?;
+        self.out.write_str("\n")
+    }
+
     /// Writes a commented-out `key = "value";` reference binding.
+    ///
+    /// The `#` stays at the binding indentation (nixfmt leaves such lines as
+    /// they are); only the payload is indented further.
+    ///
     /// # Errors
     /// Returns an error when the underlying writer fails.
     pub fn commented_assignment(&mut self, key: &str, values: &[String]) -> fmt::Result {
@@ -342,34 +358,24 @@ impl<'a> NixWriter<'a> {
         if values.len() == 1 {
             let value = quoted(&values[0]);
             if key_text.len() + 3 + value.len() < 100 {
-                return self.line(format_args!("# {key_text} = {value};"));
+                return self.comment_line(0, format_args!("{key_text} = {value};"));
             }
-            self.line(format_args!("# {key_text} ="))?;
-            self.depth += 1;
-            self.line(format_args!("#   {value};"))?;
-            self.depth -= 1;
-            return Ok(());
+            self.comment_line(0, format_args!("{key_text} ="))?;
+            return self.comment_line(2, format_args!("{value};"));
         }
         if key_text.len() + 3 < 100 {
-            self.line(format_args!("# {key_text} = ["))?;
-            self.depth += 1;
+            self.comment_line(0, format_args!("{key_text} = ["))?;
             for value in values {
-                self.line(format_args!("#   {}", quoted(value)))?;
+                self.comment_line(2, format_args!("{}", quoted(value)))?;
             }
-            self.depth -= 1;
-            return self.line(format_args!("# ];"));
+            return self.comment_line(0, format_args!("];"));
         }
-        self.line(format_args!("# {key_text} ="))?;
-        self.depth += 1;
-        self.line(format_args!("#   ["))?;
-        self.depth += 1;
+        self.comment_line(0, format_args!("{key_text} ="))?;
+        self.comment_line(2, format_args!("["))?;
         for value in values {
-            self.line(format_args!("#     {}", quoted(value)))?;
+            self.comment_line(4, format_args!("{}", quoted(value)))?;
         }
-        self.depth -= 1;
-        self.line(format_args!("#   ];"))?;
-        self.depth -= 1;
-        Ok(())
+        self.comment_line(2, format_args!("];"))
     }
 
     /// Writes a `key = lib.mkDefault "value";` binding with nixfmt-compatible
@@ -403,7 +409,7 @@ impl<'a> NixWriter<'a> {
                 self.line(format_args!("{}", quoted(value)))?;
             }
             self.depth -= 1;
-            return self.close(format_args!("];"));
+            return self.line(format_args!("];"));
         }
         self.line(format_args!("{key_text} ="))?;
         self.depth += 1;

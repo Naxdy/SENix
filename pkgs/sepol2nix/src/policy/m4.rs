@@ -195,18 +195,29 @@ impl fmt::Display for TokenSequence {
         let mut quote_open = "`".to_owned();
         let mut quote_close = "'".to_owned();
         let mut last_line = None;
+        let mut previous_ident = false;
         for (index, tree) in self.0.iter().enumerate() {
             let line = tree.span().line;
+            // `m4` only recognises a macro call when `(` touches the name.
+            let glued = previous_ident
+                && matches!(
+                    tree,
+                    TokenTree::Group(group) if group.delimiter == Delimiter::Parenthesis
+                );
             match last_line {
                 Some(previous) if line > previous => {
                     for _ in previous..line {
                         f.write_str("\n")?;
                     }
                 }
-                Some(_) => f.write_str(" ")?,
-                None if index > 0 => f.write_str(" ")?,
-                None => {}
+                Some(_) if !glued => f.write_str(" ")?,
+                None if index > 0 && !glued => f.write_str(" ")?,
+                _ => {}
             }
+            previous_ident = matches!(
+                tree,
+                TokenTree::Leaf(token) if token.kind == crate::lexer::TokenKind::Ident
+            );
             last_line = Some(line);
             match tree {
                 TokenTree::Leaf(token) => {

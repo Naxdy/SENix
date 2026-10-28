@@ -13,10 +13,11 @@ use std::fmt;
 
 use crate::error::{ParseError, ParseErrorKind, Result};
 use crate::identifier::{
-    AttributeId, BoolId, CategoryId, ClassId, CommonId, DeviceTreePath, FileName, FilesystemId,
-    GenfsFilesystem, GenfsPath, IbPkey, IbPort, Ident, Ioport, Ipv4Addr, Ipv4Cidr, Ipv6Addr,
-    Ipv6Cidr, LevelId, ModuleName, NetifName, Number64, PciDevice, PermId, Pirq, PolicyCapId,
-    RoleAttributeId, RoleId, SensitivityId, SidId, TunableId, TypeAliasId, TypeId, User, Version,
+    AttributeId, BoolId, CategoryId, ClassId, Comment, CommonId, DeviceTreePath, DocComment,
+    FileName, FilesystemId, GenfsFilesystem, GenfsPath, IbPkey, IbPort, Ident, Ioport, Ipv4Addr,
+    Ipv4Cidr, Ipv6Addr, Ipv6Cidr, LevelId, ModuleName, NetifName, Number64, PciDevice, PermId,
+    Pirq, PolicyCapId, RoleAttributeId, RoleId, SensitivityId, SidId, TunableId, TypeAliasId,
+    TypeId, User, Version,
 };
 use crate::impl_from_str;
 use crate::lexer::{Delimiter, TokenTree};
@@ -1133,12 +1134,37 @@ pub enum CondRule {
     XPerm(XPermRule),
     /// A `require` block.
     Require(RequireBlock),
+    /// A `#` comment line.
+    Comment(Comment),
+    /// A `##` documentation comment line.
+    DocComment(DocComment),
     /// A macro construct.
     Macro(MacroStatement),
 }
 
 impl ParseFromTokens for CondRule {
     fn parse_from_tokens(parser: &mut Parser<'_>) -> Result<Self> {
+        match parser.peek() {
+            Some(TokenTree::Leaf(token)) if token.kind == crate::lexer::TokenKind::Comment => {
+                let comment = Comment::new(token.text.clone());
+                parser.next_tree();
+                return Ok(Self::Comment(comment));
+            }
+            Some(TokenTree::Leaf(token)) if token.kind == crate::lexer::TokenKind::DocComment => {
+                let comment = DocComment::new(token.text.clone());
+                parser.next_tree();
+                return Ok(Self::DocComment(comment));
+            }
+            Some(_) => {}
+            None => {
+                return Err(ParseError::at(
+                    ParseErrorKind::UnexpectedEof {
+                        expected: "a conditional rule",
+                    },
+                    parser.at(),
+                ));
+            }
+        }
         let keyword = parser.peek_ident_text();
         match keyword {
             "type_transition" | "type_member" | "type_change" => {
@@ -1743,6 +1769,10 @@ pub enum Statement {
     Constraint(ConstraintStatement),
     /// A stray `;`.
     Empty(Semi),
+    /// A `#` comment line.
+    Comment(Comment),
+    /// A `##` documentation comment line (consumed by the docs generator).
+    DocComment(DocComment),
     /// A macro construct.
     Macro(MacroStatement),
 }
@@ -2465,12 +2495,12 @@ impl ParseFromTokens for StatementList {
         let mut statements = Vec::new();
         while let Some(tree) = parser.peek() {
             match tree {
-                TokenTree::Leaf(token)
-                    if matches!(
-                        token.kind,
-                        crate::lexer::TokenKind::Comment | crate::lexer::TokenKind::DocComment
-                    ) =>
-                {
+                TokenTree::Leaf(token) if token.kind == crate::lexer::TokenKind::Comment => {
+                    statements.push(Statement::Comment(Comment::new(token.text.clone())));
+                    parser.next_tree();
+                }
+                TokenTree::Leaf(token) if token.kind == crate::lexer::TokenKind::DocComment => {
+                    statements.push(Statement::DocComment(DocComment::new(token.text.clone())));
                     parser.next_tree();
                 }
                 _ => statements.push(Statement::parse_from_tokens(parser)?),
@@ -2508,6 +2538,8 @@ impl fmt::Display for Statement {
             Self::Context(statement) => fmt::Display::fmt(statement, f),
             Self::Constraint(statement) => fmt::Display::fmt(statement, f),
             Self::Empty(semi) => writeln!(f, "{semi}"),
+            Self::Comment(comment) => writeln!(f, "{comment}"),
+            Self::DocComment(comment) => writeln!(f, "{comment}"),
             Self::Macro(statement) => fmt::Display::fmt(statement, f),
         }
     }
@@ -2826,6 +2858,8 @@ impl fmt::Display for CondRule {
             Self::AvTab(v) => fmt::Display::fmt(v, f),
             Self::XPerm(v) => fmt::Display::fmt(v, f),
             Self::Require(v) => fmt::Display::fmt(v, f),
+            Self::Comment(v) => writeln!(f, "{v}"),
+            Self::DocComment(v) => writeln!(f, "{v}"),
             Self::Macro(v) => fmt::Display::fmt(v, f),
         }
     }

@@ -128,6 +128,7 @@
             }) self.packages.${system}.${pname}.passthru.tests;
         in
         (testsFrom "metafs")
+        // (testsFrom "sepol2nix")
         // {
           treefmt = treefmtEval.config.build.check self;
 
