@@ -1026,18 +1026,22 @@ in
         '';
       };
 
+      # `SurviveFinalKillSignal` requires a "companion unit" for the service
+      # to survive post switchr-root. This is never meant to be run by itself.
+      #
+      # The value for `ExecStart` doesn't actually matter, but for consistency's
+      # sake it's nice to have it be the same as the initrd one.
       selinux-metafs = {
         serviceConfig = {
-          Type = "exec";
-          ExecStart = "${lib.getExe pkgs.metafs} -f /nix/store /nix/store -o nosuid,nodev --seclabel";
+          inherit (config.boot.initrd.systemd.services.selinux-metafs.serviceConfig)
+            ExecStart
+            Type
+            ;
         };
         restartIfChanged = false;
-        unitConfig = {
-          DefaultDependencies = false;
-          IgnoreOnIsolate = true;
-          SurviveFinalKillSignal = true;
-          RefuseManualStop = true;
-        };
+        unitConfig = builtins.removeAttrs config.boot.initrd.systemd.services.selinux-metafs.unitConfig [
+          "RequiresMountsFor"
+        ];
       };
 
       senix-run-relabel = {

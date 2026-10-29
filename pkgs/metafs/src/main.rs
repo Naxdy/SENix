@@ -150,8 +150,6 @@ fn main() -> ExitCode {
     }
 
     let source = strip_type_prefix(&cli.source);
-    install_signal_handlers();
-    mark_survivor();
     let config = session_config(&cli.options, cli.read_only, cli.read_write, cli.seclabel);
 
     let result = if cli.foreground {
@@ -453,8 +451,8 @@ fn errno(e: nix::errno::Errno) -> io::Error {
     io::Error::from_raw_os_error(e as i32)
 }
 
-/// File descriptor for `/dev/kmsg`, opened once at startup and reused from
-/// within signal handlers (where allocating / opening is risky).
+/// File descriptor for `/dev/kmsg`, opened once at startup and reused by every
+/// later write, so a diagnostic never has to open a descriptor itself.
 static KMSG_FD: AtomicI32 = AtomicI32::new(-1);
 
 /// Write a message to the kernel log.
@@ -480,85 +478,10 @@ fn write_kmsg(msg: &str) {
     }
 }
 
-/// Open `/dev/kmsg` once so later (including signal-handler) writes cannot
-/// fail on descriptor exhaustion.
+/// Open `/dev/kmsg` once so later diagnostics cannot fail on descriptor
+/// exhaustion.
 fn open_kmsg() {
     // SAFETY: constant arguments, path is NUL-terminated.
     let fd = unsafe { libc::open(c"/dev/kmsg".as_ptr(), libc::O_WRONLY | libc::O_CLOEXEC) };
     KMSG_FD.store(fd, Ordering::Relaxed);
-}
-
-/// Signal handler: log the signal and continue (the daemon only exits when
-/// its FUSE connection ends). Kept async-signal-safe: no allocation, direct
-/// `write(2)` to the pre-opened kmsg descriptor.
-extern "C" fn on_term_signal(_sig: libc::c_int) {
-    let fd = KMSG_FD.load(Ordering::Relaxed);
-    if fd >= 0 {
-        const MSG: &[u8] = b"<6>metafs: caught termination signal, staying alive\n";
-        // SAFETY: static buffer, valid fd.
-        unsafe {
-            libc::write(fd, MSG.as_ptr().cast(), MSG.len());
-        }
-    }
-}
-
-/// Ask systemd to keep this daemon across the switch-root killing spree by
-/// setting the same cgroup xattr systemd itself would set for
-/// `SurviveFinalKillSignal=yes` (see `systemd.io/ROOT_STORAGE_DAEMONS`). This is
-/// belt-and-suspenders in case systemd has not (yet) applied it to our unit.
-fn mark_survivor() {
-    let Some(path) = std::fs::read_to_string("/proc/self/cgroup")
-        .ok()
-        .and_then(|cg| {
-            cg.lines()
-                .next()
-                .and_then(|l| l.split_once(':').map(|(_, p)| p.trim().to_string()))
-        })
-    else {
-        return;
-    };
-    if path.is_empty() {
-        return;
-    }
-    let cgpath = std::ffi::CString::new(format!("/sys/fs/cgroup{path}")).unwrap_or_default();
-    let mut name = b"user.survive_final_kill_signal".to_vec();
-    name.push(0);
-    let mut value = b"1".to_vec();
-    value.push(0);
-    // SAFETY: the three pointers reference valid, NUL-terminated buffers;
-    // `setxattr` cannot fail dangerously (the error is only reported).
-    let r = unsafe {
-        libc::setxattr(
-            cgpath.as_ptr(),
-            name.as_ptr().cast(),
-            value.as_ptr().cast(),
-            1,
-            0,
-        )
-    };
-    write_kmsg(if r == 0 {
-        "metafs: survivor cgroup xattr applied"
-    } else {
-        "metafs: survivor cgroup xattr failed (best effort)"
-    });
-}
-
-/// Ignore `SIGTERM`/`SIGHUP` so the daemon survives systemd's switch-root and
-/// shutdown killing sprees (see `systemd.io/ROOT_STORAGE_DAEMONS`): the daemon
-/// only exits when the mounted filesystem is unmounted, which ends the FUSE
-/// connection and makes `Session::run` return.
-fn install_signal_handlers() {
-    open_kmsg();
-    // SAFETY: `sigaction` with a constant handler function, an empty signal
-    // mask and SA_RESTART (so syscalls are not interrupted with EINTR).
-    #[allow(clippy::borrow_as_ptr)]
-    unsafe {
-        let mut action: libc::sigaction = std::mem::zeroed();
-        let handler: unsafe extern "C" fn(libc::c_int) = on_term_signal;
-        action.sa_sigaction = handler as libc::sighandler_t;
-        libc::sigemptyset(&raw mut action.sa_mask);
-        action.sa_flags = libc::SA_RESTART;
-        libc::sigaction(libc::SIGTERM, &raw const action, std::ptr::null_mut());
-        libc::sigaction(libc::SIGHUP, &raw const action, std::ptr::null_mut());
-    }
 }
