@@ -216,8 +216,30 @@ in
       allow systemd_logind_t init_runtime_t:sock_file create;
     '';
     fileContext = {
+      # The policy artifact is consumed through `/etc/selinux/targeted`
+      # symlinks (see `nixos/default.nix`). Its files therefore carry store
+      # paths, and must get the contexts the `/etc/selinux` rules assign to a
+      # real policy tree, so confined readers of the file contexts
+      # (`systemd-logind`, `setfiles`, `restorecond`) see the expected types.
+      # This dummy store path is replaced with the artifact's actual output
+      # path in `nixos/build.nix`; referring to `build.policy` here directly
+      # would create a cycle (the artifact is an input to its own build through
+      # the module sources). It is spelled like a real store path so the
+      # `types.path` check accepts it.
+      storePaths.policy = [ "/nix/store/00000000000000000000000000000000-senix-policy" ];
       rules = {
         "/var/empty" = "gen_context(system_u:object_r:var_t,s0)";
+        "@policy@/etc/selinux/targeted(/.*)?" = "gen_context(system_u:object_r:selinux_config_t,s0)";
+        "@policy@/etc/selinux/targeted/contexts(/.*)?" =
+          "gen_context(system_u:object_r:default_context_t,s0)";
+        "@policy@/etc/selinux/targeted/contexts/files(/.*)?" =
+          "gen_context(system_u:object_r:file_context_t,s0)";
+        "@policy@/etc/selinux/targeted/contexts/users(/.*)?" =
+          "-- gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
+        "@policy@/etc/selinux/targeted/policy(/.*)?" =
+          "gen_context(system_u:object_r:policy_config_t,mls_systemhigh)";
+        "@policy@/etc/selinux/targeted/seusers" =
+          "-- gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
       };
     };
   };

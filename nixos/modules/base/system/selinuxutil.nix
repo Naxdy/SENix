@@ -1708,6 +1708,33 @@
         # /run
         #
         "/run/restorecond\\.pid" = lib.mkDefault "-- gen_context(system_u:object_r:restorecond_run_t,s0)";
+        # The policy store is copied to `/run` (the initrd `/var` is read-only),
+        # and `/etc/selinux/<type>` is a symlink into it. Label it like the
+        # `/etc/selinux` tree it stands in for, so the domains that read the
+        # file contexts (systemd, restorecond, setfiles, logind) match the
+        # refpolicy interfaces that grant `file_context_t`/`policy_config_t`
+        # access instead of leaving the tmpfs' raw `tmpfs_t` on the files.
+        # Directories on the path to the policy/contexts stay `selinux_config_t`
+        # (which `seutil_read_file_contexts` grants search on); the module
+        # store subtree itself must be `semanage_store_t` so `semanage`/
+        # `setsebool` can manage it.
+        "/run/selinux(/.*)?" = lib.mkDefault "gen_context(system_u:object_r:selinux_config_t,s0)";
+        "/run/selinux/[^/]+/(active|previous|tmp|[0-9]+)(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:semanage_store_t,s0)";
+        "/run/selinux/([^/]*/)?contexts(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:default_context_t,s0)";
+        "/run/selinux/([^/]*/)?contexts/files(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:file_context_t,s0)";
+        "/run/selinux/([^/]*/)?policy(/.*)?" =
+          lib.mkDefault "gen_context(system_u:object_r:policy_config_t,mls_systemhigh)";
+        "/run/selinux/([^/]*/)?seusers" =
+          lib.mkDefault "-- gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
+        "/run/selinux/([^/]*/)?users(/.*)?" =
+          lib.mkDefault "-- gen_context(system_u:object_r:selinux_config_t,mls_systemhigh)";
+        "/run/selinux/([^/]*/)?semanage\\.read\\.LOCK" =
+          lib.mkDefault "-- gen_context(system_u:object_r:semanage_read_lock_t,s0)";
+        "/run/selinux/([^/]*/)?semanage\\.trans\\.LOCK" =
+          lib.mkDefault "-- gen_context(system_u:object_r:semanage_trans_lock_t,s0)";
 
         #
         # /usr

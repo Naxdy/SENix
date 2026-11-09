@@ -12,22 +12,6 @@ let
 
   cfg = config.security.selinux;
 
-  setsebools = lib.escapeShellArgs (
-    lib.mapAttrsToList (name: value: "${name}=${if value then "on" else "off"}") cfg.booleans
-  );
-
-  # Recomputes the label of every store path from the active file contexts.
-  #
-  # The labels live in metafs' in-memory map, and the store is read-only for
-  # everyone but the Nix daemon, so the relabel is delegated to a transient
-  # systemd unit: `PrivateMounts=` gives it a private mount namespace in which
-  # the store can be remounted writable, leaving every other process with the
-  # read-only overlay.
-  storeRelabel = pkgs.writeShellScript "senix-store-relabel" ''
-    ${lib.getExe' pkgs.util-linux "mount"} -o remount,rw,bind /nix/store
-    exec ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
-      /etc/selinux/targeted/contexts/files/file_contexts /nix/store
-  '';
 in
 {
   imports = [
@@ -78,9 +62,11 @@ in
       default = null;
       example = 33;
       description = ''
-        The SELinux policy version to target when building policy modules.
+        The SELinux policy version to target when compiling and linking the policy.
 
-        Passed to `semanage` via `policy-version` in `semanage.conf`. If `null`, the toolchain default is used.
+        Passed to `checkpolicy` and to the build-time `semodule` link via
+        `policy-version` in `semanage.conf`. If `null`, the toolchain default is
+        used.
       '';
     };
 
@@ -702,11 +688,17 @@ in
           SELINUXTYPE=targeted
         '';
 
+        # libsemanage's config parser has no comment syntax, so none of the
+        # lines below may be `#` comments. The boot path reads the immutable
+        # build artifact through `/etc/selinux/targeted` and needs no store;
+        # tools that do want a writable one (`semodule`, `setsebool -P`)
+        # create it on the ephemeral `/run`.
         "selinux/semanage.conf".text =
           lib.optionalString (cfg.policyVersion != null) ''
             policy-version = ${toString cfg.policyVersion}
           ''
           + ''
+            store-root = /run/selinux
             compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
 
             [load_policy]
@@ -724,25 +716,12 @@ in
             [end]
           '';
 
-        # Appconfig for the login-context machinery: SELinux-aware login
-        # programs (`sshd` via `get_default_context`) read the
-        # user→SELinux-user mapping (`seusers`), the context orderings
-        # (`default_contexts`, `contexts/users/*`) and the role→type
-        # defaults (`default_type`) from `/etc/selinux/<type>`. The
-        # initrd provisions `/etc/selinux` in its ephemeral rootfs only,
-        # so link these into the live tree on every activation (plain
-        # store-path references; these files are immutable policy
-        # artifacts, never customized per machine). Without them
-        # `ssh_selinux_getctxbyname` fails and every ssh session dies in
-        # enforcing mode.
-        "selinux/targeted/seusers".source = "${cfg.build.policy}/etc/selinux/refpolicy/seusers";
-        "selinux/targeted/contexts/default_contexts".source =
-          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/default_contexts";
-        "selinux/targeted/contexts/default_type".source =
-          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/default_type";
-        "selinux/targeted/contexts/failsafe_context".source =
-          "${cfg.build.policy}/etc/selinux/refpolicy/contexts/failsafe_context";
-        "selinux/targeted/contexts/users".source = "${cfg.build.policy}/selinux/refpolicy/contexts/users";
+        # The immutable policy artifact is exposed through `/etc/selinux`: the
+        # kernel policy, the file contexts and the appconfig (seusers,
+        # `default_contexts`, `contexts/users/*`, ...). Nothing writes these at
+        # runtime, so store-path symlinks suffice; the `selinuxutil` module
+        # grants the link traversal that confined readers need.
+        "selinux/targeted".source = "${cfg.build.policy}/etc/selinux/targeted";
       };
 
       systemPackages = [
@@ -763,65 +742,40 @@ in
           # bash
           ''
             install -d -m0755 /var/lib/selinux
-            # The full policy (base + all declared modules) comes from
-            # `build.policy`; it is installed wholesale.
-            pp=""
-            keep=""
-            for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
-              if [ -e "$f" ]; then
-                pp="$pp $f"
-                keep="$keep $(basename "$f" .pp)"
-              fi
-            done
-            cmd="${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -i ''${pp}"
+            # The policy (base + all declared modules) is fully linked at build
+            # time in `build.policy` and exposed via `environment.etc`; the
+            # runtime only loads it.
+            # Booleans are baked into the policy defaults, and `setsebool`
+            # (without `-P`: there is no writable policy store) applies the
+            # configured values on the live policy.
+            policy=${lib.escapeShellArg cfg.build.policy}
             skipSELinuxActivation=0
 
             if [ -f /var/lib/selinux/activate-check ]; then
-              if [ "$(cat /var/lib/selinux/activate-check)" == "$cmd" ]; then
+              if [ "$(cat /var/lib/selinux/activate-check)" == "$policy" ]; then
                 skipSELinuxActivation=1
               fi
             fi
 
             if [ $skipSELinuxActivation -eq 0 ]; then
-              eval "$cmd"
-              # `semodule -i` installs/updates a module but never removes one that
-              # is no longer part of the policy (e.g. a module dropped by a
-              # rebuild/switch). Remove those stale modules so their types vanish
-              # from the active policy and their store labels revert. Only touch
-              # modules that were actually installed.
-              if [ -n "$keep" ]; then
-                # `semodule -i` installs/updates but never removes a module that is
-                # no longer part of the policy (e.g. one dropped by a rebuild or
-                # switch). Remove those stale modules so their types vanish from the
-                # active policy and their store labels revert. `keep` lists the
-                # module names from the current build; it is empty only where the
-                # build store is unavailable (e.g. early initrd), in which case the
-                # modules are the ones just installed, so there is nothing stale.
-                for m in $(${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -l 2>/dev/null | tr -d '\0\r'); do
-                  if ! echo " $keep " | grep -qw "$m"; then
-                    ${lib.getExe' pkgs.policycoreutils "semodule"} -s targeted -r "$m" || true
-                  fi
-                done
-              fi
+              ${lib.getExe' pkgs.policycoreutils "load_policy"}
+              # The copies carry the store labels; relabel them for `/etc`.
+              ${lib.getExe' pkgs.policycoreutils "setfiles"} -F \
+                /etc/selinux/targeted/contexts/files/file_contexts /etc/selinux/targeted
 
-              ${lib.getExe' pkgs.policycoreutils "setsebool"} -P ${setsebools}
-
-              # Booting already relabels the store from the initrd, so this is
-              # only needed while a running system changes its policy, i.e. on
-              # `switch-to-configuration` (which exports `NIXOS_ACTION`).
-              if [ -n "''${NIXOS_ACTION:-}" ]; then
-                ${lib.getExe' pkgs.systemd "systemd-run"} --quiet --collect --wait \
-                  --unit="senix-store-relabel-$$" \
-                  --property=PrivateMounts=yes \
-                  --property=Type=oneshot \
-                  ${storeRelabel}
-              fi
-
-              echo "$cmd" >/var/lib/selinux/activate-check
+              echo "$policy" >/var/lib/selinux/activate-check
             fi
           '';
       };
     };
+
+    # These `environment.etc` entries point at the policy artifact itself, so
+    # feeding them back into the policy's `@etc@` file context paths would
+    # create an evaluation cycle (`build.policy` → module sources → the etc
+    # paths → `build.policy`). The artifact gets its own rules instead.
+    security.selinux.exclusions.etc = [
+      "selinux/targeted"
+    ];
 
     security.selinux.exclusions.systemdUnits = [
       config.boot.initrd.systemd.services.selinux-init.name
@@ -864,6 +818,13 @@ in
             args = $@
             [end]
           '';
+
+        # The immutable policy artifact is exposed through `/etc/selinux` for
+        # `load_policy`, `setfiles` and `matchpathcon`.
+        "/etc/selinux/targeted".source = "${cfg.build.policy}/etc/selinux/targeted";
+        "/etc/selinux/config".text = ''
+          SELINUXTYPE=targeted
+        '';
       };
 
       services = {
@@ -878,8 +839,6 @@ in
             pkgs.libselinux.bin
             pkgs.coreutils
             pkgs.mount
-            pkgs.gnugrep
-            pkgs.gnused
           ];
           serviceConfig = {
             Type = "oneshot";
@@ -896,50 +855,28 @@ in
 
             sleep 1
 
-            pp=""
-            for f in ${lib.escapeShellArg cfg.build.policy}/share/selinux/refpolicy/*.pp; do
-              [ -e "$f" ] && pp="$pp $f"
-            done
-            semodule -s targeted -i ''${pp}
+            load_policy -i
 
-            # semanage writes the store to `store-root` (`/run/selinux`) from
-            # semanage.conf, but libselinux + setfiles/restorecon read the tree
-            # `/etc/selinux/<type>/{policy, contexts/files}` (computed from
-            # SELINUXTYPE), which the semanage store does not lay out. Link
-            # `/etc/selinux/<type>` to the store and symlink the libselinux-visible
-            # files to the store's `active/` artifacts, so `load_policy` and
-            # `setfiles` find the linked policy and file contexts.
-            rm -rf /etc/selinux/targeted
-            ln -s /run/selinux/targeted /etc/selinux/targeted
-            mkdir -p /etc/selinux/targeted/contexts/files /etc/selinux/targeted/policy
-            ln -sfn ../../active/file_contexts /etc/selinux/targeted/contexts/files/file_contexts
-            ln -sfn ../active/policy.kern /etc/selinux/targeted/policy/policy
-            for v in $(seq 40 -1 25); do
-              ln -sfn policy /etc/selinux/targeted/policy/policy.$v || true
-            done
+            fc=/etc/selinux/targeted/contexts/files/file_contexts
+            setfiles -F "$fc" /etc/selinux/targeted
 
-            # We let systemd handle all of the relabeling for us.
+            # We let systemd handle the relabeling of the host directories.
             mkdir -p /run/systemd/relabel-extra.d || true
-            echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
-            echo "/nix/store" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/etc" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/var" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/home" >> /run/systemd/relabel-extra.d/10-senix.relabel
             echo "/usr" >> /run/systemd/relabel-extra.d/10-senix.relabel
-
-            printf 'SELINUXTYPE=targeted\n' > /etc/selinux/config
-
-            load_policy -i
-
-            setsebool -P ${setsebools}
-
-            fc=/etc/selinux/targeted/contexts/files/file_contexts
+            echo "/nix" >> /run/systemd/relabel-extra.d/10-senix.relabel
+            echo "/nix/store" >> /run/systemd/relabel-extra.d/10-senix.relabel
 
             echo "relabeling initrd..."
 
             # We need to relabel the initrd's nix store in order to
             # ensure that systemd's post-initrd transition to `init_t` works.
             setfiles -F "$fc" /nix/store
+            # The host store is a separate mount, which a recursive
+            # `setfiles /sysroot` skips; label it (and `/nix` itself) here
+            # instead of stalling the post-switch boot with it.
             setfiles -r /sysroot -F "$fc" /sysroot${config.systemd.package}
             setfiles -r /sysroot -F "$fc" /sysroot${config.boot.kernelPackages.kernel.modules}
             setfiles -r /sysroot -F "$fc" /sysroot -e /sysroot/nix/store
@@ -962,6 +899,12 @@ in
               [ -n "$label" ] || continue
               setfattr -n security.selinux -v "$label" "$path" || true
             done
+
+            # The post-initrd activation script skips its work when the policy
+            # artifact is unchanged, so record it here (the initrd `/var` is
+            # read-only, the host's is below `/sysroot`).
+            install -d -m0755 /sysroot/var/lib/selinux
+            echo ${lib.escapeShellArg cfg.build.policy} > /sysroot/var/lib/selinux/activate-check
           '';
         };
 
@@ -1027,7 +970,7 @@ in
       };
 
       # `SurviveFinalKillSignal` requires a "companion unit" for the service
-      # to survive post switchr-root. This is never meant to be run by itself.
+      # to survive post switch-root. This is never meant to be run by itself.
       #
       # The value for `ExecStart` doesn't actually matter, but for consistency's
       # sake it's nice to have it be the same as the initrd one.

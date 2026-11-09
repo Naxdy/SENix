@@ -154,7 +154,7 @@ testers.runNixOSTest (
         # invoking it activates the target. `test` is the documented action for
         # switching into a specialisation
         # <https://nixos.org/manual/nixos/unstable/#module-system-activation-script>:
-        # it runs the full activation (relabel + `semodule`, the etc switch, the
+        # it runs the full activation (policy install/load + relabel, the etc switch, the
         # unit diff), which is what this test is about. `switch` would
         # additionally install a boot loader and make the target the boot
         # default, which is meaningless for a specialisation.

@@ -1,10 +1,21 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }:
 {
   config.security.selinux.modules.selinuxutil = {
+    # `/etc/selinux/targeted` is a set of symlinks into the policy artifact
+    # (`environment.etc`). Following them needs `read` on the link itself, which
+    # the upstream interface does not grant (it assumes real files below
+    # `/etc/selinux`); every caller of the interface needs it.
+    interface.exports.seutil_read_file_contexts = {
+      gen_require = lib.mkBefore "type policy_config_t;";
+      content = lib.mkBefore ''
+        read_lnk_files_pattern(''$1,{selinux_config_t default_context_t file_context_t policy_config_t},{selinux_config_t default_context_t file_context_t policy_config_t})
+      '';
+    };
     fileContext = {
       storePaths = {
         selinux = [

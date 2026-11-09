@@ -13,6 +13,15 @@ let
 
   policySrc = cfg.refpolicy.src;
 
+  # The `selinux` Python bindings, needed by the Reference Policy's
+  # `validate-appconfig.py`. nixpkgs' `libselinux` pywrap runs `python -m build`
+  # but does not depend on the `build` module, so add it.
+  pythonBindings = pkgs.python3.withPackages (ps: [
+    (ps.libselinux.overrideAttrs (old: {
+      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ ps.build ];
+    }))
+  ]);
+
   # The Reference Policy layer directories that exist in the source tree.
   refpolicyLayers = lib.attrNames (
     lib.filterAttrs (_: t: t == "directory") (builtins.readDir "${policySrc}/policy/modules")
@@ -289,13 +298,38 @@ let
 
     nativeBuildInputs = [
       pkgs.gnum4
-      pkgs.python3
+      pythonBindings
       pkgs.getopt
+      pkgs.libselinux.bin
+      # `chkcon`, used by the Reference Policy's `validate` target to check the
+      # appconfig contexts against the linked policy.
+      pkgs.libsepol.bin
     ];
 
     postPatch = ''
       cp -aL ${moduleSourceDrv}/. .
       chmod -R u+w .
+
+      # The rules for the artifact itself (see `targeted/system/init.nix`) use
+      # a dummy store path; resolve it to this build's output path.
+      for f in $(grep -rl '00000000000000000000000000000000-senix-policy' policy/modules); do
+        substituteInPlace "$f" \
+          --replace-fail '/nix/store/00000000000000000000000000000000-senix-policy' "$out"
+      done
+
+      # Drop every substitution that aliases a path to (or from) `/usr` from the
+      # reference policy's `file_contexts.subs_dist`, the merged-usr leftovers
+      # (`/bin`, `/lib`, `/lib64`, `/sbin`, `/etc/systemd/*`, `/usr/lib*`, …).
+      # NixOS generates the file contexts for its own layout in `modules/files`
+      # (`/lib64` and the `/usr` it actually creates), so an aliased lookup
+      # hides exactly those rules behind the `/.* → default_t` catch-all —
+      # e.g. `/lib64` resolved as `/usr/lib`, which nothing labeled, so
+      # `systemd-tmpfiles` created the loader link as `default_t`. libselinux
+      # also fails to match a rule whose own path it substituted, so the rules
+      # cannot simply be written on both paths.
+      subs=config/file_contexts.subs_dist
+      awk '$1 !~ /^\/usr/ && $2 !~ /^\/usr/' "$subs" > "$subs.tmp"
+      mv "$subs.tmp" "$subs"
 
       substituteInPlace ./Makefile \
         --replace-fail "/bin/bash" "${lib.getExe pkgs.bash}"
@@ -306,7 +340,65 @@ let
 
       make conf ''${makeFlags[@]}
 
+      # Bake the declaratively declared booleans into the policy defaults.
+      # Without a writable runtime policy store, `setsebool -P` cannot persist
+      # them, so the build is the only place they can be applied before the
+      # policy is loaded.
+      ${lib.concatStringsSep "\n" (
+        lib.mapAttrsToList (
+          name: value:
+          "echo ${lib.escapeShellArg "${name} = ${if value then "true" else "false"}"} >> policy/booleans.conf"
+        ) cfg.booleans
+      )}
+
       runHook postConfigure
+    '';
+
+    # Compile every module, then link the full policy exactly as `semodule -i`
+    # does at runtime (this is the Reference Policy's own `validate` target).
+    # The link resolves every `require` against the base and every other
+    # module, so an undefined type, a neverallow violation, a duplicate
+    # declaration or a conflicting file context fails the *build* instead of
+    # the boot. The linked binary policy and the populated policy store are
+    # installed as the runtime artifacts; the runtime then only loads them.
+    buildPhase = ''
+      runHook preBuild
+
+      make ''${makeFlags[@]}
+
+      semanageConf=$NIX_BUILD_TOP/semanage.conf
+      storeRoot=$NIX_BUILD_TOP/selinux-store
+      mkdir -p "$storeRoot"
+      cat > "$semanageConf" <<EOF
+      store-root = $storeRoot
+      compiler-directory = ${pkgs.policycoreutils}/libexec/selinux/hll
+      ${lib.optionalString (cfg.policyVersion != null) "policy-version = ${toString cfg.policyVersion}"}
+
+      [load_policy]
+      path = ${lib.getExe' pkgs.policycoreutils "load_policy"}
+      [end]
+
+      [setfiles]
+      path = ${lib.getExe' pkgs.policycoreutils "setfiles"}
+      args = -q -c \$@ \$<
+      [end]
+
+      [sefcontext_compile]
+      path = ${lib.getExe' pkgs.libselinux.bin "sefcontext_compile"}
+      args = -r \$@
+      [end]
+      EOF
+
+      make validate ''${makeFlags[@]} \
+        SEMODULE="${lib.getExe' pkgs.policycoreutils "semodule"} --noreload --config=$semanageConf --store-path=$storeRoot" \
+        SETFILES=${lib.getExe' pkgs.policycoreutils "setfiles"} \
+        CHKCON=${lib.getExe' pkgs.libsepol.bin "chkcon"} \
+        PYTHON=${lib.getExe pythonBindings}
+
+      install -d "$out"/etc/selinux/targeted
+      cp -a tmp/policy_root/etc/selinux/targeted/. "$out"/etc/selinux/targeted/
+
+      runHook postBuild
     '';
 
     makeFlags = [
@@ -322,21 +414,24 @@ let
       "SYSTEMD=y"
       "UBAC=y"
       "TYPE=mcs"
+      # The policy is installed under the name the runtime loads by
+      # (`SELINUXTYPE=targeted`), not the Reference Policy's devel default
+      # (`refpolicy`).
+      "NAME=targeted"
     ]
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_POLICY=${toString cfg.policyVersion}"
     ++ lib.optional (cfg.policyVersion != null) "OUTPUT_MODULE=${toString cfg.policyVersion}";
 
-    # The Reference Policy's `make install` provisions the appconfig for the
-    # selected policy type (`seusers`, `default_contexts`, `default_type`,
-    # the per-user context files, ...) into the live policy tree; the build
-    # here only runs `make conf`, whose output carries a subset without
-    # `seusers`. Provision the appconfig for `TYPE` explicitly: libselinux's
-    # `get_default_context()` (used by SELinux-aware login programs, e.g.
-    # sshd, to place sessions in `sysadm_r:sysadm_t`) reads exactly these
-    # files, and without them the context lookup fails under enforcing.
+    # Ensure the appconfig for the selected policy type (`seusers`,
+    # `default_contexts`, `default_type`, the per-user context files, ...) is
+    # complete in the installed tree. libselinux's `get_default_context()`
+    # (used by SELinux-aware login programs, e.g. sshd, to place sessions in
+    # `sysadm_r:sysadm_t`) reads exactly these files, and without them the
+    # context lookup fails under enforcing.
     postInstall = ''
       appconfig=${policySrc}/config/appconfig-mcs
-      cp -r $appconfig/. $out/etc/selinux/refpolicy/contexts/
+      install -d $out/etc/selinux/targeted/contexts/users
+      cp -r $appconfig/. $out/etc/selinux/targeted/contexts/
       # libselinux reads per-SELinux-user context orderings from
       # `contexts/users/<user>`; the appconfig ships those as
       # `<user>_default_contexts` (the REF's Makefile renames them on
@@ -344,10 +439,10 @@ let
       for f in $appconfig/*_default_contexts; do
         name=$(basename "$f" _default_contexts)
         [ "$name" = root ] && name=root
-        mv $out/etc/selinux/refpolicy/contexts/$(basename "$f") \
-          $out/etc/selinux/refpolicy/contexts/users/"$name"
+        mv $out/etc/selinux/targeted/contexts/$(basename "$f") \
+          $out/etc/selinux/targeted/contexts/users/"$name"
       done
-      mv $out/etc/selinux/refpolicy/contexts/seusers $out/etc/selinux/refpolicy/seusers
+      mv $out/etc/selinux/targeted/contexts/seusers $out/etc/selinux/targeted/seusers
     '';
   };
 in
@@ -360,8 +455,10 @@ in
       description = ''
         The final, combined SELinux policy package built entirely from
         `config.security.selinux.modules`. It is a self-contained Reference
-        Policy (base module plus every declared module) that is loaded at boot
-        and activation, replacing the pre-built `pkgs.selinux-refpolicy` base.
+        Policy (base module plus every declared module) that is compiled *and
+        linked* at build time — the runtime only loads the linked binary — so
+        link-time errors fail the build instead of the boot. It replaces the
+        pre-built `pkgs.selinux-refpolicy` base.
       '';
     };
   };
