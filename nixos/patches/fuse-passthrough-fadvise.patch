@@ -1,0 +1,78 @@
+Backport of upstream commits 3cfce590fe18 ("fuse: Forward vfs_fadvise to
+backing_file in passthrough mode") and bf5686121633 ("fuse: handle extent
+map files in fuse_passthrough_fadvise()") to 6.18.
+
+`posix_fadvise(2)` and `readahead(2)` (which is `vfs_fadvise(...,
+POSIX_FADV_WILLNEED)`) dispatch through `file->f_op->fadvise` when present and
+otherwise fall back to `generic_fadvise()`. `generic_fadvise()` runs the FUSE
+inode's `readahead` mapping op, which issues a `FUSE_READ` to the daemon even
+when the file is open in passthrough mode; nothing consumes those cached pages
+because the actual I/O goes to the backing file. `POSIX_FADV_DONTNEED` is
+equally ineffective: it evicts upper-mapping pages while the backing page
+cache stays resident.
+
+The two upstream commits teach FUSE to forward fadvise to the backing file the
+way overlayfs does (`ovl_fadvise()`). Compared to the upstream series this
+backport only differs in the passthrough check: the stable 6.18 tree predates
+`fuse_is_passthrough()` (extent-map passthrough, FOPEN_PASSTHROUGH without a
+backing file), so the hook tests `fuse_file_passthrough(ff)` directly and
+`fuse_passthrough_fadvise()` keeps the post-`bf5686121633` NULL-backing
+fallback anyway.
+
+--- a/fs/fuse/file.c
++++ b/fs/fuse/file.c
+@@ -3120,4 +3120,14 @@ static ssize_t fuse_copy_file_range(struct file *src_file, loff_t src_off,
+ 	return ret;
+ }
+ 
++static int fuse_file_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
++{
++	struct fuse_file *ff = file->private_data;
++
++	if (fuse_file_passthrough(ff))
++		return fuse_passthrough_fadvise(file, offset, len, advice);
++
++	return generic_fadvise(file, offset, len, advice);
++}
++
+ static const struct file_operations fuse_file_operations = {
+@@ -3127,2 +3137,3 @@ static const struct file_operations fuse_file_operations = {
+ 	.mmap		= fuse_file_mmap,
++	.fadvise	= fuse_file_fadvise,
+ 	.open		= fuse_open,
+--- a/fs/fuse/fuse_i.h
++++ b/fs/fuse/fuse_i.h
+@@ -1546,6 +1546,7 @@ ssize_t fuse_passthrough_splice_write(struct pipe_inode_info *pipe,
+ 				      struct file *out, loff_t *ppos,
+ 				      size_t len, unsigned int flags);
+ ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma);
++int fuse_passthrough_fadvise(struct file *file, loff_t offset, loff_t len, int advice);
+ 
+ #ifdef CONFIG_SYSCTL
+ extern int fuse_sysctl_register(void);
+--- a/fs/fuse/passthrough.c
++++ b/fs/fuse/passthrough.c
+@@ -144,6 +144,23 @@ ssize_t fuse_passthrough_mmap(struct file *file, struct vm_area_struct *vma)
+ 	return backing_file_mmap(backing_file, vma, &ctx);
+ }
+ 
++int fuse_passthrough_fadvise(struct file *file, loff_t offset, loff_t len, int advice)
++{
++	struct fuse_file *ff = file->private_data;
++	struct file *backing_file = fuse_file_passthrough(ff);
++	const struct cred *old_cred;
++	int ret;
++
++	if (!backing_file)
++		return generic_fadvise(file, offset, len, advice);
++
++	old_cred = override_creds(ff->cred);
++	ret = vfs_fadvise(backing_file, offset, len, advice);
++	revert_creds(old_cred);
++
++	return ret;
++}
++
+ /*
+  * Setup passthrough to a backing file.
+  *

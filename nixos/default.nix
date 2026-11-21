@@ -662,7 +662,23 @@ in
         };
         patch = null;
       }
-    ];
+    ]
+    # The backport needs the passthrough `mmap`/`fadvise` plumbing present
+    # since 6.18, and is obsolete once the hook is upstream (v7.4).
+    ++
+      lib.optional
+        (lib.versionAtLeast pkgs.linux.version "6.18" && lib.versionOlder pkgs.linux.version "7.4")
+        {
+          # `posix_fadvise(2)`/`readahead(2)` on a passthrough file execute the
+          # FUSE inode's readahead mapping op, which asks the daemon for pages
+          # that nothing then reads (all I/O goes to the backing fd), and leaves
+          # `POSIX_FADV_DONTNEED` unable to drop the backing page cache. Forward
+          # the advice to the backing file like overlayfs does. Backport of
+          # upstream 3cfce590fe18 + bf5686121633 with the pre-
+          # `fuse_is_passthrough()` passthrough check adapted.
+          name = "fuse-passthrough-fadvise";
+          patch = ./patches/fuse-passthrough-fadvise.patch;
+        };
 
     # The store overlay setup mounts the metadata SquashFS via a loop device, so
     # ensure the loop module is available as early as possible.
