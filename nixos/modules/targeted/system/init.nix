@@ -129,6 +129,7 @@ in
 
       gen_require(`
         attribute non_security_file_type;
+        attribute systemd_user_session_type;
         class service { start status };
         class process2 { execmem nosuid_transition };
         class capability2 { checkpoint_restore };
@@ -154,6 +155,21 @@ in
       allow kernel_t init_t:process2 nosuid_transition;
       allow init_t self:process dyntransition;
       allow kernel_t self:process setcurrent;
+
+      # PID1 starts each user's manager by execing `systemd --user` for
+      # `user@.service`. The binary lives on the `nosuid,nodev` metafs store, so
+      # the kernel's `check_nnp_nosuid()` checks `process2 nosuid_transition`
+      # on top of the ordinary `process transition` that
+      # `init_pgm_spec_user_daemon_domain()` (from the reference policy's
+      # `systemd_user_session_template`) already grants. The reference policy
+      # leaves that permission out of `init_domain()`; Fedora carries it there
+      # and in this narrower `init_nosuid_domain()`, which mirrors the case
+      # where only the nosuid half is needed. `nnp_transition` is not required:
+      # `user@.service` does not set `NoNewPrivileges`. The grant targets the
+      # `systemd_user_session_type` attribute, i.e. every per-role manager
+      # domain (`user_systemd_t` and its staff/sysadm/guest counterparts), which
+      # is exactly the set PID1 can start this way.
+      init_nosuid_domain(systemd_user_session_type)
 
       allow initrc_t self:capability2 checkpoint_restore;
 
