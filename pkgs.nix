@@ -71,6 +71,7 @@ in
     in
     mkSenixPackage {
       pname = "metafs";
+      meta.mainProgram = "metafs";
 
       # Ship metafs also as the `mount(8)` FUSE helper under the fstype-specific
       # name. mount(8) resolves helpers as `mount.<fstype>` through its
