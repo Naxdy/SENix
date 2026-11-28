@@ -497,6 +497,14 @@ in
           for btrfs filesystems, or native ZFS deduplication.
         '';
       }
+      {
+        assertion = lib.versionAtLeast config.system.build.kernel.version "6.18";
+        message = ''
+          `config.security.selinux.enable` requires a minimum kernel version of 6.18, but yours is ${config.system.build.kernel.version}.
+
+          Update your Linux kernel to a more recent version, or disable SELinux.
+        '';
+      }
     ];
 
     warnings = lib.mkIf (lib.versionOlder config.system.build.kernel.version "7.4") [
