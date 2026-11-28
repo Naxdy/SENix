@@ -21,6 +21,12 @@ use fuser::{Config, MountOption, Session, SessionACL};
 use log::{Metadata, Record, debug};
 use metafs::fs::MetaFs;
 
+// Avoid musl's default allocator due to lackluster performance
+// https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance
+#[cfg(target_env = "musl")]
+#[global_allocator]
+static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
+
 /// A `log` backend that writes every record to `/dev/kmsg` through the held
 /// descriptor, so daemon and fuser diagnostics remain visible on the console
 /// even after journald stops at the initrd root switch.
@@ -51,12 +57,6 @@ fn install_panic_hook() {
         default(info);
     }));
 }
-
-// Avoid musl's default allocator due to lackluster performance
-// https://nickb.dev/blog/default-musl-allocator-considered-harmful-to-performance
-#[cfg(target_env = "musl")]
-#[global_allocator]
-static GLOBAL: mimalloc::MiMalloc = mimalloc::MiMalloc;
 
 /// Mount an existing directory as a strictly read-only FUSE overlay.
 ///
