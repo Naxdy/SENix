@@ -53,6 +53,7 @@ testers.runNixOSTest {
       imports = [
         senix
       ];
+      boot.kernelPackages = pkgs.linuxPackages_testing;
 
       security.selinux = {
         enable = true;

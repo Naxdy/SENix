@@ -7,6 +7,10 @@ testers.runNixOSTest {
   nodes.machine =
     { pkgs, ... }:
     {
+      # `linux_testing` is the 7.4 kernel, whose upstream `fadvise` forwarding
+      # makes the in-tree backport unnecessary; it builds from cache.
+      boot.kernelPackages = pkgs.linuxPackages_testing;
+
       # Load the FUSE kernel module so /dev/fuse exists and the pass-through
       # filesystem can actually be mounted (as root, mount(2) succeeds).
       boot.kernelModules = [ "fuse" ];

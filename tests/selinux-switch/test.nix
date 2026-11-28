@@ -99,6 +99,7 @@ testers.runNixOSTest (
           senix
           switchLearnModule
         ];
+        boot.kernelPackages = pkgs.linuxPackages_testing;
 
         security.selinux = {
           enable = true;

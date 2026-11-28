@@ -61,11 +61,12 @@ testers.runNixOSTest {
   node.pkgsReadOnly = false;
 
   nodes.machine =
-    { ... }:
+    { pkgs, ... }:
     {
       imports = [
         senix
       ];
+      boot.kernelPackages = pkgs.linuxPackages_testing;
 
       security.selinux = {
         enable = true;

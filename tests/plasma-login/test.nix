@@ -25,6 +25,8 @@ testers.runNixOSTest {
         overlayPackages = false;
       };
 
+      boot.kernelPackages = pkgs.linuxPackages_testing;
+
       # The account the test logs in with, and the only one SDDM lists
       # (sddm is built with UID_MIN=1000, the nixbld users sit above
       # Users.MaximumUid).
