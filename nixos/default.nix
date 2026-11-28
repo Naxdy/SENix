@@ -499,6 +499,19 @@ in
       }
     ];
 
+    warnings = lib.mkIf (lib.versionOlder config.system.build.kernel.version "7.4") [
+      ''
+        security.selinux: The Linux kernel version is ${config.system.build.kernel.version},
+        which is older than the minimum supported version of 7.4.
+
+        SENix includes a kernel patch that backports the required functionality,
+        though note that this is going to require a rebuild of your kernel.
+
+        To avoid having to build the Linux kernel from scratch, update to
+        a supported version.
+      ''
+    ];
+
     # We use this to remove `ro` as the store mount option, since our overlay
     # already ensures the underlying store cannot be written to.
     boot.nixStoreMountOpts = lib.mkForce [ ];
