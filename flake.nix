@@ -1,6 +1,6 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/staging-next";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
