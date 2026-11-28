@@ -609,6 +609,14 @@ in
                 name = "postgresql_18";
                 flag = "selinuxSupport";
               }
+              {
+                name = "linux-pam";
+                flag = "withSelinux";
+              }
+              {
+                name = "openssh";
+                flag = "withSelinux";
+              }
             ];
           in
           builtins.listToAttrs (
@@ -625,18 +633,6 @@ in
               }
             ) overridePkgs
           )
-          // {
-            # OpenSSH has no SELinux toggle in this nixpkgs revision; wire the
-            # upstream support directly so sshd performs the standard
-            # login-context transition (`get_default_context` ->
-            # `default_contexts`), placing root's ssh sessions in
-            # `sysadm_r:sysadm_t` instead of leaving every session stuck in
-            # `sshd_t`.
-            openssh = prev.openssh.overrideAttrs (old: {
-              buildInputs = (old.buildInputs or [ ]) ++ [ final.libselinux ];
-              configureFlags = (old.configureFlags or [ ]) ++ [ "--with-selinux" ];
-            });
-          }
         )
       ]
       ++ [
@@ -649,30 +645,16 @@ in
       }
     );
 
-    # `pam_selinux` is the PAM module that sets the session's default exec
-    # context from the policy's `default_contexts`. The user manager relies on
-    # it: `system_r:init_t` is mapped to the per-role manager domain
-    # (`user_systemd_t` for `user_u`), so PAM's `open` call is what enters the
-    # domain before `systemd --user` execs. nixpkgs builds linux-pam with
-    # `-Dselinux=disabled`, which drops `pam_selinux.so` entirely — the
-    # Fedora stack carries `pam_selinux.so close`/`nottys open` in
-    # `systemd-user` for exactly this transition.
     security.pam.package = lib.mkDefault (
-      pkgs.linux-pam.overrideAttrs (old: {
-        buildInputs = (old.buildInputs or [ ]) ++ [ pkgs.libselinux ];
-        # `pam_sepermit`'s lock dir is compiled from `localstatedir`; keep the
-        # runtime path `/run/sepermit`, but install the empty dir relative to
-        # the prefix (meson's `install_emptydir()` would otherwise write it
-        # into the build sandbox's absolute `/var`).
-        mesonFlags = lib.filter (flag: flag != "-Dselinux=disabled") (old.mesonFlags or [ ]) ++ [
-          "-Dselinux=enabled"
-          "-Dlocalstatedir=/run"
-        ];
-        postPatch = (old.postPatch or "") + ''
-          substituteInPlace modules/module-meson.build \
-            --replace-fail "sepermit_lockdir," "'run/sepermit',"
-        '';
-      })
+      pkgs.linux-pam.override {
+        withSelinux = true;
+      }
+    );
+
+    services.openssh.package = lib.mkDefault (
+      pkgs.openssh.override {
+        withSelinux = true;
+      }
     );
 
     boot.kernelPatches = [

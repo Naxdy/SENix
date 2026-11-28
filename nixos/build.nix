@@ -14,11 +14,15 @@ let
   policySrc = cfg.refpolicy.src;
 
   # The `selinux` Python bindings, needed by the Reference Policy's
-  # `validate-appconfig.py`. nixpkgs' `libselinux` pywrap runs `python -m build`
-  # but does not depend on the `build` module, so add it.
+  # `validate-appconfig.py`. libselinux 3.11's SWIG typemaps still call the
+  # Python 2-era `PyString_FromString`, which Python 3.12 removed; alias it to
+  # the equivalent `PyUnicode_FromString`.
   pythonBindings = pkgs.python3.withPackages (ps: [
     (ps.libselinux.overrideAttrs (old: {
-      nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ ps.build ];
+      env = (old.env or { }) // {
+        NIX_CFLAGS_COMPILE =
+          (old.env.NIX_CFLAGS_COMPILE or "") + " -DPyString_FromString=PyUnicode_FromString";
+      };
     }))
   ]);
 
