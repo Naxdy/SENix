@@ -680,7 +680,10 @@ in
     # since 6.18, and is obsolete once the hook is upstream (v7.4).
     ++
       lib.optional
-        (lib.versionAtLeast pkgs.linux.version "6.18" && lib.versionOlder pkgs.linux.version "7.4")
+        (
+          lib.versionAtLeast config.system.build.kernel.version "6.18"
+          && lib.versionOlder config.system.build.kernel.version "7.4"
+        )
         {
           # `posix_fadvise(2)`/`readahead(2)` on a passthrough file execute the
           # FUSE inode's readahead mapping op, which asks the daemon for pages
